@@ -37,7 +37,6 @@ public class Domain {
 		
 	}
 	
-	
 	public void addObjectClass(ObjectClass oc){
 		if(!objectClassMap_.containsKey(oc.name_)){
 			objectClasses_.add(oc);
@@ -66,8 +65,6 @@ public class Domain {
 			actionMap_.put(act.getName(), act);
 		}
 	}
-
-
 	
 	
 	public List <ObjectClass> getObjectClasses(){

@@ -74,6 +74,8 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	public static int				MINY = 0;
 	public static int				MAXY = 24;
 	public static int [][]		MAP = new int[MAXX+1][MAXY+1];
+	
+	
 	public static final ArrayList<String> colors = new ArrayList<String>(Arrays.asList(new String[]{"black", "blue",
 			"cyan", "darkGray", "gray", "green", "lightGray", "magenta", "orange", "pink", "red", "white", "yellow"}));
 
@@ -83,7 +85,6 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	private static Domain 			SOKOBANDOMAIN = null;
 
 	public static void main(String args[]){
-
 		
 		//command line arguments
 		
@@ -94,7 +95,6 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		int dLocation = -1;
 		int wLocation = -1;
 		int sLocation = -1;
-
 
 		if (args.length == 0 || args[0].equals("-help")){
 			System.out.println("Usage: SokobanDomain [-c commandsfile] [-t] [-v] [-f statefile]");
@@ -226,13 +226,11 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 			agent.setValue(XATTNAME, 1);
 			agent.setValue(YATTNAME, 5);
 
-
 			ObjectInstance block = st.getObject(BLOCKCLASS + 0);
 			block.setValue(XATTNAME, 2);
 			block.setValue(YATTNAME, 2);
 			block.setValue(COLORATTNAME, "green");
 			block.setValue(SHAPEATTNAME, "star");
-
 
 			ObjectInstance block2 = st.getObject(BLOCKCLASS + 1);
 			block2.setValue(XATTNAME, 6);
@@ -386,15 +384,10 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		dClass.addAttribute(bottomYAtt);
 
 		PropositionalFunction isCircle = new IsCirclePF(PFISCIRCLE, SOKOBANDOMAIN, new String[]{BLOCKCLASS});
-		//PropositionalFunction isCircle2 = new IsBlackPF(PFISCIRCLE, SOKOBANDOMAIN, new String[]{AGENTCLASS});
 		PropositionalFunction isStar = new IsStarPF(PFISSTAR, SOKOBANDOMAIN, new String[]{BLOCKCLASS});
-		//PropositionalFunction isStar2 = new IsBlackPF(PFISCIRCLE, SOKOBANDOMAIN, new String[]{AGENTCLASS});
 		PropositionalFunction isMoon = new IsMoonPF(PFISMOON, SOKOBANDOMAIN, new String[]{BLOCKCLASS});
-		//PropositionalFunction isMoon2 = new IsBlackPF(PFISMOON, SOKOBANDOMAIN, new String[]{AGENTCLASS});
 		PropositionalFunction isSmiley = new IsSmileyPF(PFISSMILEY, SOKOBANDOMAIN, new String[]{BLOCKCLASS});
-		//PropositionalFunction isSmiley2 = new IsBlackPF(PFISMOON, SOKOBANDOMAIN, new String[]{AGENTCLASS});
 		PropositionalFunction isSquare = new IsSquarePF(PFISSQUARE, SOKOBANDOMAIN, new String[]{BLOCKCLASS});
-		//PropositionalFunction isSquare2 = new IsBlackPF(PFISSQUARE, SOKOBANDOMAIN, new String[]{AGENTCLASS});
 		PropositionalFunction inRoom = new InRoomPF(PFAGENTINROOM, SOKOBANDOMAIN, new String[]{AGENTCLASS, ROOMCLASS});
 		PropositionalFunction inRoom2 = new InRoomPF(PFBLOCKINROOM, SOKOBANDOMAIN, new String[]{BLOCKCLASS, ROOMCLASS});
 		PropositionalFunction isBlack = new IsBlackPF(PFISBLACK, SOKOBANDOMAIN, new String[]{BLOCKCLASS});
@@ -470,8 +463,6 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		Action east = new EastAction(ACTIONEAST, SOKOBANDOMAIN, "");
 		Action west = new WestAction(ACTIONWEST, SOKOBANDOMAIN, "");
 
-		//	this.createMap();
-
 		return SOKOBANDOMAIN;
 	}
 
@@ -506,6 +497,8 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	} 
 
 	//creates the walls using the coordinates of rooms
+	//each room is defined by its top left and bottom right corners (including walls)
+	//entrances are allowed by door objects
 	public static void createMap(State st){
 
 		MAXX = getMaxX(st);
@@ -965,6 +958,8 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	/**
 	 * @return The string representation of a state
 	 */
+	//create a string representation of a given state
+	//This string can be turned back into a state with the proceeding function
 	public String stateToString(State s) {
 		String output = "";
 		List<ObjectInstance> rooms = s.getObjectsOfClass(ROOMCLASS);
@@ -1005,6 +1000,10 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		return output;
 	}
 
+	//parses a string representation of a state into an actual State object
+	//The state is described by a string in which an object is named, followed by its parameters
+	//for example: room,2,0,0,10,10
+	//rooms are defined by their top left and bottom right corners
 	@Override
 	public State stringToState(String str) {
 		State st = new State();
@@ -1121,7 +1120,6 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	}
 
 
-	
 	public static Map <SokoSAS, Double> getTransitionsFromSourceState(State s){
 		
 		SokobanDomain constructor = new SokobanDomain();

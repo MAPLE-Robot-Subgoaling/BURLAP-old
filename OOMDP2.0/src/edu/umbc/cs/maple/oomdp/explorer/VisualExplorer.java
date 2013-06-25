@@ -124,17 +124,12 @@ public class VisualExplorer extends JFrame{
 		
 		pack();
 		setVisible(true);
-		
-		
-		
-		
 	}
 	
 	
 	private void handleKeyPressed(KeyEvent e){
 		
 		String key = String.valueOf(e.getKeyChar());
-		
 
 		//otherwise this could be an action, see if there is an action mapping
 		String mappedAction = keyActionMap_.get(key);
@@ -179,8 +174,6 @@ public class VisualExplorer extends JFrame{
 			}
 		}
 				
-			
-
 		
 		//now paint the screen with the new state
 		painter_.updateState(curState_);
@@ -204,8 +197,6 @@ public class VisualExplorer extends JFrame{
 				}
 			}
 		}
-		
-
 		propViewer_.setText(buf.toString());
 		
 		
