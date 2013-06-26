@@ -117,7 +117,9 @@ public class FourRoomsDomain implements DomainGenerator {
 		//			2)setStandardWalls()
 		generateMap();
 		
-		
+		/*Creates a new Attribute object
+		 * 
+		 */
 		Attribute xatt = new Attribute(DOMAIN, ATTX, Attribute.AttributeType.DISC);
 		xatt.setDiscValuesForRange(0, MAXX, 1);
 		
@@ -219,7 +221,9 @@ public class FourRoomsDomain implements DomainGenerator {
 		//Horizontal walls set at Map[10][5], Map[11][5]
 		horizontalWall(10, 11, 5);
 		
+		//Vertical walls set at Map[1][6]
 		verticalWall(1, 1, 6);
+		//Vertical walls set at Map[3][6], Map[4][6],Map[5][6],Map[6][6],Map[7][6],Map[8][6],
 		verticalWall(3, 8, 6);
 		verticalWall(10, 11, 6);
 		
