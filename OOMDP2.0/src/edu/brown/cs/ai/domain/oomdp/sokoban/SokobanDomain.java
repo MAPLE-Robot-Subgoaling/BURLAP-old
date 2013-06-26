@@ -12,62 +12,62 @@ import edu.umbc.cs.maple.oomdp.data.*;
 
 public class SokobanDomain implements DomainGenerator, StateParser {
 
-	public static final String			XATTNAME = "xAtt";
-	public static final String			YATTNAME = "yAtt";
-	public static final String			TOPYATTNAME = "topYAtt";	
-	public static final String			BOTTOMXATTNAME = "bottomXAtt";
-	public static final String			TOPXATTNAME = "topXAtt";
-	public static final String			BOTTOMYATTNAME = "bottomYAtt";
-	public static final String			COLORATTNAME = "colorAtt";
-	public static final String			SHAPEATTNAME = "shapeAtt";
-	public static final String			AGENTCLASS = "agent";
-	public static final String			ROOMCLASS = "room";
-	public static final String			BLOCKCLASS = "block";
-	public static final String			DOORCLASS = "door";
-	public static final String			ACTIONNORTH = "north";
-	public static final String			ACTIONSOUTH = "south";
-	public static final String			ACTIONEAST = "east";
-	public static final String			ACTIONWEST = "west";
-	public static final String			PFAGENTINROOM = "agentInRoom";
-	public static final String			PFBLOCKINROOM = "blockInRoom";
-	public static final String			PFISBLACK = "isBlack";
-	public static final String			PFISBLUE = "isBlue";
-	public static final String			PFISCYAN = "isCyan";
-	public static final String			PFISDARKGRAY = "isDarkGray";
-	public static final String			PFISGRAY = "isGray";
-	public static final String			PFISGREEN = "isGreen";
-	public static final String			PFISLIGHTGRAY = "isLightGray";
-	public static final String			PFISMAGENTA = "isMagenta";
-	public static final String			PFISORANGE = "isOrange";
-	public static final String			PFISPINK = "isPink";
-	public static final String			PFISRED = "isRed";
-	public static final String			PFISWHITE = "isWhite";
-	public static final String			PFISYELLOW = "isYellow";	
-	public static final String			PFISSTAR = "isStar";	
-	public static final String			PFISMOON = "isMoon";	
-	public static final String			PFISCIRCLE = "isCircle";	
-	public static final String			PFISSMILEY = "isSmiley";	
-	public static final String			PFISSQUARE = "isSquare";	
-	public static final String			PFBLOCKNEXTTO = "blockNextTo";
-	public static final String			PFAGENTNEXTTO = "agentNextTo";
-	public static final String			PFROOMISBLACK = "roomIsBlack";
-	public static final String			PFROOMISBLUE = "roomIsBlue";
-	public static final String			PFROOMISCYAN = "roomIsCyan";
-	public static final String			PFROOMISDARKGRAY = "roomIsDarkGray";
-	public static final String			PFROOMISGRAY = "roomIsGray";
-	public static final String			PFROOMISGREEN = "roomIsGreen";
-	public static final String			PFROOMISLIGHTGRAY = "roomIsLightGray";
-	public static final String			PFROOMISMAGENTA = "roomIsMagenta";
-	public static final String			PFROOMISORANGE = "roomIsOrange";
-	public static final String			PFROOMISPINK = "roomIsPink";
-	public static final String			PFROOMISRED = "roomIsRed";
-	public static final String			PFROOMISWHITE = "roomIsWhite";
-	public static final String			PFROOMISYELLOW = "roomIsYellow";
+	private static final String			XATTNAME = "xAtt";
+	private static final String			YATTNAME = "yAtt";
+	private static final String			TOPYATTNAME = "topYAtt";	
+	private static final String			BOTTOMXATTNAME = "bottomXAtt";
+	private static final String			TOPXATTNAME = "topXAtt";
+	private static final String			BOTTOMYATTNAME = "bottomYAtt";
+	private static final String			COLORATTNAME = "colorAtt";
+	private static final String			SHAPEATTNAME = "shapeAtt";
+	private static final String			AGENTCLASS = "agent";
+	private static final String			ROOMCLASS = "room";
+	private static final String			BLOCKCLASS = "block";
+	private static final String			DOORCLASS = "door";
+	private static final String			ACTIONNORTH = "north";
+	private static final String			ACTIONSOUTH = "south";
+	private static final String			ACTIONEAST = "east";
+	private static final String			ACTIONWEST = "west";
+	private static final String			PFAGENTINROOM = "agentInRoom";
+	private static final String			PFBLOCKINROOM = "blockInRoom";
+	private static final String			PFISBLACK = "isBlack";
+	private static final String			PFISBLUE = "isBlue";
+	private static final String			PFISCYAN = "isCyan";
+	private static final String			PFISDARKGRAY = "isDarkGray";
+	private static final String			PFISGRAY = "isGray";
+	private static final String			PFISGREEN = "isGreen";
+	private static final String			PFISLIGHTGRAY = "isLightGray";
+	private static final String			PFISMAGENTA = "isMagenta";
+	private static final String			PFISORANGE = "isOrange";
+	private static final String			PFISPINK = "isPink";
+	private static final String			PFISRED = "isRed";
+	private static final String			PFISWHITE = "isWhite";
+	private static final String			PFISYELLOW = "isYellow";	
+	private static final String			PFISSTAR = "isStar";	
+	private static final String			PFISMOON = "isMoon";	
+	private static final String			PFISCIRCLE = "isCircle";	
+	private static final String			PFISSMILEY = "isSmiley";	
+	private static final String			PFISSQUARE = "isSquare";	
+	private static final String			PFBLOCKNEXTTO = "blockNextTo";
+	private static final String			PFAGENTNEXTTO = "agentNextTo";
+	private static final String			PFROOMISBLACK = "roomIsBlack";
+	private static final String			PFROOMISBLUE = "roomIsBlue";
+	private static final String			PFROOMISCYAN = "roomIsCyan";
+	private static final String			PFROOMISDARKGRAY = "roomIsDarkGray";
+	private static final String			PFROOMISGRAY = "roomIsGray";
+	private static final String			PFROOMISGREEN = "roomIsGreen";
+	private static final String			PFROOMISLIGHTGRAY = "roomIsLightGray";
+	private static final String			PFROOMISMAGENTA = "roomIsMagenta";
+	private static final String			PFROOMISORANGE = "roomIsOrange";
+	private static final String			PFROOMISPINK = "roomIsPink";
+	private static final String			PFROOMISRED = "roomIsRed";
+	private static final String			PFROOMISWHITE = "roomIsWhite";
+	private static final String			PFROOMISYELLOW = "roomIsYellow";
 
 
-	public static final String			PFCOLORCLASS = "color";
-	public static final String			PFSHAPECLASS = "shape";
-	public static final String			PFPOSCLASS = "position";
+	private static final String			PFCOLORCLASS = "color";
+	private static final String			PFSHAPECLASS = "shape";
+	private static final String			PFPOSCLASS = "position";
 
 	public static int				MINX = 0;
 	public static int				MAXX = 24;
@@ -423,7 +423,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		isStar.setClassName(PFSHAPECLASS);
 		isMoon.setClassName(PFSHAPECLASS);
 		isSmiley.setClassName(PFSHAPECLASS);
-		isSmiley.setClassName(PFSHAPECLASS);
+		isSquare.setClassName(PFSHAPECLASS);
 
 		inRoom.setClassName(PFPOSCLASS);
 		inRoom2.setClassName(PFPOSCLASS);
@@ -495,10 +495,13 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 
 		return st;
 	} 
-
-	//creates the walls using the coordinates of rooms
-	//each room is defined by its top left and bottom right corners (including walls)
-	//entrances are allowed by door objects
+	/**
+	 * Creates the walls using the coordinates of rooms.
+	 * Each room is defined by its top left and bottom right corners (including walls)
+	 * Entrances are allowed by door objects
+	 * 
+	 * @param st A state with defined rooms and doors from which we can generate walls
+	 */
 	public static void createMap(State st){
 
 		MAXX = getMaxX(st);
@@ -620,7 +623,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	}
 
 	//move function for pushing blocks
-	public static boolean moveBlock(State st, ObjectInstance block, int x, int y){
+	private static boolean moveBlock(State st, ObjectInstance block, int x, int y){
 
 		int curX = block.getDiscValForAttribute(XATTNAME);
 		int curY = block.getDiscValForAttribute(YATTNAME);
@@ -1000,10 +1003,13 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		return output;
 	}
 
-	//parses a string representation of a state into an actual State object
-	//The state is described by a string in which an object is named, followed by its parameters
-	//for example: room,2,0,0,10,10
-	//rooms are defined by their top left and bottom right corners
+	/**
+	 * parses a string representation of a state into an actual State object
+	 *The state is described by a string in which an object is named, followed by its parameters
+	 *for example: room,2,0,0,10,10
+	 *rooms are defined by their top left and bottom right corners
+	 *@return The state representation of a given string
+	 */
 	@Override
 	public State stringToState(String str) {
 		State st = new State();
