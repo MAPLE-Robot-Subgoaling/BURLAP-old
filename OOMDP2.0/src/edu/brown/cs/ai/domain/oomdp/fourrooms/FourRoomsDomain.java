@@ -1,5 +1,8 @@
 package edu.brown.cs.ai.domain.oomdp.fourrooms;
 
+import java.util.List;
+import java.util.Map;
+
 import edu.umbc.cs.maple.domain.oomdp.DomainGenerator;
 import edu.umbc.cs.maple.oomdp.Action;
 import edu.umbc.cs.maple.oomdp.Attribute;
@@ -14,7 +17,7 @@ import edu.umbc.cs.maple.oomdp.visualizer.Visualizer;
 
 public class FourRoomsDomain implements DomainGenerator {
 
-	
+	//Constants
 	public static final String							ATTX = "x";
 	public static final String							ATTY = "y";
 	
@@ -33,11 +36,30 @@ public class FourRoomsDomain implements DomainGenerator {
 	
 	public static int[][]								MAP;
 	
+	/*A variable of type Domain
+	 * The attributes of the Domain class are:
+	 * 			private List <ObjectClass> objectClasses_; //list of object classes
+				private Map <String, ObjectClass> objectClassMap_; //look up object classes by name
+				private List <Attribute> attributes_; //list of attributes
+				private Map <String, Attribute>	attributeMap_; //lookup attributes by name
+				private List <PropositionalFunction> propFunctions_; //list of propositional functions
+				private Map <String, PropositionalFunction> propFunctionMap_; //lookup propositional functions by name
+				private List <Action> actions_; //list of actions
+				private Map <String, Action> actionMap_; //lookup actions by name
+	 */
 	public static Domain								DOMAIN = null;	
 	
 	public static void main(String[] args) {
 		
+		/*Creating an object called fourRoomsDomain()
+		 * 	THis object has no constructor nor any attributes that would differ from each object		
+		*/
 		FourRoomsDomain frd = new FourRoomsDomain();
+		
+		/*Generates a domain by calling the function generateDomain()
+		 * 		
+		 * 
+		 */
 		Domain d = frd.generateDomain();
 		
 		State s = FourRoomsDomain.getCleanState();
@@ -87,8 +109,12 @@ public class FourRoomsDomain implements DomainGenerator {
 		}
 		
 		//otherwise create the domain data
+		//Starts with all the attributes inititalized
 		DOMAIN = new Domain();
 		
+		//Calls the function generateMap which in itself calls the functions
+		//			1)frameMap()
+		//			2)setStandardWalls()
 		generateMap();
 		
 		
@@ -147,6 +173,8 @@ public class FourRoomsDomain implements DomainGenerator {
 	
 	
 	public static void generateMap(){
+		
+		//Initializes the map two-dimensional array to be [13][13]
 		MAP = new int[MAXX+1][MAXY+1]; //+1 to handle zero base
 		
 		frameMap();
@@ -154,6 +182,9 @@ public class FourRoomsDomain implements DomainGenerator {
 		
 	}
 	
+	/**Makes a big box with the walls being set to the value of 1
+	 * So, (0,0) is one point in th Map and since it is the main frame, the value is set to 1
+	 */
 	public static void frameMap(){
 		
 		for(int x = 0; x <= MAXX; x++){
@@ -172,11 +203,20 @@ public class FourRoomsDomain implements DomainGenerator {
 	}
 	
 	
+	/**
+	 * Creates horizontal and vertical walls within the bigger box created in frameMap()
+	 */
 	public static void setStandardWalls(){
 		
+		/*
+		 * The horizontal wall is set to be at Map[1][6]
+		 */
 		horizontalWall(1, 1, 6);
+		//Horizontal walls set at Map[3][6], Map[4][6], Map[5][6]
 		horizontalWall(3, 5, 6);
+		//Horizontal walls set at Map[7][5], Map[8][5]
 		horizontalWall(7, 8, 5);
+		//Horizontal walls set at Map[10][5], Map[11][5]
 		horizontalWall(10, 11, 5);
 		
 		verticalWall(1, 1, 6);
