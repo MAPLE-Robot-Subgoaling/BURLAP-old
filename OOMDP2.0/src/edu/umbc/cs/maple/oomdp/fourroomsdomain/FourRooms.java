@@ -7,6 +7,7 @@ import edu.umbc.cs.maple.oomdp.Action;
 import edu.umbc.cs.maple.oomdp.Attribute;
 import edu.umbc.cs.maple.oomdp.Domain;
 import edu.umbc.cs.maple.oomdp.GroundedAction;
+import edu.umbc.cs.maple.oomdp.GroundedProp;
 import edu.umbc.cs.maple.oomdp.ObjectClass;
 import edu.umbc.cs.maple.oomdp.ObjectInstance;
 import edu.umbc.cs.maple.oomdp.PropositionalFunction;
@@ -17,6 +18,7 @@ import edu.umbc.cs.maple.oomdp.explorer.VisualExplorer;
 import edu.umbc.cs.maple.oomdp.visualizer.Visualizer;
 import edu.brown.cs.ai.behavior.oomdp.planning.deterministc.*;
 import edu.umbc.cs.maple.behavior.oomdp.planning.*;
+import edu.umbc.cs.maple.behavior.oomdp.EpisodeAnalysis;
 
 public class FourRooms implements DomainGenerator {
 	
@@ -53,6 +55,8 @@ public class FourRooms implements DomainGenerator {
 	public static final double LEARNINGRATE = 0.99;
 	public static final double DISCOUNTFACTOR = 0.95;
 	public static Map<StateHashTuple, List<QAction>> qVals = new HashMap<StateHashTuple, List<QAction>>();
+	public static EpisodeAnalysis analyzer;
+	public static FourRoomsStateParser parser;
 	
 	/**
 	 * main() - starts the program
@@ -67,11 +71,6 @@ public class FourRooms implements DomainGenerator {
 		setGoal(s, 5, 5);
 		
 		int expMode = 3;
-		if(args.length > 0){
-			if(args[0].equals("v")){
-				expMode = 1;
-			}
-		}
 		
 		if(expMode == 0){	
 			TerminalExplorer exp = new TerminalExplorer(d);
@@ -89,13 +88,15 @@ public class FourRooms implements DomainGenerator {
 			exp.addKeyAction("d", ACTIONEAST);
 			exp.initGUI();
 		}else if(expMode == 3){
-			
 			//Runs the simulator via text output
-			for(int i = 1; i <= 50; i++){
+			for(int i = 1; i <= 1; i++){
+				analyzer = new EpisodeAnalysis();
+				parser = new FourRoomsStateParser();
 				System.out.println("\t\t~ Episode " + i + " ~\t\t");
 				runSim(d, s);
 				setAgent(s, 1, 1);
 				setGoal(s, 5, 5);
+				analyzer.writeToFile("Episode " + i + ".txt", parser);
 			}
 		}
 	}
@@ -115,9 +116,11 @@ public class FourRooms implements DomainGenerator {
 		//Reward Function Implementation...
 		RewardFunction rf = new SingleGoalPFRF(d.getPropFunction(PFATGOAL));
 		rf.setDomain(d);
+		//d.getPropFunction(PFATGOAL).isTrue(s, new String[]{FourRooms.CLASSAGENT, FourRooms.CLASSGOAL})
+		
 		
 		//While the agent is not at the goal state
-		while(!d.getPropFunction(PFATGOAL).isTrue(s, new String[]{FourRooms.CLASSAGENT, FourRooms.CLASSGOAL})){
+		while(!FourRooms.isTrue(s, d.getPropFunction(PFATGOAL))){
 			
 			/***************Part one****************/
 			
@@ -156,7 +159,7 @@ public class FourRooms implements DomainGenerator {
 				System.exit(0);
 			}
 			
-			System.out.println("Action Taken: " + groundAction.action.getName());
+			//System.out.println("Action Taken: " + groundAction.action.getName());
 			
 			/**************Part Two****************/
 			
@@ -205,7 +208,7 @@ public class FourRooms implements DomainGenerator {
 			/******************Part Four**************/
 			
 			//QValue update
-			double reward = FourRooms.getReward(s, newState, d);
+			double reward = rf.reward(s, groundAction, newState);
 			double newQval = FourRooms.updateQValue(currentQvalue, highestQvalue, reward);
 			for(QAction oldVal :currStateActionList){
 				if(currentQvalue == oldVal.getQVal()){
@@ -215,16 +218,32 @@ public class FourRooms implements DomainGenerator {
 			//System.out.println("Reward Function reward: " + rf.reward(s, groundAction, newState));
 			
 			//Change the States
-			System.out.print(s.getStateDescription());
-			System.out.println("Step number: " + steps + "\n---------------\n");
+			//System.out.print(s.getStateDescription());
+			//System.out.println("Step number: " + steps + "\n---------------\n");
 			s = newState;
 			steps++;
+			analyzer.record(s, groundAction, reward);
 		}
 		
 		//End of the Episode
 		System.out.println("\tSteps: " + steps);
 	}
-
+	
+	
+	public static boolean isTrue(State s, PropositionalFunction pf){
+		boolean isTrue = false;
+		
+		List<GroundedProp> gps = s.getAllGroundedPropsFor(pf);
+		for(GroundedProp gp: gps){
+			if(gp.isTrue(s)){
+				isTrue = true;
+			}else{
+				break;
+			}
+		}
+		
+		return isTrue;
+	}
 	
 	/**
 	 * getReward() - returns the reward of the state-action pair executed
@@ -234,7 +253,7 @@ public class FourRooms implements DomainGenerator {
 	 * @return - reward value
 	 */
 	public static double getReward(State currentState, State newState, Domain d){
-		if(d.getPropFunction(PFATGOAL).isTrue(currentState, new String[]{CLASSAGENT, CLASSGOAL})) //the agent has reached the goal
+		if(FourRooms.isTrue(currentState, d.getPropFunction(PFATGOAL))) //the agent has reached the goal
 			return 10;
 		else{
 			int cX = currentState.getObjectsOfTrueClass(CLASSAGENT).get(0).getDiscValForAttribute(ATTX);
@@ -253,12 +272,6 @@ public class FourRooms implements DomainGenerator {
 	}
 
 	@Override
-	/**
-	 * generateDomain() - generates the domain for the program to use
-	 * defines all the classes and objects available in the domain, as well
-	 * as the attributes, actions, and conditions.
-	 * @return - none
-	 */
 	public Domain generateDomain(){		
 		if(DOMAIN != null){
 			return DOMAIN;
@@ -268,7 +281,6 @@ public class FourRooms implements DomainGenerator {
 		DOMAIN = new Domain();
 		generateMap();
 		
-		//creates the attributes, define the parameters of the domain
 		Attribute xatt = new Attribute(DOMAIN, ATTX, Attribute.AttributeType.DISC);
 		xatt.setDiscValuesForRange(0, MAXX, 1);
 		
@@ -278,7 +290,6 @@ public class FourRooms implements DomainGenerator {
 		DOMAIN.addAttribute(xatt);
 		DOMAIN.addAttribute(yatt);
 		
-		//adding the objects associated with the domain - agent and goal
 		ObjectClass agentClass = new ObjectClass(DOMAIN, CLASSAGENT);
 		agentClass.addAttribute(xatt);
 		agentClass.addAttribute(yatt);
@@ -290,7 +301,6 @@ public class FourRooms implements DomainGenerator {
 		DOMAIN.addObjectClass(goalClass);
 		DOMAIN.addObjectClass(agentClass);
 	
-		//adding the actions
 		Action north = new NorthAction(ACTIONNORTH, DOMAIN, "");
 		Action south = new SouthAction(ACTIONSOUTH, DOMAIN, "");
 		Action east = new EastAction(ACTIONEAST, DOMAIN, "");
@@ -301,69 +311,44 @@ public class FourRooms implements DomainGenerator {
 		DOMAIN.addAction(east);
 		DOMAIN.addAction(west);
 		
-		//adding the conditions 
 		PropositionalFunction atGoal = new AtGoalPF(PFATGOAL, DOMAIN, new String[]{CLASSAGENT, CLASSGOAL});
 		DOMAIN.addPropositionalFunction(atGoal);
 		
-		//reward function - currently unoperational
 		RewardFunction rf = new SingleGoalPFRF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
 		rf.setDomain(DOMAIN);
+		
 		
 		return DOMAIN;
 	}
 
-	/**
-	 * getCleanState() - creates a fresh new state to use in the state transition.
-	 * @return - a state object
-	 */
 	public static State getCleanState(){	
 		FourRooms frd = new FourRooms();
 		frd.generateDomain();
 		State s = new State();
 		
-		//adds the object and goal to the current state
 		s.addObject(new ObjectInstance(DOMAIN.getObjectClass(CLASSAGENT), CLASSAGENT+0));
 		s.addObject(new ObjectInstance(DOMAIN.getObjectClass(CLASSGOAL), CLASSGOAL+0));
 		return s;
 	}
 	
-	/**
-	 * setAgent() - sets the agent's location inside the initial state
-	 * @param s - state
-	 * @param x - x attribute
-	 * @param y - y attribute
-	 */
 	public static void setAgent(State s, int x, int y){
 		ObjectInstance agent = s.getObjectsOfTrueClass(CLASSAGENT).get(0);
 		agent.setValue(ATTX, x);
 		agent.setValue(ATTY, y);
 	}
 	
-	/**
-	 * setGoal() - sets the goal's location inside the initial state 
-	 * @param s - state
-	 * @param x - x attribute
-	 * @param y - y attribute
-	 */
 	public static void setGoal(State s, int x, int y){
 		ObjectInstance goal = s.getObjectsOfTrueClass(CLASSGOAL).get(0);
 		goal.setValue(ATTX, x);
 		goal.setValue(ATTY, y);
 	}
 	
-	/**
-	 * generateMap() - generates a 2D array map to represent the boundary's of
-	 * the domain.
-	 */
 	public static void generateMap(){
 		MAP = new int[MAXX+1][MAXY+1]; //+1 to handle zero base
 		frameMap();
 		setStandardWalls();
 	}
 	
-	/**
-	 * frameMap() - sets up the wall of the domain
-	 */
 	public static void frameMap(){
 		for(int x = 0; x <= MAXX; x++){
 			for(int y = 0; y <= MAXY; y++){
@@ -375,9 +360,6 @@ public class FourRooms implements DomainGenerator {
 		}
 	}
 	
-	/**
-	 * setStandardWalls() - sets up the doorways of the domain
-	 */
 	public static void setStandardWalls(){
 		horizontalWall(1, 1, 6);
 		horizontalWall(3, 5, 6);
@@ -389,160 +371,94 @@ public class FourRooms implements DomainGenerator {
 		verticalWall(10, 11, 6);
 	}
 	
-	/**
-	 * horizontalWall() - creates a horizontal barrier for the agent
-	 * @param xi - starting x position
-	 * @param xf - final x position
-	 * @param y - y position
-	 */
 	protected static void horizontalWall(int xi, int xf, int y){
 		for(int x = xi; x <= xf; x++)
 			MAP[x][y] = 1;
 	}
 	
-	/**
-	 * verticalWall() - creates a vertical barrier for the agent 
-	 * @param yi - starting y position
-	 * @param yf - ending y position
-	 * @param x - x position
-	 */
 	protected static void verticalWall(int yi, int yf, int x){
 		for(int y = yi; y <= yf; y++)
 			MAP[x][y] = 1;
 	}
 	
-	/**
-	 * move() - moves the agent to a new location, thus creating a
-	 * state transition from s to s-prime. 
-	 * @param s - State
-	 * @param xd - x distance
-	 * @param yd - y distance
-	 */
 	public static void move(State s, int xd, int yd){
 		
-		//Collects the position of the agent, based off true class
 		ObjectInstance agent = s.getObjectsOfTrueClass(CLASSAGENT).get(0);
 		int ax = agent.getDiscValForAttribute(ATTX);
 		int ay = agent.getDiscValForAttribute(ATTY);
 		int nx = ax+xd;
 		int ny = ay+yd;
 		
-		//checks to see if it hit a wall
 		if(MAP[nx][ny] == 1){
 			nx = ax;
 			ny = ay;
 		}
 		
-		//updates the agent's position
 		agent.setValue(ATTX, nx);
 		agent.setValue(ATTY, ny);
 	
 	}
 	
-	/**
-	 * NorthAction - extended class to replicate north action
-	 */
 	public static class NorthAction extends Action{
 		public NorthAction(String name, Domain domain, String parameterClasses){
 			super(name, domain, parameterClasses);
 		}
 		
 		@Override
-		/**
-		 * performActionHelper() - helper function that executes the action
-		 * @param st - state
-		 * @param params - string parameters
-		 * @return - returns the state that has been updated by move.
-		 */
 		protected State performActionHelper(State st, String[] params) {
 			move(st, 0, 1);
 			return st;
 		}
 	}
 	
-	/**
-	 * SouthAction - extended class to replicate south action
-	 */
 	public static class SouthAction extends Action{
 		public SouthAction(String name, Domain domain, String parameterClasses){
 			super(name, domain, parameterClasses);
 		}
 		
 		@Override
-		/**
-		 * performActionHelper() - helper function that executes the action
-		 * @param st - state
-		 * @param params - string parameters
-		 * @return - returns the state that has been updated by move.
-		 */
 		protected State performActionHelper(State st, String[] params) {
 			move(st, 0, -1);
 			return st;
 		}
 	}
 	
-	/**
-	 * EastAction - extended class to replicate east action
-	 */
 	public static class EastAction extends Action{
 		public EastAction(String name, Domain domain, String parameterClasses){
 			super(name, domain, parameterClasses);
 		}
 		
 		@Override
-		/**
-		 * performActionHelper() - helper function that executes the action
-		 * @param st - state
-		 * @param params - string parameters
-		 * @return - returns the state that has been updated by move.
-		 */
 		protected State performActionHelper(State st, String[] params) {
 			move(st, 1, 0);
 			return st;
 		}
 	}
 	
-	/**
-	 * WestAction - extended class to replicate west action
-	 */
 	public static class WestAction extends Action{
 		public WestAction(String name, Domain domain, String parameterClasses){
 			super(name, domain, parameterClasses);
 		}
 		
 		@Override
-		/**
-		 * performActionHelper() - helper function that executes the action
-		 * @param st - state
-		 * @param params - string parameters
-		 * @return - returns the state that has been updated by move.
-		 */
 		protected State performActionHelper(State st, String[] params) {
 			move(st, -1, 0);
 			return st;
 		}
 	}
 	
-	/**
-	 * AtGoalPF - propositional function to determine if at goal state
-	 */
 	public static class AtGoalPF extends PropositionalFunction{
 		public AtGoalPF(String name, Domain domain, String[] parameterClasses) {
 			super(name, domain, parameterClasses);
 		}
 
 		@Override
-		/**
-		 * isTrue() - determines if the agent has reached the goal state
-		 * @param st - state
-		 * @param params - string parameters
-		 */
 		public boolean isTrue(State st, String[] params){
-			ObjectInstance agent = st.getObjectsOfTrueClass(params[0]).get(0);
+			ObjectInstance agent = st.getObject(params[0]);
 			int ax = agent.getDiscValForAttribute(ATTX);
 			int ay = agent.getDiscValForAttribute(ATTY);
 			
-			ObjectInstance goal = st.getObjectsOfTrueClass(params[1]).get(0);
+			ObjectInstance goal = st.getObject(params[1]);
 			int gx = goal.getDiscValForAttribute(ATTX);
 			int gy = goal.getDiscValForAttribute(ATTY);
 			
@@ -552,13 +468,6 @@ public class FourRooms implements DomainGenerator {
 		}	
 	}
 	
-	/**
-	 * updateQValue() - runs the update function on the Q-Value
-	 * @param oldQVal - original q value
-	 * @param highestQVal - highest q value from the set from s-prime
-	 * @param reward - reward function
-	 * @return - updated q-value
-	 */
 	public static double updateQValue(double oldQVal, double highestQVal, double reward){
 		return oldQVal + FourRooms.LEARNINGRATE * ((reward + FourRooms.DISCOUNTFACTOR * highestQVal) - oldQVal);
 	}
