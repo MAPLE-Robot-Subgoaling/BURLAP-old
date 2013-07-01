@@ -107,11 +107,14 @@ public class FourRooms implements DomainGenerator {
 	 * @return - none
 	 */
 	public static void runSim(Domain d, State s){
-		System.out.println("Running One Episode.");
 		
 		//Variable Declaration
 		List<QAction> currStateActionList = null;
 		int steps = 0;
+		
+		//Reward Function Implementation...
+		RewardFunction rf = new SingleGoalPFRF(d.getPropFunction(PFATGOAL));
+		rf.setDomain(d);
 		
 		//While the agent is not at the goal state
 		while(!d.getPropFunction(PFATGOAL).isTrue(s, new String[]{FourRooms.CLASSAGENT, FourRooms.CLASSGOAL})){
@@ -124,13 +127,8 @@ public class FourRooms implements DomainGenerator {
 			StateHashTuple currentStateTuple = new StateHashTuple(s, attributesForHash);
 			
 			//Search for a match
-			for(Map.Entry<StateHashTuple, List<QAction>> entry: qVals.entrySet()){
-				if(currentStateTuple.equals(entry.getKey())){
-					currStateActionList = entry.getValue();
-					break;
-				}
-			}
-			
+			currStateActionList = qVals.get(currentStateTuple);
+
 			//no match found
 			if(currStateActionList == null){
 				currStateActionList = new ArrayList<QAction>();
@@ -158,6 +156,8 @@ public class FourRooms implements DomainGenerator {
 				System.exit(0);
 			}
 			
+			System.out.println("Action Taken: " + groundAction.action.getName());
+			
 			/**************Part Two****************/
 			
 			//Perform the Action
@@ -173,12 +173,7 @@ public class FourRooms implements DomainGenerator {
 			List<QAction> newStateActionList = null;
 			
 			//Search for a match
-			for(Map.Entry<StateHashTuple, List<QAction>> entry: qVals.entrySet()){
-				if(newStateTuple.equals(entry.getKey())){
-					newStateActionList = entry.getValue();
-					break;
-				}
-			}
+			newStateActionList = qVals.get(newStateTuple);
 			
 			//no match found
 			if(newStateActionList == null){
@@ -217,7 +212,11 @@ public class FourRooms implements DomainGenerator {
 					 oldVal.setQVal(newQval);
 				}
 			}
+			//System.out.println("Reward Function reward: " + rf.reward(s, groundAction, newState));
 			
+			//Change the States
+			System.out.print(s.getStateDescription());
+			System.out.println("Step number: " + steps + "\n---------------\n");
 			s = newState;
 			steps++;
 		}
@@ -225,6 +224,7 @@ public class FourRooms implements DomainGenerator {
 		//End of the Episode
 		System.out.println("\tSteps: " + steps);
 	}
+
 	
 	/**
 	 * getReward() - returns the reward of the state-action pair executed
@@ -560,6 +560,6 @@ public class FourRooms implements DomainGenerator {
 	 * @return - updated q-value
 	 */
 	public static double updateQValue(double oldQVal, double highestQVal, double reward){
-		return oldQVal + (FourRooms.LEARNINGRATE * reward) + ((FourRooms.DISCOUNTFACTOR * highestQVal) - oldQVal);
+		return oldQVal + FourRooms.LEARNINGRATE * ((reward + FourRooms.DISCOUNTFACTOR * highestQVal) - oldQVal);
 	}
 }
