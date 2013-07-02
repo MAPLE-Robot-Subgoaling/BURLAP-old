@@ -423,7 +423,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		isStar.setClassName(PFSHAPECLASS);
 		isMoon.setClassName(PFSHAPECLASS);
 		isSmiley.setClassName(PFSHAPECLASS);
-		isSmiley.setClassName(PFSHAPECLASS);
+		isSquare.setClassName(PFSHAPECLASS);
 
 		inRoom.setClassName(PFPOSCLASS);
 		inRoom2.setClassName(PFPOSCLASS);
@@ -495,10 +495,13 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 
 		return st;
 	} 
-
-	//creates the walls using the coordinates of rooms
-	//each room is defined by its top left and bottom right corners (including walls)
-	//entrances are allowed by door objects
+	/**
+	 * Creates the walls using the coordinates of rooms.
+	 * Each room is defined by its top left and bottom right corners (including walls)
+	 * Entrances are allowed by door objects
+	 * 
+	 * @param st A state with defined rooms and doors from which we can generate walls
+	 */
 	public static void createMap(State st){
 
 		MAXX = getMaxX(st);
@@ -620,7 +623,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	}
 
 	//move function for pushing blocks
-	public static boolean moveBlock(State st, ObjectInstance block, int x, int y){
+	private static boolean moveBlock(State st, ObjectInstance block, int x, int y){
 
 		int curX = block.getDiscValForAttribute(XATTNAME);
 		int curY = block.getDiscValForAttribute(YATTNAME);
@@ -1000,10 +1003,13 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		return output;
 	}
 
-	//parses a string representation of a state into an actual State object
-	//The state is described by a string in which an object is named, followed by its parameters
-	//for example: room,2,0,0,10,10
-	//rooms are defined by their top left and bottom right corners
+	/**
+	 * parses a string representation of a state into an actual State object
+	 *The state is described by a string in which an object is named, followed by its parameters
+	 *for example: room,2,0,0,10,10
+	 *rooms are defined by their top left and bottom right corners
+	 *@return The state representation of a given string
+	 */
 	@Override
 	public State stringToState(String str) {
 		State st = new State();

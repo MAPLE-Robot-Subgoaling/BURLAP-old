@@ -1,0 +1,106 @@
+Four Rooms Domain - Notes - Tenji Tembo
+	The Four Rooms domain is a simple implementation of an agent exploring a grid-world like arena where the goal is to reach the end state.
+		Note: More documentation will come after the Q-Learning Algorithm is Finalized.
+
+	Variables:
+		ATTX, ATTY - these variables are responsible for recording the positions of different objects inside the domain. For the Four Rooms domain, the hold the X and Y coordinates of the agent and the goal state. Note that these are String keys for the actual integer value, and the integer value is dependent upon the current state the domain is running.
+		
+		CLASSAGENT, CLASSGOAL - these variables are responsible for defining the objects we will be using in the FourRooms domain: the agent and the goal. They will be used in tandem with ATTX, and ATTY to display current information about their positions in the current state
+
+		ACTIONNORTH, ACTIONSOUTH, ACTIONEAST, ACTIONWEST - these variables are responsible for defining the actions available to the domain to implement. This, used in tandem with the CLASSAGENT, ATTX, & ATTY, help define the State transitions available in the domain, with leads to the agent moving from position to position.
+
+		PFATGOAL - the propositional function used to determine whether or not the agent has reached the goal state or not. Again, relevant to the state, but is defined in the domain, and subject not to change throughout the program. (In essence, it's a boolean variable indicating if the ATTX and ATTY for both the agent and the goal match with each other)
+
+		MAXX, MAXY - defines the bounds of the grid.
+
+	Functions:
+		main()
+			Parameters
+				args - controls the command line arguments
+			Description
+				Main simply initializes the entire domain and state elements, as well as a visualizer to show how the agent moves.
+		generateDomain()
+			Parameters:
+				none
+			Description:
+				This initializes the items the Domain will enforce, and the items the State has control over when performing state transition.
+					- All Atttributes are discrete values between 1 and 12 inclusive (ATTX & ATTY)
+					- Agent and Goal are defined as objects of the domain, and are bound to the 2D grid set by the attributes
+					- Actions north, south, east and west are added to the domain to help define the state transition, while in the bounds of the domain's attributes
+					- The AtGoal propositional function is defined for the domain, using the objects agent and goal to define isTrue (do their respective attributes match?)
+		getCleanState()
+			Paremeters:
+				none
+			Description:
+				Sets up a base state in which to begin performing state transition.
+					- Adds the Agent and the Goal location to the begining state, as determined by the Domain
+		setAgent()
+			Parameters:
+				none
+			Description
+				Sets up the agent's location inside the state. made for the first state only
+		setGoal()
+			Parameters:
+				none
+			Description:
+				Sets up the goal's location inside the state. made for the first state only.
+		generateMap()
+			Parameters:
+				none
+			Description:
+				runs a series of helper functions to define the walls and bounds of the experiment
+		frameMap()
+			Parameters:
+				none
+			Description:
+				Creates the outside walls of the domain. If there is a 1 inside the 2D array representation, the agent has hit a wall
+		setStandardWalls()
+			Parameters:
+				none
+			Description:
+				Creates the barricading walls and doorways that act as barriers for the agent to try and manuever through.
+		horizontalWall()
+			Parameters:
+				xi, xf, y - defines the bounds of the horizontal wall.
+			Description:
+				Creates a horizontal barricading wall.
+		verticalWall()
+			Parameters:
+				yi, yf, x - defines the bounds of the vertical wall
+			Description:
+				Creates a vertical barricading wall.
+		move()
+			Parameters:
+				State s, int xd, int yd
+			Description:
+				One of the most important functions for create State Transistion inside our domain. This function takes in the current state and parameters to alter the attributes of the agent, thus creating a new state.
+					- It collects the discrete values (X&Y coordinates) of the agent and performs a simple update in position, checks to see if it hit a wall, and redefines the attributes. The redefinition of the attributes make it a new state.
+	Classes:
+		NorthAction - extends Action
+			Functions
+				performActionHelper()
+					Parameters
+						State st, String parameters
+					Description
+						This helper function is a critical part in determining the state transition we need in order to run our sim. For north, it calls move and returns a newly updated state from the one that was passed in. This can help in pulling items from previous states as well as information in the new state, as to perform VFA and Q-Value Update functions. 
+		SouthAction - extends Action
+			Functions
+				performActionHelper()
+					Parameters
+						State st, String parameters
+					Description
+						This helper function is a critical part in determining the state transition we need in order to run our sim. For south, it calls move and returns a newly updated state from the one that was passed in. This can help in pulling items from previous states as well as information in the new state, as to perform VFA and Q-Value Update functions. 
+		EastAction - extends Action
+			Functions
+				performActionHelper()
+					Parameters
+						State st, String parameters
+					Description
+						This helper function is a critical part in determining the state transition we need in order to run our sim. For east, it calls move and returns a newly updated state from the one that was passed in. This can help in pulling items from previous states as well as information in the new state, as to perform VFA and Q-Value Update functions. 
+		WestAction - extends Action
+			Functions
+				performActionHelper()
+					Parameters
+						State st, String parameters
+					Description
+						This helper function is a critical part in determining the state transition we need in order to run our sim. For west, it calls move and returns a newly updated state from the one that was passed in. This can help in pulling items from previous states as well as information in the new state, as to perform VFA and Q-Value Update functions. 
