@@ -70,7 +70,7 @@ public class FourRooms implements DomainGenerator {
 		setAgent(s, 1, 1);
 		setGoal(s, 5, 5);
 		
-		int expMode = 3;
+		int expMode = 1;
 		
 		if(expMode == 0){	
 			TerminalExplorer exp = new TerminalExplorer(d);
@@ -326,8 +326,10 @@ public class FourRooms implements DomainGenerator {
 		frd.generateDomain();
 		State s = new State();
 		
-		s.addObject(new ObjectInstance(DOMAIN.getObjectClass(CLASSAGENT), CLASSAGENT+0));
+		//the order of the objects determines the order in which they are drawn -Richard
 		s.addObject(new ObjectInstance(DOMAIN.getObjectClass(CLASSGOAL), CLASSGOAL+0));
+		s.addObject(new ObjectInstance(DOMAIN.getObjectClass(CLASSAGENT), CLASSAGENT+0));
+		
 		return s;
 	}
 	
