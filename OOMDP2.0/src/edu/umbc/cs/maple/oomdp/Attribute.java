@@ -2,7 +2,11 @@ package edu.umbc.cs.maple.oomdp;
 
 import java.util.*;
 
-
+/**
+ * 
+ * @author James
+ * 
+ */
 public class Attribute {
 	
 	public enum AttributeType{

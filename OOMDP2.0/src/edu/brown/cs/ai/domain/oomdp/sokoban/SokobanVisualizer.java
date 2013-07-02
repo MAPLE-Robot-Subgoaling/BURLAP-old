@@ -11,6 +11,7 @@ import edu.umbc.cs.maple.oomdp.visualizer.*;
 /**
  * Javadoc test
  * @author Richard Adjogah
+ * This is the visualizer for the Sokoban domain.
  *
  */
 public class SokobanVisualizer {
@@ -34,7 +35,12 @@ public class SokobanVisualizer {
 		return v;
 	}
 
-	//each invdividual object type should have its own painter classthat determines what color to draw and where
+	
+	/**
+	 * Note: Each individual object type should have its own painter class that determines what color to draw and where
+	 * @author richard
+	 *
+	 */
 	class RoomPainter extends ObjectPainter{
 
 		public RoomPainter(Domain domain) {
@@ -92,7 +98,11 @@ public class SokobanVisualizer {
 		}
 	}
 
-
+	/**
+	 * Note: Each individual object type should have its own painter class that determines what color to draw and where
+	 * @author richard
+	 *
+	 */
 	class AgentPainter extends ObjectPainter{
 
 		public AgentPainter(Domain domain) {
@@ -118,6 +128,11 @@ public class SokobanVisualizer {
 		}
 	}
 
+	/**
+	 * Note: Each individual object type should have its own painter class that determines what color to draw and where
+	 * @author richard
+	 *
+	 */
 	class GoalPainter extends ObjectPainter{
 
 		public GoalPainter(Domain domain) {

@@ -1,13 +1,15 @@
 package edu.umbc.cs.maple.oomdp;
 
-/*
+
+
+
+/**
+ * @author James
  * This action is an action that does nothing. 
  * It may be useful for making references to actions that do not have domain associations
  * or if a domain needs a no-op action
  * 
  */
-
-
 public class NullAction extends Action {
 
 	

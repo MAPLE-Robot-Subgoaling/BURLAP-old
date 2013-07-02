@@ -9,7 +9,15 @@ import edu.umbc.cs.maple.oomdp.explorer.TerminalExplorer;
 import edu.umbc.cs.maple.oomdp.explorer.VisualExplorer;
 import edu.umbc.cs.maple.oomdp.visualizer.Visualizer;
 import edu.umbc.cs.maple.oomdp.data.*;
-
+/**
+ * 
+ * @author richard
+ * This domain is an implementation of the classic computer game Sokoban. See http://en.wikipedia.org/wiki/Sokoban
+ * for details. It's largely based off the four rooms domain, but with a number of improvements including support for
+ * reading trajectories from files, a fairly robust command line interface, and shape/color descriptors to 
+ * distinguish between individual blocks.
+ *
+ */
 public class SokobanDomain implements DomainGenerator, StateParser {
 
 	public static final String			XATTNAME = "xAtt";
