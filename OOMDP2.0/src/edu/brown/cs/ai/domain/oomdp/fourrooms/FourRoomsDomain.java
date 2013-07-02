@@ -299,9 +299,7 @@ public class FourRoomsDomain implements DomainGenerator {
 			move(st, 0, -1);
 			System.out.println("Action Performed: " + this.name_);
 			return st;
-		}
-		
-		
+		}		
 	}
 	
 	
@@ -317,8 +315,6 @@ public class FourRoomsDomain implements DomainGenerator {
 			System.out.println("Action Performed: " + this.name_);
 			return st;
 		}
-		
-		
 	}
 	
 	

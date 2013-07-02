@@ -44,7 +44,11 @@ public class Attribute {
 	public List <String>				discValues_;		//list of discrete value names by their int value
 	public boolean						hidden_;			//whether this value is part of the state representation or is hidden from the agent
 	
-	
+	/**
+	 * 
+	 * @param domain the domain that the attribute exists in
+	 * @param name the name of the attribute
+	 */
 	public Attribute(Domain domain, String name){
 		
 		domain_ = domain;
@@ -63,7 +67,12 @@ public class Attribute {
 		domain_.addAttribute(this);
 		
 	}
-	
+	/**
+	 * 
+	 * @param domain the domain that the attribute exists in
+	 * @param name the name of the attribute
+	 * @param type the type of the attribute (discrete or real)
+	 */
 	public Attribute(Domain domain, String name, AttributeType type){
 		
 		domain_ = domain;
@@ -83,7 +92,12 @@ public class Attribute {
 		
 	}
 	
-	
+	/**
+	 * 
+	 * @param domain the domain that the attribute exists in
+	 * @param name the name of the attribute
+	 * @param type the type of the attribute (discrete or real) in int form
+	 */
 	public Attribute(Domain domain, String name, int type){
 		
 		domain_ = domain;
@@ -129,7 +143,12 @@ public class Attribute {
 		upperLim_ = discValues_.size()-1;
 	}
 	
-	
+	/**
+	 * Sets the possible range of discrete values for the attribute
+	 * @param low the minimum int value for the attribute
+	 * @param high the maximum int value for the attribute
+	 * @param step the amount by which the int value will increase
+	 */
 	public void setDiscValuesForRange(int low, int high, int step){
 	
 		discValues_ = new ArrayList <String>();
