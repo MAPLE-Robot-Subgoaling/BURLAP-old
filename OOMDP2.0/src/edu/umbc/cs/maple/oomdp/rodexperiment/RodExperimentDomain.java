@@ -26,15 +26,16 @@ public class RodExperimentDomain implements DomainGenerator {
 	public static final String				ACTIONUPTHRUST = "upThrust"; //rotates 10 degrees
 	public static final String				ACTIONDOWNTHRUST = "downThrust"; //rotates -10 degrees
 	
-	//Propositional Fuctions
-	public static final String				PFTOUCHGOAL = "reachedGoal";
+	//Propositional Functions
+	public static final String				PFREACHGOAL = "reachedGoal";
+	public static final String				PFTOUCHGOAL = "touchedGoal";
 	public static final String				PFTOUCHSURFACE = "touchingSurface"; //touching an obstacle
 	
-	public static Domain					DOMAIN = null;	
+	public static Domain					RODDOMAIN = null;	
 	
 	public Domain generateDomain(){
 		
-		return DOMAIN;
+		return RODDOMAIN;
 		
 	}
 
