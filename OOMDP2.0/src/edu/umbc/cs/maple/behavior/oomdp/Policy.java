@@ -2,7 +2,7 @@ package edu.umbc.cs.maple.behavior.oomdp;
 
 import java.util.List;
 
-import edu.brown.cs.ai.behavior.oomdp.options.Option;
+import edu.umbc.cs.ai.behavior.oomdp.options.Option;
 import edu.umbc.cs.maple.oomdp.GroundedAction;
 import edu.umbc.cs.maple.oomdp.NullAction;
 import edu.umbc.cs.maple.oomdp.RewardFunction;

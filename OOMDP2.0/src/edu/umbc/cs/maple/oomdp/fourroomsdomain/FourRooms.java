@@ -2,6 +2,7 @@ package edu.umbc.cs.maple.oomdp.fourroomsdomain;
 
 import java.util.*;
 
+import edu.umbc.cs.ai.behavior.oomdp.planning.deterministc.*;
 import edu.umbc.cs.maple.domain.oomdp.DomainGenerator;
 import edu.umbc.cs.maple.oomdp.Action;
 import edu.umbc.cs.maple.oomdp.Attribute;
@@ -16,7 +17,6 @@ import edu.umbc.cs.maple.oomdp.State;
 import edu.umbc.cs.maple.oomdp.explorer.TerminalExplorer;
 import edu.umbc.cs.maple.oomdp.explorer.VisualExplorer;
 import edu.umbc.cs.maple.oomdp.visualizer.Visualizer;
-import edu.brown.cs.ai.behavior.oomdp.planning.deterministc.*;
 import edu.umbc.cs.maple.behavior.oomdp.planning.*;
 import edu.umbc.cs.maple.behavior.oomdp.EpisodeAnalysis;
 
