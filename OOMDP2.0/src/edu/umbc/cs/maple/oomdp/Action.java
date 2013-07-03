@@ -85,10 +85,15 @@ public abstract class Action {
 		return applicableInState(st, params.split(","));
 	}
 	
-	
+	/**
+	 * Default behavior is that an action can be applied in any state
+	 * , but this might need be overridden if that is not the case.
+	 * @param st the state to perform the action on
+	 * @param params list of parameters to be passed into the action
+	 * @return whether the action can be performed on the given state
+	 */
 	public boolean applicableInState(State st, String [] params){
-		//default behavior is that an action can be applied in any state
-		//but this might need be overridden if that is not the case
+
 		return true; 
 	}
 	
@@ -99,7 +104,11 @@ public abstract class Action {
 		return performAction(st, params.split(","));
 		
 	}
-	
+	/**This is a wrapper for performActionHelper that first performs a check to see whether the action is applicable to the current state.
+	 * @param st the state to perform the action on
+	 * @param params list of parameters to be passed into the action
+	 * @return the modified State st
+	 */
 	public final State performAction(State st, String [] params){
 		
 		State resultState = st.copy();
@@ -112,9 +121,12 @@ public abstract class Action {
 	}
 	
 	
-	//naturally, this should be overridden if it's not a primitive.
-	//primitive here means that execution is longer than one time step
-	//and a result of executing other actions
+	/**Naturally, this should be overridden if it's not a primitive.
+	"Primitive" here means that execution is longer than one time step
+	and a result of executing other actions.
+	 * 
+	 * @return whether the action is primitive (longer than one time step)
+	 */
 	public boolean isPrimitive(){
 		return true;
 	}
@@ -136,8 +148,11 @@ public abstract class Action {
 		return transition;
 	}
 	
-	//parameterClasses is expected to be comma delimited with no unnecessary spaces
-	//should return modified State st
+	/**parameterClasses is expected to be comma delimited with no unnecessary spaces
+	 * @param st the state to perform the action on
+	 * @param params list of parameters to be passed into the action
+	 * @return the modified State st
+	 */
 	protected abstract State performActionHelper(State st, String [] params);
 	
 	
