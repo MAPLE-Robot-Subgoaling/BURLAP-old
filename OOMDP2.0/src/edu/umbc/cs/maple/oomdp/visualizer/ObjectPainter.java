@@ -5,22 +5,24 @@ import edu.umbc.cs.maple.oomdp.*;
 
 public abstract class ObjectPainter {
 
-	protected Domain 		domain_;
+	protected Domain 		domain;
 	
 	
 	public ObjectPainter(Domain domain){
-		domain_ = domain;
+		this.domain = domain;
 	}
 	
 	public void setDomain(Domain domain){
-		domain_ = domain;
+		this.domain = domain;
 	}
 	
 	
 	
-	/* g2: 				graphics context to which the object should be painted
-	 * ob				the instantiated object to be painted
-	 * cWidth/cHeight:	dimensions of the canvas size
+	/**
+	 * @param g2 graphics context to which the object should be painted
+	 * @param ob the instantiated object to be painted
+	 * @param cWidth width of the canvas size
+	 * @param cHeight height of the canvas size
 	 */
 	public abstract void paintObject(Graphics2D g2, ObjectInstance ob, float cWidth, float cHeight);
 	

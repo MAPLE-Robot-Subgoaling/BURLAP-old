@@ -79,7 +79,7 @@ public class ObjectClass {
 		
 		if(!att.hidden_){
 			observableAttributeIndices_.add(ind);
-			if(att.type_ == Attribute.AttributeType.DISC){
+			if(att.type == Attribute.AttributeType.DISC){
 				int d = att.discValues_.size();
 				discreteSpace_ *= d;
 				int [] newD = new int[discreteAttributeSpaces_.length+1];

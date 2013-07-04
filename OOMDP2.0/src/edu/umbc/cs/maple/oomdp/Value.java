@@ -5,34 +5,34 @@ import edu.umbc.cs.maple.oomdp.Attribute.AttributeType;
 
 public class Value {
 
-	private Attribute			attribute_;		//defines the attribute kind of this value
-	private int					discVal_;		//the value of the attribute if it is a discrete attribute
-	private double				realVal_;		//the value of the attribute if it is a real value
+	private Attribute			attribute;		//defines the attribute kind of this value
+	private int					discVal;		//the value of the attribute if it is a discrete attribute
+	private double				realVal;		//the value of the attribute if it is a real value
 	
 	
 	
 	static public Value copyValueAttribute(Value v){
 		
-		return new Value(v.attribute_);
+		return new Value(v.attribute);
 		
 	}
 	
 	
 	public Value(Attribute attribute){
 		
-		attribute_ = attribute;
+		this.attribute = attribute;
 		
-		discVal_ = -1;
-		realVal_ = Double.NaN;
+		discVal = -1;
+		realVal = Double.NaN;
 		
 	}
 	
 	public Value(Value v){
 		
-		attribute_ = v.attribute_;
+		attribute = v.attribute;
 		
-		discVal_ = v.discVal_;
-		realVal_ = v.realVal_;
+		discVal = v.discVal;
+		realVal = v.realVal;
 		
 	}
 	
@@ -41,111 +41,107 @@ public class Value {
 	}
 	
 	public Attribute getAttribute(){
-		return attribute_;
+		return attribute;
 	}
 	
 	public void setValue(int v){
-		if(attribute_.type_ == Attribute.AttributeType.DISC){
-			discVal_ = v;
+		if(attribute.type == Attribute.AttributeType.DISC){
+			discVal = v;
 		}
 		else{
-			realVal_ = (double)v;
+			realVal = (double)v;
 		}
 	}
 	
 	public void setValue(double v){
-		if(attribute_.type_ == Attribute.AttributeType.DISC){
-			discVal_ = (int)v;
+		if(attribute.type == Attribute.AttributeType.DISC){
+			discVal = (int)v;
 		}
 		else{
-			realVal_ = v;
+			realVal = v;
 		}
 	}
 	
 	public void setValue(String v){
-		if(attribute_.type_ == Attribute.AttributeType.DISC){
+		if(attribute.type == Attribute.AttributeType.DISC){
 			this.setDiscValue(v);
 		}
 		else{
-			realVal_ = Double.valueOf(v);
+			realVal = Double.valueOf(v);
 		}
 	}
 	
 	public void setDiscValue(int v){
-		discVal_ = v;
+		discVal = v;
 	}
 	
 	public void setDiscValue(String v){
-		int intv = attribute_.discValuesHash_.get(v);
-		discVal_ = intv;
+		int intv = attribute.discValuesHash_.get(v);
+		discVal = intv;
 	}
 	
 	public void setRealValue(double v){
-		realVal_ = v;
+		realVal = v;
 	}
 	
 	
 	public String attName(){
-		return attribute_.name_;
+		return attribute.name_;
 	}
 	
 	public int getDiscVal(){
 		
-		if(attribute_.type_ == Attribute.AttributeType.DISC)
-			return discVal_;
+		if(attribute.type == Attribute.AttributeType.DISC)
+			return discVal;
 		return -1;
 	}
 	
 	public double getRealVal(){
-		if(attribute_.type_ == Attribute.AttributeType.REAL  || attribute_.type_ == Attribute.AttributeType.REALUNBOUND)
-			return realVal_;
+		if(attribute.type == Attribute.AttributeType.REAL  || attribute.type == Attribute.AttributeType.REALUNBOUND)
+			return realVal;
 		return Double.NaN;
 	}
 	
 	public String getStringVal(){
-		if(attribute_.type_ == Attribute.AttributeType.DISC){
-			if (discVal_ == -1){
+		if(attribute.type == Attribute.AttributeType.DISC){
+			if (discVal == -1){
 				System.out.println("PROBLEM!");
 			}
-			return attribute_.discValues_.get(discVal_);
+			return attribute.discValues_.get(discVal);
 			
 		}
-		else if(attribute_.type_ == Attribute.AttributeType.REAL || attribute_.type_ == Attribute.AttributeType.REALUNBOUND){
-			return Double.toString(realVal_);
+		else if(attribute.type == Attribute.AttributeType.REAL || attribute.type == Attribute.AttributeType.REALUNBOUND){
+			return Double.toString(realVal);
 		}
 		
 		return null;
 	}
 	
 	public double getNumericVal(){
-		if(attribute_.type_ == Attribute.AttributeType.DISC)
-			return (double)discVal_;
-		return realVal_;
+		if(attribute.type == Attribute.AttributeType.DISC)
+			return (double)discVal;
+		return realVal;
 	}
 	
 	public int getDiscreteDimensionality(){
-		return attribute_.discValues_.size();
+		return attribute.discValues_.size();
 	}
-	
-	
-	
-	
 	
 	public boolean equals(Object obj){
 		Value op = (Value)obj;
-		if(!op.attribute_.equals(attribute_)){
+		if(!op.attribute.equals(attribute)){
 			return false;
 		}
-		if(op.attribute_.type_ == AttributeType.DISC){
-			return discVal_ == op.discVal_;
+		if(op.attribute.type == AttributeType.DISC){
+			return discVal == op.discVal;
 		}
-		return realVal_ == op.realVal_;
+		return realVal == op.realVal;
 		
 		
 	}
 	
 	public int hashCode(){
-		return attribute_.hashCode();
+		return attribute.hashCode();
 	}
 	
 	
