@@ -74,13 +74,13 @@ public class ObjectClass {
 		int ind = attributeList_.size();
 		
 		attributeList_.add(att);
-		attributeMap_.put(att.name_, att);
-		attributeIndex_.put(att.name_, ind);
+		attributeMap_.put(att.name, att);
+		attributeIndex_.put(att.name, ind);
 		
-		if(!att.hidden_){
+		if(!att.hidden){
 			observableAttributeIndices_.add(ind);
 			if(att.type == Attribute.AttributeType.DISC){
-				int d = att.discValues_.size();
+				int d = att.discValues.size();
 				discreteSpace_ *= d;
 				int [] newD = new int[discreteAttributeSpaces_.length+1];
 				for(int i = 0; i < discreteAttributeSpaces_.length; i++){
@@ -95,7 +95,7 @@ public class ObjectClass {
 	
 	
 	public boolean hasAttribute(Attribute att){
-		return this.hasAttribute(att.name_);
+		return this.hasAttribute(att.name);
 	}
 	
 	public boolean hasAttribute(String attName){	
