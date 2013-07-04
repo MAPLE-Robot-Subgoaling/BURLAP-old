@@ -14,7 +14,12 @@ import edu.umbc.cs.maple.oomdp.State;
 import edu.umbc.cs.maple.oomdp.explorer.TerminalExplorer;
 import edu.umbc.cs.maple.oomdp.explorer.VisualExplorer;
 import edu.umbc.cs.maple.oomdp.visualizer.Visualizer;
-
+/**
+ * 
+ * @author James
+ * The four rooms domains is a basic block world domain in which the agent has to navigate to the goal square.
+ * This class should be used as a basis for anyone interested in developing a more complicated grid world domain.
+ */
 public class FourRoomsDomain implements DomainGenerator {
 
 	//Constants
@@ -117,9 +122,7 @@ public class FourRoomsDomain implements DomainGenerator {
 		//			2)setStandardWalls()
 		generateMap();
 		
-		/*Creates a new Attribute object
-		 * 
-		 */
+		//Creates a new Attribute object
 		Attribute xatt = new Attribute(DOMAIN, ATTX, Attribute.AttributeType.DISC);
 		xatt.setDiscValuesForRange(0, MAXX, 1);
 		
@@ -134,8 +137,6 @@ public class FourRoomsDomain implements DomainGenerator {
 		ObjectClass goalClass = new ObjectClass(DOMAIN, CLASSGOAL);
 		goalClass.addAttribute(xatt);
 		goalClass.addAttribute(yatt);
-	
-		
 		
 		Action north = new NorthAction(ACTIONNORTH, DOMAIN, "");
 		Action south = new SouthAction(ACTIONSOUTH, DOMAIN, "");
@@ -200,8 +201,6 @@ public class FourRoomsDomain implements DomainGenerator {
 				}
 			}
 		}
-		
-		
 	}
 	
 	
@@ -230,22 +229,36 @@ public class FourRoomsDomain implements DomainGenerator {
 		
 	}
 	
-	
+	/**
+	 * Creates a horizontal wall
+	 * @param xi The starting x coordinate of the wall
+	 * @param xf The ending x coordinate of the wall
+	 * @param y The y coordinate of the wall
+	 */
 	protected static void horizontalWall(int xi, int xf, int y){
 		for(int x = xi; x <= xf; x++){
 			MAP[x][y] = 1;
 		}
 	}
 	
+	/**
+	 * Creates a horizontal wall
+	 * @param yi The stating y coordinate of the wall
+	 * @param yf The ending y coordinate of the wall
+	 * @param x	The x coordinate of the wall
+	 */
 	protected static void verticalWall(int yi, int yf, int x){
 		for(int y = yi; y <= yf; y++){
 			MAP[x][y] = 1;
 		}
 	}
 	
-	
-	
-	
+	/**
+	 * Attempts to move the agent into the given position, taking into account walls and blocks
+	 * @param the current state
+	 * @param the attempted new X position of the agent
+	 * @param the attempted new Y position of the agent
+	 */
 	public static void move(State s, int xd, int yd){
 		
 		ObjectInstance agent = s.getObjectsOfTrueClass(CLASSAGENT).get(0);
@@ -262,13 +275,7 @@ public class FourRoomsDomain implements DomainGenerator {
 		
 		agent.setValue(ATTX, nx);
 		agent.setValue(ATTY, ny);
-		
-		
-		
 	}
-	
-	
-	
 	
 	
 	public static class NorthAction extends Action{
@@ -329,14 +336,14 @@ public class FourRoomsDomain implements DomainGenerator {
 			move(st, -1, 0);
 			System.out.println("Action Performed: " + this.name_);
 			return st;
-		}
-		
-		
+		}	
 	}
 	
-	
-	
-	
+	/**
+	 * 
+	 * @author James
+	 * Propositional function for determining whether the agent is in the same position as the goal.
+	 */
 	public static class AtGoalPF extends PropositionalFunction{
 
 		public AtGoalPF(String name, Domain domain, String[] parameterClasses) {
