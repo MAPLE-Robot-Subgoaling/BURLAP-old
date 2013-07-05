@@ -8,29 +8,29 @@ import edu.umbc.cs.maple.oomdp.*;
 
 public class TerminalExplorer {
 	
-	private Domain					domain_;
-	private Map <String, String>	actionShortHand_;
+	private Domain					domain;
+	private Map <String, String>	actionShortHand;
 	
 	public TerminalExplorer(Domain domain){
-		domain_ = domain;
+		this.domain = domain;
 		this.setActionShortHand(new HashMap <String, String>());
 	}
 	
 	public TerminalExplorer(Domain domain, Map <String, String> ash){
-		domain_ = domain;
+		this.domain = domain;
 		this.setActionShortHand(ash);
 	}
 	
 	public void setActionShortHand(Map <String, String> ash){
-		actionShortHand_ = ash;
-		List <Action> actionList = domain_.getActions();
+		this.actionShortHand = ash;
+		List <Action> actionList = domain.getActions();
 		for(Action a : actionList){
 			this.addActionShortHand(a.getName(), a.getName());
 		}
 	}
 	
 	public void addActionShortHand(String shortHand, String action){
-		actionShortHand_.put(shortHand, action);
+		actionShortHand.put(shortHand, action);
 	}
 	
 	public void exploreFromState(State st){
@@ -58,7 +58,7 @@ public class TerminalExplorer {
 					
 					//split the string up into components
 					String [] comps = line.split(" ");
-					String actionName = actionShortHand_.get(comps[0]);
+					String actionName = actionShortHand.get(comps[0]);
 					
 					if(actionName == null){
 						actionName = comps[0];
@@ -76,7 +76,7 @@ public class TerminalExplorer {
 						params = new String[0];
 					}
 					
-					Action action = domain_.getAction(actionName);
+					Action action = domain.getAction(actionName);
 					if(action == null){
 						System.out.println("Unknown action: " + actionName);
 					}

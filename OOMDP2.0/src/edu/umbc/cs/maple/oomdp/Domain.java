@@ -108,16 +108,16 @@ public class Domain {
 	public Map<String, Set<PropositionalFunction>> getPropositionlFunctionsMap() {
 		HashMap<String, Set<PropositionalFunction>> propFuncs = new HashMap<String, Set<PropositionalFunction>>();
 		for(PropositionalFunction pf : this.propFunctions) {
-			for(String paramClass : pf.getParameterClasses()) {
-				String propFuncClass = pf.getClassName();
-				Set<PropositionalFunction> propList = propFuncs.get(propFuncClass);
-				if(propList == null) {
-					propList = new HashSet<PropositionalFunction>();
-				}
 
-				propList.add(pf);
-				propFuncs.put(propFuncClass, propList);
+			String propFuncClass = pf.getClassName();
+			Set<PropositionalFunction> propList = propFuncs.get(propFuncClass);
+			if(propList == null) {
+				propList = new HashSet<PropositionalFunction>();
 			}
+
+			propList.add(pf);
+			propFuncs.put(propFuncClass, propList);
+			
 		}
 		return propFuncs;
 	}

@@ -19,14 +19,14 @@ import edu.umbc.cs.maple.oomdp.*;
 
 public abstract class StaticPainter {
 	
-	protected Domain 		domain_;
+	protected Domain 		domain;
 	
 	public StaticPainter(Domain domain){
-		domain_ = domain;
+		this.domain = domain;
 	}
 	
 	public void setDomain(Domain domain){
-		domain_ = domain;
+		this.domain = domain;
 	}
 	
 	/* g2: 				graphics context to which the static data should be painted

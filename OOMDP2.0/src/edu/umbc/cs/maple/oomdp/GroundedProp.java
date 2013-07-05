@@ -23,7 +23,7 @@ public class GroundedProp implements Cloneable{
 	public String toString(){
 		StringBuffer buf = new StringBuffer();
 		
-		buf.append(pf.name_).append("(");
+		buf.append(pf.name).append("(");
 		for(int i = 0; i < params.length; i++){
 			if(i > 0){
 				buf.append(", ");
@@ -57,13 +57,13 @@ public class GroundedProp implements Cloneable{
 		for(int i = 0; i < params.length; i++){
 			if(!params[i].equals(that.params[i])){
 				//check if there is another parameter with this reference that has the same rename class (which means parameters are order independent)
-				String curRename = pf.replacedClassNames_[i];
+				String orderGroup = pf.parameterOrderGroup[i];
 				boolean foundMatch = false;
 				for(int j = 0; j < that.params.length; j++){
 					if(j == i){
 						continue; //already checked this
 					}
-					if(curRename.equals(that.pf.replacedClassNames_[j])){
+					if(orderGroup.equals(that.pf.parameterOrderGroup[j])){
 						if(params[i].equals(that.params[j])){
 							foundMatch = true;
 							break;

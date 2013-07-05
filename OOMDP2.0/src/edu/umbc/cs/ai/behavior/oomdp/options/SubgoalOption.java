@@ -14,13 +14,13 @@ public class SubgoalOption extends Option {
 	
 	
 	public SubgoalOption(String name, Policy p, StateConditionTest init, StateConditionTest sg){
-		this.name_ = name;
+		this.name = name;
 		this.policy = p;
 		this.initiationTest = init;
 		this.subgoalTest = sg;
 		
-		this.parameterClasses_ = new String[0];
-		this.replacedClassNames_ = new String[0];
+		this.parameterClasses = new String[0];
+		this.parameterOrderGroup = new String[0];
 		
 	}
 	

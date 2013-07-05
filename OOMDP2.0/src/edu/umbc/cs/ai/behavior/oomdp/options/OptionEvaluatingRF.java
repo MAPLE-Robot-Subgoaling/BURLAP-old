@@ -15,7 +15,7 @@ import edu.umbc.cs.maple.oomdp.State;
  * 
 */
 
-public class OptionEvaluatingRF extends RewardFunction {
+public class OptionEvaluatingRF implements RewardFunction {
 
 	RewardFunction primitiveRF;
 	

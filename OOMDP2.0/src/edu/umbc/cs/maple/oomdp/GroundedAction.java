@@ -34,6 +34,7 @@ public class GroundedAction {
 		return action.performAction(s, params);
 	}
 	
+	@Override
 	public String toString(){
 		StringBuffer buf = new StringBuffer();
 		buf.append(action.getName());
@@ -61,14 +62,14 @@ public class GroundedAction {
 			return false;
 		}
 		
-		String [] rclasses = this.action.getReplacedClasses();
+		String [] pog = this.action.getParameterOrderGroups();
 		
 		for(int i = 0; i < this.params.length; i++){
 			String p = this.params[i];
-			String replaceClass = rclasses[i];
+			String orderGroup = pog[i];
 			boolean foundMatch = false;
 			for(int j = 0; j < go.params.length; j++){
-				if(p.equals(go.params[j]) && replaceClass.equals(rclasses[j])){
+				if(p.equals(go.params[j]) && orderGroup.equals(pog[j])){
 					foundMatch = true;
 					break;
 				}

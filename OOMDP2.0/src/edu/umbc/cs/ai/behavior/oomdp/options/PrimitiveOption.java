@@ -19,7 +19,7 @@ public class PrimitiveOption extends Option {
 	
 	public PrimitiveOption(Action srcAction){
 		this.srcAction = srcAction;
-		this.init(srcAction.getName(), srcAction.getDomain(), srcAction.getParameterClasses(), srcAction.getReplacedClasses());
+		this.init(srcAction.getName(), srcAction.getDomain(), srcAction.getParameterClasses(), srcAction.getParameterOrderGroups());
 	}
 
 	

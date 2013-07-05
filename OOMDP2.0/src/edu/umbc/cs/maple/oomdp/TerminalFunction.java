@@ -7,27 +7,8 @@
 
 package edu.umbc.cs.maple.oomdp;
 
-public abstract class TerminalFunction {
-
-	protected Domain		domain_; //the domain on which this terminal function operates
+public interface TerminalFunction {
 	
-	public TerminalFunction(){
-		
-	}
-	
-	public TerminalFunction(Domain domain){
-		domain_ = domain;
-	}
-	
-	public final void setDomain(Domain domain){
-		domain_ = domain;
-	}
-	
-	public final Domain getDomain(){
-		return domain_;
-	}
-	
-	public abstract boolean isTerminal(State s);
-	
+	public boolean isTerminal(State s);	
 	
 }

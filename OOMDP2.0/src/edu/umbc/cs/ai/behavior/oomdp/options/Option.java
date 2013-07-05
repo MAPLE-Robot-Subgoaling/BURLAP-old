@@ -10,7 +10,7 @@ import edu.umbc.cs.maple.oomdp.RewardFunction;
 import edu.umbc.cs.maple.oomdp.State;
 
 /*
- * Note: will the reward tracker work for hierarchical options with discounting?
+ * Note: will the reward tracker work for 3-level hierarchical options with discounting?
  * I think not they will only work if the one step hierarchical action selection
  * only returns primitives, in which case I will have to implement
  * that for any hierarchical subclasses 
@@ -29,6 +29,7 @@ public abstract class Option extends Action {
 	protected double 									lastCumulativeReward;
 	protected double									cumulativeDiscount;
 	protected int										lastNumSteps;
+	protected TerminalFunction							externalTerminalFunction;
 	
 	protected StateMapping								stateMapping;
 	
@@ -72,6 +73,7 @@ public abstract class Option extends Action {
 		lastNumSteps = 0;
 		stateMapping = null;
 		terminateMapper = null;
+		externalTerminalFunction = new NullTermination();
 	}
 	
 	public void setStateMapping(StateMapping m){
@@ -80,6 +82,15 @@ public abstract class Option extends Action {
 	
 	public void setTerminateMapper(DirectOptionTerminateMapper tm){
 		this.terminateMapper = tm;
+	}
+	
+	public void setExernalTermination(TerminalFunction tf){
+		if(tf == null){
+			this.externalTerminalFunction = new NullTermination();
+		}
+		else{
+			this.externalTerminalFunction = tf;
+		}
 	}
 	
 	protected State map(State s){
@@ -99,10 +110,10 @@ public abstract class Option extends Action {
 	//this method overrides and removes the statement connecting the domain to it
 	public void init(String name, Domain domain, String [] parameterClasses, String [] replacedClassNames){
 		
-		name_ = name;
-		domain_ = domain;
-		parameterClasses_ = parameterClasses;
-		replacedClassNames_ = replacedClassNames;
+		this.name = name;
+		this.domain = domain;
+		this.parameterClasses = parameterClasses;
+		this.parameterOrderGroup = replacedClassNames;
 		
 	}
 	
@@ -143,7 +154,7 @@ public abstract class Option extends Action {
 		
 		do{
 			curState = this.oneStep(curState, params);
-		}while(this.continueFromState(curState, params));
+		}while(this.continueFromState(curState, params) && !externalTerminalFunction.isTerminal(curState));
 		
 		
 		

@@ -58,7 +58,7 @@ public class StateHashTuple {
 		}
 		//check if already there or not
 		for(Attribute attInList : atts){
-			if(attInList.name_.equals(att.name_)){
+			if(attInList.name.equals(att.name)){
 				return ;
 			}
 		}
@@ -106,8 +106,8 @@ public class StateHashTuple {
 		int index = 0;
 		int vol = 1;
 		for(Attribute att : attributes){
-			index += o.getDiscValForAttribute(att.name_)*vol;
-			vol *= att.discValues_.size();
+			index += o.getDiscValForAttribute(att.name)*vol;
+			vol *= att.discValues.size();
 		}
 		
 		return index;
@@ -120,7 +120,7 @@ public class StateHashTuple {
 		List <Attribute> attributes = this.getAttributesForClass(oclass);
 		int vol = 1;
 		for(Attribute att : attributes){
-			vol *= att.discValues_.size();
+			vol *= att.discValues.size();
 		}
 		
 		return vol;

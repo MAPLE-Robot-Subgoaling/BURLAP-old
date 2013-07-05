@@ -41,5 +41,14 @@ public class DPrint {
 			System.out.print(s);
 		}
 	}
+	
+	public static boolean mode(int c){
+		Boolean m = debugCodes.get(c);
+		boolean mb = universalPrint;
+		if(m != null){
+			mb = m;
+		}
+		return mb;
+	}
 
 }

@@ -127,7 +127,7 @@ public class Attribute {
 	
 	
 	public void setType(int itype){
-		type = AttributeType.fromInt(itype);
+		this.type = AttributeType.fromInt(itype);
 	}
 	
 	public void setType(AttributeType type){
@@ -136,15 +136,15 @@ public class Attribute {
 	
 	
 	public void setDiscValues(List <String> vals){
-		discValues = new ArrayList <String> (vals);
-		discValuesHash = new HashMap<String, Integer>();
+		this.discValues = new ArrayList <String> (vals);
+		this.discValuesHash = new HashMap<String, Integer>();
 		for(int i = 0; i < discValues.size(); i++){
-			discValuesHash.put(vals.get(i), new Integer(i));
+			this.discValuesHash.put(vals.get(i), new Integer(i));
 		}
 		
 		//set range
-		lowerLim = 0.0;
-		upperLim = discValues.size()-1;
+		this.lowerLim = 0.0;
+		this.upperLim = discValues.size()-1;
 	}
 	
 	/**
@@ -155,23 +155,23 @@ public class Attribute {
 	 */
 	public void setDiscValuesForRange(int low, int high, int step){
 	
-		discValues = new ArrayList <String>();
-		discValuesHash = new HashMap<String, Integer>();
+		this.discValues = new ArrayList <String>();
+		this.discValuesHash = new HashMap<String, Integer>();
 		
 		int counter = 0;
 		for(int i = low; i <= high; i += step){
 		
 			String s = Integer.toString(i);
 			
-			discValues.add(s);
-			discValuesHash.put(s, counter);
+			this.discValues.add(s);
+			this.discValuesHash.put(s, counter);
 			
 			counter++;
 		}
 		
 		//set range
-		lowerLim = 0.0;
-		upperLim = discValues.size()-1;
+		this.lowerLim = 0.0;
+		this.upperLim = discValues.size()-1;
 	
 	}
 	

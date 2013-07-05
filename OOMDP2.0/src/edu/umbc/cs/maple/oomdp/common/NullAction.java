@@ -1,5 +1,8 @@
 package edu.umbc.cs.maple.oomdp;
 
+import oomdptb.oomdp.Action;
+import oomdptb.oomdp.Domain;
+import oomdptb.oomdp.State;
 
 
 
@@ -14,10 +17,10 @@ public class NullAction extends Action {
 
 	
 	public NullAction(String name){
-		this.name_ = name;
-		this.parameterClasses_ = new String[0];
-		this.replacedClassNames_ = new String[0];
-		this.domain_ = null;
+		this.name = name;
+		this.parameterClasses = new String[0];
+		this.parameterOrderGroup = new String[0];
+		this.domain = null;
 	}
 	
 	public NullAction(String name, Domain domain, String parameterClasses){

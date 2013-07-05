@@ -3,11 +3,11 @@ package edu.umbc.cs.maple.oomdp;
 
 public abstract class PropositionalFunction {
 
-	protected String					name_;					//name of the propositional function
-	protected Domain					domain_;				//domain that hosts this function
-	protected String []					parameterClasses_;		//list of class names for each parameter of the function
-	protected String []					replacedClassNames_;	//list of class names to which each parameter object should be paramaterized
-	protected String					pfClass_;
+	protected String					name;					//name of the propositional function
+	protected Domain					domain;					//domain that hosts this function
+	protected String []					parameterClasses;		//list of class names for each parameter of the function
+	protected String []					parameterOrderGroup;	//setting two or more parameters to the same order group indicates that the function evaluate the same regardless of which specific object is set to each parameter
+	protected String					pfClass;				//optional; allows propositional functions to be grouped by class names
 	
 	
 	//parameterClasses is expected to be comma delimited with no unnecessary spaces
@@ -21,12 +21,12 @@ public abstract class PropositionalFunction {
 			pClassArray = parameterClasses.split(",");
 		}
 		
-		String [] rcn = new String[pClassArray.length];
-		for(int i = 0; i < rcn.length; i++){
-			rcn[i] = name + ".P" + i;
+		String [] pog = new String[pClassArray.length];
+		for(int i = 0; i < pog.length; i++){
+			pog[i] = name + ".P" + i;
 		}
 		
-		this.init(name, domain, pClassArray, rcn, name);
+		this.init(name, domain, pClassArray, pog, name);
 		
 	}
 	
@@ -40,12 +40,12 @@ public abstract class PropositionalFunction {
 			pClassArray = parameterClasses.split(",");
 		}
 		
-		String [] rcn = new String[pClassArray.length];
-		for(int i = 0; i < rcn.length; i++){
-			rcn[i] = name + ".P" + i;
+		String [] pog = new String[pClassArray.length];
+		for(int i = 0; i < pog.length; i++){
+			pog[i] = name + ".P" + i;
 		}
 		
-		this.init(name, domain, pClassArray, rcn, pfClassName);
+		this.init(name, domain, pClassArray, pog, pfClassName);
 		
 	}
 	
@@ -75,38 +75,38 @@ public abstract class PropositionalFunction {
 		this.init(name, domain, parameterClasses, replacedClassNames, name);
 	}
 	
-	public PropositionalFunction(String name, Domain domain, String [] parameterClasses, String [] replacedClassNames, String pfClassName){
-		this.init(name, domain, parameterClasses, replacedClassNames, pfClassName);
+	public PropositionalFunction(String name, Domain domain, String [] parameterClasses, String [] parameterOrderGroup, String pfClassName){
+		this.init(name, domain, parameterClasses, parameterOrderGroup, pfClassName);
 	}
 	
-	public final void init(String name, Domain domain, String [] parameterClasses, String [] replacedClassNames, String pfClass){
-		name_ = name;
-		domain_ = domain;
-		domain_.addPropositionalFunction(this);
-		parameterClasses_ = parameterClasses;
-		replacedClassNames_ = replacedClassNames;
-		pfClass_ = pfClass;
+	public final void init(String name, Domain domain, String [] parameterClasses, String [] parameterOrderGroup, String pfClass){
+		this.name = name;
+		this.domain = domain;
+		this.domain.addPropositionalFunction(this);
+		this.parameterClasses = parameterClasses;
+		this.parameterOrderGroup = parameterOrderGroup;
+		this.pfClass = pfClass;
 	}
 	
 	public final String getName(){
-		return name_;
+		return name;
 	}
 	
 	
 	public final String[] getParameterClasses(){
-		return parameterClasses_;
+		return parameterClasses;
 	}
 	
-	public final String[] getReplacedClasses(){
-		return replacedClassNames_;
+	public final String[] getParameterOrderGroups(){
+		return parameterOrderGroup;
 	}
 	
 	public final void setClassName(String cn){
-		pfClass_ = cn;
+		pfClass = cn;
 	}
 	
 	public final String getClassName(){
-		return pfClass_;
+		return pfClass;
 	}
 	
 	//params is expected to be comma delimited with no unnecessary spaces
@@ -121,17 +121,17 @@ public abstract class PropositionalFunction {
 	
 	public boolean equals(Object obj){
 		PropositionalFunction op = (PropositionalFunction)obj;
-		if(op.name_.equals(name_))
+		if(op.name.equals(name))
 			return true;
 		return false;
 	}
 	
 	public String toString() {
-		return this.name_;
+		return this.name;
 	}
 
 	public int hashCode(){
-		return name_.hashCode();
+		return name.hashCode();
 	}
 	
 	

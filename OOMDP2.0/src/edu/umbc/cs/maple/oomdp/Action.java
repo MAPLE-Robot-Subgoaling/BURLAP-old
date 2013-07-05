@@ -7,10 +7,10 @@ import java.util.List;
 
 public abstract class Action {
 
-	protected String					name_;					//name of the action
-	protected Domain					domain_;				//domain that hosts the action
-	protected String []					parameterClasses_;		//list of class names for each parameter of the action
-	protected String []					replacedClassNames_;	//list of class names to which each parameter object should be paramaterized
+	protected String					name;									//name of the action
+	protected Domain					domain;									//domain that hosts the action
+	protected String []					parameterClasses = new String[0];		//list of class names for each parameter of the action
+	protected String []					parameterOrderGroup = new String[0];	//setting two or more parameters to the same order group indicates that the action will be same regardless of which specific object is set to each parameter
 	
 	
 	public Action(){
@@ -29,22 +29,24 @@ public abstract class Action {
 			pClassArray = parameterClasses.split(",");
 		}
 		
-		String [] rcn = new String[pClassArray.length];
-		for(int i = 0; i < rcn.length; i++){
-			rcn[i] = name + ".P" + i;
+		//without parameter order group specified, all parameters are assumed to be in a different group
+		String [] pog = new String[pClassArray.length];
+		for(int i = 0; i < pog.length; i++){
+			pog[i] = name + ".P" + i;
 		}
 		
-		this.init(name, domain, pClassArray, rcn);
+		this.init(name, domain, pClassArray, pog);
 		
 	}
 	
 	public Action(String name, Domain domain, String [] parameterClasses){
 		
-		String [] rcn = new String[parameterClasses.length];
-		for(int i = 0; i < rcn.length; i++){
-			rcn[i] = name + ".P" + i;
+		String [] pog = new String[parameterClasses.length];
+		//without parameter order group specified, all parameters are assumed to be in a different group
+		for(int i = 0; i < pog.length; i++){
+			pog[i] = name + ".P" + i;
 		}
-		this.init(name, domain, parameterClasses, rcn);
+		this.init(name, domain, parameterClasses, pog);
 		
 	}
 	
@@ -55,29 +57,29 @@ public abstract class Action {
 	
 	public void init(String name, Domain domain, String [] parameterClasses, String [] replacedClassNames){
 		
-		name_ = name;
-		domain_ = domain;
-		domain_.addAction(this);
-		parameterClasses_ = parameterClasses;
-		replacedClassNames_ = replacedClassNames;
+		this.name = name;
+		this.domain = domain;
+		this.domain.addAction(this);
+		this.parameterClasses = parameterClasses;
+		this.parameterOrderGroup = replacedClassNames;
 		
 	}
 	
 	public final String getName(){
-		return name_;
+		return name;
 	}
 	
 	
 	public final String[] getParameterClasses(){
-		return parameterClasses_;
+		return parameterClasses;
 	}
 	
-	public final String[] getReplacedClasses(){
-		return replacedClassNames_;
+	public final String[] getParameterOrderGroups(){
+		return parameterOrderGroup;
 	}
 	
 	public final Domain getDomain(){
-		return domain_;
+		return domain;
 	}
 	
 	
@@ -98,7 +100,7 @@ public abstract class Action {
 	}
 	
 	
-	//parameterClasses is expected to be comma delimited with no unnecessary spaces
+	//params are expected to be comma delimited with no unnecessary spaces
 	public final State performAction(State st, String params){
 		
 		return performAction(st, params.split(","));
@@ -160,13 +162,13 @@ public abstract class Action {
 	
 	public boolean equals(Object obj){
 		Action op = (Action)obj;
-		if(op.name_.equals(name_))
+		if(op.name.equals(name))
 			return true;
 		return false;
 	}
 	
 	public int hashCode(){
-		return name_.hashCode();
+		return name.hashCode();
 	}
 	
 	

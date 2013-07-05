@@ -20,9 +20,9 @@ public class PolicyDefinedSubgoalOption extends Option {
 	public PolicyDefinedSubgoalOption(String name, Policy p, StateConditionTest sg){
 		this.policy = p;
 		this.subgoalTest = sg;
-		this.name_ = name;
-		this.parameterClasses_ = new String[0];
-		this.replacedClassNames_ = new String[0];
+		this.name = name;
+		this.parameterClasses = new String[0];
+		this.parameterOrderGroup = new String[0];
 	}
 	
 	@Override

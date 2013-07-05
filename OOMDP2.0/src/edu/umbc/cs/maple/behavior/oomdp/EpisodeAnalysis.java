@@ -22,6 +22,20 @@ public class EpisodeAnalysis {
 	public List<Double>									rewardSequence;
 	
 	public EpisodeAnalysis(){
+		this.initializeDatastructures();
+	}
+	
+	
+	public EpisodeAnalysis(State initialState){
+		this.initializeEpisideWithInitialState(initialState);
+	}
+	
+	public void initializeEpisideWithInitialState(State initialState){
+		this.initializeDatastructures();
+		this.stateSequence.add(initialState);
+	}
+	
+	protected void initializeDatastructures(){
 		stateSequence = new ArrayList<State>();
 		actionSequence = new ArrayList<GroundedAction>();
 		rewardSequence = new ArrayList<Double>();
@@ -39,9 +53,9 @@ public class EpisodeAnalysis {
 		rewardSequence.add(r);
 	}
 	
-	public void record(State next, GroundedAction a, double r){
+	public void recordTransitionTo(State next, GroundedAction usingAction, double r){
 		stateSequence.add(next);
-		actionSequence.add(a);
+		actionSequence.add(usingAction);
 		rewardSequence.add(r);
 	}
 	
@@ -61,6 +75,19 @@ public class EpisodeAnalysis {
 		return stateSequence.size(); //state sequence will always have the most because of initial state and terminal state
 	}
 	
+	public String getActionSequenceString(){
+		StringBuffer buf = new StringBuffer();
+		boolean first = true;
+		for(GroundedAction ga : actionSequence){
+			if(!first){
+				buf.append("; ");
+			}
+			buf.append(ga.toString());
+			first = false;
+		}
+		
+		return buf.toString();
+	}
 	
 	
 	public void writeToFile(String path, StateParser sp){
@@ -133,7 +160,7 @@ public class EpisodeAnalysis {
 			State s = sp.stringToState(parts[0]);
 			if(i < elComps.length-1){
 				String [] ars = parts[1].split("\n");
-				ea.record(s, getGAFromSpaceDelimGASTring(d, ars[0]), Double.parseDouble(ars[1]));
+				ea.recordTransitionTo(s, getGAFromSpaceDelimGASTring(d, ars[0]), Double.parseDouble(ars[1]));
 			}
 			else{
 				ea.addState(s);

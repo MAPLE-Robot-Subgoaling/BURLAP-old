@@ -12,6 +12,7 @@ import edu.umbc.cs.maple.oomdp.TerminalFunction;
 public abstract class Policy {
 
 	protected boolean evaluateDecomposesOptions = true;
+	protected boolean annotateOptionDecomposition = true;
 	
 	
 	public abstract GroundedAction getAction(State s); //returns null when policy is undefined for s
@@ -21,6 +22,10 @@ public abstract class Policy {
 	
 	public void evaluateMethodsShouldDecomposeOption(boolean toggle){
 		this.evaluateDecomposesOptions = toggle;
+	}
+	
+	public void evaluateMethodsShouldAnnotateOptionDecomposition(boolean toggle){
+		this.annotateOptionDecomposition = toggle;
 	}
 	
 	public EpisodeAnalysis evaluateBehavior(State s, RewardFunction rf, TerminalFunction tf){
@@ -79,7 +84,7 @@ public abstract class Policy {
 			double r = rf.reward(cur, ga, next);
 			
 			//record result
-			ea.record(next, ga, r);
+			ea.recordTransitionTo(next, ga, r);
 		}
 		else{
 			//then we need to decompose the option
@@ -92,12 +97,18 @@ public abstract class Policy {
 				next = cga.executeIn(cur);
 				double r = rf.reward(cur, cga, next);
 				
-				//setup a null action to record the option and primitive action taken
-				NullAction annotatedPrimitive = new NullAction(o.getName() + "(" + ns + ")-" + cga.action.getName());
-				GroundedAction annotatedPrimitiveGA = new GroundedAction(annotatedPrimitive, cga.params);
-				
-				//record it
-				ea.record(next, annotatedPrimitiveGA, r);
+				if(annotateOptionDecomposition){
+					//setup a null action to record the option and primitive action taken
+					NullAction annotatedPrimitive = new NullAction(o.getName() + "(" + ns + ")-" + cga.action.getName());
+					GroundedAction annotatedPrimitiveGA = new GroundedAction(annotatedPrimitive, cga.params);
+					
+					//record it
+					ea.recordTransitionTo(next, annotatedPrimitiveGA, r);
+				}
+				else{
+					//otherwise just record the primitive that was taken
+					ea.recordTransitionTo(next, cga, r);
+				}
 				
 				cur = next;
 				ns++;

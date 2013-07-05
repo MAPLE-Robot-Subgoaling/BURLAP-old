@@ -22,17 +22,17 @@ public class Value {
 		
 		this.attribute = attribute;
 		
-		discVal = -1;
-		realVal = Double.NaN;
+		this.discVal = -1;
+		this.realVal = Double.NaN;
 		
 	}
 	
 	public Value(Value v){
 		
-		attribute = v.attribute;
+		this.attribute = v.attribute;
 		
-		discVal = v.discVal;
-		realVal = v.realVal;
+		this.discVal = v.discVal;
+		this.realVal = v.realVal;
 		
 	}
 	
@@ -76,7 +76,7 @@ public class Value {
 	}
 	
 	public void setDiscValue(String v){
-		int intv = attribute.discValuesHash_.get(v);
+		int intv = attribute.discValuesHash.get(v);
 		discVal = intv;
 	}
 	
@@ -86,7 +86,7 @@ public class Value {
 	
 	
 	public String attName(){
-		return attribute.name_;
+		return attribute.name;
 	}
 	
 	public int getDiscVal(){
@@ -107,7 +107,7 @@ public class Value {
 			if (discVal == -1){
 				System.out.println("PROBLEM!");
 			}
-			return attribute.discValues_.get(discVal);
+			return attribute.discValues.get(discVal);
 			
 		}
 		else if(attribute.type == Attribute.AttributeType.REAL || attribute.type == Attribute.AttributeType.REALUNBOUND){
@@ -124,7 +124,7 @@ public class Value {
 	}
 	
 	public int getDiscreteDimensionality(){
-		return attribute.discValues_.size();
+		return attribute.discValues.size();
 	}
 	
 	public boolean equals(Object obj){
