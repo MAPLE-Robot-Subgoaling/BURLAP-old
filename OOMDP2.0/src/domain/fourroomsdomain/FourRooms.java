@@ -18,23 +18,9 @@ import oomdptb.oomdp.State;
 import oomdptb.oomdp.explorer.TerminalExplorer;
 import oomdptb.oomdp.explorer.VisualExplorer;
 import oomdptb.oomdp.visualizer.Visualizer;
-
-import oomdptb.behavior.planning.deterministic.*;
 import oomdptb.behavior.planning.*;
 
 public class FourRooms implements DomainGenerator {
-	
-	/**
-	 * PLEASE READ: Couple things to note:
-	 * 1) The Q-Learning Code is still partially attached to the domain. I am working on that.
-	 * 2) Grounded Actions support for the Q-Learning Code does not exist at the moment. 
-	 * 		Working on that too.
-	 * 3) Having some trouble grabbing the reward function implementation due to null objects
-	 * 		State.getObject(String) gives me null, however State.getObjectsOfTrueClass(String).get(0) does not...
-	 * 		and for some reason the RewardFunction doesn't like that.
-	 * 4) All it prints for now is just regular steps. As soon as functionality for Grounded Actions increases
-	 * I can go ahead and implement the episode analyzer.
-	 */
 
 	//Attributes, Actions, and PropFuncs
 	public static final String ATTX = "x";
@@ -72,7 +58,7 @@ public class FourRooms implements DomainGenerator {
 		setAgent(s, 1, 1);
 		setGoal(s, 5, 5);
 		
-		int expMode = 3;
+		int expMode = 1;
 		
 		if(expMode == 0){	
 			TerminalExplorer exp = new TerminalExplorer(d);
@@ -91,10 +77,10 @@ public class FourRooms implements DomainGenerator {
 			exp.initGUI();
 		}else if(expMode == 3){
 			//Runs the simulator via text output
-			for(int i = 1; i <= 4; i++){
+			for(int i = 1; i <= 20; i++){
 				analyzer = new EpisodeAnalysis();
 				parser = new FourRoomsStateParser();
-				System.out.println("\t\t~ Episode " + i + " ~\t\t");
+				System.out.print("Episode " + i + ": ");
 				runSim(d, s);
 				analyzer.writeToFile("Episode " + i + ".txt", parser);
 				setAgent(s, 1, 1);
@@ -116,7 +102,7 @@ public class FourRooms implements DomainGenerator {
 		int steps = 0;
 		
 		//Reward Function Implementation...
-		RewardFunction rf = new SingleGoalPFRF(d.getPropFunction(PFATGOAL));
+		RewardFunction rf = new SingleGoalPFRF(d.getPropFunction(PFATGOAL), 10.0, -1.0);
 		
 		//While the agent is not at the goal state
 		while(!FourRooms.isTrue(s, d.getPropFunction(PFATGOAL))){
