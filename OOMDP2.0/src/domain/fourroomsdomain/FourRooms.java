@@ -91,7 +91,7 @@ public class FourRooms implements DomainGenerator {
 			exp.initGUI();
 		}else if(expMode == 3){
 			//Runs the simulator via text output
-			for(int i = 1; i <= 19; i++){
+			for(int i = 1; i <= 4; i++){
 				analyzer = new EpisodeAnalysis();
 				parser = new FourRoomsStateParser();
 				System.out.println("\t\t~ Episode " + i + " ~\t\t");
@@ -117,9 +117,6 @@ public class FourRooms implements DomainGenerator {
 		
 		//Reward Function Implementation...
 		RewardFunction rf = new SingleGoalPFRF(d.getPropFunction(PFATGOAL));
-		rf.setDomain(d);
-		//d.getPropFunction(PFATGOAL).isTrue(s, new String[]{FourRooms.CLASSAGENT, FourRooms.CLASSGOAL})
-		
 		
 		//While the agent is not at the goal state
 		while(!FourRooms.isTrue(s, d.getPropFunction(PFATGOAL))){
@@ -160,8 +157,6 @@ public class FourRooms implements DomainGenerator {
 				System.out.println("Fatal Error - Current State");
 				System.exit(0);
 			}
-			
-			//System.out.println("Action Taken: " + groundAction.action.getName());
 			
 			/**************Part Two****************/
 			
@@ -217,14 +212,11 @@ public class FourRooms implements DomainGenerator {
 					 oldVal.setQVal(newQval);
 				}
 			}
-			//System.out.println("Reward Function reward: " + rf.reward(s, groundAction, newState));
 			
 			//Change the States
-			//System.out.print(s.getStateDescription());
-			//System.out.println("Step number: " + steps + "\n---------------\n");
 			s = newState;
 			steps++;
-			analyzer.record(s, groundAction, reward);
+			analyzer.recordTransitionTo(s, groundAction, reward);
 		}
 		
 		//End of the Episode
@@ -317,8 +309,6 @@ public class FourRooms implements DomainGenerator {
 		DOMAIN.addPropositionalFunction(atGoal);
 		
 		RewardFunction rf = new SingleGoalPFRF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
-		rf.setDomain(DOMAIN);
-		
 		
 		return DOMAIN;
 	}
