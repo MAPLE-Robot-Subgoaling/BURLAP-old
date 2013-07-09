@@ -1193,8 +1193,6 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		public int aId;
 		public int sPrimeId;
 
-
-
 		public SokoSAS(int si, int ai, int spi){
 			sId = si;
 			aId = ai;
@@ -1236,7 +1234,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 			return stateID;
 		}
 
-		//unencypts a state from a given ID
+		//unencRypts a state from a given ID
 		public static State getStateFromId(int id, State referenceState){
 			State st = new State(referenceState);
 			List<ObjectInstance> blocks = referenceState.getObjectsOfClass(BLOCKCLASS);
