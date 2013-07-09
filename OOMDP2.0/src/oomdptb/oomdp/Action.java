@@ -78,6 +78,10 @@ public abstract class Action {
 		return parameterOrderGroup;
 	}
 	
+	/**
+	 * 
+	 * @return domain that hosts the action
+	 */
 	public final Domain getDomain(){
 		return domain;
 	}
