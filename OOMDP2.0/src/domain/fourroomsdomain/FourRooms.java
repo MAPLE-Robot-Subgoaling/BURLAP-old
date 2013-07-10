@@ -59,10 +59,8 @@ public class FourRooms implements DomainGenerator {
 		FourRooms frd = new FourRooms();
 		Domain d = frd.generateDomain();
 		State s = FourRooms.getCleanState();
-		
 		setAgent(s, 1, 1);
 		setGoal(s, 5, 5);
-		
 		int expMode = 3;
 		
 		if(expMode == 0){	
@@ -82,11 +80,11 @@ public class FourRooms implements DomainGenerator {
 			exp.initGUI();
 		}else if(expMode == 3){
 			//Runs the simulator via text output
-			for(int i = 1; i <= 5; i++){
+			for(int i = 1; i <= 20; i++){
 				analyzer = new EpisodeAnalysis();
 				parser = new FourRoomsStateParser();
 				System.out.print("Episode " + i + ": ");
-				run(d, s);
+				runSim(d, s);
 				analyzer.writeToFile("Episode " + i + ".txt", parser);
 				setAgent(s, 1, 1);
 				setGoal(s, 5, 5);
@@ -94,6 +92,12 @@ public class FourRooms implements DomainGenerator {
 		}
 	}
 	
+	/**
+	 * run() - runs one episode of the Simulation
+	 * Note - This code uses the framework provided by the OOMDPTB Package
+	 * @param d - Domain
+	 * @param s - State
+	 */
 	public static void run(Domain d, State s){
 		
 		//Variable Declaration
@@ -104,7 +108,7 @@ public class FourRooms implements DomainGenerator {
 		while(!FourRooms.isTrue(s, d.getPropFunction(PFATGOAL))){
 			
 			/******Part one********/
-			//Generate the StateHashTuple
+			//get the List of Actions and QValues
 			List<QValue> currentStateActionList = Q.getQs(s);
 			
 			//search for a match
@@ -120,8 +124,6 @@ public class FourRooms implements DomainGenerator {
 				}
 			}
 			
-			//System.out.println("\tCurrent QValue: " + currentQValue);
-			
 			//error checking - preventing a null groundAction from triggering
 			if(groundAction == null && currentQValue == -100.00){
 				System.out.println("Fatal Error");
@@ -133,8 +135,10 @@ public class FourRooms implements DomainGenerator {
 			State newState = doAction.performAction(s, "");
 			
 			/*******Part Three********/
+			//get the new list of actions and q-values
 			List<QValue> newStateActionList = Q.getQs(newState);
 			
+			//finds the highest q-value
 			Double highestQvalue = -100.00;
 			GroundedAction newGroundAction = null;
 			for(QValue newVal: newStateActionList){
@@ -144,6 +148,7 @@ public class FourRooms implements DomainGenerator {
 				}
 			}
 			
+			//error checking - preventing a null ground action from triggering
 			if(newGroundAction == null && highestQvalue == -100.00){
 				System.out.println("Fatal Error - Part two");
 				System.exit(0);
@@ -158,6 +163,8 @@ public class FourRooms implements DomainGenerator {
 					break;
 				}
 			}
+			
+			//writes the items to the recorder
 			analyzer.recordTransitionTo(newState, groundAction, qVal);
 			s = newState;
 			steps++;
@@ -315,11 +322,9 @@ public class FourRooms implements DomainGenerator {
 		else{
 			int cX = currentState.getObjectsOfTrueClass(CLASSAGENT).get(0).getDiscValForAttribute(ATTX);
 			int cY = currentState.getObjectsOfTrueClass(CLASSAGENT).get(0).getDiscValForAttribute(ATTY);
-			//System.out.println("Current State::\t\t" + cX + ":" + cY);
 			
 			int nX = newState.getObjectsOfTrueClass(CLASSAGENT).get(0).getDiscValForAttribute(ATTX);
 			int nY = newState.getObjectsOfTrueClass(CLASSAGENT).get(0).getDiscValForAttribute(ATTY);
-			//System.out.println("New State::\t\t" + nX + ":" + nY);
 
 			if(cX == nX && cY == nY) 
 				return -5; //the agent has not moved - hit a wall
@@ -376,9 +381,7 @@ public class FourRooms implements DomainGenerator {
 		
 		Map<String, List<Attribute>> attributesForHashCode = new HashMap<String, List<Attribute>>();
 		attributesForHashCode.put(CLASSAGENT, DOMAIN.getObjectClass(CLASSAGENT).attributeList_);
-		Double temp = Math.random() * 12;
-		System.out.println("qInit: " + temp);
-		Q = new QLearning(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, attributesForHashCode, temp , FourRooms.LEARNINGRATE, 5);
+		Q = new QLearning(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, attributesForHashCode, Math.random() * 12, FourRooms.LEARNINGRATE, 20);
 		return DOMAIN;
 	}
 
