@@ -56,9 +56,9 @@ public class FourRooms implements DomainGenerator {
 		State s = FourRooms.getCleanState();
 		
 		setAgent(s, 1, 1);
-		setGoal(s, 5, 5);
+		setGoal(s, 11, 11);
 		
-		int expMode = 1;
+		int expMode = 3;
 		
 		if(expMode == 0){	
 			TerminalExplorer exp = new TerminalExplorer(d);
@@ -77,14 +77,14 @@ public class FourRooms implements DomainGenerator {
 			exp.initGUI();
 		}else if(expMode == 3){
 			//Runs the simulator via text output
-			for(int i = 1; i <= 20; i++){
+			for(int i = 1; i <= 50; i++){
 				analyzer = new EpisodeAnalysis();
 				parser = new FourRoomsStateParser();
 				System.out.print("Episode " + i + ": ");
 				runSim(d, s);
 				analyzer.writeToFile("Episode " + i + ".txt", parser);
 				setAgent(s, 1, 1);
-				setGoal(s, 5, 5);
+				setGoal(s, 11, 11);
 			}
 		}
 	}
