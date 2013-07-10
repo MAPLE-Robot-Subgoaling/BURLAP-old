@@ -3,6 +3,9 @@ package domain.fourroomsdomain;
 import java.util.*;
 
 import oomdptb.behavior.EpisodeAnalysis;
+import oomdptb.behavior.QValue;
+import oomdptb.behavior.learning.tdmethods.QLearning;
+import oomdptb.behavior.learning.tdmethods.QLearningStateNode;
 import oomdptb.behavior.planning.deterministic.SingleGoalPFRF;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Attribute;
@@ -15,6 +18,7 @@ import oomdptb.oomdp.ObjectInstance;
 import oomdptb.oomdp.PropositionalFunction;
 import oomdptb.oomdp.RewardFunction;
 import oomdptb.oomdp.State;
+import oomdptb.oomdp.TerminalFunction;
 import oomdptb.oomdp.explorer.TerminalExplorer;
 import oomdptb.oomdp.explorer.VisualExplorer;
 import oomdptb.oomdp.visualizer.Visualizer;
@@ -43,6 +47,7 @@ public class FourRooms implements DomainGenerator {
 	public static final double LEARNINGRATE = 0.99;
 	public static final double DISCOUNTFACTOR = 0.95;
 	public static Map<StateHashTuple, List<QAction>> qVals = new HashMap<StateHashTuple, List<QAction>>();
+	public static QLearning Q;
 	public static EpisodeAnalysis analyzer;
 	public static FourRoomsStateParser parser;
 	
@@ -56,7 +61,7 @@ public class FourRooms implements DomainGenerator {
 		State s = FourRooms.getCleanState();
 		
 		setAgent(s, 1, 1);
-		setGoal(s, 11, 11);
+		setGoal(s, 5, 5);
 		
 		int expMode = 3;
 		
@@ -77,16 +82,88 @@ public class FourRooms implements DomainGenerator {
 			exp.initGUI();
 		}else if(expMode == 3){
 			//Runs the simulator via text output
-			for(int i = 1; i <= 50; i++){
+			for(int i = 1; i <= 5; i++){
 				analyzer = new EpisodeAnalysis();
 				parser = new FourRoomsStateParser();
 				System.out.print("Episode " + i + ": ");
-				runSim(d, s);
+				run(d, s);
 				analyzer.writeToFile("Episode " + i + ".txt", parser);
 				setAgent(s, 1, 1);
-				setGoal(s, 11, 11);
+				setGoal(s, 5, 5);
 			}
 		}
+	}
+	
+	public static void run(Domain d, State s){
+		
+		//Variable Declaration
+		RewardFunction rf = new SingleGoalPFRF(d.getPropFunction(PFATGOAL), 10, -1.0);
+		int steps = 0;
+
+		//While the agent has not reached the goal state
+		while(!FourRooms.isTrue(s, d.getPropFunction(PFATGOAL))){
+			
+			/******Part one********/
+			//Generate the StateHashTuple
+			List<QValue> currentStateActionList = Q.getQs(s);
+			
+			//search for a match
+			currentStateActionList = Q.getQs(s);
+			
+			//Looking for the best QValue
+			Double currentQValue = -100.00;
+			GroundedAction groundAction = null;
+			for(QValue oldVal: currentStateActionList){
+				if(currentQValue <= oldVal.q){
+					currentQValue = oldVal.q;
+					groundAction = oldVal.a;
+				}
+			}
+			
+			//System.out.println("\tCurrent QValue: " + currentQValue);
+			
+			//error checking - preventing a null groundAction from triggering
+			if(groundAction == null && currentQValue == -100.00){
+				System.out.println("Fatal Error");
+				System.exit(0);
+			}
+			
+			/******Part two********/
+			Action doAction = d.getAction(groundAction.action.getName());
+			State newState = doAction.performAction(s, "");
+			
+			/*******Part Three********/
+			List<QValue> newStateActionList = Q.getQs(newState);
+			
+			Double highestQvalue = -100.00;
+			GroundedAction newGroundAction = null;
+			for(QValue newVal: newStateActionList){
+				if(highestQvalue <= newVal.q){
+					highestQvalue = newVal.q;
+					newGroundAction = newVal.a;
+				}
+			}
+			
+			if(newGroundAction == null && highestQvalue == -100.00){
+				System.out.println("Fatal Error - Part two");
+				System.exit(0);
+			}
+			
+			/**Part Four**/
+			//Update QValue
+			Double qVal = FourRooms.updateQValue(currentQValue, highestQvalue, rf.reward(s, groundAction, newState));
+			for(QValue QVal: currentStateActionList){
+				if(currentQValue == QVal.q && groundAction == QVal.a){
+					QVal.q = qVal;
+					break;
+				}
+			}
+			analyzer.recordTransitionTo(newState, groundAction, qVal);
+			s = newState;
+			steps++;
+		}
+		System.out.println("\tSteps: " + steps);
+		
 	}
 	
 	/**
@@ -295,7 +372,13 @@ public class FourRooms implements DomainGenerator {
 		DOMAIN.addPropositionalFunction(atGoal);
 		
 		RewardFunction rf = new SingleGoalPFRF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
+		TerminalFunction tf = null; //shouldn't be needed for now..
 		
+		Map<String, List<Attribute>> attributesForHashCode = new HashMap<String, List<Attribute>>();
+		attributesForHashCode.put(CLASSAGENT, DOMAIN.getObjectClass(CLASSAGENT).attributeList_);
+		Double temp = Math.random() * 12;
+		System.out.println("qInit: " + temp);
+		Q = new QLearning(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, attributesForHashCode, temp , FourRooms.LEARNINGRATE, 5);
 		return DOMAIN;
 	}
 
