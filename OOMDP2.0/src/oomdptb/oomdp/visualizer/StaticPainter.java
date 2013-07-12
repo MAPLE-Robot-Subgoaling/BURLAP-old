@@ -16,6 +16,7 @@ package oomdptb.oomdp.visualizer;
 import java.awt.Graphics2D;
 
 import oomdptb.oomdp.Domain;
+import oomdptb.oomdp.State;
 
 public abstract class StaticPainter {
 	
@@ -29,9 +30,12 @@ public abstract class StaticPainter {
 		this.domain = domain;
 	}
 	
-	/* g2: 				graphics context to which the static data should be painted
-	 * cWidth/cHeight:	dimensions of the canvas size
+	/** 
+	 * @param g2 graphics context to which the static data should be painted
+	 * @param s the state to be painted
+	 * @param cWidth the width of the canvas
+	 * @param cHeight the height of the canvas
 	 */
-	public abstract void paint(Graphics2D g2, float cWidth, float cHeight);
+	public abstract void paint(Graphics2D g2, State s, float cWidth, float cHeight);
 
 }

@@ -7,8 +7,7 @@ import java.lang.reflect.Field;
 
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.ObjectInstance;
-import oomdptb.oomdp.visualizer.ObjectPainter;
-import oomdptb.oomdp.visualizer.Visualizer;
+import oomdptb.oomdp.State;
 import oomdptb.oomdp.visualizer.*;
 
 /**
@@ -50,7 +49,7 @@ public class SokobanVisualizer {
 			super(domain);
 		}
 
-		public void paintObject(Graphics2D g2, ObjectInstance ob, float cWidth, float cHeight) {
+		public void paintObject(Graphics2D g2, State s, ObjectInstance ob, float cWidth, float cHeight) {
 			float domainXScale = (SokobanDomain.MAXX + 1) - SokobanDomain.MINX;
 			float domainYScale = (SokobanDomain.MAXY + 1) - SokobanDomain.MINY;
 			
@@ -112,7 +111,7 @@ public class SokobanVisualizer {
 			super(domain);
 		}
 
-		public void paintObject(Graphics2D g2, ObjectInstance ob, float cWidth, float cHeight) {
+		public void paintObject(Graphics2D g2, State s, ObjectInstance ob, float cWidth, float cHeight) {
 
 			//make agent gray
 			g2.setColor(Color.gray);
@@ -142,7 +141,7 @@ public class SokobanVisualizer {
 			super(domain);
 		}
 
-		public void paintObject(Graphics2D g2, ObjectInstance ob, float cWidth, float cHeight) {
+		public void paintObject(Graphics2D g2, State s, ObjectInstance ob, float cWidth, float cHeight) {
 
 			g2.setColor(Color.blue);
 
@@ -166,7 +165,7 @@ public class SokobanVisualizer {
 			super(domain);
 		}
 
-		public void paintObject(Graphics2D g2, ObjectInstance ob, float cWidth, float cHeight) {
+		public void paintObject(Graphics2D g2, State s, ObjectInstance ob, float cWidth, float cHeight) {
 
 			String color = ob.getStringValForAttribute(SokobanDomain.COLORATTNAME);
 			
