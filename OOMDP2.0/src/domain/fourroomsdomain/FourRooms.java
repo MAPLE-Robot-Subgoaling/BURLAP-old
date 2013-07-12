@@ -19,6 +19,7 @@ import oomdptb.oomdp.PropositionalFunction;
 import oomdptb.oomdp.RewardFunction;
 import oomdptb.oomdp.State;
 import oomdptb.oomdp.TerminalFunction;
+import oomdptb.oomdp.common.SinglePFTF;
 import oomdptb.oomdp.explorer.TerminalExplorer;
 import oomdptb.oomdp.explorer.VisualExplorer;
 import oomdptb.oomdp.visualizer.Visualizer;
@@ -80,17 +81,23 @@ public class FourRooms implements DomainGenerator {
 			exp.initGUI();
 		}else if(expMode == 3){
 			//Runs the simulator via text output
-			for(int i = 1; i <= 20; i++){
+			for(int i = 1; i <= 100; i++){
 				analyzer = new EpisodeAnalysis();
 				parser = new FourRoomsStateParser();
 				System.out.print("Episode " + i + ": ");
-				run(d, s);
+				//run(d, s);
+				analyzer = Q.runLearningEpisodeFrom(s);
+				System.out.println("\tSteps: " + analyzer.numTimeSteps());
 				//analyzer.writeToFile("Episode " + i + ".txt", parser);
 				setAgent(s, 1, 1);
 				setGoal(s, 11, 11);
 			}
 		}
 	}
+	
+	
+	
+	
 	
 	/**
 	 * run() - runs one episode of the Simulation
@@ -377,11 +384,11 @@ public class FourRooms implements DomainGenerator {
 		DOMAIN.addPropositionalFunction(atGoal);
 		
 		RewardFunction rf = new SingleGoalPFRF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
-		TerminalFunction tf = null; //shouldn't be needed for now..
+		TerminalFunction tf = new SinglePFTF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
 		
 		Map<String, List<Attribute>> attributesForHashCode = new HashMap<String, List<Attribute>>();
 		attributesForHashCode.put(CLASSAGENT, DOMAIN.getObjectClass(CLASSAGENT).attributeList_);
-		Q = new QLearning(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, attributesForHashCode, Math.random() * 12, FourRooms.LEARNINGRATE, 20);
+		Q = new QLearning(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, attributesForHashCode, 0.2, FourRooms.LEARNINGRATE, Integer.MAX_VALUE);
 		return DOMAIN;
 	}
 
