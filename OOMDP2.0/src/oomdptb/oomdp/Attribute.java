@@ -41,12 +41,12 @@ public class Attribute {
 
 	public String						name;				//name of the attribute
 	public AttributeType				type;				//type of values attribute holds
-	public Domain						domain;			//domain that holds this attribute
+	public Domain						domain;				//domain that holds this attribute
 	public double						lowerLim;			//lowest value for a bounded real attribute
 	public double						upperLim;			//highest value for a bounded real attribute
-	public Map <String, Integer>		discValuesHash;	//maps names of discrete values to int values 
-	public List <String>				discValues;		//list of discrete value names by their int value
-	public boolean						hidden;			//whether this value is part of the state representation or is hidden from the agent
+	public Map <String, Integer>		discValuesHash;		//maps names of discrete values to int values 
+	public List <String>				discValues;			//list of discrete value names by their int value
+	public boolean						hidden;				//whether this value is part of the state representation or is hidden from the agent
 	
 	/**
 	 * 

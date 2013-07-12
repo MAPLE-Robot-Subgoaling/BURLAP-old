@@ -62,7 +62,7 @@ public class State {
 		objectMap.put(oname, o);
 		
 		
-		if(o.getObjectClass().hidden_){
+		if(o.getObjectClass().hidden){
 			hiddenObjectInstances.add(o);
 		}
 		else{
@@ -123,7 +123,7 @@ public class State {
 			return ; //make sure we're removing something that actually exists in this state!
 		}
 		
-		if(o.getObjectClass().hidden_){
+		if(o.getObjectClass().hidden){
 			hiddenObjectInstances.remove(o);
 		}
 		else{

@@ -202,7 +202,7 @@ public class FourRooms implements DomainGenerator {
 			
 			//Generate the StateHashTuple
 			Map <String, List<Attribute>> attributesForHash = new HashMap<String, List<Attribute>>();
-			attributesForHash.put(FourRooms.CLASSAGENT, DOMAIN.getObjectClass(FourRooms.CLASSAGENT).attributeList_);
+			attributesForHash.put(FourRooms.CLASSAGENT, DOMAIN.getObjectClass(FourRooms.CLASSAGENT).attributeList);
 			StateHashTuple currentStateTuple = new StateHashTuple(s, attributesForHash);
 			
 			//Search for a match
@@ -245,7 +245,7 @@ public class FourRooms implements DomainGenerator {
 			
 			//Generate the StateHashTuple for the new state
 			Map <String, List<Attribute>> attributesForHashNew = new HashMap<String, List<Attribute>>();
-			attributesForHashNew.put(FourRooms.CLASSAGENT, DOMAIN.getObjectClass(FourRooms.CLASSAGENT).attributeList_);
+			attributesForHashNew.put(FourRooms.CLASSAGENT, DOMAIN.getObjectClass(FourRooms.CLASSAGENT).attributeList);
 			StateHashTuple newStateTuple = new StateHashTuple(newState, attributesForHashNew);
 			List<QAction> newStateActionList = null;
 			
@@ -387,7 +387,7 @@ public class FourRooms implements DomainGenerator {
 		TerminalFunction tf = new SinglePFTF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
 		
 		Map<String, List<Attribute>> attributesForHashCode = new HashMap<String, List<Attribute>>();
-		attributesForHashCode.put(CLASSAGENT, DOMAIN.getObjectClass(CLASSAGENT).attributeList_);
+		attributesForHashCode.put(CLASSAGENT, DOMAIN.getObjectClass(CLASSAGENT).attributeList);
 		Q = new QLearning(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, attributesForHashCode, 0.2, FourRooms.LEARNINGRATE, Integer.MAX_VALUE);
 		return DOMAIN;
 	}

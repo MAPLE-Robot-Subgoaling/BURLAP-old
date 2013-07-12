@@ -128,7 +128,7 @@ public class StateHashTuple {
 	
 	private List <Attribute> getAttributesForClass(ObjectClass oc){
 		if(attributesForHashCode != null){
-			List <Attribute> selectedAtts = attributesForHashCode.get(oc.name_);
+			List <Attribute> selectedAtts = attributesForHashCode.get(oc.name);
 			if(selectedAtts == null){
 				//no definition at all for this class, so return empty list
 				return new ArrayList<Attribute>();
@@ -137,7 +137,7 @@ public class StateHashTuple {
 		}
 		
 		//then default to using all attributes for all object classes
-		return oc.attributeList_;
+		return oc.attributeList;
 	}
 	
 	private List <String> getOrderedClasses(){
