@@ -24,16 +24,16 @@ public class VisualExplorer extends JFrame{
 	private static final long serialVersionUID = 1L;
 	
 	
-	private Domain									domain_;
-	private Map <String, String>					keyActionMap_;
-	private Map <String, SpecialExplorerAction>		keySpecialMap_;
-	State											baseState_;
-	State											curState_;
+	private Domain									domain;
+	private Map <String, String>					keyActionMap;
+	private Map <String, SpecialExplorerAction>		keySpecialMap;
+	State											baseState;
+	State											curState;
 	
-	Visualizer 										painter_;
-	TextArea										propViewer_;
-	int												cWidth_;
-	int												cHeight_;
+	Visualizer 										painter;
+	TextArea										propViewer;
+	int												cWidth;
+	int												cHeight;
 	
 	int												numSteps;
 	
@@ -49,46 +49,46 @@ public class VisualExplorer extends JFrame{
 	
 	public void init(Domain domain, Visualizer painter, State baseState, int w, int h){
 		
-		domain_ = domain;
-		baseState_ = baseState;
-		curState_ = baseState.copy();
-		painter_ = painter;
-		keyActionMap_ = new HashMap <String, String>();
-		keySpecialMap_ = new HashMap <String, SpecialExplorerAction>();
+		this.domain = domain;
+		this.baseState = baseState;
+		this.curState = baseState.copy();
+		this.painter = painter;
+		this.keyActionMap = new HashMap <String, String>();
+		this.keySpecialMap = new HashMap <String, SpecialExplorerAction>();
 		
-		StateResetSpecialAction reset = new StateResetSpecialAction(baseState_);
+		StateResetSpecialAction reset = new StateResetSpecialAction(this.baseState);
 		this.addSpecialAction("`", reset);
 		
-		cWidth_ = w;
-		cHeight_ = h;
+		this.cWidth = w;
+		this.cHeight = h;
 		
-		propViewer_ = new TextArea();
-		propViewer_.setEditable(false);
+		this.propViewer = new TextArea();
+		this.propViewer.setEditable(false);
 		
-		numSteps = 0;
+		this.numSteps = 0;
 		
 	}
 	
 	public StateResetSpecialAction getResetSpecialAction(){
-		return (StateResetSpecialAction)keySpecialMap_.get("`");
+		return (StateResetSpecialAction)keySpecialMap.get("`");
 	}
 	
 	public void addKeyAction(String key, String action){
-		keyActionMap_.put(key, action);
+		keyActionMap.put(key, action);
 	}
 	
 	public void addSpecialAction(String key, SpecialExplorerAction action){
-		keySpecialMap_.put(key, action);
+		keySpecialMap.put(key, action);
 	}
 	
 	public void initGUI(){
 		
-		painter_.setPreferredSize(new Dimension(cWidth_, cHeight_));
-		propViewer_.setPreferredSize(new Dimension(cWidth_, 100));
+		painter.setPreferredSize(new Dimension(cWidth, cHeight));
+		propViewer.setPreferredSize(new Dimension(cWidth, 100));
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		getContentPane().add(propViewer_, BorderLayout.SOUTH);
-		getContentPane().add(painter_, BorderLayout.CENTER);
+		getContentPane().add(propViewer, BorderLayout.SOUTH);
+		getContentPane().add(painter, BorderLayout.CENTER);
 	
 		
 		addKeyListener(new KeyListener(){
@@ -103,7 +103,7 @@ public class VisualExplorer extends JFrame{
 		});
 		
 		//also add key listener to the painter in case the focus is changed
-		painter_.addKeyListener(new KeyListener(){
+		painter.addKeyListener(new KeyListener(){
 			public void keyPressed(KeyEvent e) {
 			}
 			public void keyReleased(KeyEvent e) {	
@@ -114,7 +114,7 @@ public class VisualExplorer extends JFrame{
 
 		});
 		
-		propViewer_.addKeyListener(new KeyListener(){
+		propViewer.addKeyListener(new KeyListener(){
 			public void keyPressed(KeyEvent e) {
 			}
 			public void keyReleased(KeyEvent e) {	
@@ -125,7 +125,7 @@ public class VisualExplorer extends JFrame{
 
 		});
 		
-		painter_.updateState(baseState_);
+		painter.updateState(baseState);
 		
 		pack();
 		setVisible(true);
@@ -137,7 +137,7 @@ public class VisualExplorer extends JFrame{
 		String key = String.valueOf(e.getKeyChar());
 
 		//otherwise this could be an action, see if there is an action mapping
-		String mappedAction = keyActionMap_.get(key);
+		String mappedAction = keyActionMap.get(key);
 		if(mappedAction != null){
 			
 			//then we have a action for this key
@@ -157,21 +157,21 @@ public class VisualExplorer extends JFrame{
 				params = new String[0];
 			}
 			
-			Action action = domain_.getAction(actionName);
+			Action action = domain.getAction(actionName);
 			if(action == null){
 				System.out.println("Unknown action: " + actionName);
 			}
 			else{
-				curState_ = action.performAction(curState_, params);
+				curState = action.performAction(curState, params);
 				numSteps++;
 			}
 			
 		}
 		else{
 			
-			SpecialExplorerAction sea = keySpecialMap_.get(key);
+			SpecialExplorerAction sea = keySpecialMap.get(key);
 			if(sea != null){
-				curState_ = sea.applySpecialAction(curState_);
+				curState = sea.applySpecialAction(curState);
 			}
 			if(sea instanceof StateResetSpecialAction){
 				System.out.println("Number of steps before reset: " + numSteps);
@@ -181,8 +181,8 @@ public class VisualExplorer extends JFrame{
 				
 		
 		//now paint the screen with the new state
-		painter_.updateState(curState_);
-		this.updatePropTextArea(curState_);
+		painter.updateState(curState);
+		this.updatePropTextArea(curState);
 		//System.out.println(curState_.getStateDescription());
 		//System.out.println("-------------------------------------------");
 		
@@ -193,7 +193,7 @@ public class VisualExplorer extends JFrame{
 		
 		StringBuffer buf = new StringBuffer();
 		
-		List <PropositionalFunction> props = domain_.getPropFunctions();
+		List <PropositionalFunction> props = domain.getPropFunctions();
 		for(PropositionalFunction pf : props){
 			List<GroundedProp> gps = s.getAllGroundedPropsFor(pf);
 			for(GroundedProp gp : gps){
@@ -202,7 +202,7 @@ public class VisualExplorer extends JFrame{
 				}
 			}
 		}
-		propViewer_.setText(buf.toString());
+		propViewer.setText(buf.toString());
 		
 		
 	}
