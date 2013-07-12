@@ -60,7 +60,7 @@ public class FourRooms implements DomainGenerator {
 		Domain d = frd.generateDomain();
 		State s = FourRooms.getCleanState();
 		setAgent(s, 1, 1);
-		setGoal(s, 5, 5);
+		setGoal(s, 11, 11);
 		int expMode = 3;
 		
 		if(expMode == 0){	
@@ -84,10 +84,10 @@ public class FourRooms implements DomainGenerator {
 				analyzer = new EpisodeAnalysis();
 				parser = new FourRoomsStateParser();
 				System.out.print("Episode " + i + ": ");
-				runSim(d, s);
-				analyzer.writeToFile("Episode " + i + ".txt", parser);
+				run(d, s);
+				//analyzer.writeToFile("Episode " + i + ".txt", parser);
 				setAgent(s, 1, 1);
-				setGoal(s, 5, 5);
+				setGoal(s, 11, 11);
 			}
 		}
 	}
