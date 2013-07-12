@@ -76,37 +76,6 @@ public abstract class OOMDPPlanner {
 	}
 	
 	
-	/*
-	public void setAttributesForHashCode(Map<String, List<Attribute>> attributesForHashCode){
-		this.attributesForHashCode = attributesForHashCode;
-	}
-	
-	public void setAttributesForClass(String classname, List <Attribute> atts){
-		if(attributesForHashCode == null){
-			attributesForHashCode = new HashMap<String, List<Attribute>>();
-		}
-		attributesForHashCode.put(classname, atts);
-	}
-	
-	public void addAttributeForClass(String classname, Attribute att){
-		if(attributesForHashCode == null){
-			attributesForHashCode = new HashMap<String, List<Attribute>>();
-		}
-		List <Attribute> atts = attributesForHashCode.get(classname);
-		if(atts == null){
-			atts = new ArrayList<Attribute>();
-			attributesForHashCode.put(classname, atts);
-		}
-		//check if already there or not
-		for(Attribute attInList : atts){
-			if(attInList.name.equals(att.name)){
-				return ;
-			}
-		}
-		//if reached here then this att is not already added
-		atts.add(att);
-	}
-	*/
 	
 	public TerminalFunction getTF(){
 		return tf;
