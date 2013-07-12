@@ -7,9 +7,10 @@ import java.util.Map;
 import oomdptb.behavior.EpisodeAnalysis;
 import oomdptb.behavior.Policy;
 import oomdptb.behavior.planning.ActionTransitions;
-import oomdptb.behavior.planning.StateHashTuple;
 import oomdptb.behavior.planning.ValueFunctionPlanner;
 import oomdptb.behavior.planning.commonpolicies.BoltzmannQPolicy;
+import oomdptb.behavior.planning.statehashing.StateHashFactory;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.Domain;
@@ -24,9 +25,9 @@ public class RTDP extends ValueFunctionPlanner {
 	protected int						maxDepth;
 	
 	
-	public RTDP(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Map <String, List<Attribute>> attributesForHashCode, int numPasses, int maxDepth){
+	public RTDP(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, int numPasses, int maxDepth){
 		
-		this.VFPInit(domain, rf, tf, gamma, attributesForHashCode);
+		this.VFPInit(domain, rf, tf, gamma, hashingFactory);
 		
 		this.numPasses = numPasses;
 		this.maxDepth = maxDepth;

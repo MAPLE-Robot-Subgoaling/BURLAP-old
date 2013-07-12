@@ -7,6 +7,8 @@ import oomdptb.behavior.QValue;
 import oomdptb.behavior.learning.tdmethods.QLearning;
 import oomdptb.behavior.learning.tdmethods.QLearningStateNode;
 import oomdptb.behavior.planning.deterministic.SingleGoalPFRF;
+import oomdptb.behavior.planning.statehashing.DiscreteStateHashFactory;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.Domain;
@@ -191,6 +193,8 @@ public class FourRooms implements DomainGenerator {
 		//Variable Declaration
 		List<QAction> currStateActionList = null;
 		int steps = 0;
+		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
+		hashFactory.setAttributesForClass(CLASSAGENT, DOMAIN.getObjectClass(CLASSAGENT).attributeList);
 		
 		//Reward Function Implementation...
 		RewardFunction rf = new SingleGoalPFRF(d.getPropFunction(PFATGOAL), 10.0, -1.0);
@@ -203,7 +207,7 @@ public class FourRooms implements DomainGenerator {
 			//Generate the StateHashTuple
 			Map <String, List<Attribute>> attributesForHash = new HashMap<String, List<Attribute>>();
 			attributesForHash.put(FourRooms.CLASSAGENT, DOMAIN.getObjectClass(FourRooms.CLASSAGENT).attributeList);
-			StateHashTuple currentStateTuple = new StateHashTuple(s, attributesForHash);
+			StateHashTuple currentStateTuple = hashFactory.hashState(s);
 			
 			//Search for a match
 			currStateActionList = qVals.get(currentStateTuple);
@@ -246,7 +250,7 @@ public class FourRooms implements DomainGenerator {
 			//Generate the StateHashTuple for the new state
 			Map <String, List<Attribute>> attributesForHashNew = new HashMap<String, List<Attribute>>();
 			attributesForHashNew.put(FourRooms.CLASSAGENT, DOMAIN.getObjectClass(FourRooms.CLASSAGENT).attributeList);
-			StateHashTuple newStateTuple = new StateHashTuple(newState, attributesForHashNew);
+			StateHashTuple newStateTuple = hashFactory.hashState(newState);
 			List<QAction> newStateActionList = null;
 			
 			//Search for a match
@@ -386,9 +390,10 @@ public class FourRooms implements DomainGenerator {
 		RewardFunction rf = new SingleGoalPFRF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
 		TerminalFunction tf = new SinglePFTF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
 		
-		Map<String, List<Attribute>> attributesForHashCode = new HashMap<String, List<Attribute>>();
-		attributesForHashCode.put(CLASSAGENT, DOMAIN.getObjectClass(CLASSAGENT).attributeList);
-		Q = new QLearning(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, attributesForHashCode, 0.2, FourRooms.LEARNINGRATE, Integer.MAX_VALUE);
+
+		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
+		hashFactory.setAttributesForClass(CLASSAGENT, DOMAIN.getObjectClass(CLASSAGENT).attributeList);
+		Q = new QLearning(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, hashFactory, 0.2, FourRooms.LEARNINGRATE, Integer.MAX_VALUE);
 		return DOMAIN;
 	}
 

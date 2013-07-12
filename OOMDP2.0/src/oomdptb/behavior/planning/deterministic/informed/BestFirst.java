@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import oomdptb.behavior.planning.deterministic.DeterministicPlanner;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.datastructures.HashIndexedHeap;
-import oomdptb.behavior.planning.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.GroundedAction;

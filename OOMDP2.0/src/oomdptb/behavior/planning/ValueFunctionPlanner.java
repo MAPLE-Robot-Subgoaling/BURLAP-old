@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import oomdptb.behavior.QValue;
+import oomdptb.behavior.planning.statehashing.StateHashFactory;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.Domain;
@@ -27,9 +29,9 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 	
 	
 	
-	public void VFPInit(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Map <String, List<Attribute>> attributesForHashCode){
+	public void VFPInit(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory){
 		
-		this.PlannerInit(domain, rf, tf, gamma, attributesForHashCode);
+		this.PlannerInit(domain, rf, tf, gamma, hashingFactory);
 		
 		this.transitionDynamics = new HashMap<StateHashTuple, List<ActionTransitions>>();
 		this.valueFunction = new HashMap<StateHashTuple, Double>();
@@ -127,7 +129,7 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 			//now add transitions
 			allTransitions = new ArrayList<ActionTransitions>(gas.size());
 			for(GroundedAction ga : gas){
-				ActionTransitions at = new ActionTransitions(sh.s, ga, attributesForHashCode);
+				ActionTransitions at = new ActionTransitions(sh.s, ga, hashingFactory);
 				allTransitions.add(at);
 			}
 			

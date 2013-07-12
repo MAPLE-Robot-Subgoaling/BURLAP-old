@@ -12,8 +12,9 @@ import oomdptb.behavior.Policy;
 import oomdptb.behavior.QValue;
 import oomdptb.behavior.planning.OOMDPPlanner;
 import oomdptb.behavior.planning.QComputablePlanner;
-import oomdptb.behavior.planning.StateHashTuple;
 import oomdptb.behavior.planning.commonpolicies.EpsilonGreedy;
+import oomdptb.behavior.planning.statehashing.StateHashFactory;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
@@ -41,21 +42,21 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	
 	
 	
-	public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Map <String, List<Attribute>> attributesForHashCode, 
+	public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, 
 			double qInit, double learningRate, int maxEpisodeSize) {
-		this.QLInit(domain, rf, tf, gamma, attributesForHashCode, qInit, learningRate, new EpsilonGreedy(this, 0.1), maxEpisodeSize);
+		this.QLInit(domain, rf, tf, gamma, hashingFactory, qInit, learningRate, new EpsilonGreedy(this, 0.1), maxEpisodeSize);
 	}
 	
-	public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Map <String, List<Attribute>> attributesForHashCode, 
+	public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, 
 			double qInit, double learningRate, Policy learningPolicy, int maxEpisodeSize) {
-		this.QLInit(domain, rf, tf, gamma, attributesForHashCode, qInit, learningRate, learningPolicy, maxEpisodeSize);
+		this.QLInit(domain, rf, tf, gamma, hashingFactory, qInit, learningRate, learningPolicy, maxEpisodeSize);
 	}
 	
 	
-	public void QLInit(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Map <String, List<Attribute>> attributesForHashCode, 
+	public void QLInit(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, 
 			double qInit, double learningRate, Policy learningPolicy, int maxEpisodeSize){
 		
-		this.PlannerInit(domain, rf, tf, gamma, attributesForHashCode);
+		this.PlannerInit(domain, rf, tf, gamma, hashingFactory);
 		this.qIndex = new HashMap<StateHashTuple, QLearningStateNode>();
 		this.learningRate = learningRate;
 		this.learningPolicy = learningPolicy;

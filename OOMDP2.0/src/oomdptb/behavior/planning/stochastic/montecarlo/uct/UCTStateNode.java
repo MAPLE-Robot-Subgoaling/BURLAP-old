@@ -3,8 +3,8 @@ package oomdptb.behavior.planning.stochastic.montecarlo.uct;
 import java.util.ArrayList;
 import java.util.List;
 
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.behavior.planning.stochastic.montecarlo.uct.UCTActionNode.UCTActionConstructor;
-import oomdptb.behavior.planning.StateHashTuple;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.GroundedAction;
 

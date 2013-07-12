@@ -7,7 +7,8 @@ import oomdptb.behavior.planning.StateConditionTest;
 import oomdptb.behavior.planning.deterministic.informed.Heuristic;
 import oomdptb.behavior.planning.deterministic.informed.PrioritizedSearchNode;
 import oomdptb.behavior.planning.deterministic.informed.astar.AStar;
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.planning.statehashing.StateHashFactory;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
@@ -17,8 +18,8 @@ public class StaticWeightedAStar extends AStar {
 
 	protected double			epsilonP1;
 	
-	public StaticWeightedAStar(Domain domain, RewardFunction rf, StateConditionTest gc, Map<String, List<Attribute>> attributesForHashCode, Heuristic heuristic, double epsilon) {
-		super(domain, rf, gc, attributesForHashCode, heuristic);
+	public StaticWeightedAStar(Domain domain, RewardFunction rf, StateConditionTest gc, StateHashFactory hashingFactory, Heuristic heuristic, double epsilon) {
+		super(domain, rf, gc, hashingFactory, heuristic);
 		this.epsilonP1 = 1. + epsilon;
 	}
 	

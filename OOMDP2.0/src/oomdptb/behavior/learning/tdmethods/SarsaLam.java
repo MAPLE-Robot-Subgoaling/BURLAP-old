@@ -7,7 +7,8 @@ import java.util.Map;
 import oomdptb.behavior.options.Option;
 import oomdptb.behavior.EpisodeAnalysis;
 import oomdptb.behavior.Policy;
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.planning.statehashing.StateHashFactory;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.behavior.QValue;
 import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.Domain;
@@ -22,18 +23,18 @@ public class SarsaLam extends QLearning {
 	protected double				lambda;
 	
 	
-	public SarsaLam(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Map<String, List<Attribute>> attributesForHashCode, 
+	public SarsaLam(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, 
 			double qInit, double learningRate, int maxEpisodeSize, double lamda) {
 		
-		super(domain, rf, tf, gamma, attributesForHashCode, qInit, learningRate, maxEpisodeSize);
+		super(domain, rf, tf, gamma, hashingFactory, qInit, learningRate, maxEpisodeSize);
 		this.sarsalamInit(lamda);
 		
 	}
 	
-	public SarsaLam(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Map<String, List<Attribute>> attributesForHashCode, 
+	public SarsaLam(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, 
 			double qInit, double learningRate, Policy learningPolicy, int maxEpisodeSize, double lamda) {
 		
-		super(domain, rf, tf, gamma, attributesForHashCode, qInit, learningRate, learningPolicy, maxEpisodeSize);
+		super(domain, rf, tf, gamma, hashingFactory, qInit, learningRate, learningPolicy, maxEpisodeSize);
 		this.sarsalamInit(lamda);
 		
 	}

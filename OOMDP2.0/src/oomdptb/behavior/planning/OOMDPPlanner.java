@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import oomdptb.behavior.options.Option;
+import oomdptb.behavior.planning.statehashing.StateHashFactory;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Attribute;
@@ -18,7 +20,7 @@ import oomdptb.oomdp.TerminalFunction;
 public abstract class OOMDPPlanner {
 
 	protected Domain												domain;
-	protected Map <String, List<Attribute>>							attributesForHashCode;
+	protected StateHashFactory										hashingFactory;
 	protected RewardFunction										rf;
 	protected TerminalFunction										tf;
 	protected double												gamma;
@@ -34,13 +36,13 @@ public abstract class OOMDPPlanner {
 	
 	public abstract void planFromState(State initialState);
 	
-	public void PlannerInit(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Map <String, List<Attribute>> attributesForHashCode){
+	public void PlannerInit(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory){
 		
 		this.domain = domain;
 		this.rf = rf;
 		this.tf = tf;
 		this.gamma = gamma;
-		this.attributesForHashCode = attributesForHashCode;
+		this.hashingFactory = hashingFactory;
 		
 		mapToStateIndex = new HashMap<StateHashTuple, StateHashTuple>();
 		
@@ -74,6 +76,7 @@ public abstract class OOMDPPlanner {
 	}
 	
 	
+	/*
 	public void setAttributesForHashCode(Map<String, List<Attribute>> attributesForHashCode){
 		this.attributesForHashCode = attributesForHashCode;
 	}
@@ -103,7 +106,7 @@ public abstract class OOMDPPlanner {
 		//if reached here then this att is not already added
 		atts.add(att);
 	}
-	
+	*/
 	
 	public TerminalFunction getTF(){
 		return tf;
@@ -135,7 +138,7 @@ public abstract class OOMDPPlanner {
 	
 	
 	public StateHashTuple stateHash(State s){
-		return new StateHashTuple(s, attributesForHashCode);
+		return hashingFactory.hashState(s);
 	}
 	
 	

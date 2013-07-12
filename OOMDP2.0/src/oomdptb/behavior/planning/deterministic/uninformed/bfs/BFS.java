@@ -10,7 +10,8 @@ import java.util.Set;
 import oomdptb.behavior.planning.StateConditionTest;
 import oomdptb.behavior.planning.deterministic.DeterministicPlanner;
 import oomdptb.behavior.planning.deterministic.SearchNode;
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.planning.statehashing.StateHashFactory;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Attribute;
@@ -21,8 +22,8 @@ import oomdptb.oomdp.common.UniformCostRF;
 
 public class BFS extends DeterministicPlanner {
 
-	public BFS(Domain domain, StateConditionTest gc, Map <String, List<Attribute>> attributesForHashCode){
-		this.deterministicPlannerInit(domain, new UniformCostRF(), gc, attributesForHashCode);
+	public BFS(Domain domain, StateConditionTest gc, StateHashFactory hashingFactory){
+		this.deterministicPlannerInit(domain, new UniformCostRF(), gc, hashingFactory);
 	}
 	
 	

@@ -3,6 +3,8 @@ package oomdptb.behavior.planning;
 import java.util.List;
 import java.util.Map;
 
+import oomdptb.behavior.planning.statehashing.StateHashFactory;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.State;
 import oomdptb.oomdp.TransitionProbability;
@@ -17,13 +19,13 @@ public class HashedTransitionProbability {
 		this.p = p;
 	}
 	
-	public HashedTransitionProbability(State s, double p, Map <String, List<Attribute>> attsForHash){
-		this.sh = new StateHashTuple(s, attsForHash);
+	public HashedTransitionProbability(State s, double p, StateHashFactory hashingFactory){
+		this.sh = hashingFactory.hashState(s);
 		this.p = p;
 	}
 	
-	public HashedTransitionProbability(TransitionProbability tp, Map <String, List<Attribute>> attsForHash){
-		this.sh = new StateHashTuple(tp.s, attsForHash);
+	public HashedTransitionProbability(TransitionProbability tp, StateHashFactory hashingFactory){
+		this.sh = hashingFactory.hashState(tp.s);
 		this.p = tp.p;
 	}
 	

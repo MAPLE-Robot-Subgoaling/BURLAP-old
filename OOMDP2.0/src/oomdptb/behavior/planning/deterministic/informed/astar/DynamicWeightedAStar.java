@@ -9,8 +9,9 @@ import oomdptb.behavior.planning.StateConditionTest;
 import oomdptb.behavior.planning.deterministic.informed.Heuristic;
 import oomdptb.behavior.planning.deterministic.informed.PrioritizedSearchNode;
 import oomdptb.behavior.planning.deterministic.informed.astar.AStar;
+import oomdptb.behavior.planning.statehashing.StateHashFactory;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.datastructures.HashIndexedHeap;
-import oomdptb.behavior.planning.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Attribute;
@@ -26,8 +27,8 @@ public class DynamicWeightedAStar extends AStar {
 	protected Map <StateHashTuple, Integer>					depthMap;
 	protected int											lastComputedDepth;
 	
-	public DynamicWeightedAStar(Domain domain, RewardFunction rf, StateConditionTest gc, Map<String, List<Attribute>> attributesForHashCode,Heuristic heuristic, double epsilon, int expectedDepth) {
-		super(domain, rf, gc, attributesForHashCode, heuristic);
+	public DynamicWeightedAStar(Domain domain, RewardFunction rf, StateConditionTest gc, StateHashFactory hashingFactory, Heuristic heuristic, double epsilon, int expectedDepth) {
+		super(domain, rf, gc, hashingFactory, heuristic);
 		this.epsilon = epsilon;
 		this.expectedDepth = expectedDepth;
 	}

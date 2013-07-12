@@ -7,7 +7,8 @@ import oomdptb.behavior.planning.StateConditionTest;
 import oomdptb.behavior.planning.deterministic.informed.Heuristic;
 import oomdptb.behavior.planning.deterministic.informed.PrioritizedSearchNode;
 import oomdptb.behavior.planning.deterministic.informed.astar.AStar;
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.planning.statehashing.StateHashFactory;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
@@ -19,8 +20,8 @@ public class WeightedGreedy extends AStar {
 	protected double costWeight;
 	
 
-	public WeightedGreedy(Domain domain, RewardFunction rf, StateConditionTest gc, Map<String, List<Attribute>> attributesForHashCode, Heuristic heuristic, double costWeight) {
-		super(domain, rf, gc, attributesForHashCode, heuristic);
+	public WeightedGreedy(Domain domain, RewardFunction rf, StateConditionTest gc, StateHashFactory hashingFactory, Heuristic heuristic, double costWeight) {
+		super(domain, rf, gc, hashingFactory, heuristic);
 		this.costWeight = costWeight;
 	}
 	

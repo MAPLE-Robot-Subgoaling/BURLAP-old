@@ -10,7 +10,8 @@ import java.util.Set;
 import oomdptb.behavior.planning.StateConditionTest;
 import oomdptb.behavior.planning.deterministic.DeterministicPlanner;
 import oomdptb.behavior.planning.deterministic.SearchNode;
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.planning.statehashing.StateHashFactory;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.debugtools.RandomFactory;
 import oomdptb.oomdp.Action;
@@ -31,13 +32,13 @@ public class DFS extends DeterministicPlanner {
 	protected int				numVisted;
 	
 	
-	public DFS(Domain domain, RewardFunction rf, StateConditionTest gc, Map <String, List<Attribute>> attributesForHashCode, int maxDepth, boolean maintainClosed, boolean optionsFirst){
-		this.DFSInit(domain, rf, gc, attributesForHashCode, maxDepth, maintainClosed, optionsFirst);
+	public DFS(Domain domain, RewardFunction rf, StateConditionTest gc, StateHashFactory hashingFactory, int maxDepth, boolean maintainClosed, boolean optionsFirst){
+		this.DFSInit(domain, rf, gc, hashingFactory, maxDepth, maintainClosed, optionsFirst);
 	}
 	
 	
-	protected void DFSInit(Domain domain, RewardFunction rf, StateConditionTest gc, Map <String, List<Attribute>> attributesForHashCode, int maxDepth, boolean maintainClosed, boolean optionsFirst){
-		this.deterministicPlannerInit(domain, rf, gc, attributesForHashCode);
+	protected void DFSInit(Domain domain, RewardFunction rf, StateConditionTest gc, StateHashFactory hashingFactory, int maxDepth, boolean maintainClosed, boolean optionsFirst){
+		this.deterministicPlannerInit(domain, rf, gc, hashingFactory);
 		this.maxDepth = maxDepth;
 		this.maintainClosed = maintainClosed;
 		if(optionsFirst){

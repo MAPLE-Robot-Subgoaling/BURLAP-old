@@ -10,7 +10,8 @@ import java.util.Set;
 
 import oomdptb.behavior.planning.StateConditionTest;
 import oomdptb.behavior.planning.OOMDPPlanner;
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.planning.statehashing.StateHashFactory;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
@@ -30,9 +31,9 @@ public abstract class DeterministicPlanner extends OOMDPPlanner{
 	
 	
 	
-	public void deterministicPlannerInit(Domain domain, RewardFunction rf, StateConditionTest gc, Map <String, List<Attribute>> attributesForHashCode){
+	public void deterministicPlannerInit(Domain domain, RewardFunction rf, StateConditionTest gc, StateHashFactory hashingFactory){
 		
-		this.PlannerInit(domain, rf, null, 1., attributesForHashCode); //goal condition doubles as termination function for detemrinistic planners 
+		this.PlannerInit(domain, rf, null, 1., hashingFactory); //goal condition doubles as termination function for detemrinistic planners 
 		this.gc = gc;
 		this.internalPolicy = new HashMap<StateHashTuple, GroundedAction>();
 	

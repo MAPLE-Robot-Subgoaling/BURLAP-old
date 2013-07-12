@@ -3,7 +3,7 @@ package oomdptb.behavior.planning.deterministic.informed;
 import java.util.Comparator;
 
 import oomdptb.behavior.planning.deterministic.SearchNode;
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.oomdp.GroundedAction;
 
 public class PrioritizedSearchNode extends SearchNode {

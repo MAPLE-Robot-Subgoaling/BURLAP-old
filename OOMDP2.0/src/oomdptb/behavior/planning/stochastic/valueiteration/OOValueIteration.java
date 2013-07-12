@@ -9,8 +9,9 @@ import java.util.Set;
 
 import oomdptb.behavior.planning.ActionTransitions;
 import oomdptb.behavior.planning.HashedTransitionProbability;
-import oomdptb.behavior.planning.StateHashTuple;
 import oomdptb.behavior.planning.ValueFunctionPlanner;
+import oomdptb.behavior.planning.statehashing.StateHashFactory;
+import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Attribute;
@@ -28,9 +29,9 @@ public class OOValueIteration extends ValueFunctionPlanner{
 	
 	
 	
-	public OOValueIteration(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Map <String, List<Attribute>> attributesForHashCode, double minDelta, int maxPasses){
+	public OOValueIteration(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, double minDelta, int maxPasses){
 		
-		this.VFPInit(domain, rf, tf, gamma, attributesForHashCode);
+		this.VFPInit(domain, rf, tf, gamma, hashingFactory);
 		
 		this.minDelta = minDelta;
 		this.maxPasses = maxPasses;
@@ -130,7 +131,7 @@ public class OOValueIteration extends ValueFunctionPlanner{
 			//then get the transition dynamics for each action and queue up new states
 			List <ActionTransitions> transitions = new ArrayList<ActionTransitions>();
 			for(GroundedAction ga : gas){
-				ActionTransitions at = new ActionTransitions(sh.s, ga, attributesForHashCode);
+				ActionTransitions at = new ActionTransitions(sh.s, ga, hashingFactory);
 				transitions.add(at);
 				for(HashedTransitionProbability tp : at.transitions){
 					StateHashTuple tsh = tp.sh;
