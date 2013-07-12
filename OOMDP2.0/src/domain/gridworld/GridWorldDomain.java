@@ -269,6 +269,25 @@ public class GridWorldDomain implements DomainGenerator {
 	}
 	
 	/**
+	 * WIll return a state object with a single agent object and n location objects
+	 * @param d the domain object that is used to specify the min/max dimensions
+	 * @param n the number of locaiton objects
+	 * @return a state object with a single agent object and a single location object
+	 */
+	public static State getOneAgentNLocationState(Domain d, int n){
+		
+		State s = new State();
+		
+		for(int i = 0; i < n; i++){
+			s.addObject(new ObjectInstance(d.getObjectClass(CLASSLOCATION), CLASSLOCATION+i));
+		}
+		s.addObject(new ObjectInstance(d.getObjectClass(CLASSAGENT), CLASSAGENT+0));
+		
+		return s;
+	}
+	
+	
+	/**
 	 * Sets the first agent object in s to the specified x and y position.
 	 * @param s the state with the agent whose position to set
 	 * @param x the x position of the agent
