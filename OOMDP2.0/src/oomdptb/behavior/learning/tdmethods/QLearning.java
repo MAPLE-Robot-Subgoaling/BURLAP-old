@@ -42,6 +42,12 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	
 	
 	
+	
+	public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, 
+			double qInit, double learningRate) {
+		this.QLInit(domain, rf, tf, gamma, hashingFactory, qInit, learningRate, new EpsilonGreedy(this, 0.1), Integer.MAX_VALUE);
+	}
+	
 	public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, 
 			double qInit, double learningRate, int maxEpisodeSize) {
 		this.QLInit(domain, rf, tf, gamma, hashingFactory, qInit, learningRate, new EpsilonGreedy(this, 0.1), maxEpisodeSize);
@@ -61,6 +67,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 		this.learningRate = learningRate;
 		this.learningPolicy = learningPolicy;
 		this.maxEpisodeSize = maxEpisodeSize;
+		this.qInit = qInit;
 		
 		numEpisodesToStore = 1;
 		episodeHistory = new LinkedList<EpisodeAnalysis>();
