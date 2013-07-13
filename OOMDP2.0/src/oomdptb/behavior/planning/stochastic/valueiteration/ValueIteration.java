@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import oomdptb.behavior.planning.ActionTransitions;
@@ -14,14 +13,13 @@ import oomdptb.behavior.planning.statehashing.StateHashFactory;
 import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.oomdp.Action;
-import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.RewardFunction;
 import oomdptb.oomdp.State;
 import oomdptb.oomdp.TerminalFunction;
 
-public class OOValueIteration extends ValueFunctionPlanner{
+public class ValueIteration extends ValueFunctionPlanner{
 
 	
 	protected double												minDelta;
@@ -29,7 +27,7 @@ public class OOValueIteration extends ValueFunctionPlanner{
 	
 	
 	
-	public OOValueIteration(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, double minDelta, int maxPasses){
+	public ValueIteration(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, double minDelta, int maxPasses){
 		
 		this.VFPInit(domain, rf, tf, gamma, hashingFactory);
 		
@@ -59,7 +57,10 @@ public class OOValueIteration extends ValueFunctionPlanner{
 			for(StateHashTuple sh : states){
 				
 				if(tf.isTerminal(sh.s)){
-					//no need to process this state; always zero because it is terminal and agent cannot behave here
+					//no need to compute this state; always zero because it is terminal and agent cannot behave here
+					valueFunction.put(sh, 0.);
+					continue;
+					
 				}
 				
 				Double V = valueFunction.get(sh);

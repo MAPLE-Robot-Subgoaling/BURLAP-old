@@ -24,9 +24,9 @@ public class LimitedMemoryDFS extends DFS {
 	
 	
 	
-	public LimitedMemoryDFS(Domain domain, RewardFunction rf, StateConditionTest gc, StateHashFactory hashingFactory, int maxDepth, 
+	public LimitedMemoryDFS(Domain domain, StateConditionTest gc, StateHashFactory hashingFactory, int maxDepth, 
 			boolean maintainClosed, boolean optionsFirst, int memorySize) {
-		super(domain, rf, gc, hashingFactory, maxDepth, maintainClosed,
+		super(domain, gc, hashingFactory, maxDepth, maintainClosed,
 				optionsFirst);
 		
 		this.memorySize = memorySize;

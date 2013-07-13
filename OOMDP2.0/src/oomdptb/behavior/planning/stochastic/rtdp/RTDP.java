@@ -79,7 +79,8 @@ public class RTDP extends ValueFunctionPlanner {
 			
 			
 			if(tf.isTerminal(sh.s)){
-				//no need to process this state; always zero because it is terminal and agent cannot behave here
+				//no need to compute this state; always zero because it is terminal and agent cannot behave here
+				valueFunction.put(sh, 0.);
 				continue;
 			}
 			

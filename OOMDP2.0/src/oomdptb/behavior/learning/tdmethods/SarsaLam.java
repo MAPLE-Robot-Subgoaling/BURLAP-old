@@ -23,6 +23,15 @@ public class SarsaLam extends QLearning {
 	protected double				lambda;
 	
 	
+	
+	public SarsaLam(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, 
+			double qInit, double learningRate, double lamda) {
+		
+		super(domain, rf, tf, gamma, hashingFactory, qInit, learningRate);
+		this.sarsalamInit(lamda);
+		
+	}
+	
 	public SarsaLam(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, 
 			double qInit, double learningRate, int maxEpisodeSize, double lamda) {
 		

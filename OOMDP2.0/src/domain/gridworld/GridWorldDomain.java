@@ -469,7 +469,7 @@ public class GridWorldDomain implements DomainGenerator {
 				}
 				State ns = st.copy();
 				int [] dcomps = GridWorldDomain.this.movementDirectionFromIndex(i);
-				GridWorldDomain.this.move(st, dcomps[0], dcomps[1]);
+				GridWorldDomain.this.move(ns, dcomps[0], dcomps[1]);
 				
 				//make sure this direction doesn't actually stay in the same place and replicate another no-op
 				boolean isNew = true;
@@ -489,9 +489,6 @@ public class GridWorldDomain implements DomainGenerator {
 				
 			}
 			
-			
-			State res = this.performAction(st, params);
-			transitions.add(new TransitionProbability(res, 1.0));
 			
 			return transitions;
 		}
