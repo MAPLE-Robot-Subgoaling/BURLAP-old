@@ -25,29 +25,33 @@ public class BasicBehavior {
 	public static void main(String[] args) {
 		
 		GridWorldDomain gwdg = new GridWorldDomain(11, 11);
-		gwdg.setMapToFourRooms();
+		gwdg.setMapToFourRooms(); //will use the standard four rooms layout
 		Domain domain = gwdg.generateDomain();
-		StateParser sp = new GridWorldStateParser(domain);
+		StateParser sp = new GridWorldStateParser(domain); //for writing states to a file
 		
-		RewardFunction rf = new UniformCostRF();
-		TerminalFunction tf = new SinglePFTF(domain.getPropFunction(GridWorldDomain.PFATLOCATION));
+		RewardFunction rf = new UniformCostRF(); //reward always returns -1 (no positive reward on goal state either; but since the goal state ends action it will still be favored)
+		TerminalFunction tf = new SinglePFTF(domain.getPropFunction(GridWorldDomain.PFATLOCATION)); //ends when the agent reaches a location
 		
+		//set up the initial state
 		State initialState = GridWorldDomain.getOneAgentOneLocationState(domain);
 		GridWorldDomain.setAgent(initialState, 0, 0);
 		GridWorldDomain.setLocation(initialState, 0, 10, 10);
 		
+		//set up the state hashing system
 		DiscreteStateHashFactory hashingFactory = new DiscreteStateHashFactory();
 		hashingFactory.setAttributesForClass(GridWorldDomain.CLASSAGENT, domain.getObjectClass(GridWorldDomain.CLASSAGENT).attributeList); //optional code line; uses only the agent position to perform hash calculations instead of the agent and all locations
 		
+		//creating the learning algorithm object
 		LearningAgent agent = new QLearning(domain, rf, tf, 0.99, hashingFactory, 0., 0.9);
 		
+		//run learning will printing out episodic performance and recording the episode to a file
 		for(int i = 0; i < 100; i++){
 			EpisodeAnalysis ea = agent.runLearningEpisodeFrom(initialState);
 			ea.writeToFile(String.format("output/e%03d", i), sp);
 			System.out.println(i + ": " + ea.numTimeSteps());
 		}
 		
-		
+		//visualize the results
 		Visualizer v = GridWorldVisualizer.getVisualizer(domain, gwdg.getMap());
 		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, domain, sp, "output");
 		
