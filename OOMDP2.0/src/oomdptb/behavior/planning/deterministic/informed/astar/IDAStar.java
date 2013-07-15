@@ -20,6 +20,7 @@ import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.RewardFunction;
 import oomdptb.oomdp.State;
+import oomdptb.oomdp.common.NullTermination;
 
 public class IDAStar extends DeterministicPlanner {
 
@@ -29,7 +30,7 @@ public class IDAStar extends DeterministicPlanner {
 	
 	public IDAStar(Domain domain, RewardFunction rf, StateConditionTest gc, StateHashFactory hashingFactory, Heuristic heuristic){
 		
-		this.deterministicPlannerInit(domain, rf, gc, hashingFactory);
+		this.deterministicPlannerInit(domain, rf, new NullTermination(), gc, hashingFactory);
 		
 		this.heuristic = heuristic;
 		nodeComparator = new PrioritizedSearchNode.PSNComparator();

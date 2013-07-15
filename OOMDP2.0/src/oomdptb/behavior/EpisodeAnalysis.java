@@ -91,6 +91,7 @@ public class EpisodeAnalysis {
 	}
 	
 	
+	
 	public void writeToFile(String path, StateParser sp){
 		
 		if(!path.endsWith(".episode")){

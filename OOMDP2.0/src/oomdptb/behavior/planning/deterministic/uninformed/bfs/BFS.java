@@ -16,12 +16,13 @@ import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.State;
+import oomdptb.oomdp.common.NullTermination;
 import oomdptb.oomdp.common.UniformCostRF;
 
 public class BFS extends DeterministicPlanner {
 
 	public BFS(Domain domain, StateConditionTest gc, StateHashFactory hashingFactory){
-		this.deterministicPlannerInit(domain, new UniformCostRF(), gc, hashingFactory);
+		this.deterministicPlannerInit(domain, new UniformCostRF(), new NullTermination(), gc, hashingFactory);
 	}
 	
 	

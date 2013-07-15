@@ -406,6 +406,10 @@ public class State {
 		return new ArrayList<List<ObjectInstance>>(objectIndexByClass.values());
 	}
 	
+	public List <List <ObjectInstance>> getAllObjectsByTrueClass(){
+		return new ArrayList<List<ObjectInstance>>(objectIndexByTrueClass.values());
+	}
+	
 	public Set <String> getObjectClassesPresent(){
 		return new HashSet<String>(objectIndexByClass.keySet());
 	}

@@ -1,21 +1,12 @@
 package examples;
 
-import domain.gridworld.GridWorldDomain;
-import domain.gridworld.GridWorldStateParser;
-import domain.gridworld.GridWorldVisualizer;
-import oomdptb.behavior.EpisodeAnalysis;
-import oomdptb.behavior.EpisodeSequenceVisualizer;
-import oomdptb.behavior.Policy;
-import oomdptb.behavior.learning.LearningAgent;
-import oomdptb.behavior.learning.tdmethods.QLearning;
-import oomdptb.behavior.learning.tdmethods.SarsaLam;
-import oomdptb.behavior.planning.OOMDPPlanner;
-import oomdptb.behavior.planning.QComputablePlanner;
-import oomdptb.behavior.planning.StateConditionTest;
+import domain.gridworld.*;
+import oomdptb.behavior.*;
+import oomdptb.behavior.learning.*;
+import oomdptb.behavior.learning.tdmethods.*;
+import oomdptb.behavior.planning.*;
 import oomdptb.behavior.planning.commonpolicies.GreedyQPolicy;
-import oomdptb.behavior.planning.deterministic.DeterministicPlanner;
-import oomdptb.behavior.planning.deterministic.SDPlannerPolicy;
-import oomdptb.behavior.planning.deterministic.TFGoalCondition;
+import oomdptb.behavior.planning.deterministic.*;
 import oomdptb.behavior.planning.deterministic.informed.Heuristic;
 import oomdptb.behavior.planning.deterministic.informed.astar.AStar;
 import oomdptb.behavior.planning.deterministic.uninformed.bfs.BFS;
@@ -28,9 +19,7 @@ import oomdptb.oomdp.RewardFunction;
 import oomdptb.oomdp.State;
 import oomdptb.oomdp.StateParser;
 import oomdptb.oomdp.TerminalFunction;
-import oomdptb.oomdp.common.SingleGoalPFRF;
-import oomdptb.oomdp.common.SinglePFTF;
-import oomdptb.oomdp.common.UniformCostRF;
+import oomdptb.oomdp.common.*;
 import oomdptb.oomdp.visualizer.Visualizer;
 
 public class BasicBehavior {
@@ -61,9 +50,9 @@ public class BasicBehavior {
 		
 		//uncomment the example you want to see (and comment-out the rest)
 		
-		example.QLearningExample(outputPath);
+		//example.QLearningExample(outputPath);
 		//example.SarsaLearningExample(outputPath);
-		//example.BFSExample(outputPath);
+		example.BFSExample(outputPath);
 		//example.DFSExample(outputPath);
 		//example.AStarExample(outputPath);
 		//example.ValueIterationExample(outputPath);

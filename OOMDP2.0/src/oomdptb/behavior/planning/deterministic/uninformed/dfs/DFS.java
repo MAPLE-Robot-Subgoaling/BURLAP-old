@@ -17,6 +17,8 @@ import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.State;
+import oomdptb.oomdp.TerminalFunction;
+import oomdptb.oomdp.common.NullTermination;
 import oomdptb.oomdp.common.UniformCostRF;
 
 public class DFS extends DeterministicPlanner {
@@ -30,24 +32,24 @@ public class DFS extends DeterministicPlanner {
 	protected int				numVisted;
 	
 	public DFS(Domain domain, StateConditionTest gc, StateHashFactory hashingFactory){
-		this.DFSInit(domain, gc, hashingFactory, -1, false, false);
+		this.DFSInit(domain, new NullTermination(), gc, hashingFactory, -1, false, false);
 	}
 	
 	public DFS(Domain domain, StateConditionTest gc, StateHashFactory hashingFactory, int maxDepth){
-		this.DFSInit(domain, gc, hashingFactory, maxDepth, false, false);
+		this.DFSInit(domain, new NullTermination(), gc, hashingFactory, maxDepth, false, false);
 	}
 	
 	public DFS(Domain domain, StateConditionTest gc, StateHashFactory hashingFactory, int maxDepth, boolean maintainClosed){
-		this.DFSInit(domain, gc, hashingFactory, maxDepth, maintainClosed, false);
+		this.DFSInit(domain, new NullTermination(), gc, hashingFactory, maxDepth, maintainClosed, false);
 	}
 	
 	public DFS(Domain domain, StateConditionTest gc, StateHashFactory hashingFactory, int maxDepth, boolean maintainClosed, boolean optionsFirst){
-		this.DFSInit(domain, gc, hashingFactory, maxDepth, maintainClosed, optionsFirst);
+		this.DFSInit(domain, new NullTermination(), gc, hashingFactory, maxDepth, maintainClosed, optionsFirst);
 	}
 	
 	
-	protected void DFSInit(Domain domain, StateConditionTest gc, StateHashFactory hashingFactory, int maxDepth, boolean maintainClosed, boolean optionsFirst){
-		this.deterministicPlannerInit(domain, new UniformCostRF(), gc, hashingFactory);
+	protected void DFSInit(Domain domain, TerminalFunction tf, StateConditionTest gc, StateHashFactory hashingFactory, int maxDepth, boolean maintainClosed, boolean optionsFirst){
+		this.deterministicPlannerInit(domain, new UniformCostRF(), tf, gc, hashingFactory);
 		this.maxDepth = maxDepth;
 		this.maintainClosed = maintainClosed;
 		if(optionsFirst){

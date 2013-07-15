@@ -15,6 +15,7 @@ import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.RewardFunction;
+import oomdptb.oomdp.common.NullTermination;
 
 public class AStar extends BestFirst{
 
@@ -25,7 +26,7 @@ public class AStar extends BestFirst{
 	
 	public AStar(Domain domain, RewardFunction rf, StateConditionTest gc, StateHashFactory hashingFactory, Heuristic heuristic){
 		
-		this.deterministicPlannerInit(domain, rf, gc, hashingFactory);
+		this.deterministicPlannerInit(domain, rf, new NullTermination(), gc, hashingFactory);
 		
 		this.heuristic = heuristic;
 		
