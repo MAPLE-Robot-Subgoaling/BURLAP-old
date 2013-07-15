@@ -32,7 +32,7 @@ public class DiscreteStateHashFactory extends StateHashFactory {
 		if(attributesForHashCode == null){
 			attributesForHashCode = new HashMap<String, List<Attribute>>();
 		}
-		attributesForHashCode.put(classname, atts);
+		attributesForHashCode.put(classname, new ArrayList<Attribute>(atts));
 	}
 	
 	public void addAttributeForClass(String classname, Attribute att){
