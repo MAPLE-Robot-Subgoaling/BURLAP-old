@@ -195,6 +195,10 @@ public class RodExperimentDomain implements DomainGenerator {
 		public ReachGoalPF(String name, Domain domain, String parameterClasses) {
 			super(name, domain, parameterClasses);
 		}
+		
+		public ReachGoalPF(String name, Domain domain, String[] parameterClasses) {
+			super(name, domain, parameterClasses);
+		}
 
 		@Override
 		public boolean isTrue(State st, String[] params) {
