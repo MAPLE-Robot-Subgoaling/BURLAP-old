@@ -7,6 +7,7 @@ import edu.umbc.cs.maple.oomdp.Domain;
 import edu.umbc.cs.maple.oomdp.ObjectClass;
 import edu.umbc.cs.maple.oomdp.PropositionalFunction;
 import edu.umbc.cs.maple.oomdp.State;
+import edu.umbc.cs.maple.oomdp.ObjectInstance;
 
 public class RodExperimentDomain implements DomainGenerator {
 
@@ -40,7 +41,6 @@ public class RodExperimentDomain implements DomainGenerator {
 	public static final String				ACTIONTURNRIGHT = "downThrust"; //rotates -10 degrees
 
 	//Propositional Functions
-	public static final String				PFREACHGOAL = "reachedGoal";
 	public static final String				PFTOUCHGOAL = "touchedGoal";
 	public static final String				PFTOUCHSURFACE = "touchingSurface"; //touching an obstacle
 
@@ -102,7 +102,6 @@ public class RodExperimentDomain implements DomainGenerator {
 		Action turnRight = new ActionTurnRight(ACTIONTURNRIGHT, RODDOMAIN, "");
 
 		//add pfs
-		PropositionalFunction reachGoal = new ReachGoalPF(PFREACHGOAL, RODDOMAIN, new String[]{AGENTCLASS, GOALCLASS});
 		PropositionalFunction touchGoal = new TouchGoalPF(PFTOUCHGOAL, RODDOMAIN, new String[]{AGENTCLASS, GOALCLASS});
 		PropositionalFunction touchSurface = new TouchSurfacePF(PFTOUCHSURFACE, RODDOMAIN, new String[]{AGENTCLASS, OBSTACLECLASS});
 
@@ -190,21 +189,70 @@ public class RodExperimentDomain implements DomainGenerator {
 		}
 	}
 	
-	public class ReachGoalPF extends PropositionalFunction{
+	public class TouchGoalPF extends PropositionalFunction{
 
-		public ReachGoalPF(String name, Domain domain, String parameterClasses) {
+		public TouchGoalPF(String name, Domain domain, String parameterClasses) {
 			super(name, domain, parameterClasses);
 		}
 		
-		public ReachGoalPF(String name, Domain domain, String[] parameterClasses) {
+		public TouchGoalPF(String name, Domain domain, String[] parameterClasses) {
 			super(name, domain, parameterClasses);
 		}
 
 		@Override
 		public boolean isTrue(State st, String[] params) {
-			// TODO Auto-generated method stub
+			ObjectInstance agent = st.getObject(params[0]);
+			ObjectInstance goal = st.getObject(params[1]);
+			
+			double l = goal.getRealValForAttribute(LATTNAME);
+			double r = goal.getRealValForAttribute(RATTNAME);
+			double b = goal.getRealValForAttribute(BATTNAME);
+			double t = goal.getRealValForAttribute(TATTNAME);
+			
+			double x = agent.getRealValForAttribute(XATTNAME);
+			double y = agent.getRealValForAttribute(YATTNAME);
+			
+			if(x>=l && x<r && y==t){
+				return true;
+			}
+			
 			return false;
 		}
+		
+	}
+	
+	public class TouchSurfacePF extends PropositionalFunction{
+
+		public TouchSurfacePF(String name, Domain domain, String parameterClasses) {
+			super(name, domain, parameterClasses);
+		}
+		
+		public TouchSurfacePF(String name, Domain domain, String [] parameterClasses) {
+			super(name, domain, parameterClasses);
+		}
+
+		@Override
+		public boolean isTrue(State st, String[] params) {
+			
+			
+			ObjectInstance agent = st.getObject(params[0]);
+			ObjectInstance o = st.getObject(params[1]);
+			double x = agent.getRealValForAttribute(XATTNAME);
+			double y = agent.getRealValForAttribute(YATTNAME);
+			
+			double l = o.getRealValForAttribute(LATTNAME);
+			double r = o.getRealValForAttribute(RATTNAME);
+			double b = o.getRealValForAttribute(BATTNAME);
+			double t = o.getRealValForAttribute(TATTNAME);
+			
+			if(x >= l && x <= r && y >= b && y <= t){
+				return true;
+			}
+			
+			return false;
+		}
+		
+		
 		
 	}
 
