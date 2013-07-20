@@ -3,6 +3,11 @@ package oomdptb.oomdp;
 
 import java.util.*;
 
+/**
+ * 
+ * @author James
+ *	This is the base class for an OOMDBP domain. 
+ */
 public class Domain {
 	
 	
@@ -19,7 +24,6 @@ public class Domain {
 	private Map <String, Action>					actionMap;				//lookup actions by name
 
 	
-	
 	public Domain(){
 		
 		objectClasses = new ArrayList <ObjectClass>();
@@ -33,8 +37,6 @@ public class Domain {
 		
 		actions = new ArrayList <Action>();
 		actionMap = new HashMap <String, Action>();
-
-		
 	}
 	
 	public void addObjectClass(ObjectClass oc){
@@ -74,8 +76,7 @@ public class Domain {
 	public ObjectClass getObjectClass(String name){
 		return objectClassMap.get(name);
 	}
-	
-	
+		
 	public List <Attribute> getAttributes(){
 		return new ArrayList <Attribute>(attributes);
 	}
@@ -102,7 +103,6 @@ public class Domain {
 		return actionMap.get(name);
 	}
 	
-
 	// Maps propFuncClass -> propList
 	// eg: color -> isWhite, isBlue, isYellow...
 	public Map<String, Set<PropositionalFunction>> getPropositionlFunctionsMap() {

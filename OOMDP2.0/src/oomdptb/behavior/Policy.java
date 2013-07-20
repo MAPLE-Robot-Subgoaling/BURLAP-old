@@ -15,7 +15,6 @@ public abstract class Policy {
 	protected boolean evaluateDecomposesOptions = true;
 	protected boolean annotateOptionDecomposition = true;
 	
-	
 	public abstract GroundedAction getAction(State s); //returns null when policy is undefined for s
 	public abstract List<ActionProb> getActionDistributionForState(State s); //returns null when policy is undefined for s
 	public abstract boolean isStochastic();

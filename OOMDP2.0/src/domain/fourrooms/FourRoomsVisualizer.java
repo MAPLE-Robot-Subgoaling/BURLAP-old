@@ -60,17 +60,11 @@ public class FourRoomsVisualizer {
 					
 						g2.fill(new Rectangle2D.Float(rx, ry, width, height));
 						
-					}
-					
+					}		
 				}
-			}
-			
+			}		
 		}
-		
-		
 	}
-	
-	
 	
 	public static class CellPainter extends ObjectPainter{
 
@@ -101,15 +95,6 @@ public class FourRoomsVisualizer {
 			
 			g2.fill(new Rectangle2D.Float(rx, ry, width, height));
 			
-		}
-		
-		
-		
-		
+		}		
 	}
-	
-	
-	
-	
-
 }
