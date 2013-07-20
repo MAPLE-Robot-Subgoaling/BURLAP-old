@@ -127,7 +127,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 		QLearningStateNode node = this.getStateNode(s);
 		
 		if(a.params.length > 0){
-			Map<String, String> matching = s.s.getExactStateObjectMatchingTo(node.s.s);
+			Map<String, String> matching = s.s.getObjectMatchingTo(node.s.s, false);
 			a = this.translateAction(a, matching);
 		}
 		

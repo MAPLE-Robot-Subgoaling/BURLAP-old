@@ -62,9 +62,9 @@ public abstract class DeterministicPlanner extends OOMDPPlanner{
 		//otherwise it's already computed
 		GroundedAction res = internalPolicy.get(sh);
 		
-		//do object matching and return result
+		//do object matching from returned result to this query state and return result
 		if(containsParameterizedActions){
-			Map<String,String> matching = indexSH.s.getExactStateObjectMatchingTo(s);
+			Map<String,String> matching = indexSH.s.getObjectMatchingTo(sh.s, false);
 			for(int i = 0; i < res.params.length; i++){
 				res.params[i] = matching.get(res.params[i]);
 			}
