@@ -85,7 +85,7 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 		}
 		
 		if(this.containsParameterizedActions){
-			matching = s.getExactStateObjectMatchingTo(indexSH.s);
+			matching = sh.s.getExactStateObjectMatchingTo(indexSH.s);
 		}
 		return this.getQ(sh, a, matching);
 	}
