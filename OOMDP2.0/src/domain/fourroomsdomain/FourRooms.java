@@ -77,7 +77,7 @@ public class FourRooms implements DomainGenerator {
 		State s = FourRooms.getCleanState();
 		setAgent(s, 1, 1);
 		setGoal(s, 11, 11);
-		int expMode = 2;
+		int expMode = 4;
 		
 		if(expMode == 0){		//Terminal Explorer
 			TerminalExplorer exp = new TerminalExplorer(d);
@@ -338,10 +338,19 @@ public class FourRooms implements DomainGenerator {
 		
 		Action Door26 = new SubgoalOption("Start (1,1) to Door (2,6)", new StartToDoorNorthPolicy(), new StateCheck(1,1,2,6), new StateCheck(2,6,2,6));
 		Action Door62 = new SubgoalOption("Start (1,1) to Door (6,2)", new StartToDoorEastPolicy(), new StateCheck(1,1,6,2), new StateCheck(6,2,6,2));
+		Action Door69 = new SubgoalOption("Door (2,6) to Door (6,9)", new DoorNorthtoGoalEast(), new StateCheck(2,6,6,9), new StateCheck(6,9,6,9));
+		Action Door95 = new SubgoalOption("Door (6,2) to Door (9,5)", new DoorEasttoGoalNorth(), new StateCheck(6,2,9,5), new StateCheck(9,5,9,5));
+		Action Goal69 = new SubgoalOption("Door (6,9) to Goal (11,11)", new GoalEasttoGoal(), new StateCheck(6,9,11,11), new StateCheck(11,11,11,11));
+		Action Goal95 = new SubgoalOption("Door (9,5) to Goal (11,11)", new GoalNorthtoGoal(), new StateCheck(9,5,11,11), new StateCheck(11,11,11,11));
+		
 		
 		//Toggle the commenting here when running with options or without them
 		DOMAIN.addAction(Door26);
 		DOMAIN.addAction(Door62);
+		DOMAIN.addAction(Door69);
+		DOMAIN.addAction(Door95);
+		DOMAIN.addAction(Goal69);
+		DOMAIN.addAction(Goal95);
 		
 		PropositionalFunction atGoal = new AtGoalPF(PFATGOAL, DOMAIN, new String[]{CLASSAGENT, CLASSGOAL});
 		DOMAIN.addPropositionalFunction(atGoal);
@@ -654,4 +663,189 @@ public class FourRooms implements DomainGenerator {
 		
 	}
 	
+	public static class DoorNorthtoGoalEast extends Policy{
+		//Policy Mapping
+		public Map<StateHashTuple, GroundedAction> map = new HashMap<StateHashTuple, GroundedAction>();
+
+		/**
+		 *Generates the Policy
+		 */
+
+		public DoorNorthtoGoalEast(){
+			map.put(new StateHashTuple(generateState(2,6,11,11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), "")); //N
+			map.put(new StateHashTuple(generateState(2,7,11,11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), "")); //N
+			map.put(new StateHashTuple(generateState(2,8,11,11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), "")); //N
+			map.put(new StateHashTuple(generateState(2,9,11,11)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), "")); //E
+			map.put(new StateHashTuple(generateState(3,9,11,11)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), "")); //E
+			map.put(new StateHashTuple(generateState(4,9,11,11)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), "")); //E
+			map.put(new StateHashTuple(generateState(5,9,11,11)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), "")); //E
+			map.put(new StateHashTuple(generateState(6,9,11,11)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), "")); //E
+		}
+
+		@Override
+		/*
+		 * Enters the map and returns the corresponding GroundedAction for the State
+		 */
+		public GroundedAction getAction(State s){
+			return map.get(new StateHashTuple(s));
+		}
+
+		@Override
+		/*
+		 *Basic Action distribution. Since it's one action per state, it's 100% all of the time.
+		 * @param State s
+		 * @return ActionProb list
+		 */
+		public List<ActionProb> getActionDistributionForState(State s){
+			GroundedAction selectedAction = this.getAction(s);
+			List<ActionProb> res = new ArrayList<Policy.ActionProb>();
+			ActionProb ap = new ActionProb(selectedAction, 1.0);
+			res.add(ap);
+			return res;
+		}	
+
+		@Override
+		public boolean isStochastic(){
+			return false;
+		}
+	}
+	
+	public static class DoorEasttoGoalNorth extends Policy{
+		//Policy Mapping
+		public Map<StateHashTuple, GroundedAction> map = new HashMap<StateHashTuple, GroundedAction>();
+
+		/**
+		 *Generates the Policy
+		 */
+
+		public DoorEasttoGoalNorth(){
+			map.put(new StateHashTuple(generateState(6,2,11,11)), new GroundedAction(new EastAction(ACTIONNORTH, DOMAIN, ""), "")); //E
+			map.put(new StateHashTuple(generateState(7,2,11,11)), new GroundedAction(new EastAction(ACTIONNORTH, DOMAIN, ""), "")); //E
+			map.put(new StateHashTuple(generateState(8,2,11,11)), new GroundedAction(new EastAction(ACTIONNORTH, DOMAIN, ""), "")); //E
+			map.put(new StateHashTuple(generateState(9,2,11,11)), new GroundedAction(new NorthAction(ACTIONEAST, DOMAIN, ""), "")); //N
+			map.put(new StateHashTuple(generateState(9,3,11,11)), new GroundedAction(new NorthAction(ACTIONEAST, DOMAIN, ""), "")); //N
+			map.put(new StateHashTuple(generateState(9,4,11,11)), new GroundedAction(new NorthAction(ACTIONEAST, DOMAIN, ""), "")); //N
+			map.put(new StateHashTuple(generateState(9,5,11,11)), new GroundedAction(new NorthAction(ACTIONEAST, DOMAIN, ""), "")); //N
+		}
+
+		@Override
+		/*
+		 * Enters the map and returns the corresponding GroundedAction for the State
+		 */
+		public GroundedAction getAction(State s){
+			return map.get(new StateHashTuple(s));
+		}
+
+		@Override
+		/*
+		 *Basic Action distribution. Since it's one action per state, it's 100% all of the time.
+		 * @param State s
+		 * @return ActionProb list
+		 */
+		public List<ActionProb> getActionDistributionForState(State s){
+			GroundedAction selectedAction = this.getAction(s);
+			List<ActionProb> res = new ArrayList<Policy.ActionProb>();
+			ActionProb ap = new ActionProb(selectedAction, 1.0);
+			res.add(ap);
+			return res;
+		}	
+
+		@Override
+		public boolean isStochastic(){
+			return false;
+		}
+	}
+	
+	public static class GoalEasttoGoal extends Policy{
+		//Policy Mapping
+		public Map<StateHashTuple, GroundedAction> map = new HashMap<StateHashTuple, GroundedAction>();
+
+		/**
+		 *Generates the Policy
+		 */
+
+		public GoalEasttoGoal(){
+			map.put(new StateHashTuple(generateState(6,9,11,11)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), "")); //E
+			map.put(new StateHashTuple(generateState(7,9,11,11)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), "")); //E
+			map.put(new StateHashTuple(generateState(8,9,11,11)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), "")); //E
+			map.put(new StateHashTuple(generateState(9,9,11,11)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), "")); //E
+			map.put(new StateHashTuple(generateState(10,9,11,11)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), "")); //E
+			map.put(new StateHashTuple(generateState(11,9,11,11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), "")); //N
+			map.put(new StateHashTuple(generateState(11,10,11,11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), "")); //N
+		}
+
+		@Override
+		/*
+		 * Enters the map and returns the corresponding GroundedAction for the State
+		 */
+		public GroundedAction getAction(State s){
+			return map.get(new StateHashTuple(s));
+		}
+
+		@Override
+		/*
+		 *Basic Action distribution. Since it's one action per state, it's 100% all of the time.
+		 * @param State s
+		 * @return ActionProb list
+		 */
+		public List<ActionProb> getActionDistributionForState(State s){
+			GroundedAction selectedAction = this.getAction(s);
+			List<ActionProb> res = new ArrayList<Policy.ActionProb>();
+			ActionProb ap = new ActionProb(selectedAction, 1.0);
+			res.add(ap);
+			return res;
+		}	
+
+		@Override
+		public boolean isStochastic(){
+			return false;
+		}
+	}
+	
+	public static class GoalNorthtoGoal extends Policy{
+		//Policy Mapping
+		public Map<StateHashTuple, GroundedAction> map = new HashMap<StateHashTuple, GroundedAction>();
+
+		/**
+		 *Generates the Policy
+		 */
+
+		public GoalNorthtoGoal(){
+			map.put(new StateHashTuple(generateState(9,5,11,11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), "")); //n
+			map.put(new StateHashTuple(generateState(9,6,11,11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), "")); //n
+			map.put(new StateHashTuple(generateState(9,7,11,11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), "")); //n
+			map.put(new StateHashTuple(generateState(9,8,11,11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), "")); //n
+			map.put(new StateHashTuple(generateState(9,9,11,11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), "")); //n
+			map.put(new StateHashTuple(generateState(9,10,11,11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), "")); //n
+			map.put(new StateHashTuple(generateState(9,11,11,11)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), "")); //e
+			map.put(new StateHashTuple(generateState(10,11,11,11)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), "")); //e
+		}
+
+		@Override
+		/*
+		 * Enters the map and returns the corresponding GroundedAction for the State
+		 */
+		public GroundedAction getAction(State s){
+			return map.get(new StateHashTuple(s));
+		}
+
+		@Override
+		/*
+		 *Basic Action distribution. Since it's one action per state, it's 100% all of the time.
+		 * @param State s
+		 * @return ActionProb list
+		 */
+		public List<ActionProb> getActionDistributionForState(State s){
+			GroundedAction selectedAction = this.getAction(s);
+			List<ActionProb> res = new ArrayList<Policy.ActionProb>();
+			ActionProb ap = new ActionProb(selectedAction, 1.0);
+			res.add(ap);
+			return res;
+		}	
+
+		@Override
+		public boolean isStochastic(){
+			return false;
+		}
+	}
 }
