@@ -1,6 +1,12 @@
 package oomdptb.behavior.options;
 
+import java.util.List;
+
+import javax.management.RuntimeErrorException;
+
 import oomdptb.behavior.Policy;
+import oomdptb.behavior.planning.OOMDPPlanner;
+import oomdptb.behavior.planning.PlannerDerivedPolicy;
 import oomdptb.behavior.planning.StateConditionTest;
 import oomdptb.behavior.planning.StateConditionTestIterable;
 import oomdptb.oomdp.GroundedAction;
@@ -23,6 +29,60 @@ public class SubgoalOption extends Option {
 		this.parameterOrderGroup = new String[0];
 		
 	}
+	
+	
+	public SubgoalOption(String name, StateConditionTestIterable init, StateConditionTest sg, OOMDPPlanner planner, PlannerDerivedPolicy p){
+		
+		if(!(p instanceof Policy)){
+			throw new RuntimeErrorException(new Error("PlannerDerivedPolicy p is not an instnace of Policy"));
+		}
+		
+		
+		this.name = name;
+		
+		this.initiationTest = init;
+		this.subgoalTest = sg;
+		
+		this.parameterClasses = new String[0];
+		this.parameterOrderGroup = new String[0];
+		
+		//now construct the policy using the planner from each possible initiation state
+		for(State si : init){
+			planner.planFromState(si);
+		}
+		
+		p.setPlanner(planner);
+		this.policy = (Policy)p;
+		
+	}
+	
+	
+	public SubgoalOption(String name, StateConditionTest init, StateConditionTest sg, List <State> seedStatesForPlanning, 
+			OOMDPPlanner planner, PlannerDerivedPolicy p){
+		
+		if(!(p instanceof Policy)){
+			throw new RuntimeErrorException(new Error("PlannerDerivedPolicy p is not an instnace of Policy"));
+		}
+		
+		
+		this.name = name;
+		
+		this.initiationTest = init;
+		this.subgoalTest = sg;
+		
+		this.parameterClasses = new String[0];
+		this.parameterOrderGroup = new String[0];
+		
+		//now construct the policy using the planner from each possible initiation state
+		for(State si : seedStatesForPlanning){
+			planner.planFromState(si);
+		}
+		
+		p.setPlanner(planner);
+		this.policy = (Policy)p;
+		
+	}
+	
 	
 	
 	public StateConditionTest getInitiationTest(){

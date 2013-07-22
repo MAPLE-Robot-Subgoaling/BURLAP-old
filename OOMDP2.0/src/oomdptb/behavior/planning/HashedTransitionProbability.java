@@ -3,8 +3,8 @@ package oomdptb.behavior.planning;
 import java.util.List;
 import java.util.Map;
 
-import oomdptb.behavior.planning.statehashing.StateHashFactory;
-import oomdptb.behavior.planning.statehashing.StateHashTuple;
+import oomdptb.behavior.statehashing.StateHashFactory;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.State;
 import oomdptb.oomdp.TransitionProbability;

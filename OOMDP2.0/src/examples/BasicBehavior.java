@@ -11,8 +11,8 @@ import oomdptb.behavior.planning.deterministic.informed.Heuristic;
 import oomdptb.behavior.planning.deterministic.informed.astar.AStar;
 import oomdptb.behavior.planning.deterministic.uninformed.bfs.BFS;
 import oomdptb.behavior.planning.deterministic.uninformed.dfs.DFS;
-import oomdptb.behavior.planning.statehashing.DiscreteStateHashFactory;
 import oomdptb.behavior.planning.stochastic.valueiteration.ValueIteration;
+import oomdptb.behavior.statehashing.DiscreteStateHashFactory;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.ObjectInstance;
 import oomdptb.oomdp.RewardFunction;
@@ -52,9 +52,9 @@ public class BasicBehavior {
 		
 		//example.QLearningExample(outputPath);
 		//example.SarsaLearningExample(outputPath);
-		example.BFSExample(outputPath);
+		//example.BFSExample(outputPath);
 		//example.DFSExample(outputPath);
-		//example.AStarExample(outputPath);
+		example.AStarExample(outputPath);
 		//example.ValueIterationExample(outputPath);
 		
 		

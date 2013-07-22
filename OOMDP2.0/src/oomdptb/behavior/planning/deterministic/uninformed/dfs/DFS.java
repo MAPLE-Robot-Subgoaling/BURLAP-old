@@ -9,8 +9,8 @@ import java.util.Set;
 import oomdptb.behavior.planning.StateConditionTest;
 import oomdptb.behavior.planning.deterministic.DeterministicPlanner;
 import oomdptb.behavior.planning.deterministic.SearchNode;
-import oomdptb.behavior.planning.statehashing.StateHashFactory;
-import oomdptb.behavior.planning.statehashing.StateHashTuple;
+import oomdptb.behavior.statehashing.StateHashFactory;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.debugtools.RandomFactory;
 import oomdptb.oomdp.Action;
@@ -144,7 +144,7 @@ public class DFS extends DeterministicPlanner {
 	
 	
 	
-	protected void setOptionsFirst(){
+	public void setOptionsFirst(){
 		
 		optionsFirst = true;
 		

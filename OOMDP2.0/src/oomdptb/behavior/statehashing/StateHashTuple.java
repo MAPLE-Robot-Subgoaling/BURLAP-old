@@ -1,4 +1,4 @@
-package oomdptb.behavior.planning.statehashing;
+package oomdptb.behavior.statehashing;
 
 
 import oomdptb.oomdp.State;
@@ -20,7 +20,7 @@ public class StateHashTuple {
 	
 	public void computeHashCode(){
 		
-		this.hashCode = this.s.getCompleteStateDescription().toString().hashCode(); //very basic and does not gurantee object name invariance
+		this.hashCode = this.s.getCompleteStateDescription().toString().hashCode(); //very basic and does not guarantee object name invariance
 		needToRecomputeHashCode = false;
 		
 	}

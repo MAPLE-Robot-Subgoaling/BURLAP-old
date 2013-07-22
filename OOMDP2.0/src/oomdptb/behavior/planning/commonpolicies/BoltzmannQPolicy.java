@@ -4,17 +4,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import javax.management.RuntimeErrorException;
+
 import oomdptb.behavior.Policy;
 import oomdptb.behavior.QValue;
+import oomdptb.behavior.planning.OOMDPPlanner;
+import oomdptb.behavior.planning.PlannerDerivedPolicy;
 import oomdptb.behavior.planning.QComputablePlanner;
 import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.State;
 
-public class BoltzmannQPolicy extends Policy {
+public class BoltzmannQPolicy extends Policy implements PlannerDerivedPolicy{
 
 	protected QComputablePlanner		qplanner;
 	double								temperature;
 	Random 								rand;
+	
+	
+	
+	public BoltzmannQPolicy(double temperature){
+		this.qplanner = null;
+		this.temperature = temperature;
+		this.rand = new Random();
+	}
 	
 	public BoltzmannQPolicy(QComputablePlanner vf, double temperature){
 		this.qplanner = vf;
@@ -78,6 +90,16 @@ public class BoltzmannQPolicy extends Policy {
 	@Override
 	public boolean isStochastic() {
 		return true;
+	}
+
+	@Override
+	public void setPlanner(OOMDPPlanner planner) {
+		if(!(planner instanceof QComputablePlanner)){
+			throw new RuntimeErrorException(new Error("Planner is not a QComputablePlanner"));
+		}
+		
+		this.qplanner = (QComputablePlanner)planner;
+		
 	}
 
 }

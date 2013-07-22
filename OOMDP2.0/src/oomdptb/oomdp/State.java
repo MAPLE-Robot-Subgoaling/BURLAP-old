@@ -243,6 +243,7 @@ public class State {
 			return false;
 		}
 		
+		Set<String> matchedObjects = new HashSet<String>();
 		for(List <ObjectInstance> objects : objectIndexByTrueClass.values()){
 			
 			String oclass = objects.get(0).getTrueClassName();
@@ -254,8 +255,13 @@ public class State {
 			for(ObjectInstance o : objects){
 				boolean foundMatch = false;
 				for(ObjectInstance oo : oobjects){
+					String ooname = oo.getName();
+					if(matchedObjects.contains(ooname)){
+						continue;
+					}
 					if(o.valueEquals(oo)){
 						foundMatch = true;
+						matchedObjects.add(ooname);
 						break;
 					}
 				}

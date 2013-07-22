@@ -10,11 +10,11 @@ import java.util.Set;
 
 import oomdptb.behavior.options.Option;
 import oomdptb.behavior.planning.StateConditionTest;
-import oomdptb.behavior.planning.statehashing.StateHashFactory;
-import oomdptb.behavior.planning.statehashing.StateHashTuple;
 import oomdptb.behavior.planning.stochastic.montecarlo.uct.UCTActionNode.UCTActionConstructor;
 import oomdptb.behavior.planning.stochastic.montecarlo.uct.UCTStateNode.UCTStateConstructor;
 import oomdptb.behavior.planning.OOMDPPlanner;
+import oomdptb.behavior.statehashing.StateHashFactory;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.debugtools.RandomFactory;
 import oomdptb.oomdp.Attribute;

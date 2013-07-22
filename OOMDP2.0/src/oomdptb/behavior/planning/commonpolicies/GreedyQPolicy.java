@@ -4,25 +4,40 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import javax.management.RuntimeErrorException;
+
 import oomdptb.behavior.Policy;
 import oomdptb.behavior.QValue;
+import oomdptb.behavior.planning.OOMDPPlanner;
+import oomdptb.behavior.planning.PlannerDerivedPolicy;
 import oomdptb.behavior.planning.QComputablePlanner;
 import oomdptb.debugtools.RandomFactory;
 import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.State;
 
-public class GreedyQPolicy extends Policy {
+public class GreedyQPolicy extends Policy implements PlannerDerivedPolicy{
 
 	protected QComputablePlanner		qplanner;
 	protected Random 					rand;
+	
+	
+	public GreedyQPolicy(){
+		qplanner = null;
+		rand = RandomFactory.getMapped(0);
+	}
 	
 	public GreedyQPolicy(QComputablePlanner planner){
 		qplanner = planner;
 		rand = RandomFactory.getMapped(0);
 	}
 	
-	public void setPlanner(QComputablePlanner qplanner){
-		this.qplanner = qplanner;
+	public void setPlanner(OOMDPPlanner planner){
+		
+		if(!(planner instanceof QComputablePlanner)){
+			throw new RuntimeErrorException(new Error("Planner is not a QComputablePlanner"));
+		}
+		
+		this.qplanner = (QComputablePlanner)planner;
 	}
 	
 	@Override
@@ -83,5 +98,12 @@ public class GreedyQPolicy extends Policy {
 	}
 
 
+	
+	
+	
+	
+	
+	
+	
 
 }

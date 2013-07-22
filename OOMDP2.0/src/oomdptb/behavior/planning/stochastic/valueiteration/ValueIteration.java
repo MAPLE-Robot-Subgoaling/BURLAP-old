@@ -9,8 +9,8 @@ import java.util.Set;
 import oomdptb.behavior.planning.ActionTransitions;
 import oomdptb.behavior.planning.HashedTransitionProbability;
 import oomdptb.behavior.planning.ValueFunctionPlanner;
-import oomdptb.behavior.planning.statehashing.StateHashFactory;
-import oomdptb.behavior.planning.statehashing.StateHashTuple;
+import oomdptb.behavior.statehashing.StateHashFactory;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Domain;
@@ -110,8 +110,6 @@ public class ValueIteration extends ValueFunctionPlanner{
 		Set <StateHashTuple> openedSet = new HashSet<StateHashTuple>();
 		openList.offer(sih);
 		openedSet.add(sih);
-		
-		List <Action> actions = domain.getActions();
 		
 		
 		while(openList.size() > 0){

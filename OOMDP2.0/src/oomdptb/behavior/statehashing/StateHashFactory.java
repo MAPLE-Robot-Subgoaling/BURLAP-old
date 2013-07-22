@@ -1,4 +1,4 @@
-package oomdptb.behavior.planning.statehashing;
+package oomdptb.behavior.statehashing;
 
 import oomdptb.oomdp.State;
 

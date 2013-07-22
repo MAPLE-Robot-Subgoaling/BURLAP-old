@@ -1,6 +1,6 @@
 package oomdptb.behavior.planning.deterministic;
 
-import oomdptb.behavior.planning.statehashing.StateHashTuple;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.oomdp.GroundedAction;
 
 public class SearchNode {

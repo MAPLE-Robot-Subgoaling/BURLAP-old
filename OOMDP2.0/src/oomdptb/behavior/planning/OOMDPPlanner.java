@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import oomdptb.behavior.options.Option;
-import oomdptb.behavior.planning.statehashing.StateHashFactory;
-import oomdptb.behavior.planning.statehashing.StateHashTuple;
+import oomdptb.behavior.options.OptionEvaluatingRF;
+import oomdptb.behavior.statehashing.StateHashFactory;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Attribute;
@@ -65,8 +66,11 @@ public abstract class OOMDPPlanner {
 			actions.add(a);
 			if(a instanceof Option){
 				Option o = (Option)a;
-				o.keepTrackOfRewardWith(rf, 1.);
+				o.keepTrackOfRewardWith(rf, gamma);
 				o.setExernalTermination(tf);
+				if(!(this.rf instanceof OptionEvaluatingRF)){
+					this.rf = new OptionEvaluatingRF(this.rf);
+				}
 			}
 			if(a.getParameterClasses().length > 0){
 				this.containsParameterizedActions = true;

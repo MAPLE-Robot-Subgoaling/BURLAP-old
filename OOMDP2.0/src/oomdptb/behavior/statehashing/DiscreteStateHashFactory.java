@@ -1,4 +1,4 @@
-package oomdptb.behavior.planning.statehashing;
+package oomdptb.behavior.statehashing;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +12,19 @@ import oomdptb.oomdp.ObjectClass;
 import oomdptb.oomdp.ObjectInstance;
 import oomdptb.oomdp.State;
 
+/**
+ * This hash factory will producing hash codes that are unique for discrete OO-MDP domains. It should not be used
+ * with non-discrete domains. If the default constructor is called and no other methods are specified,
+ * then the state hash code will be computed with respect to all attributes of every object instance. It is not uncommon for
+ * tasks in certain domains to make the values for certain objects constant. For instance, consider a goal location which will
+ * always be the in same location for all states of a task. In such situations, the attributes of constant objects provide
+ * no information about the specific state and computing a hash code with respect to its values is wasted computation time.
+ * To make hash code computation more efficient, the user can also specify which attributes for which class to use in computing
+ * the has code. Note that once any method to specify an attribute for a class is made, the only those attributes specified will
+ * be used for hashing.
+ * @author James MacGlashan
+ *
+ */
 public class DiscreteStateHashFactory extends StateHashFactory {
 
 	Map<String, List<Attribute>>	attributesForHashCode;
@@ -54,6 +67,7 @@ public class DiscreteStateHashFactory extends StateHashFactory {
 		atts.add(att);
 	}
 	
+	@Override
 	public StateHashTuple hashState(State s){
 		return new DiscreteStateHashTuple(s);
 	}

@@ -8,8 +8,8 @@ import java.util.Set;
 
 import oomdptb.behavior.planning.StateConditionTest;
 import oomdptb.behavior.planning.deterministic.SearchNode;
-import oomdptb.behavior.planning.statehashing.StateHashFactory;
-import oomdptb.behavior.planning.statehashing.StateHashTuple;
+import oomdptb.behavior.statehashing.StateHashFactory;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
