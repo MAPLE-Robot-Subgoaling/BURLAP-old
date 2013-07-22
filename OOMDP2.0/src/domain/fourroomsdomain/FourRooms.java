@@ -77,7 +77,7 @@ public class FourRooms implements DomainGenerator {
 		State s = FourRooms.getCleanState();
 		setAgent(s, 1, 1);
 		setGoal(s, 11, 11);
-		int expMode = 5;
+		int expMode = 2;
 		
 		if(expMode == 0){		//Terminal Explorer
 			TerminalExplorer exp = new TerminalExplorer(d);
@@ -339,6 +339,7 @@ public class FourRooms implements DomainGenerator {
 		Action Door26 = new SubgoalOption("Start (1,1) to Door (2,6)", new StartToDoorNorthPolicy(), new StateCheck(1,1,2,6), new StateCheck(2,6,2,6));
 		Action Door62 = new SubgoalOption("Start (1,1) to Door (6,2)", new StartToDoorEastPolicy(), new StateCheck(1,1,6,2), new StateCheck(6,2,6,2));
 		
+		//Toggle the commenting here when running with options or without them
 		DOMAIN.addAction(Door26);
 		DOMAIN.addAction(Door62);
 		
