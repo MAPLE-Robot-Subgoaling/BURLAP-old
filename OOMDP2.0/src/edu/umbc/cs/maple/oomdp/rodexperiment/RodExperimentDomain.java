@@ -110,15 +110,60 @@ public class RodExperimentDomain implements DomainGenerator {
 	}
 
 	public static void updateMotion(State st, double change) {
-		// TODO Auto-generated method stub
-		
+
+		ObjectInstance agent = st.getObjectsOfTrueClass(AGENTCLASS).get(0);
+		double ang = agent.getRealValForAttribute(AATTNAME);
+		double x = agent.getRealValForAttribute(XATTNAME);
+		double y = agent.getRealValForAttribute(YATTNAME);
+
+		double worldAngle = (Math.PI/2.) - ang;
+
+		double tx = Math.cos(worldAngle)*change;
+		double ty = Math.sin(worldAngle)*change;
+
+		tx = tx + change;
+		ty = ty + change;
+
+		if (tx > XMAX || tx < XMIN || ty > YMAX || ty<YMIN){
+			tx = x - change;
+			ty = y - change;
+		}
+
+		//hits obstacles
+		ObjectInstance obstacle = st.getObjectsOfTrueClass(OBSTACLECLASS).get(0);
+		double l = obstacle.getRealValForAttribute(LATTNAME);
+		double r = obstacle.getRealValForAttribute(RATTNAME);
+		double b = obstacle.getRealValForAttribute(BATTNAME);
+		double t = obstacle.getRealValForAttribute(TATTNAME);
+
+		if(ty >= b && ty <= t && tx >=l && tx <= r){
+			tx = x - change;
+			ty = y - change;
+		}
+
+		agent.setValue(XATTNAME, tx);
+		agent.setValue(YATTNAME, ty);
+		agent.setValue(AATTNAME, ang);
+
+
 	}
 
 	public static void incAngle(State st, int dir) {
-		// TODO Auto-generated method stub
-		
+		ObjectInstance agent = st.getObjectsOfTrueClass(AGENTCLASS).get(0);
+		double curA = agent.getRealValForAttribute(AATTNAME);
+
+		double newa = curA + (dir * ANGLEINC);
+		if(newa > ANGLEMAX){
+			newa = ANGLEMAX;
+		}
+		else if(newa < -ANGLEMAX){
+			newa = -ANGLEMAX;
+		}
+
+		agent.setValue(AATTNAME, newa);
+
 	}
-	
+
 	public class ActionMoveUp extends Action{
 
 		public ActionMoveUp(String name, Domain domain, String parameterClasses){
@@ -188,13 +233,13 @@ public class RodExperimentDomain implements DomainGenerator {
 			return st;
 		}
 	}
-	
+
 	public class TouchGoalPF extends PropositionalFunction{
 
 		public TouchGoalPF(String name, Domain domain, String parameterClasses) {
 			super(name, domain, parameterClasses);
 		}
-		
+
 		public TouchGoalPF(String name, Domain domain, String[] parameterClasses) {
 			super(name, domain, parameterClasses);
 		}
@@ -203,57 +248,57 @@ public class RodExperimentDomain implements DomainGenerator {
 		public boolean isTrue(State st, String[] params) {
 			ObjectInstance agent = st.getObject(params[0]);
 			ObjectInstance goal = st.getObject(params[1]);
-			
+
 			double l = goal.getRealValForAttribute(LATTNAME);
 			double r = goal.getRealValForAttribute(RATTNAME);
 			double b = goal.getRealValForAttribute(BATTNAME);
 			double t = goal.getRealValForAttribute(TATTNAME);
-			
+
 			double x = agent.getRealValForAttribute(XATTNAME);
 			double y = agent.getRealValForAttribute(YATTNAME);
-			
+
 			if(x>=l && x<r && y==t){
 				return true;
 			}
-			
+
 			return false;
 		}
-		
+
 	}
-	
+
 	public class TouchSurfacePF extends PropositionalFunction{
 
 		public TouchSurfacePF(String name, Domain domain, String parameterClasses) {
 			super(name, domain, parameterClasses);
 		}
-		
+
 		public TouchSurfacePF(String name, Domain domain, String [] parameterClasses) {
 			super(name, domain, parameterClasses);
 		}
 
 		@Override
 		public boolean isTrue(State st, String[] params) {
-			
-			
+
+
 			ObjectInstance agent = st.getObject(params[0]);
 			ObjectInstance o = st.getObject(params[1]);
 			double x = agent.getRealValForAttribute(XATTNAME);
 			double y = agent.getRealValForAttribute(YATTNAME);
-			
+
 			double l = o.getRealValForAttribute(LATTNAME);
 			double r = o.getRealValForAttribute(RATTNAME);
 			double b = o.getRealValForAttribute(BATTNAME);
 			double t = o.getRealValForAttribute(TATTNAME);
-			
+
 			if(x >= l && x <= r && y >= b && y <= t){
 				return true;
 			}
-			
+
 			return false;
 		}
-		
-		
-		
+
+
+
 	}
 
 }
