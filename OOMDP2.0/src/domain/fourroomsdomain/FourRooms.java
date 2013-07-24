@@ -77,7 +77,7 @@ public class FourRooms implements DomainGenerator {
 		State s = FourRooms.getCleanState();
 		setAgent(s, 1, 1);
 		setGoal(s, 11, 11);
-		int expMode = 2;
+		int expMode = 4;
 		
 		if(expMode == 0){		//Terminal Explorer
 			TerminalExplorer exp = new TerminalExplorer(d);
@@ -120,46 +120,7 @@ public class FourRooms implements DomainGenerator {
 			new EpisodeSequenceVisualizer(v, d, parser, "output");
 			
 			
-		}else if(expMode == 3){		//Q-Learning - My Version
-			parser = new FourRoomsStateParser();
-			
-			for(int i = 1; i <= 50; i++){
-				analyzer = new EpisodeAnalysis();
-				
-				System.out.print("Episode " + i + ": ");
-				run(d, s);
-				analyzer.writeToFile(String.format("output/e%03d", i), parser);
-				
-				setAgent(s, 1, 1);
-				setGoal(s, 11, 11);
-			}
-			
-
-			//Visualize the Steps
-			Visualizer v = FourRoomsVisual.getVisualizer();
-			new EpisodeSequenceVisualizer(v, d, parser, "output");
-			
-		}else if(expMode == 4){		//Q-Learning + Options - OOMDPTB Version
-			parser = new FourRoomsStateParser();
-			
-			for(int i = 1; i <= 100; i++){
-				analyzer = new EpisodeAnalysis();
-				
-				System.out.print("Episode " + i + ": ");
-				analyzer = Q.runLearningEpisodeFrom(s);
-				System.out.println("\tTime Steps: " + analyzer.numTimeSteps() + "\tSteps: " + Q.getLastNumSteps());
-				analyzer.writeToFile(String.format("output/e%03d", i), parser);
-				
-				setAgent(s, 1, 1);
-				setGoal(s, 11, 11);			
-			}
-			
-			//Visualize the Steps
-			Visualizer v = FourRoomsVisual.getVisualizer();
-			new EpisodeSequenceVisualizer(v, d, parser, "output");
-			
-			
-		}else if(expMode == 5){		//Sarsa(Lambda) - OOMDPTB
+		}else if(expMode == 3){		//Sarsa(Lambda) - OOMDPTB
 			parser = new FourRoomsStateParser();
 			
 			System.out.println("\tRunning SARSA-LAMBDA\n");
@@ -340,21 +301,20 @@ public class FourRooms implements DomainGenerator {
 		DOMAIN.addAction(east);
 		DOMAIN.addAction(west);
 		
-		/*Action Door26 = new SubgoalOption("Start (1,1) to Door (2,6)", new StartToDoorNorthPolicy(), new StateCheck(1,1,2,6), new StateCheck(2,6,2,6));
+		//Toggle the commenting here when running with options or without them
+		Action Door26 = new SubgoalOption("Start (1,1) to Door (2,6)", new StartToDoorNorthPolicy(), new StateCheck(1,1,2,6), new StateCheck(2,6,2,6));
 		Action Door62 = new SubgoalOption("Start (1,1) to Door (6,2)", new StartToDoorEastPolicy(), new StateCheck(1,1,6,2), new StateCheck(6,2,6,2));
 		Action Door69 = new SubgoalOption("Door (2,6) to Door (6,9)", new DoorNorthtoGoalEast(), new StateCheck(2,6,6,9), new StateCheck(6,9,6,9));
 		Action Door95 = new SubgoalOption("Door (6,2) to Door (9,5)", new DoorEasttoGoalNorth(), new StateCheck(6,2,9,5), new StateCheck(9,5,9,5));
 		Action Goal69 = new SubgoalOption("Door (6,9) to Goal (11,11)", new GoalEasttoGoal(), new StateCheck(6,9,11,11), new StateCheck(11,11,11,11));
 		Action Goal95 = new SubgoalOption("Door (9,5) to Goal (11,11)", new GoalNorthtoGoal(), new StateCheck(9,5,11,11), new StateCheck(11,11,11,11));
 		
-		
-		//Toggle the commenting here when running with options or without them
 		DOMAIN.addAction(Door26);
 		DOMAIN.addAction(Door62);
 		DOMAIN.addAction(Door69);
 		DOMAIN.addAction(Door95);
 		DOMAIN.addAction(Goal69);
-		DOMAIN.addAction(Goal95);*/
+		DOMAIN.addAction(Goal95);
 		
 		PropositionalFunction atGoal = new AtGoalPF(PFATGOAL, DOMAIN, new String[]{CLASSAGENT, CLASSGOAL});
 		DOMAIN.addPropositionalFunction(atGoal);
