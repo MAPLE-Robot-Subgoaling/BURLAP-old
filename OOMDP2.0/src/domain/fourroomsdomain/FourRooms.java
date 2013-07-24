@@ -77,7 +77,7 @@ public class FourRooms implements DomainGenerator {
 		State s = FourRooms.getCleanState();
 		setAgent(s, 1, 1);
 		setGoal(s, 11, 11);
-		int expMode = 4;
+		int expMode = 5;
 		
 		if(expMode == 0){		//Terminal Explorer
 			TerminalExplorer exp = new TerminalExplorer(d);
@@ -101,12 +101,14 @@ public class FourRooms implements DomainGenerator {
 			//Runs the simulator via text output
 			parser = new FourRoomsStateParser();
 			
+			System.out.println("\tRunning Q-Learning\n");
+			
 			for(int i = 1; i <= 100; i++){
 				analyzer = new EpisodeAnalysis();
 				 
 				System.out.print("Episode " + i + ": ");
 				analyzer = Q.runLearningEpisodeFrom(s);
-				System.out.println("\tSteps: " + analyzer.numTimeSteps());
+				System.out.println("\tTime Steps: " + analyzer.numTimeSteps() + "\tSteps: " + Q.getLastNumSteps());
 				analyzer.writeToFile(String.format("output/e%03d", i), parser);
 				
 				setAgent(s, 1, 1);
@@ -145,7 +147,7 @@ public class FourRooms implements DomainGenerator {
 				
 				System.out.print("Episode " + i + ": ");
 				analyzer = Q.runLearningEpisodeFrom(s);
-				System.out.println("\tSteps: " + analyzer.numTimeSteps());
+				System.out.println("\tTime Steps: " + analyzer.numTimeSteps() + "\tSteps: " + Q.getLastNumSteps());
 				analyzer.writeToFile(String.format("output/e%03d", i), parser);
 				
 				setAgent(s, 1, 1);
@@ -160,11 +162,13 @@ public class FourRooms implements DomainGenerator {
 		}else if(expMode == 5){		//Sarsa(Lambda) - OOMDPTB
 			parser = new FourRoomsStateParser();
 			
+			System.out.println("\tRunning SARSA-LAMBDA\n");
+			
 			for(int i = 1; i <= 100; i++){
 				analyzer = new EpisodeAnalysis();
 				System.out.print("Episode " + i + ": ");
 				analyzer = S.runLearningEpisodeFrom(s);
-				System.out.println("\tSteps: " + analyzer.numTimeSteps());
+				System.out.println("\tTime Steps: " + analyzer.numTimeSteps() + "\tSteps: " + S.getLastNumSteps());
 				analyzer.writeToFile(String.format("output/e%03d", i), parser);
 				
 				setAgent(s, 1, 1);
@@ -336,7 +340,7 @@ public class FourRooms implements DomainGenerator {
 		DOMAIN.addAction(east);
 		DOMAIN.addAction(west);
 		
-		Action Door26 = new SubgoalOption("Start (1,1) to Door (2,6)", new StartToDoorNorthPolicy(), new StateCheck(1,1,2,6), new StateCheck(2,6,2,6));
+		/*Action Door26 = new SubgoalOption("Start (1,1) to Door (2,6)", new StartToDoorNorthPolicy(), new StateCheck(1,1,2,6), new StateCheck(2,6,2,6));
 		Action Door62 = new SubgoalOption("Start (1,1) to Door (6,2)", new StartToDoorEastPolicy(), new StateCheck(1,1,6,2), new StateCheck(6,2,6,2));
 		Action Door69 = new SubgoalOption("Door (2,6) to Door (6,9)", new DoorNorthtoGoalEast(), new StateCheck(2,6,6,9), new StateCheck(6,9,6,9));
 		Action Door95 = new SubgoalOption("Door (6,2) to Door (9,5)", new DoorEasttoGoalNorth(), new StateCheck(6,2,9,5), new StateCheck(9,5,9,5));
@@ -350,7 +354,7 @@ public class FourRooms implements DomainGenerator {
 		DOMAIN.addAction(Door69);
 		DOMAIN.addAction(Door95);
 		DOMAIN.addAction(Goal69);
-		DOMAIN.addAction(Goal95);
+		DOMAIN.addAction(Goal95);*/
 		
 		PropositionalFunction atGoal = new AtGoalPF(PFATGOAL, DOMAIN, new String[]{CLASSAGENT, CLASSGOAL});
 		DOMAIN.addPropositionalFunction(atGoal);
