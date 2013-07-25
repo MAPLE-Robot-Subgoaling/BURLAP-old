@@ -10,7 +10,11 @@ import oomdptb.behavior.learning.tdmethods.QLearning;
 import oomdptb.behavior.learning.tdmethods.SarsaLam;
 import oomdptb.behavior.options.PrimitiveOption;
 import oomdptb.behavior.options.SubgoalOption;
+import oomdptb.behavior.planning.OOMDPPlanner;
+import oomdptb.behavior.planning.QComputablePlanner;
 import oomdptb.behavior.planning.StateConditionTest;
+import oomdptb.behavior.planning.commonpolicies.GreedyQPolicy;
+import oomdptb.behavior.planning.stochastic.valueiteration.ValueIteration;
 import oomdptb.behavior.statehashing.DiscreteStateHashFactory;
 import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.oomdp.Action;
@@ -64,12 +68,17 @@ public class FourRooms implements DomainGenerator {
 	public static Map<StateHashTuple, List<QAction>> qVals = new HashMap<StateHashTuple, List<QAction>>();
 	public static QLearning Q;
 	public static SarsaLam S;
+	public static OOMDPPlanner Oplanner;
 	public static EpisodeAnalysis analyzer;
 	public static FourRoomsStateParser parser;
+	public static RewardFunction rf;
+	public static TerminalFunction tf;
+	
 	
 	/**
 	 * main() - starts the program
-	 * @param args - none for now...
+	 * This is also responsible for running all of the explorer modes that allow the visualization of the domain.
+	 * @param args - command line arguments
 	 */
 	public static void main(String[] args) {
 		FourRooms frd = new FourRooms();
@@ -77,7 +86,7 @@ public class FourRooms implements DomainGenerator {
 		State s = FourRooms.getCleanState();
 		setAgent(s, 1, 1);
 		setGoal(s, 11, 11);
-		int expMode = 4;
+		int expMode = 5;
 		
 		if(expMode == 0){		//Terminal Explorer
 			TerminalExplorer exp = new TerminalExplorer(d);
@@ -140,12 +149,41 @@ public class FourRooms implements DomainGenerator {
 			//Visualize the Steps
 			Visualizer v = FourRoomsVisual.getVisualizer();
 			new EpisodeSequenceVisualizer(v, d, parser, "output");
+			
 		}else if(expMode == 4){
 			parser = new FourRoomsStateParser();
 			
 			//Opens the visualizer - Make sure there are episode files in the output folder
 			Visualizer v = FourRoomsVisual.getVisualizer();
 			new EpisodeSequenceVisualizer(v, d, parser, "output");
+		}else if(expMode == 5){
+			parser = new FourRoomsStateParser();
+			
+			for(int i = 1; i <= 100; i++){
+				analyzer = new EpisodeAnalysis();
+				 
+				System.out.print("Episode " + i + ": ");
+				Q.runLearningEpisodeFrom(s);
+				System.out.println("\tSteps: " + Q.getLastNumSteps());
+		
+				setAgent(s, 1, 1);
+				setGoal(s, 11, 11);
+			}
+			
+			Policy P = new GreedyQPolicy((QComputablePlanner) Q);
+			Policy P2 = new GreedyQPolicy((QComputablePlanner) Oplanner);
+			
+			analyzer = P.evaluateBehavior(s, rf, tf);
+			analyzer.writeToFile("output/Q-learning", parser);
+			
+			analyzer = P2.evaluateBehavior(s, rf, tf);
+			analyzer.writeToFile("output/OOMDP_Planner", parser);
+			
+			
+			//Visualize the Steps
+			Visualizer v = FourRoomsVisual.getVisualizer();
+			new EpisodeSequenceVisualizer(v, d, parser, "output");
+			
 		}
 	}
 	
@@ -158,7 +196,7 @@ public class FourRooms implements DomainGenerator {
 	public static void run(Domain d, State s){
 		
 		//Variable Declaration
-		RewardFunction rf = new SingleGoalPFRF(d.getPropFunction(PFATGOAL), 10, -1.0);
+		rf = new SingleGoalPFRF(d.getPropFunction(PFATGOAL), 10, -1.0);
 		int steps = 0;
 
 		//While the agent has not reached the goal state
@@ -230,6 +268,12 @@ public class FourRooms implements DomainGenerator {
 		
 	}
 	
+	/**
+	 * 
+	 * @param s
+	 * @param pf
+	 * @return
+	 */
 	public static boolean isTrue(State s, PropositionalFunction pf){
 		boolean isTrue = false;
 		
@@ -325,13 +369,14 @@ public class FourRooms implements DomainGenerator {
 		PropositionalFunction atGoal = new AtGoalPF(PFATGOAL, DOMAIN, new String[]{CLASSAGENT, CLASSGOAL});
 		DOMAIN.addPropositionalFunction(atGoal);
 		
-		RewardFunction rf = new SingleGoalPFRF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
-		TerminalFunction tf = new SinglePFTF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
+		rf = new SingleGoalPFRF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
+		tf = new SinglePFTF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
 
 		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
 		hashFactory.setAttributesForClass(CLASSAGENT, DOMAIN.getObjectClass(CLASSAGENT).attributeList);
 		Q = new QLearning(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, hashFactory, 0.2, FourRooms.LEARNINGRATE, Integer.MAX_VALUE);
 		S = new SarsaLam(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, hashFactory, 0.2, FourRooms.LEARNINGRATE, Integer.MAX_VALUE, FourRooms.LAMBDA);
+		Oplanner = new ValueIteration(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, hashFactory, 0.001, 100);
 		
 		return DOMAIN;
 	}

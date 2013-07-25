@@ -54,8 +54,8 @@ public class BasicBehavior {
 		//example.SarsaLearningExample(outputPath);
 		//example.BFSExample(outputPath);
 		//example.DFSExample(outputPath);
-		example.AStarExample(outputPath);
-		//example.ValueIterationExample(outputPath);
+		//example.AStarExample(outputPath);
+		example.ValueIterationExample(outputPath);
 		
 		
 		//run the visualizer
