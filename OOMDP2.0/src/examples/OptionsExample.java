@@ -60,12 +60,12 @@ public class OptionsExample extends BasicBehavior{
 		
 		//uncomment the example you want to see (and comment-out the rest)
 		
-		example.QLearningExample(outputPath);
+		//example.QLearningExample(outputPath);
 		//example.SarsaLearningExample(outputPath);
 		//example.BFSExample(outputPath);
 		//example.DFSExample(outputPath);
 		//example.AStarExample(outputPath);
-		//example.ValueIterationExample(outputPath);
+		example.ValueIterationExample(outputPath);
 		
 		
 		//run the visualizer

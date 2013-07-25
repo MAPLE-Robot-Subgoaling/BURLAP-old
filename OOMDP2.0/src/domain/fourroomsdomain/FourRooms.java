@@ -158,6 +158,8 @@ public class FourRooms implements DomainGenerator {
 			new EpisodeSequenceVisualizer(v, d, parser, "output");
 		}else if(expMode == 5){
 			parser = new FourRoomsStateParser();
+			Oplanner.planFromState(s);
+			
 			
 			for(int i = 1; i <= 100; i++){
 				analyzer = new EpisodeAnalysis();
