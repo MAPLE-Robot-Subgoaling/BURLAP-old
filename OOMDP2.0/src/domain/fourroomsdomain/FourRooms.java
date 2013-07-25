@@ -140,6 +140,12 @@ public class FourRooms implements DomainGenerator {
 			//Visualize the Steps
 			Visualizer v = FourRoomsVisual.getVisualizer();
 			new EpisodeSequenceVisualizer(v, d, parser, "output");
+		}else if(expMode == 4){
+			parser = new FourRoomsStateParser();
+			
+			//Opens the visualizer - Make sure there are episode files in the output folder
+			Visualizer v = FourRoomsVisual.getVisualizer();
+			new EpisodeSequenceVisualizer(v, d, parser, "output");
 		}
 	}
 	
