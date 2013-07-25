@@ -172,8 +172,8 @@ public class FourRooms implements DomainGenerator {
 				setGoal(s, 11, 11);
 			}
 			
-			Policy P = new GreedyQPolicy((QComputablePlanner) Q);
-			Policy P2 = new GreedyQPolicy((QComputablePlanner) Oplanner);
+			Policy P = new GreedyQPolicy((QComputablePlanner) Q); //Greedy Policy via Q-Learning
+			Policy P2 = new GreedyQPolicy((QComputablePlanner) Oplanner); //Greedy Policy via Value Iteration Planner
 			
 			analyzer = P.evaluateBehavior(s, rf, tf);
 			analyzer.writeToFile("output/Q-learning", parser);

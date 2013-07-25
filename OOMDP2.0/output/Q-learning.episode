@@ -1,102 +1,102 @@
 #EL#
 1 1, 11 11
 #ES#
-east
+Start (1,1) to Door (2,6)(0)-north
 0.0
 #EL#
-2 1, 11 11
+1 2, 11 11
 #ES#
-north
+Start (1,1) to Door (2,6)(1)-north
 0.0
 #EL#
-2 2, 11 11
+1 3, 11 11
 #ES#
-east
+Start (1,1) to Door (2,6)(2)-north
 0.0
 #EL#
-3 2, 11 11
+1 4, 11 11
 #ES#
-east
+Start (1,1) to Door (2,6)(3)-north
 0.0
 #EL#
-4 2, 11 11
+1 5, 11 11
 #ES#
-east
+Start (1,1) to Door (2,6)(4)-east
 0.0
 #EL#
-5 2, 11 11
+2 5, 11 11
 #ES#
-east
+Start (1,1) to Door (2,6)(5)-north
 0.0
 #EL#
-6 2, 11 11
+2 6, 11 11
 #ES#
-Door (6,2) to Door (9,5)(0)-north
+Door (2,6) to Door (6,9)(0)-north
 0.0
 #EL#
-7 2, 11 11
+2 7, 11 11
 #ES#
-Door (6,2) to Door (9,5)(1)-north
+Door (2,6) to Door (6,9)(1)-north
 0.0
 #EL#
-8 2, 11 11
+2 8, 11 11
 #ES#
-Door (6,2) to Door (9,5)(2)-north
+Door (2,6) to Door (6,9)(2)-north
 0.0
 #EL#
-9 2, 11 11
+2 9, 11 11
 #ES#
-Door (6,2) to Door (9,5)(3)-east
+Door (2,6) to Door (6,9)(3)-east
 0.0
 #EL#
-9 3, 11 11
+3 9, 11 11
 #ES#
-Door (6,2) to Door (9,5)(4)-east
+Door (2,6) to Door (6,9)(4)-east
 0.0
 #EL#
-9 4, 11 11
+4 9, 11 11
 #ES#
-Door (6,2) to Door (9,5)(5)-east
+Door (2,6) to Door (6,9)(5)-east
 0.0
 #EL#
-9 5, 11 11
+5 9, 11 11
 #ES#
-north
+Door (2,6) to Door (6,9)(6)-east
 0.0
 #EL#
-9 6, 11 11
-#ES#
-north
-0.0
-#EL#
-9 7, 11 11
-#ES#
-north
-0.0
-#EL#
-9 8, 11 11
+6 9, 11 11
 #ES#
 east
 0.0
 #EL#
-10 8, 11 11
+7 9, 11 11
 #ES#
 east
 0.0
 #EL#
-11 8, 11 11
+8 9, 11 11
 #ES#
 north
 0.0
 #EL#
-11 9, 11 11
+8 10, 11 11
+#ES#
+east
+0.0
+#EL#
+9 10, 11 11
 #ES#
 north
 0.0
 #EL#
-11 10, 11 11
+9 11, 11 11
 #ES#
-north
+east
+0.0
+#EL#
+10 11, 11 11
+#ES#
+east
 1.0
 #EL#
 11 11, 11 11
