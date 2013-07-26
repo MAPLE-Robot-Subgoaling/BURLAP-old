@@ -63,7 +63,7 @@ public class FourRooms implements DomainGenerator {
 	
 	//Extra Stuff I added for the learning algorithm
 	public static final double LEARNINGRATE = 0.99;
-	public static final double DISCOUNTFACTOR = 0.95;
+	public static final double DISCOUNTFACTOR = 0.1;
 	public static final double LAMBDA = 0.90;
 	public static Map<StateHashTuple, List<QAction>> qVals = new HashMap<StateHashTuple, List<QAction>>();
 	public static QLearning Q;
@@ -86,7 +86,7 @@ public class FourRooms implements DomainGenerator {
 		State s = FourRooms.getCleanState();
 		setAgent(s, 1, 1);
 		setGoal(s, 11, 11);
-		int expMode = 5;
+		int expMode = 2;
 		
 		if(expMode == 0){		//Terminal Explorer
 			TerminalExplorer exp = new TerminalExplorer(d);
@@ -118,7 +118,7 @@ public class FourRooms implements DomainGenerator {
 				System.out.print("Episode " + i + ": ");
 				analyzer = Q.runLearningEpisodeFrom(s);
 				System.out.println("\tTime Steps: " + analyzer.numTimeSteps() + "\tSteps: " + Q.getLastNumSteps());
-				analyzer.writeToFile(String.format("output/e%03d", i), parser);
+				analyzer.writeToFile(String.format("output/e%03d", i), parser);	
 				
 				setAgent(s, 1, 1);
 				setGoal(s, 11, 11);
@@ -127,7 +127,6 @@ public class FourRooms implements DomainGenerator {
 			//Visualize the Steps
 			Visualizer v = FourRoomsVisual.getVisualizer();
 			new EpisodeSequenceVisualizer(v, d, parser, "output");
-			
 			
 		}else if(expMode == 3){		//Sarsa(Lambda) - OOMDPTB
 			parser = new FourRoomsStateParser();
@@ -150,37 +149,63 @@ public class FourRooms implements DomainGenerator {
 			Visualizer v = FourRoomsVisual.getVisualizer();
 			new EpisodeSequenceVisualizer(v, d, parser, "output");
 			
-		}else if(expMode == 4){
+		}else if(expMode == 4){ //Analyze previous .episode files
 			parser = new FourRoomsStateParser();
 			
 			//Opens the visualizer - Make sure there are episode files in the output folder
 			Visualizer v = FourRoomsVisual.getVisualizer();
 			new EpisodeSequenceVisualizer(v, d, parser, "output");
-		}else if(expMode == 5){
-			parser = new FourRoomsStateParser();
-			Oplanner.planFromState(s);
 			
+		}else if(expMode == 5){ //compares Q-Learning with Value Iteration Planners
+			parser = new FourRoomsStateParser();
+			
+			Oplanner.planFromState(s);
+			System.out.println("Finished Planner Algorithm");
 			
 			for(int i = 1; i <= 100; i++){
 				analyzer = new EpisodeAnalysis();
-				 
-				System.out.print("Episode " + i + ": ");
 				Q.runLearningEpisodeFrom(s);
-				System.out.println("\tSteps: " + Q.getLastNumSteps());
-		
+				
 				setAgent(s, 1, 1);
 				setGoal(s, 11, 11);
 			}
 			
+			System.out.println("Finished Q-Learning");
+			
+			
+			for(int i = 1; i <= 10; i++){
+				analyzer = new EpisodeAnalysis();
+				S.runLearningEpisodeFrom(s);
+				
+				setAgent(s, 1, 1);
+				setGoal(s, 11, 11);			
+			}
+			
+			System.out.println("Finished SARSA-Lambda");
+			
 			Policy P = new GreedyQPolicy((QComputablePlanner) Q); //Greedy Policy via Q-Learning
 			Policy P2 = new GreedyQPolicy((QComputablePlanner) Oplanner); //Greedy Policy via Value Iteration Planner
+			Policy P3 = new GreedyQPolicy((QComputablePlanner) S); //Greedy Policy via SarsaLam
 			
-			analyzer = P.evaluateBehavior(s, rf, tf);
-			analyzer.writeToFile("output/Q-learning", parser);
+			System.out.println("Policies Created");
 			
 			analyzer = P2.evaluateBehavior(s, rf, tf);
-			analyzer.writeToFile("output/OOMDP_Planner", parser);
+			System.out.println("Behavior Analyzed");
+			analyzer.writeToFile("output/OOMDP", parser);
+			System.out.println("OOMDP File Ready");
 			
+			analyzer = P.evaluateBehavior(s, rf, tf);
+			System.out.println("Behavior Analyzed");
+			analyzer.writeToFile("output/Q-learning", parser);
+			System.out.println("Q-learing File Ready");
+			
+			
+			analyzer = P3.evaluateBehavior(s, rf, tf);
+			System.out.println("Behavior Analyzed");
+			analyzer.writeToFile("output/SarsaLam", parser);
+			System.out.println("SARSA-Lam File Ready");
+
+			System.out.println("Starting Visualizer...");
 			
 			//Visualize the Steps
 			Visualizer v = FourRoomsVisual.getVisualizer();
@@ -371,7 +396,7 @@ public class FourRooms implements DomainGenerator {
 		PropositionalFunction atGoal = new AtGoalPF(PFATGOAL, DOMAIN, new String[]{CLASSAGENT, CLASSGOAL});
 		DOMAIN.addPropositionalFunction(atGoal);
 		
-		rf = new SingleGoalPFRF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
+		rf = new SingleGoalPFRF(DOMAIN.getPropFunction(FourRooms.PFATGOAL), 10, -1);
 		tf = new SinglePFTF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
 
 		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
