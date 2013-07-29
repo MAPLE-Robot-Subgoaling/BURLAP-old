@@ -63,7 +63,7 @@ public class FourRooms implements DomainGenerator {
 	
 	//Extra Stuff I added for the learning algorithm
 	public static final double LEARNINGRATE = 0.99;
-	public static final double DISCOUNTFACTOR = 0.1;
+	public static final double DISCOUNTFACTOR = 0.95;
 	public static final double LAMBDA = 0.90;
 	public static Map<StateHashTuple, List<QAction>> qVals = new HashMap<StateHashTuple, List<QAction>>();
 	public static QLearning Q;
@@ -86,7 +86,7 @@ public class FourRooms implements DomainGenerator {
 		State s = FourRooms.getCleanState();
 		setAgent(s, 1, 1);
 		setGoal(s, 11, 11);
-		int expMode = 2;
+		int expMode = 5;
 		
 		if(expMode == 0){		//Terminal Explorer
 			TerminalExplorer exp = new TerminalExplorer(d);
@@ -162,7 +162,7 @@ public class FourRooms implements DomainGenerator {
 			Oplanner.planFromState(s);
 			System.out.println("Finished Planner Algorithm");
 			
-			for(int i = 1; i <= 100; i++){
+			for(int i = 1; i <= 200; i++){
 				analyzer = new EpisodeAnalysis();
 				Q.runLearningEpisodeFrom(s);
 				
@@ -173,7 +173,7 @@ public class FourRooms implements DomainGenerator {
 			System.out.println("Finished Q-Learning");
 			
 			
-			for(int i = 1; i <= 10; i++){
+			for(int i = 1; i <= 200; i++){
 				analyzer = new EpisodeAnalysis();
 				S.runLearningEpisodeFrom(s);
 				
@@ -405,7 +405,7 @@ public class FourRooms implements DomainGenerator {
 		PropositionalFunction atGoal = new AtGoalPF(PFATGOAL, DOMAIN, new String[]{CLASSAGENT, CLASSGOAL});
 		DOMAIN.addPropositionalFunction(atGoal);
 		
-		rf = new SingleGoalPFRF(DOMAIN.getPropFunction(FourRooms.PFATGOAL), 10, -1);
+		rf = new SingleGoalPFRF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
 		tf = new SinglePFTF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
 
 		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
