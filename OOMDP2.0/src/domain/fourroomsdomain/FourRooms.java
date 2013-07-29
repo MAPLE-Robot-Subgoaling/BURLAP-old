@@ -200,6 +200,8 @@ public class FourRooms implements DomainGenerator {
 			System.out.println("Q-learing File Ready");
 			
 			
+			//Issue: trying to create the policy  for SARSA-Lam throws the program into a 
+			//elongated loop. 
 			analyzer = P3.evaluateBehavior(s, rf, tf);
 			System.out.println("Behavior Analyzed");
 			analyzer.writeToFile("output/SarsaLam", parser);
@@ -296,10 +298,10 @@ public class FourRooms implements DomainGenerator {
 	}
 	
 	/**
-	 * 
-	 * @param s
-	 * @param pf
-	 * @return
+	 * isTrue() - checks to see if the propositional function checks out in the current state
+	 * @param s - State
+	 * @param pf - Propositiona Function
+	 * @return true or false
 	 */
 	public static boolean isTrue(State s, PropositionalFunction pf){
 		boolean isTrue = false;
@@ -339,7 +341,14 @@ public class FourRooms implements DomainGenerator {
 		}
 	}
 
+	
 	@Override
+	/**
+	 * generateDomain() - generates the domain needed for the program to run
+	 * initializes all of the attributes, objects, actions, and functions that the 
+	 * domain needs in order to operate.
+	 * @return a newly created domain object
+	 */
 	public Domain generateDomain(){		
 		if(DOMAIN != null)
 			return DOMAIN;
@@ -401,6 +410,8 @@ public class FourRooms implements DomainGenerator {
 
 		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
 		hashFactory.setAttributesForClass(CLASSAGENT, DOMAIN.getObjectClass(CLASSAGENT).attributeList);
+		
+		//Learning and Planning Algorithms used to run the Agent and find the optimal policies.
 		Q = new QLearning(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, hashFactory, 0.2, FourRooms.LEARNINGRATE, Integer.MAX_VALUE);
 		S = new SarsaLam(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, hashFactory, 0.2, FourRooms.LEARNINGRATE, Integer.MAX_VALUE, FourRooms.LAMBDA);
 		Oplanner = new ValueIteration(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, hashFactory, 0.001, 100);
@@ -408,6 +419,10 @@ public class FourRooms implements DomainGenerator {
 		return DOMAIN;
 	}
 
+	/**
+	 * getCleanState() - generates a fresh new state
+	 * @return - State Object
+	 */
 	public static State getCleanState(){	
 		FourRooms frd = new FourRooms();
 		frd.generateDomain();
@@ -420,24 +435,42 @@ public class FourRooms implements DomainGenerator {
 		return s;
 	}
 	
+	/**
+	 * setAgent() - sets up the Agent's relative location in the domain
+	 * @param s - State
+	 * @param x - x position
+	 * @param y - y position
+	 */
 	public static void setAgent(State s, int x, int y){
 		ObjectInstance agent = s.getObjectsOfTrueClass(CLASSAGENT).get(0);
 		agent.setValue(ATTX, x);
 		agent.setValue(ATTY, y);
 	}
 	
+	/**
+	 * setGoal() - sets up the goal's relative location in the domain
+	 * @param s - State
+	 * @param x - x position
+	 * @param y - y position
+	 */
 	public static void setGoal(State s, int x, int y){
 		ObjectInstance goal = s.getObjectsOfTrueClass(CLASSGOAL).get(0);
 		goal.setValue(ATTX, x);
 		goal.setValue(ATTY, y);
 	}
 	
+	/*
+	 * generateMap() - creates a Integer map to visualize the domain
+	 */
 	public static void generateMap(){
 		MAP = new int[MAXX+1][MAXY+1]; //+1 to handle zero base
 		frameMap();
 		setStandardWalls();
 	}
 	
+	/**
+	 * frameMap() - creates the outside borders of the domain.
+	 */
 	public static void frameMap(){
 		for(int x = 0; x <= MAXX; x++){
 			for(int y = 0; y <= MAXY; y++){
@@ -449,6 +482,9 @@ public class FourRooms implements DomainGenerator {
 		}
 	}
 	
+	/**
+	 * setStandardWalls() - sets up the barrier walls of the domain
+	 */
 	public static void setStandardWalls(){
 		horizontalWall(1, 1, 6);
 		horizontalWall(3, 5, 6);
@@ -460,16 +496,35 @@ public class FourRooms implements DomainGenerator {
 		verticalWall(10, 11, 6);
 	}
 	
+	/**
+	 * horizontalWall() -  creates horizontal barrier walls
+	 * @param xi - starting x position
+	 * @param xf - final x position
+	 * @param y - y position
+	 */
 	protected static void horizontalWall(int xi, int xf, int y){
 		for(int x = xi; x <= xf; x++)
 			MAP[x][y] = 1;
 	}
 	
+	/**
+	 * verticalWall() - creates a vertical barrier walls
+	 * @param yi - starting y position
+	 * @param yf - final y position
+	 * @param x - x position
+	 */
 	protected static void verticalWall(int yi, int yf, int x){
 		for(int y = yi; y <= yf; y++)
 			MAP[x][y] = 1;
 	}
 	
+	/**
+	 * move() - the defined move function for the domain to operate in. 
+	 * The move function is always specific to the domain 
+	 * @param s - current state 
+	 * @param xd - change in x 
+	 * @param yd - change in y
+	 */
 	public static void move(State s, int xd, int yd){
 		
 		ObjectInstance agent = s.getObjectsOfTrueClass(CLASSAGENT).get(0);
@@ -488,60 +543,139 @@ public class FourRooms implements DomainGenerator {
 	
 	}
 	
+	/**
+	 * NorthAction - the Action class that defines the north action
+	 * @author Tenji Tembo
+	 *
+	 */
 	public static class NorthAction extends Action{
+		
+		/**
+		 * Constructor NorthAction() - creates a north action object
+		 * @param name - name of the action
+		 * @param domain - domain in which the action exists
+		 * @param parameterClasses - parameters associated with the actions
+		 */
 		public NorthAction(String name, Domain domain, String parameterClasses){
 			super(name, domain, parameterClasses);
 		}
 		
 		@Override
+		/**
+		 * performActionHelper() - runs the action movement specific to the domain
+		 * @return st - a new state object
+		 */
 		protected State performActionHelper(State st, String[] params) {
 			move(st, 0, 1);
 			return st;
 		}
 	}
 	
+	/**
+	 * SouthAction -  the Action class that defines the south action
+	 * @author Tenji Tembo
+	 *
+	 */
 	public static class SouthAction extends Action{
+		/**
+		 * Constructor SouthAction() - creates a south action object
+		 * @param name - name of the action
+		 * @param domain - domain in which the action exists in
+		 * @param parameterClasses - parameters associated with the actions
+		 */
 		public SouthAction(String name, Domain domain, String parameterClasses){
 			super(name, domain, parameterClasses);
 		}
 		
 		@Override
+		/**
+		 * performActionHelper() - runs the action movement specific to the domain
+		 * @return st - a new state object
+		 */
 		protected State performActionHelper(State st, String[] params) {
 			move(st, 0, -1);
 			return st;
 		}
 	}
 	
+	/**
+	 * EastAction - the action class that defines the east action
+	 * @author Tenji Tembo
+	 *
+	 */
 	public static class EastAction extends Action{
+		/**
+		 * Constructor EastAction() - creates an east action object
+		 * @param name - name of the action
+		 * @param domain - domain in which the action exists in
+		 * @param parameterClasses - parameters associated with the actions
+		 */
 		public EastAction(String name, Domain domain, String parameterClasses){
 			super(name, domain, parameterClasses);
 		}
 		
 		@Override
+		/**
+		 * performActionHelper() - runs the action movement specific to the domain
+		 * @return st - a new state object
+		 */
 		protected State performActionHelper(State st, String[] params) {
 			move(st, 1, 0);
 			return st;
 		}
 	}
 	
+	/**
+	 * WestAction - the action class that defines the west action
+	 * @author Tenji Tembo
+	 *
+	 */
 	public static class WestAction extends Action{
+		/**
+		 * Constructor WestAction() - creates a west action object
+		 * @param name - name of the action
+		 * @param domain - domain in which the action exists
+		 * @param parameterClasses - parameters associated with the action
+		 */
 		public WestAction(String name, Domain domain, String parameterClasses){
 			super(name, domain, parameterClasses);
 		}
 		
 		@Override
+		/**
+		 * performActionHelper() - runs the action movement specific to the domain
+		 * @return st - a new state object
+		 */
 		protected State performActionHelper(State st, String[] params) {
 			move(st, -1, 0);
 			return st;
 		}
 	}
 	
+	/**
+	 * AtGoalPF - the Propositional Function class that defines the AtGoalPF
+	 * @author MCTembo
+	 *
+	 */
 	public static class AtGoalPF extends PropositionalFunction{
+		/**
+		 * Constructor AtGoalPF - creates an AtGoalPF Object
+		 * @param name - name of the propfunc
+		 * @param domain - domain in which the function exists
+		 * @param parameterClasses - parameters associated with the propfunc
+		 */
 		public AtGoalPF(String name, Domain domain, String[] parameterClasses) {
 			super(name, domain, parameterClasses);
 		}
 
 		@Override
+		/**
+		 * isTrue() - specific to the domain, this checks to see if the conditions of the
+		 * propositional function have been met
+		 * @param st - current state
+		 * @param params - string based parameters
+		 * @return - true or false 
+		 */
 		public boolean isTrue(State st, String[] params){
 			ObjectInstance agent = st.getObject(params[0]);
 			int ax = agent.getDiscValForAttribute(ATTX);
@@ -557,10 +691,25 @@ public class FourRooms implements DomainGenerator {
 		}	
 	}
 	
+	/**
+	 * updateQValue() - returns an updated Q value
+	 * @param oldQVal - older q value
+	 * @param highestQVal - highest q value
+	 * @param reward - reward value
+	 * @return - new q value
+	 */
 	public static double updateQValue(double oldQVal, double highestQVal, double reward){
 		return oldQVal + FourRooms.LEARNINGRATE * ((reward + FourRooms.DISCOUNTFACTOR * highestQVal) - oldQVal);
 	}
 	
+	/**
+	 * generateState() - generates a custom state
+	 * @param ax - agent x position
+	 * @param ay - agent y position
+	 * @param gx - goal x position
+	 * @param gy - goal y position
+	 * @return - state object
+	 */
 	public static State generateState(int ax, int ay, int gx, int gy){
 		State s = FourRooms.getCleanState();
 		setAgent(s, ax, ay);
@@ -568,6 +717,12 @@ public class FourRooms implements DomainGenerator {
 		return s;
 	}
 	
+	/**
+	 * StateCheck - a StateConditionTest class used for checking conditions in which 
+	 * options can be triggered
+	 * @author Tenji Tembo
+	 *
+	 */
 	public static class StateCheck implements StateConditionTest{
 			
 		protected State condition;
@@ -651,12 +806,20 @@ public class FourRooms implements DomainGenerator {
 		}
 
 		@Override
+		/**
+		 * Not a stochastic policy, just deterministic
+		 */
 		public boolean isStochastic() {
 			return false;
 		}
 		
 	}
 	
+	/**
+	 * Simple Policy from the Start to the Door(6,2)
+	 * @author Tenji Tembo
+	 *
+	 */
 	public static class StartToDoorEastPolicy extends Policy{
 		
 		//Policy Mapping
@@ -705,6 +868,11 @@ public class FourRooms implements DomainGenerator {
 		
 	}
 	
+	/**
+	 * Simple Policy from the Door(2,6) to Door (6,9)
+	 * @author Tenji Tembo
+	 *
+	 */
 	public static class DoorNorthtoGoalEast extends Policy{
 		//Policy Mapping
 		public Map<StateHashTuple, GroundedAction> map = new HashMap<StateHashTuple, GroundedAction>();
@@ -725,7 +893,7 @@ public class FourRooms implements DomainGenerator {
 		}
 
 		@Override
-		/*
+		/**
 		 * Enters the map and returns the corresponding GroundedAction for the State
 		 */
 		public GroundedAction getAction(State s){
@@ -733,7 +901,7 @@ public class FourRooms implements DomainGenerator {
 		}
 
 		@Override
-		/*
+		/**
 		 *Basic Action distribution. Since it's one action per state, it's 100% all of the time.
 		 * @param State s
 		 * @return ActionProb list
@@ -752,6 +920,11 @@ public class FourRooms implements DomainGenerator {
 		}
 	}
 	
+	/**
+	 * Simple Policy from the Door(6,2) to the Door(9,5)
+	 * @author Tenji Tembo
+	 *
+	 */
 	public static class DoorEasttoGoalNorth extends Policy{
 		//Policy Mapping
 		public Map<StateHashTuple, GroundedAction> map = new HashMap<StateHashTuple, GroundedAction>();
@@ -798,6 +971,11 @@ public class FourRooms implements DomainGenerator {
 		}
 	}
 	
+	/**
+	 * Simple Policy from Door(6,9) to the Goal
+	 * @author Tenji Tembo
+	 *
+	 */
 	public static class GoalEasttoGoal extends Policy{
 		//Policy Mapping
 		public Map<StateHashTuple, GroundedAction> map = new HashMap<StateHashTuple, GroundedAction>();
@@ -844,6 +1022,11 @@ public class FourRooms implements DomainGenerator {
 		}
 	}
 	
+	/**
+	 * Simple Policy from Door(9,5) to the goal
+	 * @author Tenji Tembo
+	 *
+	 */
 	public static class GoalNorthtoGoal extends Policy{
 		//Policy Mapping
 		public Map<StateHashTuple, GroundedAction> map = new HashMap<StateHashTuple, GroundedAction>();
