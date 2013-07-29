@@ -15,6 +15,7 @@ import oomdptb.behavior.planning.QComputablePlanner;
 import oomdptb.behavior.planning.commonpolicies.EpsilonGreedy;
 import oomdptb.behavior.statehashing.StateHashFactory;
 import oomdptb.behavior.statehashing.StateHashTuple;
+import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
@@ -40,6 +41,8 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	protected LinkedList<EpisodeAnalysis>							episodeHistory;
 	protected int													numEpisodesToStore;
 	
+	
+	protected boolean												shouldDecomposeOptions;
 	
 	
 	
@@ -75,6 +78,8 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 		numEpisodesForPlanning = 1;
 		maxQChangeForPlanningTermination = 0.;
 		
+		shouldDecomposeOptions = true;
+		
 	}
 	
 	
@@ -104,6 +109,50 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	public int getLastNumSteps(){
 		return eStepCounter;
 	}
+	
+	
+	/**
+	 * Sets whether the primitive actions taken during an options will be included as steps in produced EpisodeAnalysis objects.
+	 * The default value is true. If this is set to false, then EpisodeAnalysis objects returned from a learning episode will record options
+	 * as a single "action" and the steps taken by the option will be hidden. 
+	 * @param toggle whether to decompose options into the primitive actions taken by them or not.
+	 */
+	public void toggleShouldDecomposeOption(boolean toggle){
+		this.shouldDecomposeOptions = toggle;
+		for(Action a : actions){
+			if(a instanceof Option){
+				((Option)a).toggleShouldRecordResults(toggle);
+			}
+		}
+	}
+	
+	/**
+	 * Sets whether options that are decomposed into primitives will have the option that produced them and listed.
+	 * The default value is true. If option decomposition is not enabled, changing this value will do nothing. When it
+	 * is enabled and this is set to true, primitive actions taken by an option in EpisodeAnalysis objects will be
+	 * recorded with a special action name that indicates which option was called to produce the primitive action
+	 * as well as which step of the option the primitive action is. When set to false, recorded names of primitives
+	 * will be only the primitive aciton's name it will be unclear which option was taken to generate it.
+	 * @param toggle whether to annotate the primitive actions of options with the calling option's name.
+	 */
+	public void toggleShouldAnnotateOptionDecomposition(boolean toggle){
+		for(Action a : actions){
+			if(a instanceof Option){
+				((Option)a).toggleShouldAnnotateResults(toggle);
+			}
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	@Override
 	public List<QValue> getQs(State s) {
@@ -210,6 +259,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 			if(action.action.isPrimitive()){
 				r = rf.reward(curState.s, action, nextState.s);
 				eStepCounter++;
+				ea.recordTransitionTo(nextState.s, action, r);
 			}
 			else{
 				Option o = (Option)action.action;
@@ -217,9 +267,15 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 				int n = o.getLastNumSteps();
 				discount = Math.pow(this.gamma, n);
 				eStepCounter += n;
+				if(this.shouldDecomposeOptions){
+					ea.appendAndMergeEpisodeAnalysis(o.getLastExecutionResults());
+				}
+				else{
+					ea.recordTransitionTo(nextState.s, action, r);
+				}
 			}
 			
-			ea.recordTransitionTo(nextState.s, action, r);
+			
 			
 			double oldQ = curQ.q;
 			

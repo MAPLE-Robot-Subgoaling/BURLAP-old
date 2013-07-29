@@ -19,11 +19,25 @@ public abstract class Policy {
 	public abstract List<ActionProb> getActionDistributionForState(State s); //returns null when policy is undefined for s
 	public abstract boolean isStochastic();
 	
-	
+	/**
+	 * Sets whether the primitive actions taken during an options will be included as steps in produced EpisodeAnalysis objects.
+	 * The default value is true. If this is set to false, then EpisodeAnalysis objects returned from evaluating a policy will record options
+	 * as a single "action" and the steps taken by the option will be hidden. 
+	 * @param toggle whether to decompose options into the primitive actions taken by them or not.
+	 */
 	public void evaluateMethodsShouldDecomposeOption(boolean toggle){
 		this.evaluateDecomposesOptions = toggle;
 	}
 	
+	/**
+	 * Sets whether options that are decomposed into primitives will have the option that produced them and listed.
+	 * The default value is true. If option decomposition is not enabled, changing this value will do nothing. When it
+	 * is enabled and this is set to true, primitive actions taken by an option in EpisodeAnalysis objects will be
+	 * recorded with a special action name that indicates which option was called to produce the primitive action
+	 * as well as which step of the option the primitive action is. When set to false, recorded names of primitives
+	 * will be only the primitive aciton's name it will be unclear which option was taken to generate it.
+	 * @param toggle whether to annotate the primitive actions of options with the calling option's name.
+	 */
 	public void evaluateMethodsShouldAnnotateOptionDecomposition(boolean toggle){
 		this.annotateOptionDecomposition = toggle;
 	}

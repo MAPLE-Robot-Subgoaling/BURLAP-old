@@ -88,6 +88,7 @@ public class SarsaLam extends QLearning {
 			if(action.action.isPrimitive()){
 				r = rf.reward(curState.s, action, nextState.s);
 				eStepCounter++;
+				ea.recordTransitionTo(nextState.s, action, r);
 			}
 			else{
 				Option o = (Option)action.action;
@@ -95,9 +96,15 @@ public class SarsaLam extends QLearning {
 				int n = o.getLastNumSteps();
 				discount = Math.pow(this.gamma, n);
 				eStepCounter += n;
+				if(this.shouldDecomposeOptions){
+					ea.appendAndMergeEpisodeAnalysis(o.getLastExecutionResults());
+				}
+				else{
+					ea.recordTransitionTo(nextState.s, action, r);
+				}
 			}
 			
-			ea.recordTransitionTo(nextState.s, action, r);
+			
 			
 			//delta
 			double delta = r + (discount * nextQV) - curQ.q;

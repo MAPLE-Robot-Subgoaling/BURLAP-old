@@ -148,9 +148,15 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 		
 		double q = this.getDefaultValue(s);
 		for(HashedTransitionProbability tp : trans.transitions){
+			double discount = this.gamma;
+			if(trans.ga.action instanceof Option){
+				trans.ga.executeIn(s);
+				int n = ((Option)trans.ga.action).getLastNumSteps();
+				discount = Math.pow(this.gamma, n);
+			}
 			double r = rf.reward(s, trans.ga, tp.sh.s);
 			double vp = this.getComputedVForSH(tp.sh);
-			q += tp.p * (r + (this.gamma * vp));
+			q += tp.p * (r + (discount * vp));
 		}
 		
 		

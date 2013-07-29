@@ -76,6 +76,19 @@ public class EpisodeAnalysis {
 		return stateSequence.size(); //state sequence will always have the most because of initial state and terminal state
 	}
 	
+	
+	/**
+	 * This method will append execution results in e to this object's results. Note that it is assumed that the initial state in e
+	 * is the last state recorded in this object. This method is useful for appending the results of an option's execution
+	 * to a episode.
+	 * @param e the execution results to append to this episode.
+	 */
+	public void appendAndMergeEpisodeAnalysis(EpisodeAnalysis e){
+		for(int i = 0; i < e.numTimeSteps()-1; i++){
+			this.recordTransitionTo(e.getState(i+1), e.getAction(i), e.getReward(i));
+		}
+	}
+	
 	public String getActionSequenceString(){
 		StringBuffer buf = new StringBuffer();
 		boolean first = true;

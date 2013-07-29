@@ -2,6 +2,7 @@ package oomdptb.behavior.options;
 
 import java.util.Random;
 
+import oomdptb.behavior.EpisodeAnalysis;
 import oomdptb.behavior.planning.StateMapping;
 import oomdptb.oomdp.*;
 import oomdptb.oomdp.common.*;
@@ -20,6 +21,10 @@ import oomdptb.oomdp.common.*;
 public abstract class Option extends Action {
 
 	protected Random 									rand;
+	
+	protected EpisodeAnalysis							lastOptionExecutionResults;
+	protected boolean									shouldRecordResults;
+	protected boolean									shouldAnnotateExecution;
 	
 	//variables for keeping track of reward from execution
 	protected RewardFunction 							rf;
@@ -73,6 +78,30 @@ public abstract class Option extends Action {
 		stateMapping = null;
 		terminateMapper = null;
 		externalTerminalFunction = new NullTermination();
+		shouldRecordResults = true;
+		shouldAnnotateExecution = true;
+	}
+	
+	
+	public void toggleShouldRecordResults(boolean toggle){
+		this.shouldRecordResults = toggle;
+	}
+	
+	public void toggleShouldAnnotateResults(boolean toggle){
+		this.shouldAnnotateExecution = toggle;
+	}
+	
+	
+	public boolean isRecordingExecutionResults(){
+		return shouldRecordResults;
+	}
+	
+	public boolean isAnnotatingExecutionResults(){
+		return shouldAnnotateExecution;
+	}
+	
+	public EpisodeAnalysis getLastExecutionResults(){
+		return lastOptionExecutionResults;
 	}
 	
 	public void setStateMapping(StateMapping m){
@@ -135,6 +164,7 @@ public abstract class Option extends Action {
 		lastCumulativeReward = 0.;
 		cumulativeDiscount = 1.;
 		lastNumSteps = 0;
+		lastOptionExecutionResults = new EpisodeAnalysis(s);
 		this.initiateInStateHelper(s, params);
 	}
 	
@@ -165,10 +195,24 @@ public abstract class Option extends Action {
 		GroundedAction ga = this.oneStepActionSelection(s, params);
 		State sprime = ga.executeIn(s);
 		lastNumSteps++;
+		double r = 0.;
 		if(keepTrackOfReward){
-			lastCumulativeReward += cumulativeDiscount*rf.reward(s, ga, sprime);
+			r = rf.reward(s, ga, sprime);
+			lastCumulativeReward += cumulativeDiscount*r;
 			cumulativeDiscount *= discountFactor;
 		}
+		
+		if(shouldRecordResults){
+			GroundedAction recordAction = ga;
+			if(shouldAnnotateExecution){
+				NullAction annotatedPrimitive = new NullAction(this.name + "(" + (lastNumSteps-1) + ")-" + ga.action.getName());
+				recordAction = new GroundedAction(annotatedPrimitive, ga.params);
+			}
+			lastOptionExecutionResults.recordTransitionTo(sprime, recordAction, r);
+		}
+		
+		
+		
 		return sprime;
 	}
 	
