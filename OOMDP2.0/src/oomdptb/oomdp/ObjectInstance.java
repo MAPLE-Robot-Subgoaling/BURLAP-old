@@ -20,7 +20,7 @@ public class ObjectInstance {
 		this.obClass = obClass;
 		this.name = "noname";
 		this.pseudoClass = new LinkedList <String>();
-		this.pseudoClass.add(obClass.name_); //base pseudo class is the true class 
+		this.pseudoClass.add(obClass.name); //base pseudo class is the true class 
 		
 		this.initializeValueObjects();
 		
@@ -31,7 +31,7 @@ public class ObjectInstance {
 		this.obClass = obClass;
 		this.name = name;
 		this.pseudoClass = new LinkedList <String>();
-		this.pseudoClass.add(obClass.name_); //base pseudo class is the true class
+		this.pseudoClass.add(obClass.name); //base pseudo class is the true class
 		
 		this.initializeValueObjects();
 		
@@ -52,7 +52,7 @@ public class ObjectInstance {
 			pseudoClass.addLast(pc);
 		}
 		
-		this.obsFeatureVec = new double[obClass.observableAttributeIndices_.size()];
+		this.obsFeatureVec = new double[obClass.observableAttributeIndices.size()];
 		for(int i = 0; i < o.obsFeatureVec.length; i++){
 			obsFeatureVec[i] = o.obsFeatureVec[i];
 		}
@@ -67,10 +67,10 @@ public class ObjectInstance {
 	
 	public void initializeValueObjects(){
 		
-		obsFeatureVec = new double[obClass.observableAttributeIndices_.size()];
+		obsFeatureVec = new double[obClass.observableAttributeIndices.size()];
 		
 		values = new ArrayList <Value>(obClass.numAttributes());
-		for(Attribute att : obClass.attributeList_){
+		for(Attribute att : obClass.attributeList){
 			values.add(new Value(att));
 		}
 		
@@ -80,13 +80,6 @@ public class ObjectInstance {
 		this.name = name;
 	}
 	
-	public int getDiscreteSpace(){
-		return obClass.discreteSpace_;
-	}
-	
-	public int [] getDiscreteAttributeSpaces(){
-		return obClass.discreteAttributeSpaces_;
-	}
 	
 	public void pushPseudoClass(String c){
 		pseudoClass.addFirst(c);
@@ -121,7 +114,7 @@ public class ObjectInstance {
 	public void setObservableValues(List <Double> vs){
 		
 		for(int i = 0; i < vs.size(); i++){
-			int ind = obClass.observableAttributeIndices_.get(i);
+			int ind = obClass.observableAttributeIndices.get(i);
 			values.get(ind).setValue(vs.get(i));
 		}
 		this.computeRealVals();
@@ -138,7 +131,7 @@ public class ObjectInstance {
 	}
 	
 	public String getTrueClassName(){
-		return obClass.name_;
+		return obClass.name;
 	}
 	
 	public String getPseudoClass(){
@@ -199,9 +192,9 @@ public class ObjectInstance {
 	
 	public void computeRealVals(){
 		
-		for(int i = 0; i < obClass.observableAttributeIndices_.size(); i++){
+		for(int i = 0; i < obClass.observableAttributeIndices.size(); i++){
 			
-			int ind = obClass.observableAttributeIndices_.get(i);
+			int ind = obClass.observableAttributeIndices.get(i);
 			obsFeatureVec[i] = values.get(ind).getNumericVal();
 			
 		}

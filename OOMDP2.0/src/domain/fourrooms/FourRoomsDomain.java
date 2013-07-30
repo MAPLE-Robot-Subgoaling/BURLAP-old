@@ -44,21 +44,24 @@ public class FourRoomsDomain implements DomainGenerator {
 	
 	/*A variable of type Domain
 	 * The attributes of the Domain class are:
-	 * 			private List <ObjectClass> objectClasses_; //list of object classes
-				private Map <String, ObjectClass> objectClassMap_; //look up object classes by name
-				private List <Attribute> attributes_; //list of attributes
-				private Map <String, Attribute>	attributeMap_; //lookup attributes by name
-				private List <PropositionalFunction> propFunctions_; //list of propositional functions
-				private Map <String, PropositionalFunction> propFunctionMap_; //lookup propositional functions by name
-				private List <Action> actions_; //list of actions
-				private Map <String, Action> actionMap_; //lookup actions by name
+	 *private List <ObjectClass>						objectClasses;			//list of object classes
+	 *private Map <String, ObjectClass>				objectClassMap;		//look up object classes by name
+	 *
+	 *private List <Attribute>						attributes;			//list of attributes
+	 *private Map <String, Attribute>					attributeMap;			//lookup attributes by name
+	 *
+	 *private List <PropositionalFunction>			propFunctions;			//list of propositional functions
+	 *private Map <String, PropositionalFunction> 	propFunctionMap;		//lookup propositional functions by name
+	 *
+	 *private List <Action>							actions;				//list of actions
+	 *private Map <String, Action>					actionMap;				//lookup actions by name
 	 */
 	public static Domain								DOMAIN = null;	
 	
 	public static void main(String[] args) {
 		
 		/*Creating an object called fourRoomsDomain()
-		 * 	THis object has no constructor nor any attributes that would differ from each object		
+		 * 	This object has no constructor nor any attributes that would differ from each object		
 		*/
 		FourRoomsDomain frd = new FourRoomsDomain();
 		
@@ -163,12 +166,24 @@ public class FourRoomsDomain implements DomainGenerator {
 		return s;
 	}
 	
+	/**
+	 * Sets the agent's position to the given coordinates in a states
+	 * @param s the state to modify
+	 * @param x the new x coordinate of the agent
+	 * @param y the new y coordinate of the agent
+	 */
 	public static void setAgent(State s, int x, int y){
 		ObjectInstance agent = s.getObjectsOfTrueClass(CLASSAGENT).get(0);
 		agent.setValue(ATTX, x);
 		agent.setValue(ATTY, y);
 	}
 	
+	/**
+	 * Sets the goal's position to the given coordinates in a states
+	 * @param s the state to modify
+	 * @param x the new x coordinate of the goal
+	 * @param y the new y coordinate of the goal
+	 */
 	public static void setGoal(State s, int x, int y){
 		ObjectInstance goal = s.getObjectsOfTrueClass(CLASSGOAL).get(0);
 		goal.setValue(ATTX, x);
@@ -207,23 +222,17 @@ public class FourRoomsDomain implements DomainGenerator {
 	
 	/**
 	 * Creates horizontal and vertical walls within the bigger box created in frameMap()
+	 * see the documentation for horizontalWall() and verticalWall() for how to modify this
 	 */
 	public static void setStandardWalls(){
 		
-		/*
-		 * The horizontal wall is set to be at Map[1][6]
-		 */
+		
 		horizontalWall(1, 1, 6);
-		//Horizontal walls set at Map[3][6], Map[4][6], Map[5][6]
 		horizontalWall(3, 5, 6);
-		//Horizontal walls set at Map[7][5], Map[8][5]
 		horizontalWall(7, 8, 5);
-		//Horizontal walls set at Map[10][5], Map[11][5]
 		horizontalWall(10, 11, 5);
 		
-		//Vertical walls set at Map[1][6]
 		verticalWall(1, 1, 6);
-		//Vertical walls set at Map[3][6], Map[4][6],Map[5][6],Map[6][6],Map[7][6],Map[8][6],
 		verticalWall(3, 8, 6);
 		verticalWall(10, 11, 6);
 		
@@ -256,6 +265,7 @@ public class FourRoomsDomain implements DomainGenerator {
 	
 	/**
 	 * Attempts to move the agent into the given position, taking into account walls and blocks
+	 * This is a helper function for the North, South, East, and West actions.
 	 * @param the current state
 	 * @param the attempted new X position of the agent
 	 * @param the attempted new Y position of the agent
@@ -291,8 +301,6 @@ public class FourRoomsDomain implements DomainGenerator {
 			System.out.println("Action Performed: " + this.name);
 			return st;
 		}
-		
-		
 	}
 	
 	
@@ -355,10 +363,14 @@ public class FourRoomsDomain implements DomainGenerator {
 		public boolean isTrue(State st, String[] params) {
 			
 			ObjectInstance agent = st.getObject(params[0]);
+			
+			//get the agent coordinates
 			int ax = agent.getDiscValForAttribute(ATTX);
 			int ay = agent.getDiscValForAttribute(ATTY);
 			
 			ObjectInstance goal = st.getObject(params[1]);
+			
+			//get the goal coordinates
 			int gx = goal.getDiscValForAttribute(ATTX);
 			int gy = goal.getDiscValForAttribute(ATTY);
 			
@@ -367,11 +379,6 @@ public class FourRoomsDomain implements DomainGenerator {
 			}
 			
 			return false;
-		}
-		
-		
-		
+		}	
 	}
-	
-
 }

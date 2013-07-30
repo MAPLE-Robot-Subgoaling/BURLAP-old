@@ -10,12 +10,14 @@ import java.util.Set;
 
 import oomdptb.behavior.planning.StateConditionTest;
 import oomdptb.behavior.planning.OOMDPPlanner;
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.statehashing.StateHashFactory;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.RewardFunction;
 import oomdptb.oomdp.State;
+import oomdptb.oomdp.TerminalFunction;
 
 public abstract class DeterministicPlanner extends OOMDPPlanner{
 
@@ -30,9 +32,9 @@ public abstract class DeterministicPlanner extends OOMDPPlanner{
 	
 	
 	
-	public void deterministicPlannerInit(Domain domain, RewardFunction rf, StateConditionTest gc, Map <String, List<Attribute>> attributesForHashCode){
+	public void deterministicPlannerInit(Domain domain, RewardFunction rf, TerminalFunction tf, StateConditionTest gc, StateHashFactory hashingFactory){
 		
-		this.PlannerInit(domain, rf, null, 1., attributesForHashCode); //goal condition doubles as termination function for detemrinistic planners 
+		this.PlannerInit(domain, rf, tf, 1., hashingFactory); //goal condition doubles as termination function for detemrinistic planners 
 		this.gc = gc;
 		this.internalPolicy = new HashMap<StateHashTuple, GroundedAction>();
 	
@@ -60,9 +62,9 @@ public abstract class DeterministicPlanner extends OOMDPPlanner{
 		//otherwise it's already computed
 		GroundedAction res = internalPolicy.get(sh);
 		
-		//do object matching and return result
+		//do object matching from returned result to this query state and return result
 		if(containsParameterizedActions){
-			Map<String,String> matching = indexSH.s.getExactStateObjectMatchingTo(s);
+			Map<String,String> matching = indexSH.s.getObjectMatchingTo(sh.s, false);
 			for(int i = 0; i < res.params.length; i++){
 				res.params[i] = matching.get(res.params[i]);
 			}

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.oomdp.GroundedAction;
 
 public class UCTActionNode {
