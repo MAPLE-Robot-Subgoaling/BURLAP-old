@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import oomdptb.behavior.options.Option;
+import oomdptb.behavior.options.OptionEvaluatingRF;
+import oomdptb.behavior.statehashing.StateHashFactory;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Attribute;
@@ -18,7 +21,7 @@ import oomdptb.oomdp.TerminalFunction;
 public abstract class OOMDPPlanner {
 
 	protected Domain												domain;
-	protected Map <String, List<Attribute>>							attributesForHashCode;
+	protected StateHashFactory										hashingFactory;
 	protected RewardFunction										rf;
 	protected TerminalFunction										tf;
 	protected double												gamma;
@@ -34,13 +37,13 @@ public abstract class OOMDPPlanner {
 	
 	public abstract void planFromState(State initialState);
 	
-	public void PlannerInit(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Map <String, List<Attribute>> attributesForHashCode){
+	public void PlannerInit(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory){
 		
 		this.domain = domain;
 		this.rf = rf;
 		this.tf = tf;
 		this.gamma = gamma;
-		this.attributesForHashCode = attributesForHashCode;
+		this.hashingFactory = hashingFactory;
 		
 		mapToStateIndex = new HashMap<StateHashTuple, StateHashTuple>();
 		
@@ -63,8 +66,11 @@ public abstract class OOMDPPlanner {
 			actions.add(a);
 			if(a instanceof Option){
 				Option o = (Option)a;
-				o.keepTrackOfRewardWith(rf, 1.);
+				o.keepTrackOfRewardWith(rf, gamma);
 				o.setExernalTermination(tf);
+				if(!(this.rf instanceof OptionEvaluatingRF)){
+					this.rf = new OptionEvaluatingRF(this.rf);
+				}
 			}
 			if(a.getParameterClasses().length > 0){
 				this.containsParameterizedActions = true;
@@ -73,36 +79,6 @@ public abstract class OOMDPPlanner {
 		
 	}
 	
-	
-	public void setAttributesForHashCode(Map<String, List<Attribute>> attributesForHashCode){
-		this.attributesForHashCode = attributesForHashCode;
-	}
-	
-	public void setAttributesForClass(String classname, List <Attribute> atts){
-		if(attributesForHashCode == null){
-			attributesForHashCode = new HashMap<String, List<Attribute>>();
-		}
-		attributesForHashCode.put(classname, atts);
-	}
-	
-	public void addAttributeForClass(String classname, Attribute att){
-		if(attributesForHashCode == null){
-			attributesForHashCode = new HashMap<String, List<Attribute>>();
-		}
-		List <Attribute> atts = attributesForHashCode.get(classname);
-		if(atts == null){
-			atts = new ArrayList<Attribute>();
-			attributesForHashCode.put(classname, atts);
-		}
-		//check if already there or not
-		for(Attribute attInList : atts){
-			if(attInList.name.equals(att.name)){
-				return ;
-			}
-		}
-		//if reached here then this att is not already added
-		atts.add(att);
-	}
 	
 	
 	public TerminalFunction getTF(){
@@ -135,7 +111,7 @@ public abstract class OOMDPPlanner {
 	
 	
 	public StateHashTuple stateHash(State s){
-		return new StateHashTuple(s, attributesForHashCode);
+		return hashingFactory.hashState(s);
 	}
 	
 	

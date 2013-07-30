@@ -62,7 +62,7 @@ public class State {
 		objectMap.put(oname, o);
 		
 		
-		if(o.getObjectClass().hidden_){
+		if(o.getObjectClass().hidden){
 			hiddenObjectInstances.add(o);
 		}
 		else{
@@ -123,7 +123,7 @@ public class State {
 			return ; //make sure we're removing something that actually exists in this state!
 		}
 		
-		if(o.getObjectClass().hidden_){
+		if(o.getObjectClass().hidden){
 			hiddenObjectInstances.remove(o);
 		}
 		else{
@@ -172,11 +172,22 @@ public class State {
 	}
 	
 	
-	public Map <String, String> getExactStateObjectMatchingTo(State so){
+	/**
+	 * This method computes a matching from objects in the receiver to value-identical objects in the parameter state so. The matching
+	 * is returned as a map from the object names in the receiving state to the matched objects in state so. If
+	 * enforceStateExactness is set to true, then the returned matching will be an empty map if the two states
+	 * are not OO-MDP-wise identical (i.e., if there is a not a bijection
+	 *  between value-identical objects of the two states). If enforceExactness is false and the states are not identical,
+	 *  the the method will return the largest matching between objects that can be made.
+	 * @param so the state to whose objects the receiving state's objects should be matched
+	 * @param enforceStateExactness whether to require that states are identical to return a matching
+	 * @return a matching from this receiving state's objects to objects in so that have identical values. 
+	 */
+	public Map <String, String> getObjectMatchingTo(State so, boolean enforceStateExactness){
 		
 		Map <String, String> matching = new HashMap<String, String>();
 		
-		if(this.numTotalObjets() != so.numTotalObjets()){
+		if(this.numTotalObjets() != so.numTotalObjets() && enforceStateExactness){
 			return new HashMap<String, String>(); //states are not equal and therefore cannot be matched
 		}
 		
@@ -186,7 +197,7 @@ public class State {
 			
 			String oclass = objects.get(0).getTrueClassName();
 			List <ObjectInstance> oobjects = so.getObjectsOfTrueClass(oclass);
-			if(objects.size() != oobjects.size()){
+			if(objects.size() != oobjects.size() && enforceStateExactness){
 				return new HashMap<String, String>(); //states are not equal and therefore cannot be matched
 			}
 			
@@ -203,7 +214,7 @@ public class State {
 						break;
 					}
 				}
-				if(!foundMatch){
+				if(!foundMatch && enforceStateExactness){
 					return new HashMap<String, String>(); //states are not equal and therefore cannot be matched
 				}
 			}
@@ -232,6 +243,7 @@ public class State {
 			return false;
 		}
 		
+		Set<String> matchedObjects = new HashSet<String>();
 		for(List <ObjectInstance> objects : objectIndexByTrueClass.values()){
 			
 			String oclass = objects.get(0).getTrueClassName();
@@ -243,8 +255,13 @@ public class State {
 			for(ObjectInstance o : objects){
 				boolean foundMatch = false;
 				for(ObjectInstance oo : oobjects){
+					String ooname = oo.getName();
+					if(matchedObjects.contains(ooname)){
+						continue;
+					}
 					if(o.valueEquals(oo)){
 						foundMatch = true;
+						matchedObjects.add(ooname);
 						break;
 					}
 				}
@@ -404,6 +421,10 @@ public class State {
 	
 	public List <List <ObjectInstance>> getAllObjectsByClass(){
 		return new ArrayList<List<ObjectInstance>>(objectIndexByClass.values());
+	}
+	
+	public List <List <ObjectInstance>> getAllObjectsByTrueClass(){
+		return new ArrayList<List<ObjectInstance>>(objectIndexByTrueClass.values());
 	}
 	
 	public Set <String> getObjectClassesPresent(){

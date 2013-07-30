@@ -8,7 +8,8 @@ import java.util.Set;
 
 import oomdptb.behavior.planning.StateConditionTest;
 import oomdptb.behavior.planning.deterministic.SearchNode;
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.statehashing.StateHashFactory;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.oomdp.Attribute;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
@@ -23,9 +24,9 @@ public class LimitedMemoryDFS extends DFS {
 	
 	
 	
-	public LimitedMemoryDFS(Domain domain, RewardFunction rf, StateConditionTest gc, Map<String, List<Attribute>> attributesForHashCode, int maxDepth, 
+	public LimitedMemoryDFS(Domain domain, StateConditionTest gc, StateHashFactory hashingFactory, int maxDepth, 
 			boolean maintainClosed, boolean optionsFirst, int memorySize) {
-		super(domain, rf, gc, attributesForHashCode, maxDepth, maintainClosed,
+		super(domain, gc, hashingFactory, maxDepth, maintainClosed,
 				optionsFirst);
 		
 		this.memorySize = memorySize;

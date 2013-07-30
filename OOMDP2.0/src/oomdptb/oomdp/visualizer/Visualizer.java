@@ -75,7 +75,7 @@ public class Visualizer extends Canvas{
 		
 		//draw the static properties
 		for(StaticPainter sp : staticPainters){
-			sp.paint(g2, cWidth, cHeight);
+			sp.paint(g2, curState, cWidth, cHeight);
 		}
 		
 		//draw each object if there is a painter to do so
@@ -84,16 +84,16 @@ public class Visualizer extends Canvas{
 			
 			//is there a specific object painter for this object?
 			if(specificObjectPainters.containsKey(o.getName())){
-				specificObjectPainters.get(o.getName()).paintObject(g2, o, cWidth, cHeight);
+				specificObjectPainters.get(o.getName()).paintObject(g2, curState, o, cWidth, cHeight);
 			}
 			else{ //otherwise see if we have a painter for this object's class
 				
 				//try the parameterized class first
 				if(objectClassPainters.containsKey(o.getPseudoClass())){
-					objectClassPainters.get(o.getPseudoClass()).paintObject(g2, o, cWidth, cHeight);
+					objectClassPainters.get(o.getPseudoClass()).paintObject(g2, curState, o, cWidth, cHeight);
 				}
 				else if(objectClassPainters.containsKey(o.getTrueClassName())){ //try true class if no entry for the parameterized class
-					objectClassPainters.get(o.getTrueClassName()).paintObject(g2, o, cWidth, cHeight);
+					objectClassPainters.get(o.getTrueClassName()).paintObject(g2, curState, o, cWidth, cHeight);
 				}
 				
 			}

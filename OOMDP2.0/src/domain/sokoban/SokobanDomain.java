@@ -82,8 +82,6 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	public static final String			PFROOMISRED = "roomIsRed";
 	public static final String			PFROOMISWHITE = "roomIsWhite";
 	public static final String			PFROOMISYELLOW = "roomIsYellow";
-
-
 	public static final String			PFCOLORCLASS = "color";
 	public static final String			PFSHAPECLASS = "shape";
 	public static final String			PFPOSCLASS = "position";
@@ -1144,7 +1142,6 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		return y+1;
 	}
 
-
 	public static Map <SokoSAS, Double> getTransitionsFromSourceState(State s){
 		
 		SokobanDomain constructor = new SokobanDomain();
@@ -1182,11 +1179,9 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 					//add prime to open list if not already closed
 					if(!closedList.contains(spid)){
 						openList.addLast(sPrime);
-					}
-					
+					}		
 				}
 			}
-	
 		}
 		
 		return transitionMatrix;
@@ -1197,8 +1192,6 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		public int sId;
 		public int aId;
 		public int sPrimeId;
-
-
 
 		public SokoSAS(int si, int ai, int spi){
 			sId = si;
@@ -1236,13 +1229,12 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 
 				stateID += x * ((int)Math.pow(rows,i+1)) * ((int)Math.pow(col, i+1));
 				stateID += y * ((int)Math.pow(rows,i+1)) * ((int)Math.pow(col, i+2));
-
 			}
 
 			return stateID;
 		}
 
-		//unencypts a state from a given ID
+		//unencRypts a state from a given ID
 		public static State getStateFromId(int id, State referenceState){
 			State st = new State(referenceState);
 			List<ObjectInstance> blocks = referenceState.getObjectsOfClass(BLOCKCLASS);
@@ -1267,10 +1259,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 			}
 			return st;
 		}
-
-
 	}
-
 }
 
 

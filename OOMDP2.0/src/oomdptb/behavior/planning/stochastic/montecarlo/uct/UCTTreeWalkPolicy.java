@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import oomdptb.behavior.Policy;
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.State;
 

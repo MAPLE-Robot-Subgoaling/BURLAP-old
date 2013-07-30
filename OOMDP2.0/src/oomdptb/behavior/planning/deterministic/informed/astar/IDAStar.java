@@ -11,7 +11,8 @@ import oomdptb.behavior.planning.deterministic.SearchNode;
 import oomdptb.behavior.planning.deterministic.informed.Heuristic;
 import oomdptb.behavior.planning.deterministic.informed.PrioritizedSearchNode;
 import oomdptb.behavior.planning.deterministic.informed.PrioritizedSearchNode.PSNComparator;
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.statehashing.StateHashFactory;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Attribute;
@@ -19,6 +20,7 @@ import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.RewardFunction;
 import oomdptb.oomdp.State;
+import oomdptb.oomdp.common.NullTermination;
 
 public class IDAStar extends DeterministicPlanner {
 
@@ -26,9 +28,9 @@ public class IDAStar extends DeterministicPlanner {
 	protected Heuristic									heuristic;
 	protected PSNComparator								nodeComparator;
 	
-	public IDAStar(Domain domain, RewardFunction rf, StateConditionTest gc, Map <String, List<Attribute>> attributesForHashCode, Heuristic heuristic){
+	public IDAStar(Domain domain, RewardFunction rf, StateConditionTest gc, StateHashFactory hashingFactory, Heuristic heuristic){
 		
-		this.deterministicPlannerInit(domain, rf, gc, attributesForHashCode);
+		this.deterministicPlannerInit(domain, rf, new NullTermination(), gc, hashingFactory);
 		
 		this.heuristic = heuristic;
 		nodeComparator = new PrioritizedSearchNode.PSNComparator();

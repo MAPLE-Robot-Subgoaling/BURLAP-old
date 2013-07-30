@@ -1,5 +1,9 @@
 package oomdptb.oomdp;
-
+/**
+ * 
+ * @author James
+ *
+ */
 public class GroundedAction {
 
 	public Action action;
@@ -29,11 +33,16 @@ public class GroundedAction {
 		params = p;
 	}
 	
-	
+	/**
+	 * Executes the grounded action on a given state
+	 * @param s the state on which to execute the action
+	 * @return The state after the action has been executed
+	 */
 	public State executeIn(State s){
 		return action.performAction(s, params);
 	}
 	
+
 	@Override
 	public String toString(){
 		StringBuffer buf = new StringBuffer();
@@ -76,8 +85,7 @@ public class GroundedAction {
 			}
 			if(!foundMatch){
 				return false;
-			}
-			
+			}		
 		}
 		
 		return true;
