@@ -8,11 +8,14 @@ import edu.umbc.cs.maple.oomdp.ObjectClass;
 import edu.umbc.cs.maple.oomdp.PropositionalFunction;
 import edu.umbc.cs.maple.oomdp.State;
 import edu.umbc.cs.maple.oomdp.ObjectInstance;
+import edu.umbc.cs.maple.oomdp.explorer.TerminalExplorer;
 
 public class RodExperimentDomain implements DomainGenerator {
 
 	public static final String				XATTNAME = "xAtt"; //x attribute
 	public static final String				YATTNAME = "yAtt"; //y attribute
+	public static final String				X1ATTNAME = "x1Att";
+	public static final String				Y1ATTNAME = "y1Att";
 
 	public static final String				AATTNAME = "angATT"; //Angle of the rod
 
@@ -46,6 +49,77 @@ public class RodExperimentDomain implements DomainGenerator {
 
 	public static Domain					RODDOMAIN = null;	
 
+	public static void main(String[] args){
+		RodExperimentDomain red = new RodExperimentDomain();
+		red.generateDomain();
+
+		State clean= red.getCleanState();
+
+		red.setAgent(clean, 0., 3., 0., 0., 0.);
+		red.setObstacle(clean, 20., 30., 40., 60.);
+		red.setGoal(clean, 40., 42., 38., 34.);
+		
+		TerminalExplorer te = new TerminalExplorer(RODDOMAIN);
+		
+		te.addActionShortHand("w", ACTIONMOVEUP);
+		te.addActionShortHand("s", ACTIONMOVEDOWN);
+		te.addActionShortHand("a", ACTIONTURNLEFT);
+		te.addActionShortHand("d", ACTIONTURNRIGHT);
+		
+		te.exploreFromState(clean);
+		
+	}
+
+	public void setAgent(State s, double a, double x, double y, double x1, double y1){
+
+		ObjectInstance agent = s.getObjectsOfTrueClass(AGENTCLASS).get(0);
+
+		agent.setValue(AATTNAME, a);
+		agent.setValue(XATTNAME, x);
+		agent.setValue(YATTNAME, y);
+		agent.setValue(X1ATTNAME, x1);
+		agent.setValue(Y1ATTNAME, y1);
+	}
+	
+	public void setObstacle(State s, double l, double r, double b, double t){
+		ObjectInstance obst = s.getObjectsOfTrueClass(OBSTACLECLASS).get(0);
+		
+		obst.setValue(LATTNAME, l);
+		obst.setValue(RATTNAME, r);
+		obst.setValue(BATTNAME, b);
+		obst.setValue(TATTNAME, t);
+	}
+	
+	public void setGoal(State s, double l, double r, double b, double t){
+		ObjectInstance goal = s.getObjectsOfTrueClass(GOALCLASS).get(0);
+		
+		goal.setValue(LATTNAME, l);
+		goal.setValue(RATTNAME, r);
+		goal.setValue(BATTNAME, b);
+		goal.setValue(TATTNAME, t);
+	}
+	
+
+	public State getCleanState(){
+
+		this .generateDomain();
+
+		State s = new State();
+
+		ObjectInstance agent = new ObjectInstance(RODDOMAIN.getObjectClass(AGENTCLASS), AGENTCLASS + "0");
+		s.addObject(agent);
+
+		ObjectInstance goal = new ObjectInstance(RODDOMAIN.getObjectClass(GOALCLASS), GOALCLASS + "0");
+		s.addObject(goal);
+
+
+		ObjectInstance obst = new ObjectInstance(RODDOMAIN.getObjectClass(OBSTACLECLASS), OBSTACLECLASS + "0");
+		s.addObject(obst);
+
+
+		return s;
+
+	}
 	public Domain generateDomain(){
 
 		if( RODDOMAIN!= null ){
@@ -59,6 +133,12 @@ public class RodExperimentDomain implements DomainGenerator {
 		xatt.setLims(XMIN, XMAX);
 
 		Attribute yatt = new Attribute(RODDOMAIN, YATTNAME, Attribute.AttributeType.REAL);
+		yatt.setLims(YMIN, YMAX);
+
+		Attribute x1att = new Attribute(RODDOMAIN, X1ATTNAME, Attribute.AttributeType.REAL);
+		xatt.setLims(XMIN, XMAX);
+
+		Attribute y1att = new Attribute(RODDOMAIN, Y1ATTNAME, Attribute.AttributeType.REAL);
 		yatt.setLims(YMIN, YMAX);
 
 		Attribute aatt = new Attribute(RODDOMAIN, AATTNAME, Attribute.AttributeType.REAL);
@@ -80,6 +160,8 @@ public class RodExperimentDomain implements DomainGenerator {
 		ObjectClass agentclass = new ObjectClass(RODDOMAIN, AGENTCLASS);
 		agentclass.addAttribute(xatt);
 		agentclass.addAttribute(yatt);
+		agentclass.addAttribute(x1att);
+		agentclass.addAttribute(y1att);
 		agentclass.addAttribute(aatt);
 
 		ObjectClass obstclss = new ObjectClass(RODDOMAIN, OBSTACLECLASS);
@@ -116,17 +198,16 @@ public class RodExperimentDomain implements DomainGenerator {
 		double x = agent.getRealValForAttribute(XATTNAME);
 		double y = agent.getRealValForAttribute(YATTNAME);
 
-		double worldAngle = (Math.PI/2.) - ang;
+		if(change == 1.0 || change == -1.0 ){
+			x = x + change;
+			y = y + change;
+		}else{
+			x = (Math.cos(ang)*x) + (Math.sin(ang) * y * -1);
+		}
 
-		double tx = Math.cos(worldAngle)*change;
-		double ty = Math.sin(worldAngle)*change;
-
-		tx = tx + change;
-		ty = ty + change;
-
-		if (tx > XMAX || tx < XMIN || ty > YMAX || ty<YMIN){
-			tx = x - change;
-			ty = y - change;
+		if (x > XMAX || x < XMIN || y > YMAX || y<YMIN){
+			x = x - change;
+			y = y - change;
 		}
 
 		//hits obstacles
@@ -136,13 +217,13 @@ public class RodExperimentDomain implements DomainGenerator {
 		double b = obstacle.getRealValForAttribute(BATTNAME);
 		double t = obstacle.getRealValForAttribute(TATTNAME);
 
-		if(ty >= b && ty <= t && tx >=l && tx <= r){
-			tx = x - change;
-			ty = y - change;
+		if (y >= b && y <= t && x >=l && x <= r){
+			x = x - change;
+			y = y - change;
 		}
 
-		agent.setValue(XATTNAME, tx);
-		agent.setValue(YATTNAME, ty);
+		agent.setValue(XATTNAME, x);
+		agent.setValue(YATTNAME, y);
 		agent.setValue(AATTNAME, ang);
 
 
