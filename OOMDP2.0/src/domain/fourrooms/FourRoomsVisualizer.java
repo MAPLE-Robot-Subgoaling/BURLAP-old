@@ -6,6 +6,7 @@ import java.awt.geom.Rectangle2D;
 
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.ObjectInstance;
+import oomdptb.oomdp.State;
 import oomdptb.oomdp.visualizer.ObjectPainter;
 import oomdptb.oomdp.visualizer.StaticPainter;
 import oomdptb.oomdp.visualizer.Visualizer;
@@ -36,7 +37,7 @@ public class FourRoomsVisualizer {
 		}
 
 		@Override
-		public void paint(Graphics2D g2, float cWidth, float cHeight) {
+		public void paint(Graphics2D g2, State s, float cWidth, float cHeight) {
 			
 			//draw the walls; make them black
 			g2.setColor(Color.black);
@@ -75,8 +76,8 @@ public class FourRoomsVisualizer {
 		}
 
 		@Override
-		public void paintObject(Graphics2D g2, ObjectInstance ob, float cWidth,
-				float cHeight) {
+		public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
+				float cWidth, float cHeight) {
 			
 			
 			//draw the walls; make them black

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import oomdptb.behavior.QValue;
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.oomdp.GroundedAction;
 
 public class QLearningStateNode {

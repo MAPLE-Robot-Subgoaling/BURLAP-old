@@ -13,7 +13,8 @@ import oomdptb.behavior.planning.StateConditionTest;
 import oomdptb.behavior.planning.stochastic.montecarlo.uct.UCTActionNode.UCTActionConstructor;
 import oomdptb.behavior.planning.stochastic.montecarlo.uct.UCTStateNode.UCTStateConstructor;
 import oomdptb.behavior.planning.OOMDPPlanner;
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.statehashing.StateHashFactory;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.debugtools.RandomFactory;
 import oomdptb.oomdp.Attribute;
@@ -48,20 +49,20 @@ public class UCT extends OOMDPPlanner {
 	
 	
 	
-	public UCT(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Map <String, List<Attribute>> attributesForHashCode, int horizon, int nRollouts, int explorationBias){
+	public UCT(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, int horizon, int nRollouts, int explorationBias){
 		
 		stateNodeConstructor = new UCTStateConstructor();
 		actionNodeConstructor = new UCTActionConstructor();
 		
 		
-		this.UCTInit(domain, rf, tf, gamma, attributesForHashCode, horizon, nRollouts, explorationBias);
+		this.UCTInit(domain, rf, tf, gamma, hashingFactory, horizon, nRollouts, explorationBias);
 		
 		
 	}
 	
-	public void UCTInit(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Map <String, List<Attribute>> attributesForHashCode, int horizon, int nRollouts, int explorationBias){
+	public void UCTInit(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, int horizon, int nRollouts, int explorationBias){
 		
-		this.PlannerInit(domain, rf, tf, gamma, attributesForHashCode);
+		this.PlannerInit(domain, rf, tf, gamma, hashingFactory);
 		this.maxHorizon = horizon;
 		this.maxRollOutsFromRoot = nRollouts;
 		this.explorationBias = explorationBias;

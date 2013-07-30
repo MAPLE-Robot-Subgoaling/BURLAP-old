@@ -4,19 +4,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import javax.management.RuntimeErrorException;
+
 import oomdptb.behavior.Policy;
 import oomdptb.behavior.QValue;
+import oomdptb.behavior.planning.OOMDPPlanner;
+import oomdptb.behavior.planning.PlannerDerivedPolicy;
 import oomdptb.behavior.planning.QComputablePlanner;
 import oomdptb.debugtools.RandomFactory;
 import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.State;
 
-public class EpsilonGreedy extends Policy {
+public class EpsilonGreedy extends Policy implements PlannerDerivedPolicy{
 
 	protected QComputablePlanner		qplanner;
 	protected double					epsilon;
 	protected Random 					rand;
 	
+	
+	
+	public EpsilonGreedy(double epsilon) {
+		qplanner = null;
+		this.epsilon = epsilon;
+		rand = RandomFactory.getMapped(0);
+	}
 	
 	public EpsilonGreedy(QComputablePlanner planner, double epsilon) {
 		qplanner = planner;
@@ -24,8 +35,13 @@ public class EpsilonGreedy extends Policy {
 		rand = RandomFactory.getMapped(0);
 	}
 
-	public void setPlanner(QComputablePlanner qplanner){
-		this.qplanner = qplanner;
+	public void setPlanner(OOMDPPlanner planner){
+		
+		if(!(planner instanceof QComputablePlanner)){
+			throw new RuntimeErrorException(new Error("Planner is not a QComputablePlanner"));
+		}
+		
+		this.qplanner = (QComputablePlanner)planner;
 	}
 	
 	@Override

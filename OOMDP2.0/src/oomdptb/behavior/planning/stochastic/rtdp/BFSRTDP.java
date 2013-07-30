@@ -12,7 +12,8 @@ import oomdptb.behavior.Policy;
 import oomdptb.behavior.planning.ActionTransitions;
 import oomdptb.behavior.planning.HashedTransitionProbability;
 import oomdptb.behavior.planning.StateConditionTest;
-import oomdptb.behavior.planning.StateHashTuple;
+import oomdptb.behavior.statehashing.StateHashFactory;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.debugtools.DPrint;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Attribute;
@@ -33,9 +34,9 @@ public class BFSRTDP extends RTDP {
 	
 	
 	
-	public BFSRTDP(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Map <String, List<Attribute>> attributesForHashCode, int numPasses, int maxDepth){
+	public BFSRTDP(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, int numPasses, int maxDepth){
 		
-		super(domain, rf, tf, gamma, attributesForHashCode, numPasses, maxDepth);
+		super(domain, rf, tf, gamma, hashingFactory, numPasses, maxDepth);
 
 		this.dynamicPasses = 1;
 		this.performedInitialPlan = false;
@@ -44,9 +45,9 @@ public class BFSRTDP extends RTDP {
 	}
 	
 	
-	public BFSRTDP(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Map <String, List<Attribute>> attributesForHashCode, int numPasses, int maxDepth, StateConditionTest goalCondition){
+	public BFSRTDP(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, int numPasses, int maxDepth, StateConditionTest goalCondition){
 		
-		super(domain, rf, tf, gamma, attributesForHashCode, numPasses, maxDepth);
+		super(domain, rf, tf, gamma, hashingFactory, numPasses, maxDepth);
 
 		this.dynamicPasses = 1;
 		this.performedInitialPlan = false;
@@ -153,7 +154,7 @@ public class BFSRTDP extends RTDP {
 			//then get the transition dynamics for each action and queue up new states
 			List <ActionTransitions> transitions = new ArrayList<ActionTransitions>();
 			for(GroundedAction ga : gas){
-				ActionTransitions at = new ActionTransitions(sh.s, ga, attributesForHashCode);
+				ActionTransitions at = new ActionTransitions(sh.s, ga, hashingFactory);
 				transitions.add(at);
 				for(HashedTransitionProbability tp : at.transitions){
 					StateHashTuple tsh = tp.sh;

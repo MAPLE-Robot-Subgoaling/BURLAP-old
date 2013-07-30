@@ -7,6 +7,7 @@ import java.awt.geom.Rectangle2D;
 
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.ObjectInstance;
+import oomdptb.oomdp.State;
 import oomdptb.oomdp.visualizer.ObjectPainter;
 import oomdptb.oomdp.visualizer.Visualizer;
 
@@ -38,7 +39,7 @@ public class LLVisualizer {
 		}
 
 		@Override
-		public void paintObject(Graphics2D g2, ObjectInstance ob, float cWidth, float cHeight) {
+		public void paintObject(Graphics2D g2, State s, ObjectInstance ob, float cWidth, float cHeight) {
 			
 			g2.setColor(Color.red);
 			
@@ -133,8 +134,8 @@ public class LLVisualizer {
 		}
 
 		@Override
-		public void paintObject(Graphics2D g2, ObjectInstance ob, float cWidth,
-				float cHeight) {
+		public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
+				float cWidth, float cHeight) {
 			
 			g2.setColor(Color.black);
 			
@@ -178,8 +179,8 @@ public class LLVisualizer {
 		}
 
 		@Override
-		public void paintObject(Graphics2D g2, ObjectInstance ob, float cWidth,
-				float cHeight) {
+		public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
+				float cWidth, float cHeight) {
 			
 			g2.setColor(Color.blue);
 			

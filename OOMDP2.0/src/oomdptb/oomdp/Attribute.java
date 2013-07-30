@@ -41,12 +41,12 @@ public class Attribute {
 
 	public String						name;				//name of the attribute
 	public AttributeType				type;				//type of values attribute holds
-	public Domain						domain;			//domain that holds this attribute
+	public Domain						domain;				//domain that holds this attribute
 	public double						lowerLim;			//lowest value for a bounded real attribute
 	public double						upperLim;			//highest value for a bounded real attribute
-	public Map <String, Integer>		discValuesHash;	//maps names of discrete values to int values 
-	public List <String>				discValues;		//list of discrete value names by their int value
-	public boolean						hidden;			//whether this value is part of the state representation or is hidden from the agent
+	public Map <String, Integer>		discValuesHash;		//maps names of discrete values to int values 
+	public List <String>				discValues;			//list of discrete value names by their int value
+	public boolean						hidden;				//whether this value is part of the state representation or is hidden from the agent
 	
 	/**
 	 * 
@@ -119,22 +119,36 @@ public class Attribute {
 		
 	}
 	
+	/**
+	 * Sets the upper and lower limits for real attributes
+	 * @param lower lowest value for a bounded real attribute
+	 * @param upper highest value for a bounded real attribute
+	 */
 	public void setLims(double lower, double upper){
 		this.lowerLim = lower;
 		this.upperLim = upper;
 	}
 	
 	
-	
+	/**
+	 * Sets the type of the attribute using an int
+	 * @param itype type of values attribute holds
+	 */
 	public void setType(int itype){
 		this.type = AttributeType.fromInt(itype);
 	}
-	
+	/**
+	 * 
+	 * @param type type of values attribute holds
+	 */
 	public void setType(AttributeType type){
 		this.type = type;
 	}
 	
-	
+	/**
+	 * 
+	 * @param vals
+	 */
 	public void setDiscValues(List <String> vals){
 		this.discValues = new ArrayList <String> (vals);
 		this.discValuesHash = new HashMap<String, Integer>();
@@ -175,7 +189,7 @@ public class Attribute {
 	
 	}
 	
-	
+	@Override
 	public boolean equals(Object obj){
 		Attribute op = (Attribute)obj;
 		if(op.name.equals(name))
@@ -183,6 +197,7 @@ public class Attribute {
 		return false;
 	}
 	
+	@Override
 	public int hashCode(){
 		return name.hashCode();
 	}

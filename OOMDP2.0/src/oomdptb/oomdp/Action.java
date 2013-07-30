@@ -12,13 +12,17 @@ public abstract class Action {
 	protected String []					parameterClasses = new String[0];		//list of class names for each parameter of the action
 	protected String []					parameterOrderGroup = new String[0];	//setting two or more parameters to the same order group indicates that the action will be same regardless of which specific object is set to each parameter
 	
-	
+	//should not be called directly, but may be useful for subclasses of Action
 	public Action(){
-		//should not be called directly, but may be useful for subclasses of Action
+		
 	}
 	
-	
-	//parameterClasses is expected to be comma delimited with no unnecessary spaces
+	/**
+	 * 
+	 * @param name the name of the action
+	 * @param domain the domain the action is associated with
+	 * @param parameterClasses class names for each parameter of the action (expected to be comma delimited with no unnecessary spaces)
+	 */
 	public Action(String name, Domain domain, String parameterClasses){
 		
 		String [] pClassArray;
@@ -39,6 +43,12 @@ public abstract class Action {
 		
 	}
 	
+	/**
+	 * 
+	 * @param name the name of the action
+	 * @param domain the domain the action is associated with
+	 * @param parameterClasses class names for each parameter of the action
+	 */
 	public Action(String name, Domain domain, String [] parameterClasses){
 		
 		String [] pog = new String[parameterClasses.length];
@@ -50,12 +60,25 @@ public abstract class Action {
 		
 	}
 	
+	/**
+	 * 
+	 * @param name the name of the action
+	 * @param domain the domain the action is associated with
+	 * @param parameterClasses class names for each parameter of the action
+	 * @param replacedClassNames
+	 */
 	public Action(String name, Domain domain, String [] parameterClasses, String [] replacedClassNames){
 		this.init(name, domain, parameterClasses, replacedClassNames);
 	}
 	
-	
-	public void init(String name, Domain domain, String [] parameterClasses, String [] replacedClassNames){
+	/**
+	 * Helper function for constructors
+	 * @param name the name of the action
+	 * @param domain the domain the action is associated with
+	 * @param parameterClasses class names for each parameter of the action
+	 * @param replacedClassNames
+	 */
+	private void init(String name, Domain domain, String [] parameterClasses, String [] replacedClassNames){
 		
 		this.name = name;
 		this.domain = domain;
@@ -65,11 +88,18 @@ public abstract class Action {
 		
 	}
 	
+	/**
+	 * 
+	 * @return the name of the action
+	 */
 	public final String getName(){
 		return name;
 	}
 	
-	
+	/**
+	 * 
+	 * @return the class names for each parameter of the action
+	 */
 	public final String[] getParameterClasses(){
 		return parameterClasses;
 	}
@@ -86,14 +116,20 @@ public abstract class Action {
 		return domain;
 	}
 	
-	
+	/**
+	 * Default behavior is that an action can be applied in any state,
+	 * but this might need be overridden if that is not the case.
+	 * @param st the state to perform the action on
+	 * @param params list of parameters to be passed into the action
+	 * @return whether the action can be performed on the given state
+	 */
 	public final boolean applicableInState(State st, String params){
 		return applicableInState(st, params.split(","));
 	}
 	
 	/**
-	 * Default behavior is that an action can be applied in any state
-	 * , but this might need be overridden if that is not the case.
+	 * Default behavior is that an action can be applied in any state,
+	 * but this might need be overridden if that is not the case.
 	 * @param st the state to perform the action on
 	 * @param params list of parameters to be passed into the action
 	 * @return whether the action can be performed on the given state
@@ -103,8 +139,13 @@ public abstract class Action {
 		return true; 
 	}
 	
-	
-	//params are expected to be comma delimited with no unnecessary spaces
+
+	/**This is a wrapper for performActionHelper that first performs a check to see whether the action is applicable to the current state.
+	 * params are expected to be comma delimited with no unnecessary spaces
+	 * @param st the state to perform the action on
+	 * @param params list of parameters to be passed into the action
+	 * @return the modified State st
+	 */
 	public final State performAction(State st, String params){
 		
 		return performAction(st, params.split(","));
@@ -142,9 +183,14 @@ public abstract class Action {
 		return this.getTransitions(st, params.split(","));
 	}
 	
-	///this method should only be defined for finite MDPs
-	//the default behavior assumes that the MDP is deterministic and will need to be
-	//overridden for stochastic MDPs for each action
+	/**this method should only be defined for finite MDPs
+	 * the default behavior assumes that the MDP is deterministic and will need to be
+	 * overridden for stochastic MDPs for each action
+	 * 
+	 * @param st
+	 * @param params
+	 * @return
+	 */
 	public List<TransitionProbability> getTransitions(State st, String [] params){
 		
 		List <TransitionProbability> transition = new ArrayList<TransitionProbability>();
@@ -163,7 +209,10 @@ public abstract class Action {
 	
 	
 	
-	
+	/**
+	 * @override
+	 * checks for equality using name only
+	 */
 	public boolean equals(Object obj){
 		Action op = (Action)obj;
 		if(op.name.equals(name))
@@ -171,6 +220,10 @@ public abstract class Action {
 		return false;
 	}
 	
+	/**
+	 * @override
+	 * @return a hashcode using the name of the action
+	 */
 	public int hashCode(){
 		return name.hashCode();
 	}

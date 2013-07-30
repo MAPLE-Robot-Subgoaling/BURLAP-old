@@ -40,9 +40,9 @@ public class Domain {
 	}
 	
 	public void addObjectClass(ObjectClass oc){
-		if(!objectClassMap.containsKey(oc.name_)){
+		if(!objectClassMap.containsKey(oc.name)){
 			objectClasses.add(oc);
-			objectClassMap.put(oc.name_, oc);
+			objectClassMap.put(oc.name, oc);
 		}
 	}
 	

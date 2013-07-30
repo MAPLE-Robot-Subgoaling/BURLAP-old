@@ -137,10 +137,12 @@ public abstract class PropositionalFunction {
 		return false;
 	}
 	
+	@Override
 	public String toString() {
 		return this.name;
 	}
 
+	@Override
 	public int hashCode(){
 		return name.hashCode();
 	}

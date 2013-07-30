@@ -1,6 +1,6 @@
 package oomdptb.oomdp;
 /**
- * 
+ * This is a class for representing grounded actions. Grounded actions are an individual action with a list of specific parameters passed into it.
  * @author James
  *
  */
@@ -8,13 +8,20 @@ public class GroundedAction {
 
 	public Action action;
 	public String [] params;
-	
+	/**
+	 * 
+	 * @param a the action that is being executed
+	 * @param p the parameters that are passed into this action
+	 */
 	public GroundedAction(Action a, String [] p){
 		this.init(a, p);
 	}
-	
-	
-	//may also take parameters as a single string that is comma delineated
+		
+	/**
+	 * 
+	 * @param a the action that is being executed
+	 * @param p the parameters that are passed into this action (comma delineated)
+	 */
 	public GroundedAction(Action a, String p){
 		
 		String [] ps = null;
@@ -27,7 +34,11 @@ public class GroundedAction {
 		this.init(a, ps);
 	}
 	
-	
+	/**
+	 * 
+	 * @param a the action that is being executed
+	 * @param p the parameters that are passed into this action (comma delineated)
+	 */
 	private void init(Action a, String [] p){
 		action = a;
 		params = p;
@@ -42,7 +53,7 @@ public class GroundedAction {
 		return action.performAction(s, params);
 	}
 	
-
+	//toString returns the name of the action followed by each paramter
 	@Override
 	public String toString(){
 		StringBuffer buf = new StringBuffer();

@@ -91,7 +91,16 @@ public class EpisodeAnalysis {
 	}
 	
 	
+	
 	public void writeToFile(String path, StateParser sp){
+		
+		if(!path.endsWith(".episode")){
+			path = path + ".episode";
+		}
+		
+		File f = (new File(path)).getParentFile();
+		f.mkdirs();
+		
 		
 		try{
 			

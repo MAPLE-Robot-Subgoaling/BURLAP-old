@@ -12,7 +12,10 @@ public class TerminalExplorer {
 	
 	private Domain					domain;
 	private Map <String, String>	actionShortHand;
-	
+	/**
+	 * 
+	 * @param domain the domain the explorer operates on
+	 */
 	public TerminalExplorer(Domain domain){
 		this.domain = domain;
 		this.setActionShortHand(new HashMap <String, String>());
