@@ -191,23 +191,39 @@ public class RodExperimentDomain implements DomainGenerator {
 
 	}
 
-	public static void updateMotion(State st, double change) {
+	public static void updateMotion(State st, double change, int dir) {
 
 		ObjectInstance agent = st.getObjectsOfTrueClass(AGENTCLASS).get(0);
 		double ang = agent.getRealValForAttribute(AATTNAME);
 		double x = agent.getRealValForAttribute(XATTNAME);
 		double y = agent.getRealValForAttribute(YATTNAME);
+		double x1 = agent.getRealValForAttribute(X1ATTNAME);
+		double y1 = agent.getRealValForAttribute(Y1ATTNAME);
 
+		double tempx = x;
+		double tempy = y;
+		double tempx1 = x1;
+		double tempy1 = y1;
+		
 		if(change == 1.0 || change == -1.0 ){
 			x = x + change;
 			y = y + change;
+			x1 = x1 + change;
+			y1 = y1 + change;
 		}else{
-			x = (Math.cos(ang)*x) + (Math.sin(ang) * y * -1);
+			double cosTheta = Math.cos(ANGLEINC * dir);
+			double sinTheta = Math.cos(ANGLEINC * dir);
+			x = ((cosTheta * (x - x1)) - (sinTheta * (y - y1)) + x1);
+			y = ((cosTheta * (y - y1)) + (sinTheta * (x - x1)) + y1);
 		}
 
-		if (x > XMAX || x < XMIN || y > YMAX || y<YMIN){
-			x = x - change;
-			y = y - change;
+		if (x > XMAX || x < XMIN || y > YMAX || y<YMIN || x1 > XMAX || x1 < XMIN || y1 > YMAX || y1<YMIN ){
+			x = tempx;
+			y = tempy;
+			y1 = tempy1;
+			x1 = tempx1;
+			System.out.println("Could not perform action, rod would be out of bounds");
+			
 		}
 
 		//hits obstacles
@@ -224,6 +240,8 @@ public class RodExperimentDomain implements DomainGenerator {
 
 		agent.setValue(XATTNAME, x);
 		agent.setValue(YATTNAME, y);
+		agent.setValue(X1ATTNAME, x1);
+		agent.setValue(Y1ATTNAME, y1);
 		agent.setValue(AATTNAME, ang);
 
 
@@ -257,7 +275,7 @@ public class RodExperimentDomain implements DomainGenerator {
 
 		@Override
 		protected State performActionHelper(State st, String[] params) {
-			RodExperimentDomain.updateMotion(st, 1.0);
+			RodExperimentDomain.updateMotion(st, 1.0, 0);
 			return st;
 		}
 	}
@@ -274,7 +292,7 @@ public class RodExperimentDomain implements DomainGenerator {
 
 		@Override
 		protected State performActionHelper(State st, String[] params) {
-			RodExperimentDomain.updateMotion(st, -1.0);
+			RodExperimentDomain.updateMotion(st, -1.0, 0);
 			return st;
 		}
 	}
@@ -292,7 +310,7 @@ public class RodExperimentDomain implements DomainGenerator {
 		@Override
 		protected State performActionHelper(State st, String[] params) {
 			RodExperimentDomain.incAngle(st, 1);
-			RodExperimentDomain.updateMotion(st, 0.0);
+			RodExperimentDomain.updateMotion(st, 0.0, 1);
 			return st;
 		}
 	}
@@ -310,7 +328,7 @@ public class RodExperimentDomain implements DomainGenerator {
 		@Override
 		protected State performActionHelper(State st, String[] params) {
 			RodExperimentDomain.incAngle(st, -1);
-			RodExperimentDomain.updateMotion(st, 0.0);
+			RodExperimentDomain.updateMotion(st, 0.0, -1);
 			return st;
 		}
 	}
