@@ -5,6 +5,8 @@ import edu.umbc.cs.maple.oomdp.Attribute;
 import edu.umbc.cs.maple.oomdp.Domain;
 import edu.umbc.cs.maple.oomdp.ObjectClass;
 import edu.umbc.cs.maple.oomdp.PropositionalFunction;
+import edu.umbc.cs.maple.oomdp.State;
+import edu.umbc.cs.maple.oomdp.rodexperiment.RodExperimentDomain;
 
 /**
  * Class details:
@@ -153,7 +155,7 @@ public class RobotArmDomain {
 		padclass.addAttribute(ratt);
 		padclass.addAttribute(batt);
 		padclass.addAttribute(tatt);
-		
+
 		//add actions to the domain
 		Action moveUp = new ActionMoveUp(ACTIONMOVEUP, ROBOTARMDOMAIN, "");
 		Action moveDown = new ActionMoveDown(ACTIONMOVEDOWN, ROBOTARMDOMAIN, "");
@@ -161,12 +163,134 @@ public class RobotArmDomain {
 		Action turnArmRight = new ActionTurnArmRight(ACTIONTURNARMRIGHT, ROBOTARMDOMAIN, "");
 		Action turnHandLeft = new ActionTurnHandLeft(ACTIONTURNHANDLEFT, ROBOTARMDOMAIN, "");
 		Action turnHandRight = new ActionTurnHandRight(ACTIONTURNHANDRIGHT, ROBOTARMDOMAIN, "");
-		
+
 		//add propositional functions to the domain
 		PropositionalFunction touchGoal = new TouchGoalPF(PFTOUCHGOAL, ROBOTARMDOMAIN, new String[]{AGENTCLASS, GOALCLASS});
 		PropositionalFunction touchObstacle = new TouchObstacleePF(PFTOUCHOBSTACLE, ROBOTARMDOMAIN, new String[]{AGENTCLASS, OBSTACLECLASS});
-		
+
 		return ROBOTARMDOMAIN;
 	}
 
+	/**Defines the ActionMoveUp for the current domain
+	 * 		Creates the Action by calling the parent class action
+	 * 		the performActionHelper calls the updateMotion to actually carry out the intended action
+	 * 		this function moves the whole hand one unit up  
+	 */
+
+	public class ActionMoveUp extends Action{
+
+		public ActionMoveUp(String name, Domain domain, String parameterClasses){
+			super(name, domain, parameterClasses);
+		}
+
+		public ActionMoveUp(String name, Domain domain, String [] parameterClasses) {
+			super(name, domain, parameterClasses);
+		}
+
+		@Override
+		protected State performActionHelper(State st, String[] params) {
+			RobotArmDomain.updateMotion(st, 1.0, 0., 0.);
+			return st;
+		}
+	}
+	
+	/**
+	 * This action moves the whole hand down 1
+	 */
+	public class ActionMoveDown extends Action{
+
+		public ActionMoveDown(String name, Domain domain, String parameterClasses){
+			super(name, domain, parameterClasses);
+		}
+
+		public ActionMoveDown(String name, Domain domain, String [] parameterClasses) {
+			super(name, domain, parameterClasses);
+		}
+
+		@Override
+		protected State performActionHelper(State st, String[] params) {
+			RobotArmDomain.updateMotion(st, -1.0, 0., 0.);
+			return st;
+		}
+	}
+
+	/**
+	 * This action rotates the arm pi/18 R to the right
+	 */
+	public class ActionTurnArmRight extends Action{
+
+		public ActionTurnArmRight(String name, Domain domain, String parameterClasses){
+			super(name, domain, parameterClasses);
+		}
+
+		public ActionTurnArmRight(String name, Domain domain, String [] parameterClasses) {
+			super(name, domain, parameterClasses);
+		}
+
+		@Override
+		protected State performActionHelper(State st, String[] params) {
+			RobotArmDomain.updateMotion(st, 0.0, -1., 0.);
+			return st;
+		}
+	}
+
+	/**
+	 * This action rotates the arm pi/18 R to the left
+	 */
+	public class ActionTurnArmLeft extends Action{
+
+		public ActionTurnArmLeft(String name, Domain domain, String parameterClasses){
+			super(name, domain, parameterClasses);
+		}
+
+		public ActionTurnArmLeft(String name, Domain domain, String [] parameterClasses) {
+			super(name, domain, parameterClasses);
+		}
+
+		@Override
+		protected State performActionHelper(State st, String[] params) {
+			RobotArmDomain.updateMotion(st, 0.0, 1., 0.);
+			return st;
+		}
+	}
+	
+	/**
+	 * This action rotates the hand pi/18 R to the right
+	 */
+	public class ActionTurnHandRight extends Action{
+
+		public ActionTurnHandRight(String name, Domain domain, String parameterClasses){
+			super(name, domain, parameterClasses);
+		}
+
+		public ActionTurnHandRight(String name, Domain domain, String [] parameterClasses) {
+			super(name, domain, parameterClasses);
+		}
+
+		@Override
+		protected State performActionHelper(State st, String[] params) {
+			RobotArmDomain.updateMotion(st, 0.0, 0.0, -1.0);
+			return st;
+		}
+	}
+
+	/**
+	 * This action rotates the hand pi/18 R to the left
+	 */
+	public class ActionTurnHandLeft extends Action{
+
+		public ActionTurnHandLeft(String name, Domain domain, String parameterClasses){
+			super(name, domain, parameterClasses);
+		}
+
+		public ActionTurnHandLeft(String name, Domain domain, String [] parameterClasses) {
+			super(name, domain, parameterClasses);
+		}
+
+		@Override
+		protected State performActionHelper(State st, String[] params) {
+			RobotArmDomain.updateMotion(st, 0.0, 0.0, -1.0);
+			return st;
+		}
+	}
 }
