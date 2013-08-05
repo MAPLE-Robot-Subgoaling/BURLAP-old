@@ -1,9 +1,20 @@
 package oomdptb.behavior.options;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
+import javax.xml.crypto.dsig.keyinfo.KeyValue;
+
 import oomdptb.behavior.EpisodeAnalysis;
+import oomdptb.behavior.Policy;
+import oomdptb.behavior.Policy.ActionProb;
+import oomdptb.behavior.planning.ActionTransitions;
 import oomdptb.behavior.planning.StateMapping;
+import oomdptb.behavior.statehashing.StateHashFactory;
+import oomdptb.behavior.statehashing.StateHashTuple;
 import oomdptb.oomdp.*;
 import oomdptb.oomdp.common.*;
 
@@ -20,24 +31,30 @@ import oomdptb.oomdp.common.*;
 
 public abstract class Option extends Action {
 
-	protected Random 									rand;
+	protected Random 												rand;
 	
-	protected EpisodeAnalysis							lastOptionExecutionResults;
-	protected boolean									shouldRecordResults;
-	protected boolean									shouldAnnotateExecution;
+	protected EpisodeAnalysis										lastOptionExecutionResults;
+	protected boolean												shouldRecordResults;
+	protected boolean												shouldAnnotateExecution;
 	
 	//variables for keeping track of reward from execution
-	protected RewardFunction 							rf;
-	protected boolean 									keepTrackOfReward;
-	protected double 									discountFactor;
-	protected double 									lastCumulativeReward;
-	protected double									cumulativeDiscount;
-	protected int										lastNumSteps;
-	protected TerminalFunction							externalTerminalFunction;
+	protected RewardFunction 										rf;
+	protected boolean 												keepTrackOfReward;
+	protected double 												discountFactor;
+	protected double 												lastCumulativeReward;
+	protected double												cumulativeDiscount;
+	protected int													lastNumSteps;
+	protected TerminalFunction										externalTerminalFunction;
 	
-	protected StateMapping								stateMapping;
+	//these variable required for planners that use full bellman updates
+	protected StateHashFactory										expectationStateHashingFactory;
+	protected Map<StateHashTuple, List <TransitionProbability>> 	cachedExpectations;
+	protected Map<StateHashTuple, Double>							cachedExpectedRewards;
+	protected double												expectationSearchCutoffProb = 0.001;
 	
-	protected DirectOptionTerminateMapper				terminateMapper;
+	protected StateMapping											stateMapping;
+	
+	protected DirectOptionTerminateMapper							terminateMapper;
 	
 	
 	public abstract boolean isMarkov();
@@ -46,6 +63,7 @@ public abstract class Option extends Action {
 	public abstract double probabilityOfTermination(State s, String [] params);
 	public abstract void initiateInStateHelper(State s, String [] params); //important if the option is not Markovian; called automatically by the perform action helper
 	public abstract GroundedAction oneStepActionSelection(State s, String [] params);
+	public abstract List<ActionProb> getActionDistributionForState(State s, String [] params);
 	
 	public Option(){
 		this.init();
@@ -82,6 +100,16 @@ public abstract class Option extends Action {
 		shouldAnnotateExecution = true;
 	}
 	
+	
+	public void setExpectationHashingFactory(StateHashFactory hashingFactory){
+		this.expectationStateHashingFactory = hashingFactory;
+		this.cachedExpectations = new HashMap<StateHashTuple, List<TransitionProbability>>();
+		this.cachedExpectedRewards = new HashMap<StateHashTuple, Double>();
+	}
+	
+	public void setExpectationCalculationProbabilityCutoff(double cutoff){
+		this.expectationSearchCutoffProb = cutoff;
+	}
 	
 	public void toggleShouldRecordResults(boolean toggle){
 		this.shouldRecordResults = toggle;
@@ -240,13 +268,148 @@ public abstract class Option extends Action {
 	}
 	
 	
+	public double getExpectedRewards(State s, String [] params){
+		StateHashTuple sh = this.expectationStateHashingFactory.hashState(s);
+		Double result = this.cachedExpectedRewards.get(sh);
+		if(result != null){
+			return result;
+		}
+		this.getTransitions(s, params);
+		return this.cachedExpectedRewards.get(sh);
+	}
 	
-	
+	public List<TransitionProbability> getTransitions(State st, String [] params){
+		
+		StateHashTuple sh = this.expectationStateHashingFactory.hashState(st);
+		
+		List <TransitionProbability> result = this.cachedExpectations.get(sh);
+		if(result != null){
+			return result;
+		}
+		
+		ExpectationSearchNode esn = new ExpectationSearchNode(st, params);
+		Map <StateHashTuple, Double> possibleTerminations = new HashMap<StateHashTuple, Double>();
+		double [] expectedReturn = new double[]{0.};
+		this.iterateExpectationScan(esn, 1., possibleTerminations, expectedReturn);
+		
+		this.cachedExpectedRewards.put(sh, expectedReturn[0]);
+		
+		List <TransitionProbability> transition = new ArrayList<TransitionProbability>();
+		for(Map.Entry<StateHashTuple, Double> e : possibleTerminations.entrySet()){
+			TransitionProbability tp = new TransitionProbability(e.getKey().s, e.getValue());
+			transition.add(tp);
+		}
+		
+		this.cachedExpectations.put(sh, transition);
+		
+		//State res = this.performAction(st, params);
+		//transition.add(new TransitionProbability(res, 1.0));
+		
+		return transition;
+	}
 	
 	
 
+	protected void iterateExpectationScan(ExpectationSearchNode src, double stackedDiscount, 
+			Map <StateHashTuple, Double> possibleTerminations, double [] expectedReturn){
+		
+		
+		double probTerm = 0.0; //can never terminate in initiation state
+		if(src.nSteps > 0){
+			probTerm = this.probabilityOfTermination(src.s, src.optionParams);
+		}
+		
+		double probContinue = 1.-probTerm;
+		
+		
+		//handle possible termination
+		if(probTerm > 0.){
+			double probOfDiscountedTrajectory = src.probability*stackedDiscount;
+			this.accumulateDiscountedProb(possibleTerminations, src.s, probOfDiscountedTrajectory);
+			expectedReturn[0] += src.cumulativeDiscountedReward;
+		}
+		
+		//handle continuation
+		if(probContinue > 0.){
+			
+			//handle option policy selection
+			List <ActionProb> actionSelction = this.getActionDistributionForState(src.s, src.optionParams);
+			for(ActionProb ap : actionSelction){
+				
+				//now get possible outcomes of each action
+				List <TransitionProbability> transitions = ap.ga.action.getTransitions(src.s, src.optionParams);
+				for(TransitionProbability tp : transitions){
+					double totalTransP = ap.pSelection * tp.p;
+					double r = stackedDiscount * this.rf.reward(src.s, ap.ga, tp.s);
+					ExpectationSearchNode next = new ExpectationSearchNode(src, tp.s, totalTransP, r);
+					if(next.probability > this.expectationSearchCutoffProb){
+						this.iterateExpectationScan(next, stackedDiscount*discountFactor, possibleTerminations, expectedReturn);
+					}
+				}
+				
+			}
+			
+		}
+		
+	}
 	
 	
+	protected void accumulateDiscountedProb(Map <StateHashTuple, Double> possibleTerminations, State s, double p){
+		StateHashTuple sh = expectationStateHashingFactory.hashState(s);
+		Double stored = possibleTerminations.get(sh);
+		double newP = p;
+		if(stored != null){
+			newP = stored + p;
+		}
+		possibleTerminations.put(sh, newP);
+	}
+	
+	protected List <ActionProb> getDeterministicPolicy(State s, String [] params){
+		GroundedAction ga = this.oneStepActionSelection(s, params);
+		ActionProb ap = new ActionProb(ga, 1.);
+		List <ActionProb> aps = new ArrayList<Policy.ActionProb>();
+		aps.add(ap);
+		return aps;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	class ExpectationSearchNode{
+		
+		public State s;
+		public String [] optionParams;
+		
+		public double	probability;
+		public double	cumulativeDiscountedReward;
+		public int		nSteps;
+		
+		
+		public ExpectationSearchNode(State s, String [] optionParams){
+			this.s = s;
+			this.optionParams = optionParams;
+			this.probability = 1.;
+			this.cumulativeDiscountedReward = 0.;
+			this.nSteps = 0;
+		}
+		
+		
+		public ExpectationSearchNode(ExpectationSearchNode src, State s, double transProb, double discountedR){
+		
+			this.s = s;
+			this.optionParams = src.optionParams;
+			this.probability = src.probability*transProb;
+			this.cumulativeDiscountedReward = src.cumulativeDiscountedReward + discountedR;
+			this.nSteps = src.nSteps+1;
+			
+			
+		}
+		
+	}
 	
 
 }

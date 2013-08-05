@@ -1,6 +1,9 @@
 package oomdptb.behavior.options;
 
+import java.util.List;
+
 import oomdptb.behavior.Policy;
+import oomdptb.behavior.Policy.ActionProb;
 import oomdptb.behavior.planning.StateConditionTest;
 import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.State;
@@ -62,6 +65,11 @@ public class PolicyDefinedSubgoalOption extends Option {
 	@Override
 	public GroundedAction oneStepActionSelection(State s, String[] params) {
 		return policy.getAction(this.map(s));
+	}
+
+	@Override
+	public List<ActionProb> getActionDistributionForState(State s, String[] params) {
+		return policy.getActionDistributionForState(this.map(s));
 	}
 
 }

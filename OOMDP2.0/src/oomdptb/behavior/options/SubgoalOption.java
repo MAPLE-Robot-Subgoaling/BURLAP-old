@@ -5,6 +5,7 @@ import java.util.List;
 import javax.management.RuntimeErrorException;
 
 import oomdptb.behavior.Policy;
+import oomdptb.behavior.Policy.ActionProb;
 import oomdptb.behavior.planning.OOMDPPlanner;
 import oomdptb.behavior.planning.PlannerDerivedPolicy;
 import oomdptb.behavior.planning.StateConditionTest;
@@ -140,6 +141,12 @@ public class SubgoalOption extends Option {
 	@Override
 	public GroundedAction oneStepActionSelection(State s, String[] params) {
 		return policy.getAction(this.map(s));
+	}
+
+
+	@Override
+	public List<ActionProb> getActionDistributionForState(State s, String[] params) {
+		return policy.getActionDistributionForState(this.map(s));
 	}
 
 	

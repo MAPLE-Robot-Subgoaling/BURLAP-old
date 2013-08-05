@@ -147,16 +147,36 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 	protected double computeQ(State s, ActionTransitions trans){
 		
 		double q = this.getDefaultValue(s);
-		for(HashedTransitionProbability tp : trans.transitions){
-			double discount = this.gamma;
-			if(trans.ga.action instanceof Option){
-				trans.ga.executeIn(s);
-				int n = ((Option)trans.ga.action).getLastNumSteps();
-				discount = Math.pow(this.gamma, n);
+		
+		if(trans.ga.action instanceof Option){
+			
+			Option o = (Option)trans.ga.action;
+			double expectedR = o.getExpectedRewards(s, trans.ga.params);
+			q += expectedR;
+			
+			for(HashedTransitionProbability tp : trans.transitions){
+				
+				double vp = this.getComputedVForSH(tp.sh);
+				
+				//note that for options, tp.p will be the *discounted* probability of transition to s',
+				//so there is not need for a discount factor to be included
+				q += tp.p * vp; 
+				
 			}
-			double r = rf.reward(s, trans.ga, tp.sh.s);
-			double vp = this.getComputedVForSH(tp.sh);
-			q += tp.p * (r + (discount * vp));
+			
+		}
+		else{
+			
+			for(HashedTransitionProbability tp : trans.transitions){
+				
+				double vp = this.getComputedVForSH(tp.sh);
+				
+				double discount = this.gamma;
+				double r = rf.reward(s, trans.ga, tp.sh.s);
+				q += tp.p * (r + (discount * vp));
+				
+			}
+			
 		}
 		
 		
@@ -176,7 +196,13 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 	}
 	
 	
-	
+	protected void initializeOptionsForExpectationComputations(){
+		for(Action a : this.actions){
+			if(a instanceof Option){
+				((Option)a).setExpectationHashingFactory(hashingFactory);
+			}
+		}
+	}
 	
 	
 }

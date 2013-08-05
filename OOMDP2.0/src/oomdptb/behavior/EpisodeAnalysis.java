@@ -78,6 +78,22 @@ public class EpisodeAnalysis {
 	
 	
 	/**
+	 * Will return the discounted return received from the first state in the episode to the last state in the episode.
+	 * @param discountFactor the discount factor to compute the discounted return; should be on [0, 1]
+	 * @return the discounted return of the episode
+	 */
+	public double getDiscountedReturn(double discountFactor){
+		double discount = 1.;
+		double sum = 0.;
+		for(double r : rewardSequence){
+			sum += discount*r;
+			discount *= discountFactor;
+		}
+		return sum;
+	}
+	
+	
+	/**
 	 * This method will append execution results in e to this object's results. Note that it is assumed that the initial state in e
 	 * is the last state recorded in this object. This method is useful for appending the results of an option's execution
 	 * to a episode.

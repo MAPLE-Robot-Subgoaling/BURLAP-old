@@ -1,5 +1,6 @@
 package oomdptb.behavior;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import oomdptb.behavior.options.Option;
@@ -15,9 +16,47 @@ public abstract class Policy {
 	protected boolean evaluateDecomposesOptions = true;
 	protected boolean annotateOptionDecomposition = true;
 	
-	public abstract GroundedAction getAction(State s); //returns null when policy is undefined for s
+	/**
+	 * This method will return an action sampled by the policy for the given state. If the defined policy is
+	 * stochastic, then multiple calls to this method for the same state may return different actions. The sampling
+	 * should be with respect to defined action distribution that is returned by getActionDistributionForState
+	 * @param s the state for which an action should be returned
+	 * @return a sample action from the action distribution; null if the policy is undefined for s
+	 */
+	public abstract GroundedAction getAction(State s);
+	
+	/**
+	 * This method will return action probability distribution defined by the policy. The action distribution is represented
+	 * by a list of ActionProb objects, each which specifies a grounded action and a probability of that grounded action being
+	 * taken. The returned list does not have to include actions with probability 0.
+	 * @param s the state for which an action distribution should be returned
+	 * @return a list of possible actions taken by the policy and their probability. 
+	 */
 	public abstract List<ActionProb> getActionDistributionForState(State s); //returns null when policy is undefined for s
+	
+	/**
+	 * Indicates whether the policy is stochastic or deterministic.
+	 * @return true when the policy is stochastic; false when it is deterministic.
+	 */
 	public abstract boolean isStochastic();
+	
+	
+	/**
+	 * A helper method for defining deterministic policies. This method relies on the getAction method being
+	 * implemented and will return a list of ActionProb objects with a single instance: the result of
+	 * the getAction method with assigned probability 1. This method simplifies the definition of
+	 * deterministic policies because the getActionDistributionForState method can just retunr this method.
+	 * @param s the state for which the action distribution should be returned.
+	 * @return a deterministic action distribution for the action returned by the getAction method.
+	 */
+	protected List <ActionProb> getDeterministicPolicy(State s){
+		GroundedAction ga = this.getAction(s);
+		ActionProb ap = new ActionProb(ga, 1.);
+		List <ActionProb> aps = new ArrayList<Policy.ActionProb>();
+		aps.add(ap);
+		return aps;
+	}
+	
 	
 	/**
 	 * Sets whether the primitive actions taken during an options will be included as steps in produced EpisodeAnalysis objects.
@@ -42,6 +81,15 @@ public abstract class Policy {
 		this.annotateOptionDecomposition = toggle;
 	}
 	
+	
+	/**
+	 * This method will return the an episode that results from following this policy from state s. The episode will terminate
+	 * when the policy reaches a terminal state defined by tf.
+	 * @param s the state from which to roll out the policy
+	 * @param rf the reward function used to track rewards accumulated during the episode
+	 * @param tf the terminal function defining when the policy should stop being followed.
+	 * @return an EpisodeAnalysis object that records the events from following the policy.
+	 */
 	public EpisodeAnalysis evaluateBehavior(State s, RewardFunction rf, TerminalFunction tf){
 		EpisodeAnalysis res = new EpisodeAnalysis();
 		res.addState(s); //add initial state
@@ -53,6 +101,18 @@ public abstract class Policy {
 		
 		return res;
 	}
+	
+	
+	
+	/**
+	 * This method will return the an episode that results from following this policy from state s. The episode will terminate
+	 * when the policy reaches a terminal state defined by tf or when the number of steps surpasses maxSteps.
+	 * @param s the state from which to roll out the policy
+	 * @param rf the reward function used to track rewards accumulated during the episode
+	 * @param tf the terminal function defining when the policy should stop being followed.
+	 * @param maxSteps the maximum number of steps to take before terminating the policy rollout.
+	 * @return an EpisodeAnalysis object that records the events from following the policy.
+	 */
 	public EpisodeAnalysis evaluateBehavior(State s, RewardFunction rf, TerminalFunction tf, int maxSteps){
 		EpisodeAnalysis res = new EpisodeAnalysis();
 		res.addState(s); //add initial state
@@ -69,6 +129,15 @@ public abstract class Policy {
 		
 		return res;
 	}
+	
+	/**
+	 * This method will return the an episode that results from following this policy from state s. The episode will terminate
+	 * when the number of steps taken is >= numSteps.
+	 * @param s the state from which to roll out the policy
+	 * @param rf the reward function used to track rewards accumulated during the episode
+	 * @param numSteps the number of steps to take before terminating the policy rollout
+	 * @return an EpisodeAnalysis object that records the events from following the policy.
+	 */
 	public EpisodeAnalysis evaluateBehavior(State s, RewardFunction rf, int numSteps){
 		EpisodeAnalysis res = new EpisodeAnalysis();
 		res.addState(s);
@@ -138,7 +207,7 @@ public abstract class Policy {
 	
 	
 	
-	public class ActionProb{
+	public static class ActionProb{
 		public GroundedAction ga;
 		public double pSelection;
 		

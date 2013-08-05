@@ -41,8 +41,11 @@ public class ValueIteration extends ValueFunctionPlanner{
 	
 	@Override
 	public void planFromState(State initialState){
-		this.performReachabilityFrom(initialState);
-		this.runVI();
+		this.initializeOptionsForExpectationComputations();
+		if(this.performReachabilityFrom(initialState)){
+			this.runVI();
+		}
+			
 	}
 	
 	
@@ -97,13 +100,15 @@ public class ValueIteration extends ValueFunctionPlanner{
 	
 	public boolean performReachabilityFrom(State si){
 		
-		DPrint.cl(11, "Starting reachability analysis");
+		
 		
 		StateHashTuple sih = this.stateHash(si);
 		//first check if this is an new state, otherwise we do not need to do any new reachability analysis
 		if(transitionDynamics.containsKey(sih)){
 			return false; //no need for additional reachability testing
 		}
+		
+		DPrint.cl(11, "Starting reachability analysis");
 		
 		//add to the open list
 		LinkedList <StateHashTuple> openList = new LinkedList<StateHashTuple>();

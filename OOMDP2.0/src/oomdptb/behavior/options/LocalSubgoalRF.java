@@ -10,9 +10,9 @@ public class LocalSubgoalRF implements RewardFunction {
 	protected StateConditionTest		applicableStateTest;
 	protected StateConditionTest		subgoalStateTest;
 	
-	protected double					subgoalReward = -1;
+	protected double					subgoalReward = 0;
 	protected double					defaultReward = -1;
-	protected double					failReward = Double.MIN_VALUE;
+	protected double					failReward = -Double.MAX_VALUE;
 	
 	public LocalSubgoalRF(StateConditionTest subgoalStateTest) {
 		this.applicableStateTest = null;

@@ -1,5 +1,8 @@
 package oomdptb.behavior.options;
 
+import java.util.List;
+
+import oomdptb.behavior.Policy.ActionProb;
 import oomdptb.oomdp.Action;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.GroundedAction;
@@ -61,6 +64,12 @@ public class PrimitiveOption extends Option {
 	@Override
 	public GroundedAction oneStepActionSelection(State s, String[] params) {
 		return new GroundedAction(this.srcAction, params);
+	}
+
+
+	@Override
+	public List<ActionProb> getActionDistributionForState(State s, String[] params) {
+		return this.getDeterministicPolicy(s, params);
 	}
 
 }

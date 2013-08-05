@@ -42,7 +42,8 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	protected int													numEpisodesToStore;
 	
 	
-	protected boolean												shouldDecomposeOptions;
+	protected boolean												shouldDecomposeOptions = true;
+	protected boolean												shouldAnnotateOptions = true;
 	
 	
 	
@@ -77,8 +78,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 		
 		numEpisodesForPlanning = 1;
 		maxQChangeForPlanningTermination = 0.;
-		
-		shouldDecomposeOptions = true;
+
 		
 	}
 	
@@ -118,6 +118,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	 * @param toggle whether to decompose options into the primitive actions taken by them or not.
 	 */
 	public void toggleShouldDecomposeOption(boolean toggle){
+		
 		this.shouldDecomposeOptions = toggle;
 		for(Action a : actions){
 			if(a instanceof Option){
@@ -136,6 +137,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	 * @param toggle whether to annotate the primitive actions of options with the calling option's name.
 	 */
 	public void toggleShouldAnnotateOptionDecomposition(boolean toggle){
+		shouldAnnotateOptions = toggle;
 		for(Action a : actions){
 			if(a instanceof Option){
 				((Option)a).toggleShouldAnnotateResults(toggle);
@@ -233,6 +235,8 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 
 	@Override
 	public EpisodeAnalysis runLearningEpisodeFrom(State initialState) {
+		
+		this.toggleShouldAnnotateOptionDecomposition(shouldAnnotateOptions);
 		
 		EpisodeAnalysis ea = new EpisodeAnalysis(initialState);
 		

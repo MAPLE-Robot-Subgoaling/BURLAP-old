@@ -3,6 +3,7 @@ package oomdptb.behavior.options;
 import java.util.ArrayList;
 import java.util.List;
 
+import oomdptb.behavior.Policy.ActionProb;
 import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.State;
 
@@ -53,5 +54,12 @@ public class MacroAction extends Option {
 		
 		return a;
 	}
+
+	@Override
+	public List<ActionProb> getActionDistributionForState(State s, String[] params) {
+		return this.getDeterministicPolicy(s, params);
+	}
+
+	
 
 }

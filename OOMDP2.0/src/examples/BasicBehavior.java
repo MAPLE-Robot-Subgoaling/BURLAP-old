@@ -67,6 +67,7 @@ public class BasicBehavior {
 	public BasicBehavior(){
 		
 		gwdg = new GridWorldDomain(11, 11);
+		//gwdg.setProbSucceedTransitionDynamics(0.8);
 		gwdg.setMapToFourRooms(); //will use the standard four rooms layout
 		domain = gwdg.generateDomain();
 		sp = new GridWorldStateParser(domain); //for writing states to a file
