@@ -287,6 +287,8 @@ public abstract class Option extends Action {
 			return result;
 		}
 		
+		this.initiateInState(st, params);
+		
 		ExpectationSearchNode esn = new ExpectationSearchNode(st, params);
 		Map <StateHashTuple, Double> possibleTerminations = new HashMap<StateHashTuple, Double>();
 		double [] expectedReturn = new double[]{0.};

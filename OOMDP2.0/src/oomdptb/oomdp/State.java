@@ -484,6 +484,14 @@ public class State {
 		return res;
 	}
 	
+	public List <GroundedAction> getAllGroundedActionsFor(List <Action> actions){
+		List <GroundedAction> res = new ArrayList<GroundedAction>(actions.size());
+		for(Action a : actions){
+			res.addAll(this.getAllGroundedActionsFor(a));
+		}
+		return res;
+	}
+	
 	
 	public List <GroundedProp> getAllGroundedPropsFor(PropositionalFunction pf){
 		
@@ -503,6 +511,18 @@ public class State {
 		}
 		
 		return res;
+	}
+	
+	
+	public boolean somePFGroundingIsTrue(PropositionalFunction pf){
+		List <GroundedProp> gps = this.getAllGroundedPropsFor(pf);
+		for(GroundedProp gp : gps){
+			if(gp.isTrue(this)){
+				return true;
+			}
+		}
+		
+		return false;
 	}
 	
 	

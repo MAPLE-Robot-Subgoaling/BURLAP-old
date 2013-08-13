@@ -113,9 +113,14 @@ public class SarsaLam extends QLearning {
 			boolean foundCurrentQTrace = false;
 			for(EligibilityTrace et : traces){
 				
-				if(et.sh.equals(curState) && et.q.a.equals(action)){
-					foundCurrentQTrace = true;
-					et.eligibility = 1.; //replacing traces
+				if(et.sh.equals(curState)){
+					if(et.q.a.equals(action)){
+						foundCurrentQTrace = true;
+						et.eligibility = 1.; //replacing traces
+					}
+					else{
+						et.eligibility = 0.; //replacing traces
+					}
 				}
 				
 				et.q.q = et.q.q + (learningRate * et.eligibility * delta);
