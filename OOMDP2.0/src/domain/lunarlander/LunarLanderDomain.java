@@ -1,5 +1,6 @@
 package domain.lunarlander;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import oomdptb.oomdp.Action;
@@ -39,36 +40,28 @@ public class LunarLanderDomain implements DomainGenerator {
 	
 	public static final String				ACTIONTURNL = "turnLeft";
 	public static final String				ACTIONTURNR = "turnRight";
-	public static final String				ACTIONHTHRUST = "hThrust";
-	public static final String				ACTIONWTHRUST = "wThrust";
-	public static final String				ACTIONMTHRUST = "mThrust";
+	public static final String				ACTIONTHRUST = "thrust";
 	public static final String				ACTIONIDLE = "idle";
 	
 	
 	public static final String				PFONPAD = "onLandingPad";
 	public static final String				PFTPAD = "touchingLandingPad";
-	public static final String				PFTOUCHSURFACE = "touchingSurface"; //either horitonzally or landed on obstacle
+	public static final String				PFTOUCHSURFACE = "touchingSurface"; //either horizontally or landed on obstacle
 	public static final String				PFONGROUND = "onGround"; //landed on ground
 	
 	
-	public static final double				XMIN = 0.;
-	public static final double				XMAX = 100.;
-	public static final double				YMIN = 0.;
-	public static final double				YMAX = 50.;
-	public static final double				VMAX = 4.0;
-	public static final double				ANGLEMAX = Math.PI/4.;
-	public static final double				ANGLEINC = Math.PI/20.;
-	
-	public static final double				GRAVTIY = -0.2;
-	public static double					HTHRUST = 0.32;
-	public static double					WTHRUST = -GRAVTIY;
-	public static double					MTHRUST = 0.26;
 	
 	
-	
-	private static Domain					LLDOMAIN = null;
-	
-
+	//data members
+	protected List <Double>					thrustValues;
+	protected double						gravity = -0.2;
+	protected double						xmin = 0.;
+	protected double						xmax = 100.;
+	protected double						ymin = 0.;
+	protected double						ymax = 50.;
+	protected double						vmax = 4.;
+	protected double						angmax = Math.PI/4.;
+	protected double						anginc = Math.PI/20.;
 	
 	
 	
@@ -78,9 +71,9 @@ public class LunarLanderDomain implements DomainGenerator {
 	public static void main(String[] args) {
 		
 		LunarLanderDomain lld = new LunarLanderDomain();
-		lld.generateDomain();
+		Domain domain = lld.generateDomain();
 		
-		State clean = lld.getCleanState(1);
+		State clean = getCleanState(domain, 1);
 
 		/*//these commented items just have different task configuration; just choose one
 		lld.setAgent(clean, 0., 5, 0.);
@@ -95,9 +88,9 @@ public class LunarLanderDomain implements DomainGenerator {
 		*/
 		
 		
-		lld.setAgent(clean, 0., 5, 0.);
-		lld.setObstacle(clean, 0, 20., 50., 0., 20.);
-		lld.setPad(clean, 80., 95., 0., 10.);
+		setAgent(clean, 0., 5, 0.);
+		setObstacle(clean, 0, 20., 50., 0., 20.);
+		setPad(clean, 80., 95., 0., 10.);
 		
 		
 		int expMode = 1;
@@ -110,12 +103,12 @@ public class LunarLanderDomain implements DomainGenerator {
 		
 		if(expMode == 0){
 			
-			TerminalExplorer te = new TerminalExplorer(LLDOMAIN);
+			TerminalExplorer te = new TerminalExplorer(domain);
 			
 			te.addActionShortHand("a", ACTIONTURNL);
 			te.addActionShortHand("d", ACTIONTURNR);
-			te.addActionShortHand("w", ACTIONHTHRUST);
-			te.addActionShortHand("s", ACTIONWTHRUST);
+			te.addActionShortHand("w", ACTIONTHRUST+0);
+			te.addActionShortHand("s", ACTIONTHRUST+1);
 			te.addActionShortHand("x", ACTIONIDLE);
 			
 			te.exploreFromState(clean);
@@ -123,11 +116,11 @@ public class LunarLanderDomain implements DomainGenerator {
 		}
 		else if(expMode == 1){
 			
-			Visualizer vis = LLVisualizer.getVisualizer();
-			VisualExplorer exp = new VisualExplorer(LLDOMAIN, vis, clean);
+			Visualizer vis = LLVisualizer.getVisualizer(lld);
+			VisualExplorer exp = new VisualExplorer(domain, vis, clean);
 			
-			exp.addKeyAction("w", ACTIONHTHRUST);
-			exp.addKeyAction("s", ACTIONWTHRUST);
+			exp.addKeyAction("w", ACTIONTHRUST+0);
+			exp.addKeyAction("s", ACTIONTHRUST+1);
 			exp.addKeyAction("a", ACTIONTURNL);
 			exp.addKeyAction("d", ACTIONTURNR);
 			exp.addKeyAction("x", ACTIONIDLE);
@@ -140,11 +133,11 @@ public class LunarLanderDomain implements DomainGenerator {
 	
 	
 	
-	public void setAgent(State s, double a, double x, double y){
-		this.setAgent(s, a, x, y, 0., 0.);
+	public static void setAgent(State s, double a, double x, double y){
+		setAgent(s, a, x, y, 0., 0.);
 	}
 	
-	public void setAgent(State s, double a, double x, double y, double vx, double vy){
+	public static void setAgent(State s, double a, double x, double y, double vx, double vy){
 		ObjectInstance agent = s.getObjectsOfTrueClass(AGENTCLASS).get(0);
 		
 		agent.setValue(AATTNAME, a);
@@ -154,7 +147,7 @@ public class LunarLanderDomain implements DomainGenerator {
 		agent.setValue(VYATTNAME, vy);
 	}
 	
-	public void setObstacle(State s, int i, double l, double r, double b, double t){
+	public static void setObstacle(State s, int i, double l, double r, double b, double t){
 		ObjectInstance obst = s.getObjectsOfTrueClass(OBSTACLECLASS).get(i);
 		
 		obst.setValue(LATTNAME, l);
@@ -163,7 +156,7 @@ public class LunarLanderDomain implements DomainGenerator {
 		obst.setValue(TATTNAME, t);
 	}
 	
-	public void setPad(State s, double l, double r, double b, double t){
+	public static void setPad(State s, double l, double r, double b, double t){
 		ObjectInstance pad = s.getObjectsOfTrueClass(PADCLASS).get(0);
 		
 		pad.setValue(LATTNAME, l);
@@ -174,63 +167,180 @@ public class LunarLanderDomain implements DomainGenerator {
 	
 	
 	
+	
+	public LunarLanderDomain(){
+		thrustValues = new ArrayList<Double>();
+	}
+	
+	
+	public void addThrustActionWithThrust(double t){
+		this.thrustValues.add(t);
+	}
+	
+	public void setGravity(double g){
+		this.gravity = g;
+	}
+	
+	public double getXmin() {
+		return xmin;
+	}
+
+
+
+	public void setXmin(double xmin) {
+		this.xmin = xmin;
+	}
+
+
+
+	public double getXmax() {
+		return xmax;
+	}
+
+
+
+	public void setXmax(double xmax) {
+		this.xmax = xmax;
+	}
+
+
+
+	public double getYmin() {
+		return ymin;
+	}
+
+
+
+	public void setYmin(double ymin) {
+		this.ymin = ymin;
+	}
+
+
+
+	public double getYmax() {
+		return ymax;
+	}
+
+
+
+	public void setYmax(double ymax) {
+		this.ymax = ymax;
+	}
+
+
+
+	public double getVmax() {
+		return vmax;
+	}
+
+
+
+	public void setVmax(double vmax) {
+		this.vmax = vmax;
+	}
+
+
+
+	public double getAngmax() {
+		return angmax;
+	}
+
+
+
+	public void setAngmax(double angmax) {
+		this.angmax = angmax;
+	}
+
+
+
+	public double getAnginc() {
+		return anginc;
+	}
+
+
+
+	public void setAnginc(double anginc) {
+		this.anginc = anginc;
+	}
+	
+	
+	public void setToStandardLunarLander(){
+		this.addStandardThrustActions();
+		this.gravity = -0.2;
+		this.xmin = 0.;
+		this.xmax = 100.;
+		this.ymin = 0.;
+		this.ymax = 50.;
+		this.vmax = 4.;
+		this.angmax = Math.PI / 4.;
+		this.anginc = Math.PI / 20.;
+	}
+	
+	public void addStandardThrustActions(){
+		this.thrustValues.add(0.32);
+		this.thrustValues.add(-gravity);
+	}
+	
 	@Override
 	public Domain generateDomain() {
 		
-		if(LLDOMAIN != null){
-			return LLDOMAIN;
+		Domain domain = new Domain();
+		
+		List <Double> thrustValuesTemp = this.thrustValues;
+		if(thrustValuesTemp.size() == 0){
+			thrustValuesTemp.add(0.32);
+			thrustValuesTemp.add(-gravity);
 		}
 		
-		LLDOMAIN = new Domain();
 		
 		//create attributes
-		Attribute xatt = new Attribute(LLDOMAIN, XATTNAME, Attribute.AttributeType.REAL);
-		xatt.setLims(XMIN, XMAX);
+		Attribute xatt = new Attribute(domain, XATTNAME, Attribute.AttributeType.REAL);
+		xatt.setLims(xmin, xmax);
 		
-		Attribute yatt = new Attribute(LLDOMAIN, YATTNAME, Attribute.AttributeType.REAL);
-		yatt.setLims(YMIN, YMAX);
+		Attribute yatt = new Attribute(domain, YATTNAME, Attribute.AttributeType.REAL);
+		yatt.setLims(ymin, ymax);
 		
-		Attribute vxatt = new Attribute(LLDOMAIN, VXATTNAME, Attribute.AttributeType.REAL);
-		vxatt.setLims(-VMAX, VMAX);
+		Attribute vxatt = new Attribute(domain, VXATTNAME, Attribute.AttributeType.REAL);
+		vxatt.setLims(-vmax, vmax);
 		
-		Attribute vyatt = new Attribute(LLDOMAIN, VYATTNAME, Attribute.AttributeType.REAL);
-		vyatt.setLims(-VMAX, VMAX);
+		Attribute vyatt = new Attribute(domain, VYATTNAME, Attribute.AttributeType.REAL);
+		vyatt.setLims(-vmax, vmax);
 		
-		Attribute aatt = new Attribute(LLDOMAIN, AATTNAME, Attribute.AttributeType.REAL);
-		aatt.setLims(-ANGLEMAX, ANGLEMAX);
+		Attribute aatt = new Attribute(domain, AATTNAME, Attribute.AttributeType.REAL);
+		aatt.setLims(-anginc, anginc);
 		
-		Attribute latt = new Attribute(LLDOMAIN, LATTNAME, Attribute.AttributeType.REAL);
-		latt.setLims(XMIN, XMAX);
+		Attribute latt = new Attribute(domain, LATTNAME, Attribute.AttributeType.REAL);
+		latt.setLims(xmin, xmax);
 		
-		Attribute ratt = new Attribute(LLDOMAIN, RATTNAME, Attribute.AttributeType.REAL);
-		ratt.setLims(XMIN, XMAX);
+		Attribute ratt = new Attribute(domain, RATTNAME, Attribute.AttributeType.REAL);
+		ratt.setLims(xmin, xmax);
 		
-		Attribute batt = new Attribute(LLDOMAIN, BATTNAME, Attribute.AttributeType.REAL);
-		batt.setLims(YMIN, YMAX);
+		Attribute batt = new Attribute(domain, BATTNAME, Attribute.AttributeType.REAL);
+		batt.setLims(ymin, ymax);
 		
-		Attribute tatt = new Attribute(LLDOMAIN, TATTNAME, Attribute.AttributeType.REAL);
-		tatt.setLims(YMIN, YMAX);
+		Attribute tatt = new Attribute(domain, TATTNAME, Attribute.AttributeType.REAL);
+		tatt.setLims(ymin, ymax);
 		
 		
 		
 		
 		
 		//create classes
-		ObjectClass agentclass = new ObjectClass(LLDOMAIN, AGENTCLASS);
+		ObjectClass agentclass = new ObjectClass(domain, AGENTCLASS);
 		agentclass.addAttribute(xatt);
 		agentclass.addAttribute(yatt);
 		agentclass.addAttribute(vxatt);
 		agentclass.addAttribute(vyatt);
 		agentclass.addAttribute(aatt);
 		
-		ObjectClass obstclss = new ObjectClass(LLDOMAIN, OBSTACLECLASS);
+		ObjectClass obstclss = new ObjectClass(domain, OBSTACLECLASS);
 		obstclss.addAttribute(latt);
 		obstclss.addAttribute(ratt);
 		obstclss.addAttribute(batt);
 		obstclss.addAttribute(tatt);
 		
 		
-		ObjectClass padclass = new ObjectClass(LLDOMAIN, PADCLASS);
+		ObjectClass padclass = new ObjectClass(domain, PADCLASS);
 		padclass.addAttribute(latt);
 		padclass.addAttribute(ratt);
 		padclass.addAttribute(batt);
@@ -238,41 +348,41 @@ public class LunarLanderDomain implements DomainGenerator {
 		
 		
 		//add actions
-		Action turnl = new ActionTurnL(ACTIONTURNL, LLDOMAIN, "");
-		Action turnr = new ActionTurnR(ACTIONTURNR, LLDOMAIN, "");
-		Action idle = new ActionIdle(ACTIONIDLE, LLDOMAIN, "");
-		Action hthrust = new ActionHThrust(ACTIONHTHRUST, LLDOMAIN, "");
-		Action wthrust = new ActionWThrust(ACTIONWTHRUST, LLDOMAIN, "");
-		Action mthrust = new ActionMThrust(ACTIONMTHRUST, LLDOMAIN, "");
+		Action turnl = new ActionTurn(ACTIONTURNL, domain, -1.);
+		Action turnr = new ActionTurn(ACTIONTURNR, domain, 1.);
+		Action idle = new ActionIdle(ACTIONIDLE, domain, "");
+		
+		for(int i = 0; i < thrustValuesTemp.size(); i++){
+			double t = thrustValuesTemp.get(i);
+			Action thrustAction = new ActionThrust(ACTIONTHRUST+i, domain, t);
+		}
 		
 		
 		//add pfs
-		PropositionalFunction onpad = new OnPadPF(PFONPAD, LLDOMAIN, new String[]{AGENTCLASS, PADCLASS});
-		PropositionalFunction touchpad = new TouchPadPF(PFTPAD, LLDOMAIN, new String[]{AGENTCLASS, PADCLASS});
-		PropositionalFunction touchsur = new TouchSurfacePF(PFTOUCHSURFACE, LLDOMAIN, new String[]{AGENTCLASS, OBSTACLECLASS});
-		PropositionalFunction touchgrd = new TouchGroundPF(PFONGROUND, LLDOMAIN, new String[]{AGENTCLASS});
+		PropositionalFunction onpad = new OnPadPF(PFONPAD, domain, new String[]{AGENTCLASS, PADCLASS});
+		PropositionalFunction touchpad = new TouchPadPF(PFTPAD, domain, new String[]{AGENTCLASS, PADCLASS});
+		PropositionalFunction touchsur = new TouchSurfacePF(PFTOUCHSURFACE, domain, new String[]{AGENTCLASS, OBSTACLECLASS});
+		PropositionalFunction touchgrd = new TouchGroundPF(PFONGROUND, domain, new String[]{AGENTCLASS});
 		
 		
 		
-		return LLDOMAIN;
+		return domain;
 		
 	}
 	
 	
-	public State getCleanState(int no){
-		
-		this.generateDomain();
+	public static State getCleanState(Domain domain, int no){
 		
 		State s = new State();
 		
-		ObjectInstance agent = new ObjectInstance(LLDOMAIN.getObjectClass(AGENTCLASS), AGENTCLASS + "0");
+		ObjectInstance agent = new ObjectInstance(domain.getObjectClass(AGENTCLASS), AGENTCLASS + "0");
 		s.addObject(agent);
 		
-		ObjectInstance pad = new ObjectInstance(LLDOMAIN.getObjectClass(PADCLASS), PADCLASS + "0");
+		ObjectInstance pad = new ObjectInstance(domain.getObjectClass(PADCLASS), PADCLASS + "0");
 		s.addObject(pad);
 		
 		for(int i = 0; i < no; i++){
-			ObjectInstance obst = new ObjectInstance(LLDOMAIN.getObjectClass(OBSTACLECLASS), OBSTACLECLASS + i);
+			ObjectInstance obst = new ObjectInstance(domain.getObjectClass(OBSTACLECLASS), OBSTACLECLASS + i);
 			s.addObject(obst);
 		}
 
@@ -282,24 +392,24 @@ public class LunarLanderDomain implements DomainGenerator {
 
 	
 	
-	public static void incAngle(State s, int dir){
+	public void incAngle(State s, double dir){
 		
 		ObjectInstance agent = s.getObjectsOfTrueClass(AGENTCLASS).get(0);
 		double curA = agent.getRealValForAttribute(AATTNAME);
 		
-		double newa = curA + (dir * ANGLEINC);
-		if(newa > ANGLEMAX){
-			newa = ANGLEMAX;
+		double newa = curA + (dir * anginc);
+		if(newa > angmax){
+			newa = angmax;
 		}
-		else if(newa < -ANGLEMAX){
-			newa = -ANGLEMAX;
+		else if(newa < -angmax){
+			newa = -angmax;
 		}
 		
 		agent.setValue(AATTNAME, newa);
 		
 	}
 	
-	public static void updateMotion(State s, double thrust){
+	public void updateMotion(State s, double thrust){
 		
 		double ti = 1.;
 		double tt = ti*ti;
@@ -317,7 +427,7 @@ public class LunarLanderDomain implements DomainGenerator {
 		double ty = Math.sin(worldAngle)*thrust;
 		
 		double ax = tx;
-		double ay = ty + GRAVTIY;
+		double ay = ty + gravity;
 		
 		double nx = x + vx*ti + (0.5*ax*tt);
 		double ny = y + vy*ti + (0.5*ay*tt);
@@ -328,38 +438,38 @@ public class LunarLanderDomain implements DomainGenerator {
 		double nang = ang;
 		
 		//check for boundaries
-		if(ny > YMAX){
-			ny = YMAX;
+		if(ny > ymax){
+			ny = ymax;
 			nvy = 0.;
 		}
-		else if(ny <= YMIN){
-			ny = YMIN;
+		else if(ny <= ymin){
+			ny = ymin;
 			nvy = 0.;
 			nang = 0.;
 			nvx = 0.;
 		}
 		
-		if(nx > XMAX){
-			nx = XMAX;
+		if(nx > xmax){
+			nx = xmax;
 			nvx = 0.;
 		}
-		else if(nx < XMIN){
-			nx = XMIN;
+		else if(nx < xmin){
+			nx = xmin;
 			nvx = 0.;
 		}
 		
-		if(nvx > VMAX){
-			nvx = VMAX;
+		if(nvx > vmax){
+			nvx = vmax;
 		}
-		else if(nvx < -VMAX){
-			nvx = -VMAX;
+		else if(nvx < -vmax){
+			nvx = -vmax;
 		}
 		
-		if(nvy > VMAX){
-			nvy = VMAX;
+		if(nvy > vmax){
+			nvy = vmax;
 		}
-		else if(nvy < -VMAX){
-			nvy = -VMAX;
+		else if(nvy < -vmax){
+			nvy = -vmax;
 		}
 		
 		
@@ -398,7 +508,7 @@ public class LunarLanderDomain implements DomainGenerator {
 				}
 				
 				
-				//can only hit one obsbtacle so break out of search
+				//can only hit one obstacle so break out of search
 				break;
 				
 			}
@@ -414,7 +524,7 @@ public class LunarLanderDomain implements DomainGenerator {
 		double b = pad.getRealValForAttribute(BATTNAME);
 		double t = pad.getRealValForAttribute(TATTNAME);
 		
-		//did we colloide?
+		//did we collide?
 		if(nx > l && nx < r && ny >= b && ny < t){
 			//intersection!
 			
@@ -457,49 +567,29 @@ public class LunarLanderDomain implements DomainGenerator {
 	
 	
 	
-	
-	
-	public class ActionTurnL extends Action{
+	public class ActionTurn extends Action{
 
-		public ActionTurnL(String name, Domain domain, String parameterClasses) {
-			super(name, domain, parameterClasses);
-		}
+		double dir;
 		
-		public ActionTurnL(String name, Domain domain, String [] parameterClasses) {
-			super(name, domain, parameterClasses);
-		}
-
-		@Override
-		protected State performActionHelper(State st, String[] params) {
-			LunarLanderDomain.incAngle(st, -1);
-			LunarLanderDomain.updateMotion(st, 0.0);
-			return st;
+		public ActionTurn(String name, Domain domain, double dir) {
+			super(name, domain, "");
+			this.dir = dir;
 		}
 		
 		
-		
-	}
-	
-	public class ActionTurnR extends Action{
-
-		public ActionTurnR(String name, Domain domain, String parameterClasses) {
-			super(name, domain, parameterClasses);
-		}
-		
-		public ActionTurnR(String name, Domain domain, String [] parameterClasses) {
-			super(name, domain, parameterClasses);
-		}
 
 		@Override
 		protected State performActionHelper(State st, String[] params) {
-			LunarLanderDomain.incAngle(st, 1);
-			LunarLanderDomain.updateMotion(st, 0.0);
+			incAngle(st, dir);
+			updateMotion(st, 0.0);
 			return st;
 		}
-		
-		
+
 		
 	}
+	
+	
+	
 	
 	public class ActionIdle extends Action{
 
@@ -513,7 +603,7 @@ public class LunarLanderDomain implements DomainGenerator {
 
 		@Override
 		protected State performActionHelper(State st, String[] params) {
-			LunarLanderDomain.updateMotion(st, 0.0);
+			updateMotion(st, 0.0);
 			return st;
 		}
 		
@@ -521,19 +611,20 @@ public class LunarLanderDomain implements DomainGenerator {
 		
 	}
 	
-	public class ActionHThrust extends Action{
+	
+	public class ActionThrust extends Action{
 
-		public ActionHThrust(String name, Domain domain, String parameterClasses) {
-			super(name, domain, parameterClasses);
+		protected double thrustValue;
+		
+		public ActionThrust(String name, Domain domain, double thrustValue){
+			super(name, domain, "");
+			this.thrustValue = thrustValue;
 		}
 		
-		public ActionHThrust(String name, Domain domain, String [] parameterClasses) {
-			super(name, domain, parameterClasses);
-		}
-
+		
 		@Override
 		protected State performActionHelper(State st, String[] params) {
-			LunarLanderDomain.updateMotion(st, HTHRUST);
+			updateMotion(st, thrustValue);
 			return st;
 		}
 		
@@ -541,43 +632,8 @@ public class LunarLanderDomain implements DomainGenerator {
 		
 	}
 	
-	public class ActionWThrust extends Action{
-
-		public ActionWThrust(String name, Domain domain, String parameterClasses) {
-			super(name, domain, parameterClasses);
-		}
-		
-		public ActionWThrust(String name, Domain domain, String [] parameterClasses) {
-			super(name, domain, parameterClasses);
-		}
-
-		@Override
-		protected State performActionHelper(State st, String[] params) {
-			LunarLanderDomain.updateMotion(st, WTHRUST);
-			return st;
-		}
-		
-		
-	}
 	
-	public class ActionMThrust extends Action{
-
-		public ActionMThrust(String name, Domain domain, String parameterClasses) {
-			super(name, domain, parameterClasses);
-		}
-		
-		public ActionMThrust(String name, Domain domain, String [] parameterClasses) {
-			super(name, domain, parameterClasses);
-		}
-
-		@Override
-		protected State performActionHelper(State st, String[] params) {
-			LunarLanderDomain.updateMotion(st, MTHRUST);
-			return st;
-		}
-		
-		
-	}
+	
 	
 	
 	/*
@@ -724,7 +780,7 @@ public class LunarLanderDomain implements DomainGenerator {
 			ObjectInstance agent = st.getObject(params[0]);
 			double y = agent.getRealValForAttribute(YATTNAME);
 			
-			if(y == YMIN){
+			if(y == ymin){
 				return true;
 			}
 			

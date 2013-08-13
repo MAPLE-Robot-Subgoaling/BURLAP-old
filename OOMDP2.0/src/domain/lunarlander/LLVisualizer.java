@@ -16,16 +16,14 @@ import oomdptb.oomdp.visualizer.Visualizer;
 public class LLVisualizer {
 
 	
-	public static Visualizer getVisualizer(){
+	public static Visualizer getVisualizer(LunarLanderDomain lld){
 		
-		LunarLanderDomain lld = new LunarLanderDomain();
-		Domain d = lld.generateDomain();
 		Visualizer v = new Visualizer();
 		
 		
-		v.addObjectClassPainter(LunarLanderDomain.AGENTCLASS, new AgentPainter(d));
-		v.addObjectClassPainter(LunarLanderDomain.OBSTACLECLASS, new ObstaclePainter(d));
-		v.addObjectClassPainter(LunarLanderDomain.PADCLASS, new PadPainter(d));
+		v.addObjectClassPainter(LunarLanderDomain.AGENTCLASS, new AgentPainter(lld));
+		v.addObjectClassPainter(LunarLanderDomain.OBSTACLECLASS, new ObstaclePainter(lld));
+		v.addObjectClassPainter(LunarLanderDomain.PADCLASS, new PadPainter(lld));
 		
 		return v;
 	}
@@ -34,8 +32,11 @@ public class LLVisualizer {
 	
 	public static class AgentPainter extends ObjectPainter{
 
-		public AgentPainter(Domain domain) {
-			super(domain);
+		protected LunarLanderDomain lld;
+		
+		public AgentPainter(LunarLanderDomain lld) {
+			super(null);
+			this.lld = lld;
 		}
 
 		@Override
@@ -53,8 +54,8 @@ public class LLVisualizer {
 			
 			double ang = ob.getRealValForAttribute(LunarLanderDomain.AATTNAME);
 			
-			double nx = (ox - LunarLanderDomain.XMIN) / (LunarLanderDomain.XMAX - LunarLanderDomain.XMIN);
-			double ny = (oy - LunarLanderDomain.YMIN) / (LunarLanderDomain.YMAX - LunarLanderDomain.YMIN);
+			double nx = (ox - lld.getXmin()) / (lld.getXmax() - lld.getXmin());
+			double ny = (oy - lld.getYmin()) / (lld.getYmax() - lld.getYmin());
 			
 			
 			double scx = (nx * cWidth);
@@ -129,8 +130,11 @@ public class LLVisualizer {
 	
 	public static class ObstaclePainter extends ObjectPainter{
 
-		public ObstaclePainter(Domain domain) {
-			super(domain);
+		protected LunarLanderDomain lld;
+		
+		public ObstaclePainter(LunarLanderDomain lld) {
+			super(null);
+			this.lld = lld;
 		}
 
 		@Override
@@ -147,11 +151,11 @@ public class LLVisualizer {
 			double ow = or - ol;
 			double oh = ot - obb;
 			
-			double xr = (LunarLanderDomain.XMAX - LunarLanderDomain.XMIN);
-			double yr = (LunarLanderDomain.YMAX - LunarLanderDomain.YMIN);
+			double xr = (lld.getXmax() - lld.getXmin());
+			double yr = (lld.getYmax() - lld.getYmin());
 			
-			double nl = (ol - LunarLanderDomain.XMIN) / xr;
-			double nt = (ot - LunarLanderDomain.YMIN) / yr;
+			double nl = (ol - lld.getXmin()) / xr;
+			double nt = (ot - lld.getYmin()) / yr;
 			
 			double nw = ow/xr;
 			double nh = oh/yr;
@@ -174,8 +178,11 @@ public class LLVisualizer {
 	
 	public static class PadPainter extends ObjectPainter{
 
-		public PadPainter(Domain domain) {
-			super(domain);
+		protected LunarLanderDomain lld;
+		
+		public PadPainter(LunarLanderDomain lld) {
+			super(null);
+			this.lld = lld;
 		}
 
 		@Override
@@ -192,11 +199,11 @@ public class LLVisualizer {
 			double ow = or - ol;
 			double oh = ot - obb;
 			
-			double xr = (LunarLanderDomain.XMAX - LunarLanderDomain.XMIN);
-			double yr = (LunarLanderDomain.YMAX - LunarLanderDomain.YMIN);
+			double xr = (lld.getXmax() - lld.getXmin());
+			double yr = (lld.getYmax() - lld.getYmin());
 			
-			double nl = (ol - LunarLanderDomain.XMIN) / xr;
-			double nt = (ot - LunarLanderDomain.YMIN) / yr;
+			double nl = (ol - lld.getXmin()) / xr;
+			double nt = (ot - lld.getYmin()) / yr;
 			
 			double nw = ow/xr;
 			double nh = oh/yr;

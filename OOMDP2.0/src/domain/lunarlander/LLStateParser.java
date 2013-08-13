@@ -2,6 +2,7 @@ package domain.lunarlander;
 
 import java.util.List;
 
+import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.ObjectInstance;
 import oomdptb.oomdp.State;
 import oomdptb.oomdp.StateParser;
@@ -9,11 +10,10 @@ import oomdptb.oomdp.StateParser;
 
 public class LLStateParser implements StateParser {
 
-	LunarLanderDomain lld_;
+	Domain domain;
 	
-	public LLStateParser(){
-		lld_ = new LunarLanderDomain();
-		lld_.generateDomain();
+	public LLStateParser(Domain domain){
+		this.domain = domain;
 	}
 	
 	
@@ -60,14 +60,14 @@ public class LLStateParser implements StateParser {
 		String [] aComps = lineComps[0].split(" ");
 		String [] pComps = lineComps[1].split(" ");
 		
-		State s = lld_.getCleanState(lineComps.length-2);
+		State s = LunarLanderDomain.getCleanState(domain, lineComps.length-2);
 		
-		lld_.setAgent(s, Double.parseDouble(aComps[0]), Double.parseDouble(aComps[1]), Double.parseDouble(aComps[2]), Double.parseDouble(aComps[3]), Double.parseDouble(aComps[4]));
-		lld_.setPad(s, Double.parseDouble(pComps[0]), Double.parseDouble(pComps[1]), Double.parseDouble(pComps[2]), Double.parseDouble(pComps[3]));
+		LunarLanderDomain.setAgent(s, Double.parseDouble(aComps[0]), Double.parseDouble(aComps[1]), Double.parseDouble(aComps[2]), Double.parseDouble(aComps[3]), Double.parseDouble(aComps[4]));
+		LunarLanderDomain.setPad(s, Double.parseDouble(pComps[0]), Double.parseDouble(pComps[1]), Double.parseDouble(pComps[2]), Double.parseDouble(pComps[3]));
 		
 		for(int i = 2; i < lineComps.length; i++){
 			String [] oComps = lineComps[i].split(" ");
-			lld_.setObstacle(s, i-2, Double.parseDouble(oComps[0]), Double.parseDouble(oComps[1]), Double.parseDouble(oComps[2]), Double.parseDouble(oComps[3]));
+			LunarLanderDomain.setObstacle(s, i-2, Double.parseDouble(oComps[0]), Double.parseDouble(oComps[1]), Double.parseDouble(oComps[2]), Double.parseDouble(oComps[3]));
 		}
 		
 		return s;
