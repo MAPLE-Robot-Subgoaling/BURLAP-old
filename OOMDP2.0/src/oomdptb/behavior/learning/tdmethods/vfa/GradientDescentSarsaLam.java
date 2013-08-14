@@ -133,6 +133,10 @@ public class GradientDescentSarsaLam extends OOMDPPlanner implements QComputable
 		return eStepCounter;
 	}
 	
+	public void setUseReplaceTraces(boolean toggle){
+		this.useReplacingTraces = toggle;
+	}
+	
 	
 	/**
 	 * Sets whether the primitive actions taken during an options will be included as steps in produced EpisodeAnalysis objects.
