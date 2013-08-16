@@ -299,8 +299,8 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 		
 		if(episodeHistory.size() >= numEpisodesToStore){
 			episodeHistory.poll();
-			episodeHistory.offer(ea);
 		}
+		episodeHistory.offer(ea);
 		
 		return ea;
 	}

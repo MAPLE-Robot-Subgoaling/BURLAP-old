@@ -160,8 +160,8 @@ public class SarsaLam extends QLearning {
 		
 		if(episodeHistory.size() >= numEpisodesToStore){
 			episodeHistory.poll();
-			episodeHistory.offer(ea);
 		}
+		episodeHistory.offer(ea);
 		
 		return ea;
 	}

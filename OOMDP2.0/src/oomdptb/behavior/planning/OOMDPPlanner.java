@@ -60,7 +60,7 @@ public abstract class OOMDPPlanner {
 		
 	}
 	
-	public final void addNonDomainReferencedAction(Action a){
+	public void addNonDomainReferencedAction(Action a){
 		//make sure it doesn't already exist in the list
 		if(!actions.contains(a)){
 			actions.add(a);

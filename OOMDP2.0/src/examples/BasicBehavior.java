@@ -3,6 +3,10 @@ package examples;
 import domain.gridworld.*;
 import oomdptb.behavior.*;
 import oomdptb.behavior.learning.*;
+import oomdptb.behavior.learning.actorcritic.Actor;
+import oomdptb.behavior.learning.actorcritic.ActorCritic;
+import oomdptb.behavior.learning.actorcritic.actor.BoltzmannActor;
+import oomdptb.behavior.learning.actorcritic.critics.TDLambda;
 import oomdptb.behavior.learning.tdmethods.*;
 import oomdptb.behavior.planning.*;
 import oomdptb.behavior.planning.commonpolicies.GreedyQPolicy;
@@ -54,8 +58,9 @@ public class BasicBehavior {
 		//example.SarsaLearningExample(outputPath);
 		//example.BFSExample(outputPath);
 		//example.DFSExample(outputPath);
-		example.AStarExample(outputPath);
+		//example.AStarExample(outputPath);
 		//example.ValueIterationExample(outputPath);
+		example.ACLearningExample(outputPath);
 		
 		
 		//run the visualizer
@@ -128,6 +133,24 @@ public class BasicBehavior {
 		LearningAgent agent = new SarsaLam(domain, rf, tf, 0.99, hashingFactory, 0., 0.5, 1.0);
 		
 		//run learning for 100 episodes
+		for(int i = 0; i < 100; i++){
+			EpisodeAnalysis ea = agent.runLearningEpisodeFrom(initialState); //run learning episode
+			ea.writeToFile(String.format("%se%03d", outputPath, i), sp); //record episode to a file
+			System.out.println(i + ": " + ea.numTimeSteps()); //print the performance of this episode
+		}
+		
+	}
+	
+	
+	public void ACLearningExample(String outputPath){
+		if(!outputPath.endsWith("/")){
+			outputPath = outputPath + "/";
+		}
+		
+		TDLambda td = new TDLambda(rf, tf, 0.99, hashingFactory, 0.5, 0., 0.9);
+		BoltzmannActor ba = new BoltzmannActor(domain, hashingFactory, 0.1);
+		ActorCritic agent = new ActorCritic(domain, rf, tf, 0.99, ba, td);
+		
 		for(int i = 0; i < 100; i++){
 			EpisodeAnalysis ea = agent.runLearningEpisodeFrom(initialState); //run learning episode
 			ea.writeToFile(String.format("%se%03d", outputPath, i), sp); //record episode to a file
