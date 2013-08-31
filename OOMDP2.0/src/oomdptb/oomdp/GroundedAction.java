@@ -67,7 +67,7 @@ public class GroundedAction {
 		}
 		
 		GroundedAction go = (GroundedAction)other;
-		if(this.action != go.action){
+		if(!this.action.getName().equals(go.action.getName())){
 			return false;
 		}
 		
