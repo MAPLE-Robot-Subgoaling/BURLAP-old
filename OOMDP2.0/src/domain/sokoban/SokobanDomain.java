@@ -13,6 +13,7 @@ import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.ObjectClass;
 import oomdptb.oomdp.ObjectInstance;
 import oomdptb.oomdp.PropositionalFunction;
+import oomdptb.oomdp.SADomain;
 import oomdptb.oomdp.State;
 import oomdptb.oomdp.StateParser;
 import oomdptb.oomdp.explorer.TerminalExplorer;
@@ -348,7 +349,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		}
 
 		//otherwise construct it!
-		SOKOBANDOMAIN = new Domain();
+		SOKOBANDOMAIN = new SADomain();
 
 		Attribute xAtt = new Attribute(SOKOBANDOMAIN, XATTNAME, 0);
 		xAtt.setDiscValuesForRange(MINX, MAXX, 1);

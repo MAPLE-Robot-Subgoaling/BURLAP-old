@@ -10,6 +10,7 @@ import oomdptb.oomdp.DomainGenerator;
 import oomdptb.oomdp.ObjectClass;
 import oomdptb.oomdp.ObjectInstance;
 import oomdptb.oomdp.PropositionalFunction;
+import oomdptb.oomdp.SADomain;
 import oomdptb.oomdp.State;
 import oomdptb.oomdp.explorer.TerminalExplorer;
 import oomdptb.oomdp.explorer.VisualExplorer;
@@ -284,7 +285,7 @@ public class LunarLanderDomain implements DomainGenerator {
 	@Override
 	public Domain generateDomain() {
 		
-		Domain domain = new Domain();
+		Domain domain = new SADomain();
 		
 		List <Double> thrustValuesTemp = this.thrustValues;
 		if(thrustValuesTemp.size() == 0){

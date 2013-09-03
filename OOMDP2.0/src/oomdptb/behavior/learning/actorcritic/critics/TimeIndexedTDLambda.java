@@ -21,10 +21,19 @@ public class TimeIndexedTDLambda extends TDLambda {
 
 	protected List<Map<StateHashTuple, VValue>>			vTIndex;
 	protected int										curTime;
+	protected int										maxEpisodeSize = Integer.MAX_VALUE;
 	
 	public TimeIndexedTDLambda(RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, double learningRate, double vinit, double lambda) {
 		super(rf, tf, gamma, hashingFactory, learningRate, vinit, lambda);
 		
+		this.vTIndex = new ArrayList<Map<StateHashTuple,VValue>>();
+		
+	}
+	
+	public TimeIndexedTDLambda(RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, double learningRate, double vinit, double lambda, int maxEpisodeSize) {
+		super(rf, tf, gamma, hashingFactory, learningRate, vinit, lambda);
+		
+		this.maxEpisodeSize = maxEpisodeSize;
 		this.vTIndex = new ArrayList<Map<StateHashTuple,VValue>>();
 		
 	}
@@ -67,7 +76,7 @@ public class TimeIndexedTDLambda extends TDLambda {
 		
 		VValue vs = this.getV(sh, curTime);
 		double nextV = 0.;
-		if(!this.tf.isTerminal(sprime)){
+		if(!this.tf.isTerminal(sprime) && this.curTime < this.maxEpisodeSize-1){
 			nextV = this.getV(shprime, curTime+n).v;
 		}
 		

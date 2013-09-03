@@ -19,6 +19,8 @@ public class ActorCritic extends OOMDPPlanner implements LearningAgent {
 	protected Actor													actor;
 	protected Critic												critic;
 	
+	protected int													maxEpisodeSize = Integer.MAX_VALUE;
+	
 	protected int													numEpisodesForPlanning;
 	
 	protected LinkedList<EpisodeAnalysis>							episodeHistory;
@@ -32,6 +34,20 @@ public class ActorCritic extends OOMDPPlanner implements LearningAgent {
 		numEpisodesToStore = 1;
 		this.PlannerInit(domain, rf, tf, gamma, null);
 	}
+	
+	
+	
+	public ActorCritic(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Actor actor, Critic critic, int maxEpisodeSize) {
+		this.actor = actor;
+		this.critic = critic;
+		this.maxEpisodeSize = maxEpisodeSize;
+		numEpisodesForPlanning = 1;
+		this.episodeHistory = new LinkedList<EpisodeAnalysis>();
+		numEpisodesToStore = 1;
+		this.PlannerInit(domain, rf, tf, gamma, null);
+	}
+	
+	
 	
 	@Override
 	public void addNonDomainReferencedAction(Action a){
@@ -50,7 +66,8 @@ public class ActorCritic extends OOMDPPlanner implements LearningAgent {
 		
 		this.critic.initializeEpisode(curState);
 		
-		while(!tf.isTerminal(curState)){
+		int timeSteps = 0;
+		while(!tf.isTerminal(curState) && timeSteps < this.maxEpisodeSize){
 			
 			GroundedAction ga = this.actor.getAction(curState);
 			State nextState = ga.executeIn(curState);
@@ -62,6 +79,7 @@ public class ActorCritic extends OOMDPPlanner implements LearningAgent {
 			this.actor.updateFromCritqique(critqiue);
 			
 			curState = nextState;
+			timeSteps++;
 			
 		}
 		

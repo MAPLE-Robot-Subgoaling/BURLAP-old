@@ -18,17 +18,8 @@ import java.awt.Graphics2D;
 import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.State;
 
-public abstract class StaticPainter {
+public interface StaticPainter {
 	
-	protected Domain 		domain;
-	
-	public StaticPainter(Domain domain){
-		this.domain = domain;
-	}
-	
-	public void setDomain(Domain domain){
-		this.domain = domain;
-	}
 	
 	/** 
 	 * @param g2 graphics context to which the static data should be painted

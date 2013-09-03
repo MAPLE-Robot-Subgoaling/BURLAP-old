@@ -43,10 +43,9 @@ public class SokobanVisualizer {
 	 * @author richard
 	 *
 	 */
-	class RoomPainter extends ObjectPainter{
+	class RoomPainter implements ObjectPainter{
 
 		public RoomPainter(Domain domain) {
-			super(domain);
 		}
 
 		public void paintObject(Graphics2D g2, State s, ObjectInstance ob, float cWidth, float cHeight) {
@@ -105,10 +104,9 @@ public class SokobanVisualizer {
 	 * @author richard
 	 *
 	 */
-	class AgentPainter extends ObjectPainter{
+	class AgentPainter implements ObjectPainter{
 
 		public AgentPainter(Domain domain) {
-			super(domain);
 		}
 
 		public void paintObject(Graphics2D g2, State s, ObjectInstance ob, float cWidth, float cHeight) {
@@ -135,10 +133,9 @@ public class SokobanVisualizer {
 	 * @author richard
 	 *
 	 */
-	class GoalPainter extends ObjectPainter{
+	class GoalPainter implements ObjectPainter{
 
 		public GoalPainter(Domain domain) {
-			super(domain);
 		}
 
 		public void paintObject(Graphics2D g2, State s, ObjectInstance ob, float cWidth, float cHeight) {
@@ -159,10 +156,9 @@ public class SokobanVisualizer {
 		}
 	}
 
-	class BlockPainter extends ObjectPainter{
+	class BlockPainter implements ObjectPainter{
 
 		public BlockPainter (Domain domain) {
-			super(domain);
 		}
 
 		public void paintObject(Graphics2D g2, State s, ObjectInstance ob, float cWidth, float cHeight) {

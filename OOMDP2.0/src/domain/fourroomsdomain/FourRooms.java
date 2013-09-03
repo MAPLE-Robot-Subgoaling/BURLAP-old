@@ -23,6 +23,7 @@ import oomdptb.oomdp.ObjectClass;
 import oomdptb.oomdp.ObjectInstance;
 import oomdptb.oomdp.PropositionalFunction;
 import oomdptb.oomdp.RewardFunction;
+import oomdptb.oomdp.SADomain;
 import oomdptb.oomdp.State;
 import oomdptb.oomdp.TerminalFunction;
 import oomdptb.oomdp.common.SingleGoalPFRF;
@@ -297,7 +298,7 @@ public class FourRooms implements DomainGenerator {
 			return DOMAIN;
 
 		//otherwise create the domain data
-		DOMAIN = new Domain();
+		DOMAIN = new SADomain();
 		generateMap();
 
 		Attribute xatt = new Attribute(DOMAIN, ATTX, Attribute.AttributeType.DISC);

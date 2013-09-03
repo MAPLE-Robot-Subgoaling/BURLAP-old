@@ -10,6 +10,7 @@ import oomdptb.oomdp.DomainGenerator;
 import oomdptb.oomdp.ObjectClass;
 import oomdptb.oomdp.ObjectInstance;
 import oomdptb.oomdp.PropositionalFunction;
+import oomdptb.oomdp.SADomain;
 import oomdptb.oomdp.State;
 import oomdptb.oomdp.explorer.TerminalExplorer;
 import oomdptb.oomdp.explorer.VisualExplorer;
@@ -119,7 +120,7 @@ public class FourRoomsDomain implements DomainGenerator {
 		
 		//otherwise create the domain data
 		//Starts with all the attributes inititalized
-		DOMAIN = new Domain();
+		DOMAIN = new SADomain();
 		
 		//Calls the function generateMap which in itself calls the functions
 		//			1)frameMap()

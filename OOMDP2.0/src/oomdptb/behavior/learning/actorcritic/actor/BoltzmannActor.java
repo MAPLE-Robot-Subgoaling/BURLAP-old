@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import javax.management.RuntimeErrorException;
+
 import oomdptb.behavior.learning.actorcritic.Actor;
 import oomdptb.behavior.learning.actorcritic.CritiqueResult;
 import oomdptb.behavior.statehashing.StateHashFactory;
@@ -80,16 +82,7 @@ public class BoltzmannActor extends Actor {
 
 	@Override
 	public GroundedAction getAction(State s) {
-		List <ActionProb> aprobs = this.getActionDistributionForState(s);
-		double roll = this.rand.nextDouble();
-		double sumP = 0.;
-		for(ActionProb ap : aprobs){
-			sumP += ap.pSelection;
-			if(roll <= sumP){
-				return ap.ga;
-			}
-		}
-		return null;
+		return this.sampleFromActionDistribution(s);
 	}
 
 	@Override
@@ -108,22 +101,27 @@ public class BoltzmannActor extends Actor {
 		}
 		
 		List <ActionProb> probs = new ArrayList<ActionProb>(gas.size());
-		
-		double sumEnergy = 0.;
-		List <Double> energies = new ArrayList<Double>(gas.size());
-		for(ActionPreference ap : node.preferences){
-			double e = Math.exp(ap.preference);
-			energies.add(e);
-			sumEnergy += e;
-			
+		double [] prefs = new double[gas.size()];
+		for(int i = 0; i < node.preferences.size(); i++){
+			prefs[i] = node.preferences.get(i).preference;
 		}
-		for(int i = 0; i < energies.size(); i++){
-			double e = energies.get(i);
+		double max = this.max(prefs);
+		double [] translatedP = this.getTranslatedPrefs(prefs, max);
+		double sumexp = 0.;
+		for(int i = 0; i < translatedP.length; i++){
+			sumexp += Math.exp(translatedP[i]);
+		}
+		double loggedSumExp = Math.log(sumexp);
+		double shift = max + loggedSumExp;
+		
+		for(int i = 0; i < prefs.length; i++){
+			double p = Math.exp(prefs[i] - shift);
+			if(Double.isNaN(p)){
+				throw new RuntimeErrorException(new Error("Probability in Boltzmann policy distribution is NaN"));
+			}
 			ActionPreference ap = node.preferences.get(i);
-			double p = e/sumEnergy;
 			probs.add(new ActionProb(ap.ga, p));
 		}
-		
 		
 		if(this.containsParameterizedActions){
 			//then convert back to this states space
@@ -180,6 +178,34 @@ public class BoltzmannActor extends Actor {
 		}
 		return new GroundedAction(a.action, newParams);
 	}
+	
+	
+	
+	
+	protected double [] getTranslatedPrefs(double [] prefs, double c){
+		double [] translated = new double[prefs.length];
+		for(int i = 0; i < prefs.length; i++){
+			translated[i] = prefs[i] - c;
+		}
+		
+		return translated;
+	}
+	
+	protected double max(double [] darray){
+		double max = Double.NEGATIVE_INFINITY;
+		for(double d : darray){
+			max = Math.max(max, d);
+		}
+		return max;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	class PolicyNode{
 		

@@ -2,8 +2,10 @@ package oomdptb.behavior;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import oomdptb.behavior.options.Option;
+import oomdptb.debugtools.RandomFactory;
 import oomdptb.oomdp.GroundedAction;
 import oomdptb.oomdp.RewardFunction;
 import oomdptb.oomdp.State;
@@ -55,6 +57,31 @@ public abstract class Policy {
 		List <ActionProb> aps = new ArrayList<Policy.ActionProb>();
 		aps.add(ap);
 		return aps;
+	}
+	
+	
+	
+	/**
+	 * This is a helper method for stochastic policies. If the policy is stochastic, then rather than
+	 * having the subclass policy define both the getAction method and getActionDistribution method,
+	 * the subclass needs to only define the getActionDistribution method and the getAction method can simply
+	 * call this method to return an action.
+	 * @param s
+	 * @return
+	 */
+	protected GroundedAction sampleFromActionDistribution(State s){
+		Random rand = RandomFactory.getMapped(0);
+		double roll = rand.nextDouble();
+		List <ActionProb> probs = this.getActionDistributionForState(s);
+		double sump = 0.;
+		for(ActionProb ap : probs){
+			sump += ap.pSelection;
+			if(roll < sump){
+				return ap.ga;
+			}
+		}
+		
+		return null;
 	}
 	
 	

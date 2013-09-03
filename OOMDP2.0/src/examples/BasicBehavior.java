@@ -7,6 +7,7 @@ import oomdptb.behavior.learning.actorcritic.Actor;
 import oomdptb.behavior.learning.actorcritic.ActorCritic;
 import oomdptb.behavior.learning.actorcritic.actor.BoltzmannActor;
 import oomdptb.behavior.learning.actorcritic.critics.TDLambda;
+import oomdptb.behavior.learning.actorcritic.critics.TimeIndexedTDLambda;
 import oomdptb.behavior.learning.tdmethods.*;
 import oomdptb.behavior.planning.*;
 import oomdptb.behavior.planning.commonpolicies.GreedyQPolicy;
@@ -60,7 +61,7 @@ public class BasicBehavior {
 		//example.DFSExample(outputPath);
 		//example.AStarExample(outputPath);
 		//example.ValueIterationExample(outputPath);
-		example.ACLearningExample(outputPath);
+		//example.ACLearningExample(outputPath);
 		
 		
 		//run the visualizer
@@ -147,11 +148,15 @@ public class BasicBehavior {
 			outputPath = outputPath + "/";
 		}
 		
-		TDLambda td = new TDLambda(rf, tf, 0.99, hashingFactory, 0.5, 0., 0.9);
-		BoltzmannActor ba = new BoltzmannActor(domain, hashingFactory, 0.1);
-		ActorCritic agent = new ActorCritic(domain, rf, tf, 0.99, ba, td);
+		int maxEpisodeSize = 100;
 		
-		for(int i = 0; i < 100; i++){
+		//gamma = 0.99, learning rate = 0.5, vinit = 0.; lambda = 0.9 
+		//TDLambda td = new TDLambda(rf, tf, 0.99, hashingFactory, 0.5, 0., 0.9);
+		TDLambda td = new TimeIndexedTDLambda(rf, tf, 0.99, hashingFactory, 0.5, 0., 1.0, maxEpisodeSize);
+		BoltzmannActor ba = new BoltzmannActor(domain, hashingFactory, 0.3);
+		ActorCritic agent = new ActorCritic(domain, rf, tf, 0.99, ba, td, maxEpisodeSize);
+		
+		for(int i = 0; i < 500; i++){
 			EpisodeAnalysis ea = agent.runLearningEpisodeFrom(initialState); //run learning episode
 			ea.writeToFile(String.format("%se%03d", outputPath, i), sp); //record episode to a file
 			System.out.println(i + ": " + ea.numTimeSteps()); //print the performance of this episode

@@ -12,6 +12,7 @@ import oomdptb.oomdp.DomainGenerator;
 import oomdptb.oomdp.ObjectClass;
 import oomdptb.oomdp.ObjectInstance;
 import oomdptb.oomdp.PropositionalFunction;
+import oomdptb.oomdp.SADomain;
 import oomdptb.oomdp.State;
 import oomdptb.oomdp.TransitionProbability;
 import oomdptb.oomdp.explorer.TerminalExplorer;
@@ -216,7 +217,7 @@ public class GridWorldDomain implements DomainGenerator {
 	@Override
 	public Domain generateDomain() {
 		
-		Domain DOMAIN = new Domain();
+		Domain DOMAIN = new SADomain();
 		
 		//Creates a new Attribute object
 		Attribute xatt = new Attribute(DOMAIN, ATTX, Attribute.AttributeType.DISC);

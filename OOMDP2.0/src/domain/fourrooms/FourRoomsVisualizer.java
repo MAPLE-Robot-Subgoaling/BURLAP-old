@@ -29,11 +29,11 @@ public class FourRoomsVisualizer {
 	}
 	
 	
-	public static class RoomsMapPainter extends StaticPainter{
+	public static class RoomsMapPainter implements StaticPainter{
 
 		
 		public RoomsMapPainter(Domain domain) {
-			super(domain);
+			
 		}
 
 		@Override
@@ -66,12 +66,11 @@ public class FourRoomsVisualizer {
 		}
 	}
 	
-	public static class CellPainter extends ObjectPainter{
+	public static class CellPainter implements ObjectPainter{
 
 		Color col;
 		
 		public CellPainter(Domain domain, Color col) {
-			super(domain);
 			this.col = col;
 		}
 

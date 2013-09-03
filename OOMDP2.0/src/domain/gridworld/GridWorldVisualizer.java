@@ -20,22 +20,21 @@ public class GridWorldVisualizer {
 		Visualizer v = new Visualizer();
 		
 		v.addStaticPainter(new MapPainter(d, map));
-		v.addObjectClassPainter(GridWorldDomain.CLASSLOCATION, new CellPainter(d, Color.blue, map));
-		v.addObjectClassPainter(GridWorldDomain.CLASSAGENT, new CellPainter(d, Color.red, map));
+		v.addObjectClassPainter(GridWorldDomain.CLASSLOCATION, new CellPainter(Color.blue, map));
+		v.addObjectClassPainter(GridWorldDomain.CLASSAGENT, new CellPainter(Color.red, map));
 		
 		return v;
 	}
 	
 	
 	
-	public static class MapPainter extends StaticPainter{
+	public static class MapPainter implements StaticPainter{
 
 		protected int 				dwidth;
 		protected int 				dheight;
 		protected int [][] 			map;
 		
 		public MapPainter(Domain domain, int [][] map) {
-			super(domain);
 			this.dwidth = map.length;
 			this.dheight = map[0].length;
 			this.map = map;
@@ -77,15 +76,14 @@ public class GridWorldVisualizer {
 	
 	
 	
-	public static class CellPainter extends ObjectPainter{
+	public static class CellPainter implements ObjectPainter{
 
 		protected Color			col;
 		protected int			dwidth;
 		protected int			dheight;
 		protected int [][]		map;
 		
-		public CellPainter(Domain domain, Color col, int [][] map) {
-			super(domain);
+		public CellPainter(Color col, int [][] map) {
 			this.col = col;
 			this.dwidth = map.length;
 			this.dheight = map[0].length;

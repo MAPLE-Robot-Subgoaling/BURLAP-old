@@ -3,25 +3,25 @@ package oomdptb.oomdp;
 
 import java.util.*;
 
+import oomdptb.oomdp.stocashticgames.SingleAction;
+
 /**
  * 
  * @author James
  *	This is the base class for an OOMDBP domain. 
  */
-public class Domain {
+public abstract class Domain {
 	
 	
-	private List <ObjectClass>						objectClasses;			//list of object classes
-	private Map <String, ObjectClass>				objectClassMap;		//look up object classes by name
+	protected List <ObjectClass>						objectClasses;			//list of object classes
+	protected Map <String, ObjectClass>					objectClassMap;		//look up object classes by name
 	
-	private List <Attribute>						attributes;			//list of attributes
-	private Map <String, Attribute>					attributeMap;			//lookup attributes by name
+	protected List <Attribute>							attributes;			//list of attributes
+	protected Map <String, Attribute>					attributeMap;			//lookup attributes by name
 	
-	private List <PropositionalFunction>			propFunctions;			//list of propositional functions
-	private Map <String, PropositionalFunction> 	propFunctionMap;		//lookup propositional functions by name
+	protected List <PropositionalFunction>				propFunctions;			//list of propositional functions
+	protected Map <String, PropositionalFunction> 		propFunctionMap;		//lookup propositional functions by name
 	
-	private List <Action>							actions;				//list of actions
-	private Map <String, Action>					actionMap;				//lookup actions by name
 
 	
 	public Domain(){
@@ -35,8 +35,6 @@ public class Domain {
 		propFunctions = new ArrayList <PropositionalFunction>();
 		propFunctionMap = new HashMap <String, PropositionalFunction>();
 		
-		actions = new ArrayList <Action>();
-		actionMap = new HashMap <String, Action>();
 	}
 	
 	public void addObjectClass(ObjectClass oc){
@@ -61,12 +59,8 @@ public class Domain {
 	}
 	
 	
-	public void addAction(Action act){
-		if(!actionMap.containsKey(act.getName())){
-			actions.add(act);
-			actionMap.put(act.getName(), act);
-		}
-	}
+	public abstract void addAction(Action act);
+	public abstract void addSingleAction(SingleAction sa);
 	
 	
 	public List <ObjectClass> getObjectClasses(){
@@ -95,13 +89,11 @@ public class Domain {
 	}
 	
 	
-	public List <Action> getActions(){
-		return new ArrayList <Action>(actions);
-	}
+	public abstract List <Action> getActions();
+	public abstract List <SingleAction> getSingleActions();
 	
-	public Action getAction(String name){
-		return actionMap.get(name);
-	}
+	public abstract Action getAction(String name);
+	public abstract SingleAction getSingleAction(String name);
 	
 	// Maps propFuncClass -> propList
 	// eg: color -> isWhite, isBlue, isYellow...

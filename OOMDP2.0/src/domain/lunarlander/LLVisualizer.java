@@ -30,12 +30,11 @@ public class LLVisualizer {
 	
 	
 	
-	public static class AgentPainter extends ObjectPainter{
+	public static class AgentPainter implements ObjectPainter{
 
 		protected LunarLanderDomain lld;
 		
 		public AgentPainter(LunarLanderDomain lld) {
-			super(null);
 			this.lld = lld;
 		}
 
@@ -128,12 +127,11 @@ public class LLVisualizer {
 		
 	}
 	
-	public static class ObstaclePainter extends ObjectPainter{
+	public static class ObstaclePainter implements ObjectPainter{
 
 		protected LunarLanderDomain lld;
 		
 		public ObstaclePainter(LunarLanderDomain lld) {
-			super(null);
 			this.lld = lld;
 		}
 
@@ -176,12 +174,11 @@ public class LLVisualizer {
 	
 	
 	
-	public static class PadPainter extends ObjectPainter{
+	public static class PadPainter implements ObjectPainter{
 
 		protected LunarLanderDomain lld;
 		
 		public PadPainter(LunarLanderDomain lld) {
-			super(null);
 			this.lld = lld;
 		}
 

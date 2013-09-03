@@ -17,6 +17,7 @@ import oomdptb.oomdp.Domain;
 import oomdptb.oomdp.DomainGenerator;
 import oomdptb.oomdp.ObjectClass;
 import oomdptb.oomdp.ObjectInstance;
+import oomdptb.oomdp.SADomain;
 import oomdptb.oomdp.State;
 import oomdptb.oomdp.TransitionProbability;
 
@@ -67,7 +68,7 @@ public class GraphDefinedDomain implements DomainGenerator {
 	@Override
 	public Domain generateDomain() {
 		
-		Domain domain = new Domain();
+		Domain domain = new SADomain();
 		
 		Attribute na = new Attribute(domain, ATTNODE, Attribute.AttributeType.DISC);
 		na.setDiscValuesForRange(0, this.numNodes-1, 1);
@@ -201,7 +202,7 @@ public class GraphDefinedDomain implements DomainGenerator {
 			for(NodeTransitionProbibility ntp : transitions){
 				
 				State ns = st.copy();
-				ObjectInstance no = st.getObjectsOfTrueClass(CLASSAGENT).get(0);
+				ObjectInstance no = ns.getObjectsOfTrueClass(CLASSAGENT).get(0);
 				no.setValue(ATTNODE, ntp.transitionTo);
 				
 				TransitionProbability tp = new TransitionProbability(ns, ntp.probabiltiy);

@@ -54,7 +54,11 @@ public class TDLambda implements Critic {
 		}
 
 	}
+
 	
+	public void setRewardFunction(RewardFunction rf){
+		this.rf = rf;
+	}
 	
 	@Override
 	public void initializeEpisode(State s) {

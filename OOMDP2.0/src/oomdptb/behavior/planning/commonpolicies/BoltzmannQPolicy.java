@@ -36,19 +36,7 @@ public class BoltzmannQPolicy extends Policy implements PlannerDerivedPolicy{
 	
 	@Override
 	public GroundedAction getAction(State s) {
-		List<QValue> qValues = this.qplanner.getQs(s);
-		List <ActionProb> dist = this.getActionDistributionForQValues(qValues);
-		double tp = 0.;
-		double roll = this.rand.nextDouble();
-		for(ActionProb ap : dist){
-			tp += ap.pSelection;
-			if(roll < tp){
-				return ap.ga;
-			}
-		}
-		
-		//something went wrong, should have added to one forcing a return so return null to break things
-		return null;
+		return this.sampleFromActionDistribution(s);
 	}
 
 	@Override
@@ -63,23 +51,22 @@ public class BoltzmannQPolicy extends Policy implements PlannerDerivedPolicy{
 		
 		List <ActionProb> res = new ArrayList<Policy.ActionProb>();
 		
-		double [] aps = new double[qValues.size()];
-		double sumAP = 0.;
-		for(int i = 0; i < qValues.size(); i++){
-			double v = Math.exp(qValues.get(i).q / this.temperature);
-			if(v == 0.){
-				System.out.println("Problem1");
-			}
-			aps[i] = v;
-			sumAP += v;
+		double [] normed = this.getTempNormalizedQs(qValues);
+		double max = this.max(normed);
+		double [] tnormed = this.getTranslatedQs(normed, max);
+		double sumexp = 0.;
+		for(int i = 0; i < tnormed.length; i++){
+			sumexp += Math.exp(tnormed[i]);
 		}
+		double loggedSumExp = Math.log(sumexp);
+		double shift = max + loggedSumExp;
 		
 		for(int i = 0; i < qValues.size(); i++){
-			QValue q = qValues.get(i);
-			double p = aps[i]/sumAP;
+			double p = Math.exp(normed[i] - shift);
 			if(Double.isNaN(p)){
-				System.out.println("Problem");
+				throw new RuntimeErrorException(new Error("Probability in Boltzmann policy distribution is NaN"));
 			}
+			QValue q = qValues.get(i);
 			ActionProb ap = new ActionProb(q.a, p);
 			res.add(ap);
 		}
@@ -100,6 +87,33 @@ public class BoltzmannQPolicy extends Policy implements PlannerDerivedPolicy{
 		
 		this.qplanner = (QComputablePlanner)planner;
 		
+	}
+	
+	
+	
+	protected double [] getTempNormalizedQs(List <QValue> qValues){
+		double [] normed = new double[qValues.size()];
+		for(int i = 0 ;i < qValues.size(); i++){
+			normed[i] = qValues.get(i).q / this.temperature;
+		}
+		return normed;
+	}
+	
+	protected double [] getTranslatedQs(double [] qs, double c){
+		double [] translated = new double[qs.length];
+		for(int i = 0; i < qs.length; i++){
+			translated[i] = qs[i] - c;
+		}
+		
+		return translated;
+	}
+	
+	protected double max(double [] darray){
+		double max = Double.NEGATIVE_INFINITY;
+		for(double d : darray){
+			max = Math.max(max, d);
+		}
+		return max;
 	}
 
 }
