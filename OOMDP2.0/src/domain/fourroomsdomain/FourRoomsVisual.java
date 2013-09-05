@@ -4,12 +4,13 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 
-import oomdptb.oomdp.Domain;
-import oomdptb.oomdp.ObjectInstance;
-import oomdptb.oomdp.State;
-import oomdptb.oomdp.visualizer.ObjectPainter;
-import oomdptb.oomdp.visualizer.StaticPainter;
-import oomdptb.oomdp.visualizer.Visualizer;
+import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.ObjectInstance;
+import burlap.oomdp.core.State;
+import burlap.oomdp.visualizer.ObjectPainter;
+import burlap.oomdp.visualizer.StaticPainter;
+import burlap.oomdp.visualizer.Visualizer;
+
 
 
 public class FourRoomsVisual {

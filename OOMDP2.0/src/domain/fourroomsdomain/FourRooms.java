@@ -2,35 +2,36 @@ package domain.fourroomsdomain;
 
 import java.util.*;
 
-import oomdptb.behavior.EpisodeAnalysis;
-import oomdptb.behavior.EpisodeSequenceVisualizer;
-import oomdptb.behavior.Policy;
-import oomdptb.behavior.QValue;
-import oomdptb.behavior.learning.tdmethods.QLearning;
-import oomdptb.behavior.options.PrimitiveOption;
-import oomdptb.behavior.options.SubgoalOption;
-import oomdptb.behavior.planning.StateConditionTest;
-import oomdptb.behavior.planning.commonpolicies.GreedyQPolicy;
-import oomdptb.behavior.statehashing.DiscreteStateHashFactory;
-import oomdptb.behavior.statehashing.StateHashTuple;
-import oomdptb.oomdp.Action;
-import oomdptb.oomdp.Attribute;
-import oomdptb.oomdp.Domain;
-import oomdptb.oomdp.DomainGenerator;
-import oomdptb.oomdp.GroundedAction;
-import oomdptb.oomdp.GroundedProp;
-import oomdptb.oomdp.ObjectClass;
-import oomdptb.oomdp.ObjectInstance;
-import oomdptb.oomdp.PropositionalFunction;
-import oomdptb.oomdp.RewardFunction;
-import oomdptb.oomdp.SADomain;
-import oomdptb.oomdp.State;
-import oomdptb.oomdp.TerminalFunction;
-import oomdptb.oomdp.common.SingleGoalPFRF;
-import oomdptb.oomdp.common.SinglePFTF;
-import oomdptb.oomdp.explorer.TerminalExplorer;
-import oomdptb.oomdp.explorer.VisualExplorer;
-import oomdptb.oomdp.visualizer.Visualizer;
+import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
+import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.QValue;
+import burlap.behavior.singleagent.learning.tdmethods.QLearning;
+import burlap.behavior.singleagent.options.PrimitiveOption;
+import burlap.behavior.singleagent.options.SubgoalOption;
+import burlap.behavior.singleagent.planning.StateConditionTest;
+import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
+import burlap.behavior.statehashing.DiscreteStateHashFactory;
+import burlap.behavior.statehashing.StateHashTuple;
+import burlap.oomdp.auxiliary.DomainGenerator;
+import burlap.oomdp.core.Attribute;
+import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.GroundedProp;
+import burlap.oomdp.core.ObjectClass;
+import burlap.oomdp.core.ObjectInstance;
+import burlap.oomdp.core.PropositionalFunction;
+import burlap.oomdp.core.State;
+import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.singleagent.Action;
+import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.singleagent.SADomain;
+import burlap.oomdp.singleagent.common.SingleGoalPFRF;
+import burlap.oomdp.singleagent.common.SinglePFTF;
+import burlap.oomdp.singleagent.explorer.TerminalExplorer;
+import burlap.oomdp.singleagent.explorer.VisualExplorer;
+import burlap.oomdp.visualizer.Visualizer;
+
 
 /**
  * A Domain implementing a Four Rooms, Grid-World style setup complete with four doorways for the agent

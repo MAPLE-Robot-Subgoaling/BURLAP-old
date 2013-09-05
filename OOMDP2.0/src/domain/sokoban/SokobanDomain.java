@@ -3,22 +3,21 @@ package domain.sokoban;
 import java.io.*;
 import java.util.*;
 
-import oomdptb.datastructures.TrainingElement;
-import oomdptb.datastructures.Trajectory;
-import oomdptb.oomdp.Action;
-import oomdptb.oomdp.Attribute;
-import oomdptb.oomdp.Domain;
-import oomdptb.oomdp.DomainGenerator;
-import oomdptb.oomdp.GroundedAction;
-import oomdptb.oomdp.ObjectClass;
-import oomdptb.oomdp.ObjectInstance;
-import oomdptb.oomdp.PropositionalFunction;
-import oomdptb.oomdp.SADomain;
-import oomdptb.oomdp.State;
-import oomdptb.oomdp.StateParser;
-import oomdptb.oomdp.explorer.TerminalExplorer;
-import oomdptb.oomdp.explorer.VisualExplorer;
-import oomdptb.oomdp.visualizer.Visualizer;
+import burlap.oomdp.auxiliary.DomainGenerator;
+import burlap.oomdp.auxiliary.StateParser;
+import burlap.oomdp.core.Attribute;
+import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.ObjectClass;
+import burlap.oomdp.core.ObjectInstance;
+import burlap.oomdp.core.PropositionalFunction;
+import burlap.oomdp.core.State;
+import burlap.oomdp.singleagent.Action;
+import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.singleagent.SADomain;
+import burlap.oomdp.singleagent.explorer.TerminalExplorer;
+import burlap.oomdp.singleagent.explorer.VisualExplorer;
+import burlap.oomdp.visualizer.Visualizer;
+
 
 
 /**

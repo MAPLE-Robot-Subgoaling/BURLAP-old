@@ -1,8 +1,8 @@
 package domain.fourroomsdomain;
 
-import oomdptb.oomdp.ObjectInstance;
-import oomdptb.oomdp.State;
-import oomdptb.oomdp.StateParser;
+import burlap.oomdp.auxiliary.StateParser;
+import burlap.oomdp.core.ObjectInstance;
+import burlap.oomdp.core.State;
 
 public class FourRoomsStateParser implements StateParser {
 

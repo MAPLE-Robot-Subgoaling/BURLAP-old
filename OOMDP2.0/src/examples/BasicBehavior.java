@@ -1,31 +1,39 @@
 package examples;
 
-import domain.gridworld.*;
-import oomdptb.behavior.*;
-import oomdptb.behavior.learning.*;
-import oomdptb.behavior.learning.actorcritic.Actor;
-import oomdptb.behavior.learning.actorcritic.ActorCritic;
-import oomdptb.behavior.learning.actorcritic.actor.BoltzmannActor;
-import oomdptb.behavior.learning.actorcritic.critics.TDLambda;
-import oomdptb.behavior.learning.actorcritic.critics.TimeIndexedTDLambda;
-import oomdptb.behavior.learning.tdmethods.*;
-import oomdptb.behavior.planning.*;
-import oomdptb.behavior.planning.commonpolicies.GreedyQPolicy;
-import oomdptb.behavior.planning.deterministic.*;
-import oomdptb.behavior.planning.deterministic.informed.Heuristic;
-import oomdptb.behavior.planning.deterministic.informed.astar.AStar;
-import oomdptb.behavior.planning.deterministic.uninformed.bfs.BFS;
-import oomdptb.behavior.planning.deterministic.uninformed.dfs.DFS;
-import oomdptb.behavior.planning.stochastic.valueiteration.ValueIteration;
-import oomdptb.behavior.statehashing.DiscreteStateHashFactory;
-import oomdptb.oomdp.Domain;
-import oomdptb.oomdp.ObjectInstance;
-import oomdptb.oomdp.RewardFunction;
-import oomdptb.oomdp.State;
-import oomdptb.oomdp.StateParser;
-import oomdptb.oomdp.TerminalFunction;
-import oomdptb.oomdp.common.*;
-import oomdptb.oomdp.visualizer.Visualizer;
+import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
+import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.learning.*;
+import burlap.behavior.singleagent.learning.actorcritic.ActorCritic;
+import burlap.behavior.singleagent.learning.actorcritic.actor.BoltzmannActor;
+import burlap.behavior.singleagent.learning.actorcritic.critics.TDLambda;
+import burlap.behavior.singleagent.learning.actorcritic.critics.TimeIndexedTDLambda;
+import burlap.behavior.singleagent.learning.tdmethods.*;
+import burlap.behavior.singleagent.planning.OOMDPPlanner;
+import burlap.behavior.singleagent.planning.QComputablePlanner;
+import burlap.behavior.singleagent.planning.StateConditionTest;
+import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
+import burlap.behavior.singleagent.planning.deterministic.DeterministicPlanner;
+import burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy;
+import burlap.behavior.singleagent.planning.deterministic.TFGoalCondition;
+import burlap.behavior.singleagent.planning.deterministic.informed.Heuristic;
+import burlap.behavior.singleagent.planning.deterministic.informed.astar.AStar;
+import burlap.behavior.singleagent.planning.deterministic.uninformed.bfs.BFS;
+import burlap.behavior.singleagent.planning.deterministic.uninformed.dfs.DFS;
+import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
+import burlap.behavior.statehashing.DiscreteStateHashFactory;
+import burlap.domain.singleagent.gridworld.GridWorldDomain;
+import burlap.domain.singleagent.gridworld.GridWorldStateParser;
+import burlap.domain.singleagent.gridworld.GridWorldVisualizer;
+import burlap.oomdp.auxiliary.StateParser;
+import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.ObjectInstance;
+import burlap.oomdp.core.State;
+import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.singleagent.common.SinglePFTF;
+import burlap.oomdp.singleagent.common.UniformCostRF;
+import burlap.oomdp.visualizer.Visualizer;
 
 public class BasicBehavior {
 
@@ -55,7 +63,7 @@ public class BasicBehavior {
 		
 		//uncomment the example you want to see (and comment-out the rest)
 		
-		//example.QLearningExample(outputPath);
+		example.QLearningExample(outputPath);
 		//example.SarsaLearningExample(outputPath);
 		//example.BFSExample(outputPath);
 		//example.DFSExample(outputPath);

@@ -1,24 +1,24 @@
 package examples;
 
 
-import domain.lunarlander.LLStateParser;
-import domain.lunarlander.LLVisualizer;
-import domain.lunarlander.LunarLanderDomain;
-import oomdptb.behavior.EpisodeAnalysis;
-import oomdptb.behavior.EpisodeSequenceVisualizer;
-import oomdptb.behavior.learning.tdmethods.vfa.GradientDescentSarsaLam;
-import oomdptb.behavior.vfa.ValueFunctionApproximation;
-import oomdptb.behavior.vfa.cmac.CMACFeatureDatabase;
-import oomdptb.behavior.vfa.cmac.CMACFeatureDatabase.TilingArrangement;
-import oomdptb.oomdp.Domain;
-import oomdptb.oomdp.GroundedAction;
-import oomdptb.oomdp.PropositionalFunction;
-import oomdptb.oomdp.RewardFunction;
-import oomdptb.oomdp.State;
-import oomdptb.oomdp.StateParser;
-import oomdptb.oomdp.TerminalFunction;
-import oomdptb.oomdp.common.SinglePFTF;
-import oomdptb.oomdp.visualizer.Visualizer;
+import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
+import burlap.behavior.singleagent.learning.tdmethods.vfa.GradientDescentSarsaLam;
+import burlap.behavior.singleagent.vfa.ValueFunctionApproximation;
+import burlap.behavior.singleagent.vfa.cmac.CMACFeatureDatabase;
+import burlap.behavior.singleagent.vfa.cmac.CMACFeatureDatabase.TilingArrangement;
+import burlap.domain.singleagent.lunarlander.LLStateParser;
+import burlap.domain.singleagent.lunarlander.LLVisualizer;
+import burlap.domain.singleagent.lunarlander.LunarLanderDomain;
+import burlap.oomdp.auxiliary.StateParser;
+import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.PropositionalFunction;
+import burlap.oomdp.core.State;
+import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.singleagent.common.SinglePFTF;
+import burlap.oomdp.visualizer.Visualizer;
 
 public class VFAExample {
 

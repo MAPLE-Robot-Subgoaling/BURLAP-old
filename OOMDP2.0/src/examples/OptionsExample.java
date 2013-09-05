@@ -2,22 +2,31 @@ package examples;
 
 import java.util.Iterator;
 
-import oomdptb.behavior.*;
-import oomdptb.behavior.learning.LearningAgent;
-import oomdptb.behavior.learning.tdmethods.*;
-import oomdptb.behavior.options.*;
-import oomdptb.behavior.planning.*;
-import oomdptb.behavior.planning.commonpolicies.*;
-import oomdptb.behavior.planning.deterministic.*;
-import oomdptb.behavior.planning.deterministic.informed.Heuristic;
-import oomdptb.behavior.planning.deterministic.informed.astar.AStar;
-import oomdptb.behavior.planning.deterministic.uninformed.bfs.BFS;
-import oomdptb.behavior.planning.deterministic.uninformed.dfs.DFS;
-import oomdptb.behavior.planning.stochastic.valueiteration.ValueIteration;
-import oomdptb.behavior.statehashing.DiscreteMaskHashingFactory;
-import oomdptb.oomdp.ObjectInstance;
-import oomdptb.oomdp.State;
-import domain.gridworld.GridWorldDomain;
+import burlap.behavior.*;
+import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.learning.LearningAgent;
+import burlap.behavior.singleagent.learning.tdmethods.*;
+import burlap.behavior.singleagent.options.*;
+import burlap.behavior.singleagent.planning.OOMDPPlanner;
+import burlap.behavior.singleagent.planning.PlannerDerivedPolicy;
+import burlap.behavior.singleagent.planning.QComputablePlanner;
+import burlap.behavior.singleagent.planning.StateConditionTest;
+import burlap.behavior.singleagent.planning.StateConditionTestIterable;
+import burlap.behavior.singleagent.planning.commonpolicies.GreedyDeterministicQPolicy;
+import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
+import burlap.behavior.singleagent.planning.deterministic.DeterministicPlanner;
+import burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy;
+import burlap.behavior.singleagent.planning.deterministic.informed.Heuristic;
+import burlap.behavior.singleagent.planning.deterministic.informed.astar.AStar;
+import burlap.behavior.singleagent.planning.deterministic.uninformed.bfs.BFS;
+import burlap.behavior.singleagent.planning.deterministic.uninformed.dfs.DFS;
+import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
+import burlap.behavior.statehashing.DiscreteMaskHashingFactory;
+import burlap.domain.singleagent.gridworld.GridWorldDomain;
+import burlap.oomdp.core.ObjectInstance;
+import burlap.oomdp.core.State;
+
 
 public class OptionsExample extends BasicBehavior{
 

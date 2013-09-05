@@ -1,6 +1,6 @@
 package domain.fourroomsdomain;
 
-import oomdptb.oomdp.GroundedAction;
+import burlap.oomdp.singleagent.GroundedAction;
 
 /**
  * QAction Class - a simple data structure that holds the GroundedAction

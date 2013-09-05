@@ -5,10 +5,11 @@ import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 import java.lang.reflect.Field;
 
-import oomdptb.oomdp.Domain;
-import oomdptb.oomdp.ObjectInstance;
-import oomdptb.oomdp.State;
-import oomdptb.oomdp.visualizer.*;
+import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.ObjectInstance;
+import burlap.oomdp.core.State;
+import burlap.oomdp.visualizer.*;
+
 
 /**
  * Javadoc test
