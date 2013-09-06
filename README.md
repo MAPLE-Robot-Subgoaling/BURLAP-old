@@ -1,4 +1,4 @@
-OOMDP-2.0
+BURLAP
 =========
 
 Robot Subgoaling Main Implementation of the OOMDP Framework
