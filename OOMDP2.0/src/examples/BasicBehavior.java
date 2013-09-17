@@ -68,12 +68,8 @@ public class BasicBehavior {
 		//example.BFSExample(outputPath);
 		//example.DFSExample(outputPath);
 		//example.AStarExample(outputPath);
-<<<<<<< HEAD
 		//example.ValueIterationExample(outputPath);
 		//example.ACLearningExample(outputPath);
-=======
-		example.ValueIterationExample(outputPath);
->>>>>>> 33ad0cd64794697e802e78cdef46fdabacf8a61f
 		
 		
 		//run the visualizer
