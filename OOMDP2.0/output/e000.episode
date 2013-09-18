@@ -1,0 +1,113 @@
+#EL#
+0 0, 5 8
+#ES#
+west
+-1.0
+#EL#
+0 0, 5 8
+#ES#
+east
+-1.0
+#EL#
+1 0, 5 8
+#ES#
+east
+-1.0
+#EL#
+2 0, 5 8
+#ES#
+east
+-1.0
+#EL#
+3 0, 5 8
+#ES#
+blr(0)-north
+-1.0
+#EL#
+3 1, 5 8
+#ES#
+blr(1)-east
+-1.0
+#EL#
+4 1, 5 8
+#ES#
+blr(2)-east
+-1.0
+#EL#
+5 1, 5 8
+#ES#
+east
+-1.0
+#EL#
+6 1, 5 8
+#ES#
+north
+-1.0
+#EL#
+6 2, 5 8
+#ES#
+brt(0)-north
+-1.0
+#EL#
+6 3, 5 8
+#ES#
+brt(1)-east
+-1.0
+#EL#
+7 3, 5 8
+#ES#
+brt(2)-east
+-1.0
+#EL#
+8 3, 5 8
+#ES#
+brt(3)-north
+-1.0
+#EL#
+8 4, 5 8
+#ES#
+west
+-1.0
+#EL#
+8 4, 5 8
+#ES#
+east
+-1.0
+#EL#
+8 4, 5 8
+#ES#
+north
+-1.0
+#EL#
+8 5, 5 8
+#ES#
+trl(0)-north
+-1.0
+#EL#
+8 6, 5 8
+#ES#
+trl(1)-north
+-1.0
+#EL#
+8 7, 5 8
+#ES#
+trl(2)-north
+-1.0
+#EL#
+8 8, 5 8
+#ES#
+trl(3)-west
+-1.0
+#EL#
+7 8, 5 8
+#ES#
+trl(4)-west
+-1.0
+#EL#
+6 8, 5 8
+#ES#
+trl(5)-west
+-1.0
+#EL#
+5 8, 5 8
+#ES#

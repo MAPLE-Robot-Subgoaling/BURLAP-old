@@ -117,45 +117,6 @@ public class FourRooms implements DomainGenerator {
 			Visualizer v = FourRoomsVisual.getVisualizer();
 			EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, d, parser, "output");
 
-
-		}else if(expMode == 3){
-			parser = new FourRoomsStateParser();
-
-			for(int i = 1; i <= 50; i++){
-				analyzer = new EpisodeAnalysis();
-
-				System.out.print("Episode " + i + ": ");
-				run(d, s);
-				analyzer.writeToFile(String.format("output/e%03d", i), parser);
-
-				setAgent(s, 1, 1);
-				setGoal(s, 11, 11);
-			}
-
-
-			//Visualize the Steps
-			Visualizer v = FourRoomsVisual.getVisualizer();
-			EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, d, parser, "output");
-
-		}else if(expMode == 4){		
-			addSubGoals(d);
-			parser = new FourRoomsStateParser();
-
-			for(int i = 1; i <= 1; i++){
-				analyzer = new EpisodeAnalysis();
-
-				System.out.print("Episode " + i + ": ");
-				analyzer = runOptions(s);
-				System.out.println("\tSteps: " + analyzer.numTimeSteps());
-				analyzer.writeToFile(String.format("output/e%03d", i), parser);
-
-				setAgent(s, 1, 1);
-				setGoal(s, 11, 11);			
-			}
-
-			//Visualize the Steps
-			Visualizer v = FourRoomsVisual.getVisualizer();
-			EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, d, parser, "output");
 		}
 	}
 
@@ -174,86 +135,6 @@ public class FourRooms implements DomainGenerator {
 		return analyze;
 	}
 
-	/**
-	 * run() - runs one episode of the Simulation.
-	 * **Note - This code uses the framework provided by the OOMDPTB Package**
-	 * @param d - Domain
-	 * @param s - State
-	 */
-	public static void run(Domain d, State s){
-
-		//Variable Declaration
-		RewardFunction rf = new SingleGoalPFRF(d.getPropFunction(PFATGOAL), 10, -1.0);
-		int steps = 0;
-
-		//While the agent has not reached the goal state
-		while(!FourRooms.isTrue(s, d.getPropFunction(PFATGOAL))){
-
-			/******Part one********/
-			//get the List of Actions and QValues
-			List<QValue> currentStateActionList = Q.getQs(s);
-
-			//search for a match
-			currentStateActionList = Q.getQs(s);
-
-			//Looking for the best QValue
-			Double currentQValue = -100.00;
-			GroundedAction groundAction = null;
-			for(QValue oldVal: currentStateActionList){
-				if(currentQValue <= oldVal.q){
-					currentQValue = oldVal.q;
-					groundAction = oldVal.a;
-				}
-			}
-
-			//error checking - preventing a null groundAction from triggering
-			if(groundAction == null && currentQValue == -100.00){
-				System.out.println("Fatal Error");
-				System.exit(0);
-			}
-
-			/******Part two********/
-			Action doAction = d.getAction(groundAction.action.getName());
-			State newState = doAction.performAction(s, "");
-
-			/*******Part Three********/
-			//get the new list of actions and q-values
-			List<QValue> newStateActionList = Q.getQs(newState);
-
-			//finds the highest q-value
-			Double highestQvalue = -100.00;
-			GroundedAction newGroundAction = null;
-			for(QValue newVal: newStateActionList){
-				if(highestQvalue <= newVal.q){
-					highestQvalue = newVal.q;
-					newGroundAction = newVal.a;
-				}
-			}
-
-			//error checking - preventing a null ground action from triggering
-			if(newGroundAction == null && highestQvalue == -100.00){
-				System.out.println("Fatal Error - Part two");
-				System.exit(0);
-			}
-
-			/**Part Four**/
-			//Update QValue
-			Double qVal = FourRooms.updateQValue(currentQValue, highestQvalue, rf.reward(s, groundAction, newState));
-			for(QValue QVal: currentStateActionList){
-				if(currentQValue == QVal.q && groundAction == QVal.a){
-					QVal.q = qVal;
-					break;
-				}
-			}
-
-			//writes the items to the recorder
-			analyzer.recordTransitionTo(newState, groundAction, qVal);
-			s = newState;
-			steps++;
-		}
-		System.out.println("\tSteps: " + steps);
-
-	}
 
 	public static boolean isTrue(State s, PropositionalFunction pf){
 		boolean isTrue = false;
@@ -517,10 +398,10 @@ public class FourRooms implements DomainGenerator {
 
 	public static void addSubGoals(Domain d){
 		SubgoalOption Door26 = new SubgoalOption("Start (1,1) to Door (2,6)", new StartToDoorNorthPolicy(), new StateCheck(1,1,2,6), new StateCheck(2,6,2,6));
-		//SubgoalOption Door62 = new SubgoalOption("Start (1,1) to Door (6,2)", new StartToDoorEastPolicy(), new StateCheck(1,1,6,2), new StateCheck(6,2,6,2));
+		SubgoalOption Door62 = new SubgoalOption("Start (1,1) to Door (6,2)", new StartToDoorEastPolicy(), new StateCheck(1,1,6,2), new StateCheck(6,2,6,2));
 
 		d.addAction(Door26);
-		//d.addAction(Door62);
+		d.addAction(Door62);
 	}
 
 	public static class StateCheck implements StateConditionTest{
