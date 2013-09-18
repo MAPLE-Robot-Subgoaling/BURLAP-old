@@ -205,6 +205,10 @@ public class GridWorldDomain implements DomainGenerator {
 		}
 	}
 	
+	public void setObstacleInCell(int x, int y){
+		this.map[x][y] = 1;
+	}
+	
 	
 	/**
 	 * Returns the map being used for the domain
@@ -325,7 +329,7 @@ public class GridWorldDomain implements DomainGenerator {
 	
 		GridWorldDomain gwdg = new GridWorldDomain(11, 11);
 		gwdg.setMapToFourRooms();
-		//gwdg.setProbSucceedTransitionDynamics(0.75);
+		gwdg.setProbSucceedTransitionDynamics(0.75);
 		
 		Domain d = gwdg.generateDomain();
 		
