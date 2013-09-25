@@ -6,11 +6,16 @@ import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.QValue;
+import burlap.behavior.singleagent.learning.LearningAgent;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
+import burlap.behavior.singleagent.learning.tdmethods.SarsaLam;
 import burlap.behavior.singleagent.options.PrimitiveOption;
 import burlap.behavior.singleagent.options.SubgoalOption;
+import burlap.behavior.singleagent.planning.OOMDPPlanner;
+import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.StateConditionTest;
 import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
+import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.auxiliary.DomainGenerator;
@@ -62,10 +67,14 @@ public class FourRooms implements DomainGenerator {
 	//Extra Stuff I added for the learning algorithm
 	public static final double LEARNINGRATE = 0.99;
 	public static final double DISCOUNTFACTOR = 0.95;
+	public static final double LAMBDA = 1.0;
 	public static Map<StateHashTuple, List<QAction>> qVals = new HashMap<StateHashTuple, List<QAction>>();
-	public static QLearning Q;
+	public static LearningAgent Q, S;
+	public static OOMDPPlanner planner;
 	public static EpisodeAnalysis analyzer;
 	public static FourRoomsStateParser parser;
+	public static RewardFunction rf;
+	public static TerminalFunction tf;
 
 	/**
 	 * main() - starts the program
@@ -117,24 +126,60 @@ public class FourRooms implements DomainGenerator {
 			Visualizer v = FourRoomsVisual.getVisualizer();
 			EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, d, parser, "output");
 
-		}
-	}
-
-
-	public static EpisodeAnalysis runOptions(State s){
-
-		List<QValue> temp = Q.getQs(s);
-		/*System.out.print("[");
-		for(QValue item: temp){
-			System.out.print(item.a.action.getName() + ",");
+		}else if(expMode == 3){
+			parser = new FourRoomsStateParser();
 			
+			for(int i=1; i <=100; i++){
+				System.out.print("Episode " + i + ": ");
+				analyzer = S.runLearningEpisodeFrom(s);
+				System.out.println("\tSteps: " + analyzer.numTimeSteps());
+				analyzer.writeToFile(String.format("output/e%03d", i), parser);
+
+				setAgent(s, 1, 1);
+				setGoal(s, 11, 11);
+			}
+			
+			//Visualize the Steps
+			Visualizer v = FourRoomsVisual.getVisualizer();
+			EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, d, parser, "output");
+			
+		}else if(expMode == 4){
+			parser = new FourRoomsStateParser();
+			
+			//Running the Value Iteration Planner
+			planner.planFromState(s);
+			Policy p = new GreedyQPolicy((QComputablePlanner)planner);
+			p.evaluateBehavior(s, rf, tf).writeToFile("output/OOMDP_Planner", parser);
+			
+			s = FourRooms.getCleanState();
+			
+			//Run Q-Learning and Generate Episode
+			for(int i = 0; i < 100; i++){
+				analyzer = Q.runLearningEpisodeFrom(s);
+				setAgent(s,1,1);
+				setGoal(s,11,11);
+			}
+			
+			analyzer.writeToFile("output/Q-Learning", parser);
+			s = FourRooms.getCleanState();
+			System.out.println("Finished Q-Learning Analysis");
+			
+			//Run SARSA-LAM and Generate Episode
+			for(int i = 0; i < 100; i++){
+				analyzer = S.runLearningEpisodeFrom(s);
+				setAgent(s,1,1);
+				setGoal(s,11,11);
+			}
+			
+			analyzer.writeToFile("output/Sarsa-Lambda", parser);
+			s = FourRooms.getCleanState();
+			System.out.println("Finished Sarsa-Lambda Anaylsis");
+			
+			//Visualize the Steps
+			Visualizer v = FourRoomsVisual.getVisualizer();
+			EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, d, parser, "output");
 		}
-		System.out.println("]");*/
-
-		EpisodeAnalysis analyze = Q.runLearningEpisodeFrom(s);
-		return analyze;
 	}
-
 
 	public static boolean isTrue(State s, PropositionalFunction pf){
 		boolean isTrue = false;
@@ -213,22 +258,24 @@ public class FourRooms implements DomainGenerator {
 		DOMAIN.addAction(east);
 		DOMAIN.addAction(west);
 
-		Action Door26 = new SubgoalOption("Start (1,1) to Door (2,6)", new StartToDoorNorthPolicy(), new StateCheck(1,1,2,6), new StateCheck(2,6,2,6));
+		//Action Door26 = new SubgoalOption("Start (1,1) to Door (2,6)", new StartToDoorNorthPolicy(), new StateCheck(1,1,2,6), new StateCheck(2,6,2,6));
 		//Action Door62 = new SubgoalOption("Start (1,1) to Door (6,2)", new StartToDoorEastPolicy(), new StateCheck(1,1,6,2), new StateCheck(6,2,6,2));
 
-		DOMAIN.addAction(Door26);
+		//DOMAIN.addAction(Door26);
 		//DOMAIN.addAction(Door62);
 
 		PropositionalFunction atGoal = new AtGoalPF(PFATGOAL, DOMAIN, new String[]{CLASSAGENT, CLASSGOAL});
 		DOMAIN.addPropositionalFunction(atGoal);
 
-		RewardFunction rf = new SingleGoalPFRF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
-		TerminalFunction tf = new SinglePFTF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
+		rf = new SingleGoalPFRF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
+		tf = new SinglePFTF(DOMAIN.getPropFunction(FourRooms.PFATGOAL));
 
 		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
 		hashFactory.setAttributesForClass(CLASSAGENT, DOMAIN.getObjectClass(CLASSAGENT).attributeList);
 		Q = new QLearning(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, hashFactory, 0.2, FourRooms.LEARNINGRATE, Integer.MAX_VALUE);
-
+		S = new SarsaLam(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, hashFactory, 0.2, FourRooms.LEARNINGRATE, FourRooms.LAMBDA);
+		planner = new ValueIteration(DOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, hashFactory, 0.001, 100);
+		
 		return DOMAIN;
 	}
 
@@ -319,7 +366,6 @@ public class FourRooms implements DomainGenerator {
 
 		@Override
 		protected State performActionHelper(State st, String[] params) {
-			System.out.println("Executing North");
 			move(st, 0, 1);
 			return st;
 		}
@@ -332,7 +378,6 @@ public class FourRooms implements DomainGenerator {
 
 		@Override
 		protected State performActionHelper(State st, String[] params) {
-			System.out.println("Executing South");
 			move(st, 0, -1);
 			return st;
 		}
@@ -345,7 +390,6 @@ public class FourRooms implements DomainGenerator {
 
 		@Override
 		protected State performActionHelper(State st, String[] params) {
-			System.out.println("Executing East");
 			move(st, 1, 0);
 			return st;
 		}
@@ -358,7 +402,6 @@ public class FourRooms implements DomainGenerator {
 
 		@Override
 		protected State performActionHelper(State st, String[] params) {
-			System.out.println("Executing West");
 			move(st, -1, 0);
 			return st;
 		}
@@ -469,9 +512,6 @@ public class FourRooms implements DomainGenerator {
 		 * Enters the map and returns the corresponding GroundedAction for the State
 		 */
 		public GroundedAction getAction(State s) {
-			System.out.println("Option Triggered!!");
-
-			//System.out.println(s.getCompleteStateDescription());
 
 			ObjectInstance agent = s.getObjectsOfTrueClass(CLASSAGENT).get(0);
 			ObjectInstance goal = s.getObjectsOfTrueClass(CLASSGOAL).get(0);
@@ -482,15 +522,8 @@ public class FourRooms implements DomainGenerator {
 			int gx = goal.getDiscValForAttribute(ATTX);
 			int gy = goal.getDiscValForAttribute(ATTY);
 
-			System.out.print("(" + ax + "," + ay + ")");
-			System.out.println(" -- (" + gx +"," + gy + ")");
-
 			StateHashTuple temp = new StateHashTuple(generateState(ax, ay, gx, gy));
 			GroundedAction action = map.get(temp);
-			System.out.println(temp + ":" + action);
-
-			System.out.println("Action take: " + action.action.getName());
-
 			return action;
 
 		}
@@ -540,7 +573,6 @@ public class FourRooms implements DomainGenerator {
 		 * Enters the map and returns the corresponding GroundedAction for the State
 		 */
 		public GroundedAction getAction(State s) {
-			System.out.println("Option Triggered!!");
 			return map.get(new StateHashTuple(s));
 		}
 
