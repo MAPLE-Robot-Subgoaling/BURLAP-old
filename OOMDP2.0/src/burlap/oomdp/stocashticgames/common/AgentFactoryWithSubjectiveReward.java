@@ -4,12 +4,12 @@ import burlap.oomdp.stocashticgames.Agent;
 import burlap.oomdp.stocashticgames.AgentFactory;
 import burlap.oomdp.stocashticgames.JointReward;
 
-public class AgentFactoryWithSubjectReward implements AgentFactory {
+public class AgentFactoryWithSubjectiveReward implements AgentFactory {
 
 	protected AgentFactory			baseFactory;
 	protected JointReward			internalReward;
 	
-	public AgentFactoryWithSubjectReward(AgentFactory baseFactory, JointReward internalReward) {
+	public AgentFactoryWithSubjectiveReward(AgentFactory baseFactory, JointReward internalReward) {
 		this.baseFactory = baseFactory;
 		this.internalReward = internalReward;
 	}
