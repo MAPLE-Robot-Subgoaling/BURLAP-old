@@ -63,12 +63,12 @@ public class BasicBehavior {
 		
 		//uncomment the example you want to see (and comment-out the rest)
 		
-		example.QLearningExample(outputPath);
+		//example.QLearningExample(outputPath);
 		//example.SarsaLearningExample(outputPath);
 		//example.BFSExample(outputPath);
 		//example.DFSExample(outputPath);
 		//example.AStarExample(outputPath);
-		//example.ValueIterationExample(outputPath);
+		example.ValueIterationExample(outputPath);
 		//example.ACLearningExample(outputPath);
 		
 		
@@ -156,7 +156,7 @@ public class BasicBehavior {
 			outputPath = outputPath + "/";
 		}
 		
-		int maxEpisodeSize = 100;
+		int maxEpisodeSize = 1000;
 		
 		//gamma = 0.99, learning rate = 0.5, vinit = 0.; lambda = 0.9 
 		//TDLambda td = new TDLambda(rf, tf, 0.99, hashingFactory, 0.5, 0., 0.9);
