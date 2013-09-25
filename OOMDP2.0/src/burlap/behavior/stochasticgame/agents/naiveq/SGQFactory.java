@@ -43,7 +43,11 @@ public class SGQFactory implements AgentFactory {
 
 	@Override
 	public Agent generateAgent() {
-		return new SGQLAgent(domain, discount, learningRate, defaultQ, stateHash);
+		SGQLAgent agent = new SGQLAgent(domain, discount, learningRate, defaultQ, stateHash);
+		if(storedAbstraction != null){
+			agent.setStoredMapAbstraction(storedAbstraction);
+		}
+		return agent;
 	}
 
 }
