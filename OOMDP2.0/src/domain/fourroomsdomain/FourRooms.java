@@ -37,7 +37,6 @@ import burlap.oomdp.singleagent.explorer.TerminalExplorer;
 import burlap.oomdp.singleagent.explorer.VisualExplorer;
 import burlap.oomdp.visualizer.Visualizer;
 
-
 /**
  * A Domain implementing a Four Rooms, Grid-World style setup complete with four doorways for the agent
  * to traverse through. It holds two attributes [ATTX,ATTY] to declare the position of the respective 
@@ -86,7 +85,7 @@ public class FourRooms implements DomainGenerator {
 		State s = FourRooms.getCleanState();
 		setAgent(s, 1, 1);
 		setGoal(s, 11, 11);
-		int expMode = 4;
+		int expMode = 5;
 
 		if(expMode == 0){	
 			TerminalExplorer exp = new TerminalExplorer(d);
@@ -178,46 +177,16 @@ public class FourRooms implements DomainGenerator {
 			//Visualize the Steps
 			Visualizer v = FourRoomsVisual.getVisualizer();
 			EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, d, parser, "output");
+		}else if(expMode == 5){
+			parser = new FourRoomsStateParser();
+			
+			//Bring up the visualizer
+			Visualizer v = FourRoomsVisual.getVisualizer();
+			new EpisodeSequenceVisualizer(v, d, parser, "output");
 		}
 	}
 
-	public static boolean isTrue(State s, PropositionalFunction pf){
-		boolean isTrue = false;
-
-		List<GroundedProp> gps = s.getAllGroundedPropsFor(pf);
-		for(GroundedProp gp: gps){
-			if(gp.isTrue(s))
-				isTrue = true;
-			else
-				break;	
-		}
-
-		return isTrue;
-	}
-
-	/**
-	 * getReward() - returns the reward of the state-action pair executed
-	 * @param currentState - agent's current position
-	 * @param newState - agent's new position once the action is committed
-	 * @param d - domain
-	 * @return - reward value
-	 */
-	public static double getReward(State currentState, State newState, Domain d){
-		if(FourRooms.isTrue(currentState, d.getPropFunction(PFATGOAL))) //the agent has reached the goal
-			return 10;
-		else{
-			int cX = currentState.getObjectsOfTrueClass(CLASSAGENT).get(0).getDiscValForAttribute(ATTX);
-			int cY = currentState.getObjectsOfTrueClass(CLASSAGENT).get(0).getDiscValForAttribute(ATTY);
-
-			int nX = newState.getObjectsOfTrueClass(CLASSAGENT).get(0).getDiscValForAttribute(ATTX);
-			int nY = newState.getObjectsOfTrueClass(CLASSAGENT).get(0).getDiscValForAttribute(ATTY);
-
-			if(cX == nX && cY == nY) 
-				return -5; //the agent has not moved - hit a wall
-			else
-				return -1; //the agent has moved - still on the grid
-		}
-	}
+	
 
 	@Override
 	public Domain generateDomain(){		
@@ -258,11 +227,6 @@ public class FourRooms implements DomainGenerator {
 		DOMAIN.addAction(east);
 		DOMAIN.addAction(west);
 
-		//Action Door26 = new SubgoalOption("Start (1,1) to Door (2,6)", new StartToDoorNorthPolicy(), new StateCheck(1,1,2,6), new StateCheck(2,6,2,6));
-		//Action Door62 = new SubgoalOption("Start (1,1) to Door (6,2)", new StartToDoorEastPolicy(), new StateCheck(1,1,6,2), new StateCheck(6,2,6,2));
-
-		//DOMAIN.addAction(Door26);
-		//DOMAIN.addAction(Door62);
 
 		PropositionalFunction atGoal = new AtGoalPF(PFATGOAL, DOMAIN, new String[]{CLASSAGENT, CLASSGOAL});
 		DOMAIN.addPropositionalFunction(atGoal);
@@ -428,23 +392,11 @@ public class FourRooms implements DomainGenerator {
 		}	
 	}
 
-	public static double updateQValue(double oldQVal, double highestQVal, double reward){
-		return oldQVal + FourRooms.LEARNINGRATE * ((reward + FourRooms.DISCOUNTFACTOR * highestQVal) - oldQVal);
-	}
-
 	public static State generateState(int ax, int ay, int gx, int gy){
 		State s = FourRooms.getCleanState();
 		setAgent(s, ax, ay);
 		setGoal(s, gx, gy);
 		return s;
-	}
-
-	public static void addSubGoals(Domain d){
-		SubgoalOption Door26 = new SubgoalOption("Start (1,1) to Door (2,6)", new StartToDoorNorthPolicy(), new StateCheck(1,1,2,6), new StateCheck(2,6,2,6));
-		SubgoalOption Door62 = new SubgoalOption("Start (1,1) to Door (6,2)", new StartToDoorEastPolicy(), new StateCheck(1,1,6,2), new StateCheck(6,2,6,2));
-
-		d.addAction(Door26);
-		d.addAction(Door62);
 	}
 
 	public static class StateCheck implements StateConditionTest{
@@ -483,118 +435,6 @@ public class FourRooms implements DomainGenerator {
 		}
 	}
 
-	/**
-	 * Simple Policy from the Start to the Door(2,6)
-	 * @author Tenji Tembo
-	 *
-	 */
-	public static class StartToDoorNorthPolicy extends Policy{
-
-		//Policy Mapping
-		public Map<StateHashTuple, GroundedAction> map = new HashMap<StateHashTuple, GroundedAction>();
-
-		/**
-		 * Generates the Policy Mapping
-		 */
-		public StartToDoorNorthPolicy(){
-			map.put(new StateHashTuple(generateState(1, 1, 11, 11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), ""));	//N
-			map.put(new StateHashTuple(generateState(1, 2, 11, 11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), ""));	//N
-			map.put(new StateHashTuple(generateState(1, 3, 11, 11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), ""));	//N
-			map.put(new StateHashTuple(generateState(1, 4, 11, 11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), ""));	//N		
-			map.put(new StateHashTuple(generateState(1, 5, 11, 11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), ""));	//N
-			map.put(new StateHashTuple(generateState(2, 5, 11, 11)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), ""));	//E
-			map.put(new StateHashTuple(generateState(2, 6, 11, 11)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), ""));	//N
-		}
-
-
-		@Override
-		/**
-		 * Enters the map and returns the corresponding GroundedAction for the State
-		 */
-		public GroundedAction getAction(State s) {
-
-			ObjectInstance agent = s.getObjectsOfTrueClass(CLASSAGENT).get(0);
-			ObjectInstance goal = s.getObjectsOfTrueClass(CLASSGOAL).get(0);
-
-			int ax = agent.getDiscValForAttribute(ATTX);
-			int ay = agent.getDiscValForAttribute(ATTY);
-
-			int gx = goal.getDiscValForAttribute(ATTX);
-			int gy = goal.getDiscValForAttribute(ATTY);
-
-			StateHashTuple temp = new StateHashTuple(generateState(ax, ay, gx, gy));
-			GroundedAction action = map.get(temp);
-			return action;
-
-		}
-
-		@Override
-		/**
-		 * Basic action distribution. Since it's one action per state, it's 100% all the time.
-		 * @param State s
-		 * @return ActionProb List
-		 */
-		public List<ActionProb> getActionDistributionForState(State s) {
-			GroundedAction selectedAction = this.getAction(s);
-			List <ActionProb> res = new ArrayList<Policy.ActionProb>();
-			ActionProb ap = new ActionProb(selectedAction, 1.0);
-			res.add(ap);
-			return res;
-		}
-
-		@Override
-		public boolean isStochastic() {
-			return false;
-		}
-
-	}
-
-	public static class StartToDoorEastPolicy extends Policy{
-
-		//Policy Mapping
-		public Map<StateHashTuple, GroundedAction> map = new HashMap<StateHashTuple, GroundedAction>();
-
-		/**
-		 * Generates the Policy Mapping
-		 */
-		public StartToDoorEastPolicy(){
-			map.put(new StateHashTuple(generateState(1, 1, 6, 2)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), ""));	//E
-			map.put(new StateHashTuple(generateState(2, 1, 6, 2)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), ""));	//E
-			map.put(new StateHashTuple(generateState(3, 1, 6, 2)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), ""));	//E
-			map.put(new StateHashTuple(generateState(4, 1, 6, 2)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), ""));	//E		
-			map.put(new StateHashTuple(generateState(5, 1, 6, 2)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), ""));	//E
-			map.put(new StateHashTuple(generateState(5, 2, 6, 2)), new GroundedAction(new NorthAction(ACTIONNORTH, DOMAIN, ""), ""));	//N
-			map.put(new StateHashTuple(generateState(6, 2, 6, 2)), new GroundedAction(new EastAction(ACTIONEAST, DOMAIN, ""), ""));	//N
-		}
-
-
-		@Override
-		/**
-		 * Enters the map and returns the corresponding GroundedAction for the State
-		 */
-		public GroundedAction getAction(State s) {
-			return map.get(new StateHashTuple(s));
-		}
-
-		@Override
-		/**
-		 * Basic action distribution. Since it's one action per state, it's 100% all the time.
-		 * @param State s
-		 * @return ActionProb List
-		 */
-		public List<ActionProb> getActionDistributionForState(State s) {
-			GroundedAction selectedAction = this.getAction(s);
-			List <ActionProb> res = new ArrayList<Policy.ActionProb>();
-			ActionProb ap = new ActionProb(selectedAction, 1.0);
-			res.add(ap);
-			return res;
-		}
-
-		@Override
-		public boolean isStochastic() {
-			return false;
-		}
-
-	}
+	
 
 }
