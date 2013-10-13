@@ -6,17 +6,17 @@ north
 #EL#
 1 2, 11 11
 #ES#
-north
-0.0
-#EL#
-1 3, 11 11
-#ES#
-north
-0.0
-#EL#
-1 4, 11 11
-#ES#
 east
+0.0
+#EL#
+2 2, 11 11
+#ES#
+north
+0.0
+#EL#
+2 3, 11 11
+#ES#
+north
 0.0
 #EL#
 2 4, 11 11
@@ -36,37 +36,22 @@ north
 #EL#
 2 7, 11 11
 #ES#
-north
+east
 0.0
 #EL#
-2 8, 11 11
-#ES#
-west
-0.0
-#EL#
-1 8, 11 11
-#ES#
-west
-0.0
-#EL#
-1 8, 11 11
+3 7, 11 11
 #ES#
 east
 0.0
 #EL#
-2 8, 11 11
+4 7, 11 11
 #ES#
 north
 0.0
 #EL#
-2 9, 11 11
+4 8, 11 11
 #ES#
-east
-0.0
-#EL#
-3 9, 11 11
-#ES#
-east
+north
 0.0
 #EL#
 4 9, 11 11
@@ -86,27 +71,27 @@ east
 #EL#
 7 9, 11 11
 #ES#
-north
+east
 0.0
 #EL#
-7 10, 11 11
+8 9, 11 11
 #ES#
-east
+north
 0.0
 #EL#
 8 10, 11 11
 #ES#
-east
-0.0
-#EL#
-9 10, 11 11
-#ES#
-east
-0.0
-#EL#
-10 10, 11 11
-#ES#
 north
+0.0
+#EL#
+8 11, 11 11
+#ES#
+east
+0.0
+#EL#
+9 11, 11 11
+#ES#
+east
 0.0
 #EL#
 10 11, 11 11
