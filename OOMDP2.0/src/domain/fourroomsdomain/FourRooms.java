@@ -85,7 +85,7 @@ public class FourRooms implements DomainGenerator {
 		State s = FourRooms.getCleanState();
 		setAgent(s, 1, 1);
 		setGoal(s, 11, 11);
-		int expMode = 4;
+		int expMode = 2;
 
 		if(expMode == 0){	
 			TerminalExplorer exp = new TerminalExplorer(d);
