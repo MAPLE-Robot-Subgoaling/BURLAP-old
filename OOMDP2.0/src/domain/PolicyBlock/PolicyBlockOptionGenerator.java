@@ -5,4 +5,23 @@ package domain.PolicyBlock;
 
 public class PolicyBlockOptionGenerator {
 
+	PolicyBlockDomain environ;
+	
+	public static void main(String args[]){
+		PolicyBlockOptionGenerator generator = new PolicyBlockOptionGenerator();
+		generator.generatePolicies();
+	}
+	
+	public PolicyBlockOptionGenerator(){
+		environ = new PolicyBlockDomain();
+	}
+	
+	public void generatePolicies(){
+		
+		for(int i = 0; i < 5; i++){
+			environ.QLearn("policyBlocks/" +  i + "-set/");
+		}
+		
+		environ.visualize("policyBlocks/2-set/");
+	}
 }
