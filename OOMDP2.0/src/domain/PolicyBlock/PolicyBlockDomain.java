@@ -1,5 +1,9 @@
 package domain.PolicyBlock;
 
+import java.util.HashMap;
+
+import domain.fourroomsdomain.FourRooms;
+
 import burlap.domain.singleagent.gridworld.*;
 import burlap.oomdp.auxiliary.StateParser;
 import burlap.oomdp.core.Domain;
@@ -7,15 +11,21 @@ import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.common.SinglePFTF;
 import burlap.oomdp.singleagent.common.UniformCostRF;
+import burlap.oomdp.stocashticgames.Agent;
 import burlap.oomdp.visualizer.Visualizer;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
+import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.learning.LearningAgent;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
+import burlap.behavior.singleagent.planning.OOMDPPlanner;
+import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.StateConditionTest;
+import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
 import burlap.behavior.singleagent.planning.deterministic.TFGoalCondition;
+import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.oomdp.core.*;
 
@@ -29,6 +39,9 @@ public class PolicyBlockDomain {
 	StateConditionTest goalCondition;
 	State initialState;
 	DiscreteStateHashFactory hashFactory;
+	HashMap<String,Policy> policies;
+	OOMDPPlanner planner;
+	double DISCOUNTFACTOR = 0.99;
 	
 	//Main Function
 	public static void main(String[] args) {
@@ -43,6 +56,7 @@ public class PolicyBlockDomain {
 		policyBlock = new GridWorldDomain(11,11);
 		policyBlock.setMapToFourRooms();
 		domain = policyBlock.generateDomain();
+		policies = new HashMap<String, Policy>();
 		
 		//define the parser, reward, and termination conditions
 		sp = new GridWorldStateParser(domain);
@@ -80,5 +94,14 @@ public class PolicyBlockDomain {
 			System.out.println("Episode "+ i + " : " + ea.numTimeSteps()); //print the performance of the episode
 		}
 	}
-
+	
+	public void computePolicy(String str){
+		planner = new ValueIteration(domain, rf, tf, DISCOUNTFACTOR, hashFactory, 0.001, 100);
+		Policy p = new GreedyQPolicy((QComputablePlanner)planner);
+		policies.put(str, p);
+	}
+	
+	public HashMap<String, Policy> getPolicyMap(){
+		return policies;
+	}
 }
