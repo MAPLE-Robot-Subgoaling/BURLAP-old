@@ -7,7 +7,7 @@ import domain.fourroomsdomain.FourRooms;
 import burlap.domain.singleagent.gridworld.*;
 import burlap.oomdp.auxiliary.StateParser;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.ObjectInstance;
+import burlap.oomdp.core.ObjectInstance;	
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.common.SinglePFTF;
 import burlap.oomdp.singleagent.common.UniformCostRF;
