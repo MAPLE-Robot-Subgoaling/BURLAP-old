@@ -1,0 +1,1068 @@
+#EL#
+0 0, 7 0
+#ES#
+north
+-1.0
+#EL#
+0 1, 7 0
+#ES#
+east
+-1.0
+#EL#
+1 1, 7 0
+#ES#
+east
+-1.0
+#EL#
+2 1, 7 0
+#ES#
+east
+-1.0
+#EL#
+3 1, 7 0
+#ES#
+west
+-1.0
+#EL#
+2 1, 7 0
+#ES#
+east
+-1.0
+#EL#
+3 1, 7 0
+#ES#
+south
+-1.0
+#EL#
+3 0, 7 0
+#ES#
+south
+-1.0
+#EL#
+3 0, 7 0
+#ES#
+east
+-1.0
+#EL#
+4 0, 7 0
+#ES#
+south
+-1.0
+#EL#
+4 0, 7 0
+#ES#
+east
+-1.0
+#EL#
+5 0, 7 0
+#ES#
+north
+-1.0
+#EL#
+5 1, 7 0
+#ES#
+west
+-1.0
+#EL#
+4 1, 7 0
+#ES#
+south
+-1.0
+#EL#
+4 0, 7 0
+#ES#
+west
+-1.0
+#EL#
+3 0, 7 0
+#ES#
+north
+-1.0
+#EL#
+3 1, 7 0
+#ES#
+north
+-1.0
+#EL#
+3 2, 7 0
+#ES#
+south
+-1.0
+#EL#
+3 1, 7 0
+#ES#
+east
+-1.0
+#EL#
+4 1, 7 0
+#ES#
+north
+-1.0
+#EL#
+4 2, 7 0
+#ES#
+east
+-1.0
+#EL#
+5 2, 7 0
+#ES#
+north
+-1.0
+#EL#
+5 3, 7 0
+#ES#
+east
+-1.0
+#EL#
+5 3, 7 0
+#ES#
+north
+-1.0
+#EL#
+5 4, 7 0
+#ES#
+north
+-1.0
+#EL#
+5 4, 7 0
+#ES#
+east
+-1.0
+#EL#
+5 4, 7 0
+#ES#
+west
+-1.0
+#EL#
+4 4, 7 0
+#ES#
+west
+-1.0
+#EL#
+3 4, 7 0
+#ES#
+east
+-1.0
+#EL#
+4 4, 7 0
+#ES#
+east
+-1.0
+#EL#
+5 4, 7 0
+#ES#
+south
+-1.0
+#EL#
+5 3, 7 0
+#ES#
+west
+-1.0
+#EL#
+4 3, 7 0
+#ES#
+north
+-1.0
+#EL#
+4 4, 7 0
+#ES#
+north
+-1.0
+#EL#
+4 4, 7 0
+#ES#
+south
+-1.0
+#EL#
+4 3, 7 0
+#ES#
+south
+-1.0
+#EL#
+4 2, 7 0
+#ES#
+west
+-1.0
+#EL#
+3 2, 7 0
+#ES#
+west
+-1.0
+#EL#
+2 2, 7 0
+#ES#
+west
+-1.0
+#EL#
+1 2, 7 0
+#ES#
+west
+-1.0
+#EL#
+0 2, 7 0
+#ES#
+east
+-1.0
+#EL#
+1 2, 7 0
+#ES#
+east
+-1.0
+#EL#
+2 2, 7 0
+#ES#
+east
+-1.0
+#EL#
+3 2, 7 0
+#ES#
+north
+-1.0
+#EL#
+3 3, 7 0
+#ES#
+north
+-1.0
+#EL#
+3 4, 7 0
+#ES#
+west
+-1.0
+#EL#
+2 4, 7 0
+#ES#
+east
+-1.0
+#EL#
+3 4, 7 0
+#ES#
+north
+-1.0
+#EL#
+3 5, 7 0
+#ES#
+north
+-1.0
+#EL#
+3 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+4 6, 7 0
+#ES#
+west
+-1.0
+#EL#
+3 6, 7 0
+#ES#
+west
+-1.0
+#EL#
+2 6, 7 0
+#ES#
+west
+-1.0
+#EL#
+1 6, 7 0
+#ES#
+west
+-1.0
+#EL#
+0 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+1 6, 7 0
+#ES#
+north
+-1.0
+#EL#
+1 7, 7 0
+#ES#
+south
+-1.0
+#EL#
+1 6, 7 0
+#ES#
+south
+-1.0
+#EL#
+1 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+2 6, 7 0
+#ES#
+north
+-1.0
+#EL#
+2 7, 7 0
+#ES#
+east
+-1.0
+#EL#
+3 7, 7 0
+#ES#
+north
+-1.0
+#EL#
+3 8, 7 0
+#ES#
+west
+-1.0
+#EL#
+2 8, 7 0
+#ES#
+west
+-1.0
+#EL#
+1 8, 7 0
+#ES#
+west
+-1.0
+#EL#
+0 8, 7 0
+#ES#
+west
+-1.0
+#EL#
+0 8, 7 0
+#ES#
+north
+-1.0
+#EL#
+0 9, 7 0
+#ES#
+south
+-1.0
+#EL#
+0 8, 7 0
+#ES#
+south
+-1.0
+#EL#
+0 7, 7 0
+#ES#
+north
+-1.0
+#EL#
+0 8, 7 0
+#ES#
+west
+-1.0
+#EL#
+0 8, 7 0
+#ES#
+south
+-1.0
+#EL#
+0 7, 7 0
+#ES#
+south
+-1.0
+#EL#
+0 6, 7 0
+#ES#
+south
+-1.0
+#EL#
+0 6, 7 0
+#ES#
+north
+-1.0
+#EL#
+0 7, 7 0
+#ES#
+west
+-1.0
+#EL#
+0 7, 7 0
+#ES#
+east
+-1.0
+#EL#
+1 7, 7 0
+#ES#
+west
+-1.0
+#EL#
+0 7, 7 0
+#ES#
+south
+-1.0
+#EL#
+0 6, 7 0
+#ES#
+west
+-1.0
+#EL#
+0 6, 7 0
+#ES#
+south
+-1.0
+#EL#
+0 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+1 6, 7 0
+#ES#
+west
+-1.0
+#EL#
+0 6, 7 0
+#ES#
+north
+-1.0
+#EL#
+0 7, 7 0
+#ES#
+west
+-1.0
+#EL#
+0 7, 7 0
+#ES#
+east
+-1.0
+#EL#
+1 7, 7 0
+#ES#
+east
+-1.0
+#EL#
+2 7, 7 0
+#ES#
+south
+-1.0
+#EL#
+2 6, 7 0
+#ES#
+south
+-1.0
+#EL#
+2 6, 7 0
+#ES#
+west
+-1.0
+#EL#
+1 6, 7 0
+#ES#
+south
+-1.0
+#EL#
+1 6, 7 0
+#ES#
+north
+-1.0
+#EL#
+1 7, 7 0
+#ES#
+north
+-1.0
+#EL#
+1 8, 7 0
+#ES#
+south
+-1.0
+#EL#
+1 7, 7 0
+#ES#
+south
+-1.0
+#EL#
+1 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+2 6, 7 0
+#ES#
+south
+-1.0
+#EL#
+2 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+3 6, 7 0
+#ES#
+north
+-1.0
+#EL#
+3 7, 7 0
+#ES#
+west
+-1.0
+#EL#
+2 7, 7 0
+#ES#
+north
+-1.0
+#EL#
+2 8, 7 0
+#ES#
+east
+-1.0
+#EL#
+3 8, 7 0
+#ES#
+south
+-1.0
+#EL#
+3 7, 7 0
+#ES#
+south
+-1.0
+#EL#
+3 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+4 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+5 6, 7 0
+#ES#
+north
+-1.0
+#EL#
+5 7, 7 0
+#ES#
+north
+-1.0
+#EL#
+5 8, 7 0
+#ES#
+east
+-1.0
+#EL#
+6 8, 7 0
+#ES#
+south
+-1.0
+#EL#
+6 8, 7 0
+#ES#
+east
+-1.0
+#EL#
+7 8, 7 0
+#ES#
+south
+-1.0
+#EL#
+7 7, 7 0
+#ES#
+west
+-1.0
+#EL#
+7 7, 7 0
+#ES#
+south
+-1.0
+#EL#
+7 6, 7 0
+#ES#
+west
+-1.0
+#EL#
+7 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+8 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+9 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+10 6, 7 0
+#ES#
+west
+-1.0
+#EL#
+9 6, 7 0
+#ES#
+south
+-1.0
+#EL#
+9 5, 7 0
+#ES#
+west
+-1.0
+#EL#
+8 5, 7 0
+#ES#
+north
+-1.0
+#EL#
+8 6, 7 0
+#ES#
+north
+-1.0
+#EL#
+8 7, 7 0
+#ES#
+east
+-1.0
+#EL#
+9 7, 7 0
+#ES#
+north
+-1.0
+#EL#
+9 8, 7 0
+#ES#
+north
+-1.0
+#EL#
+9 9, 7 0
+#ES#
+west
+-1.0
+#EL#
+8 9, 7 0
+#ES#
+east
+-1.0
+#EL#
+9 9, 7 0
+#ES#
+north
+-1.0
+#EL#
+9 10, 7 0
+#ES#
+south
+-1.0
+#EL#
+9 9, 7 0
+#ES#
+south
+-1.0
+#EL#
+9 8, 7 0
+#ES#
+west
+-1.0
+#EL#
+8 8, 7 0
+#ES#
+east
+-1.0
+#EL#
+9 8, 7 0
+#ES#
+south
+-1.0
+#EL#
+9 7, 7 0
+#ES#
+south
+-1.0
+#EL#
+9 6, 7 0
+#ES#
+west
+-1.0
+#EL#
+8 6, 7 0
+#ES#
+west
+-1.0
+#EL#
+7 6, 7 0
+#ES#
+south
+-1.0
+#EL#
+7 5, 7 0
+#ES#
+east
+-1.0
+#EL#
+8 5, 7 0
+#ES#
+south
+-1.0
+#EL#
+8 4, 7 0
+#ES#
+west
+-1.0
+#EL#
+7 4, 7 0
+#ES#
+west
+-1.0
+#EL#
+7 4, 7 0
+#ES#
+south
+-1.0
+#EL#
+7 3, 7 0
+#ES#
+north
+-1.0
+#EL#
+7 4, 7 0
+#ES#
+east
+-1.0
+#EL#
+8 4, 7 0
+#ES#
+north
+-1.0
+#EL#
+8 5, 7 0
+#ES#
+north
+-1.0
+#EL#
+8 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+9 6, 7 0
+#ES#
+north
+-1.0
+#EL#
+9 7, 7 0
+#ES#
+east
+-1.0
+#EL#
+10 7, 7 0
+#ES#
+north
+-1.0
+#EL#
+10 8, 7 0
+#ES#
+east
+-1.0
+#EL#
+11 8, 7 0
+#ES#
+south
+-1.0
+#EL#
+11 7, 7 0
+#ES#
+south
+-1.0
+#EL#
+11 6, 7 0
+#ES#
+north
+-1.0
+#EL#
+11 7, 7 0
+#ES#
+south
+-1.0
+#EL#
+11 6, 7 0
+#ES#
+west
+-1.0
+#EL#
+10 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+11 6, 7 0
+#ES#
+south
+-1.0
+#EL#
+11 5, 7 0
+#ES#
+east
+-1.0
+#EL#
+11 5, 7 0
+#ES#
+north
+-1.0
+#EL#
+11 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+11 6, 7 0
+#ES#
+west
+-1.0
+#EL#
+10 6, 7 0
+#ES#
+south
+-1.0
+#EL#
+10 5, 7 0
+#ES#
+north
+-1.0
+#EL#
+10 6, 7 0
+#ES#
+north
+-1.0
+#EL#
+10 7, 7 0
+#ES#
+east
+-1.0
+#EL#
+11 7, 7 0
+#ES#
+east
+-1.0
+#EL#
+11 7, 7 0
+#ES#
+west
+-1.0
+#EL#
+10 7, 7 0
+#ES#
+south
+-1.0
+#EL#
+10 6, 7 0
+#ES#
+south
+-1.0
+#EL#
+10 5, 7 0
+#ES#
+south
+-1.0
+#EL#
+10 4, 7 0
+#ES#
+north
+-1.0
+#EL#
+10 5, 7 0
+#ES#
+south
+-1.0
+#EL#
+10 4, 7 0
+#ES#
+west
+-1.0
+#EL#
+9 4, 7 0
+#ES#
+north
+-1.0
+#EL#
+9 5, 7 0
+#ES#
+east
+-1.0
+#EL#
+10 5, 7 0
+#ES#
+south
+-1.0
+#EL#
+10 4, 7 0
+#ES#
+south
+-1.0
+#EL#
+10 3, 7 0
+#ES#
+north
+-1.0
+#EL#
+10 4, 7 0
+#ES#
+west
+-1.0
+#EL#
+9 4, 7 0
+#ES#
+east
+-1.0
+#EL#
+10 4, 7 0
+#ES#
+east
+-1.0
+#EL#
+11 4, 7 0
+#ES#
+west
+-1.0
+#EL#
+10 4, 7 0
+#ES#
+south
+-1.0
+#EL#
+10 3, 7 0
+#ES#
+north
+-1.0
+#EL#
+10 4, 7 0
+#ES#
+north
+-1.0
+#EL#
+10 5, 7 0
+#ES#
+west
+-1.0
+#EL#
+9 5, 7 0
+#ES#
+north
+-1.0
+#EL#
+9 6, 7 0
+#ES#
+east
+-1.0
+#EL#
+10 6, 7 0
+#ES#
+south
+-1.0
+#EL#
+10 5, 7 0
+#ES#
+east
+-1.0
+#EL#
+11 5, 7 0
+#ES#
+west
+-1.0
+#EL#
+10 5, 7 0
+#ES#
+south
+-1.0
+#EL#
+10 4, 7 0
+#ES#
+south
+-1.0
+#EL#
+10 3, 7 0
+#ES#
+east
+-1.0
+#EL#
+11 3, 7 0
+#ES#
+east
+-1.0
+#EL#
+11 3, 7 0
+#ES#
+south
+-1.0
+#EL#
+11 2, 7 0
+#ES#
+west
+-1.0
+#EL#
+10 2, 7 0
+#ES#
+north
+-1.0
+#EL#
+10 3, 7 0
+#ES#
+east
+-1.0
+#EL#
+11 3, 7 0
+#ES#
+west
+-1.0
+#EL#
+10 3, 7 0
+#ES#
+west
+-1.0
+#EL#
+9 3, 7 0
+#ES#
+west
+-1.0
+#EL#
+8 3, 7 0
+#ES#
+south
+-1.0
+#EL#
+8 2, 7 0
+#ES#
+north
+-1.0
+#EL#
+8 3, 7 0
+#ES#
+east
+-1.0
+#EL#
+9 3, 7 0
+#ES#
+south
+-1.0
+#EL#
+9 2, 7 0
+#ES#
+south
+-1.0
+#EL#
+9 1, 7 0
+#ES#
+south
+-1.0
+#EL#
+9 0, 7 0
+#ES#
+west
+-1.0
+#EL#
+8 0, 7 0
+#ES#
+south
+-1.0
+#EL#
+8 0, 7 0
+#ES#
+west
+-1.0
+#EL#
+7 0, 7 0
+#ES#
