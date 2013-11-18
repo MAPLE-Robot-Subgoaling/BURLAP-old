@@ -28,11 +28,13 @@ public class PolicyBlockOptionGenerator {
 	
 	//Generates 5 iterations which contains 100 policies run via Q-Learning
 	public void generatePolicies(){	
-		for(int i = 0; i < 5; i++){
-			//environ.QLearn("policyBlocks/" +  i + "-set/");
-			environ.computePolicy(i +"-set");
-		}
-		//environ.visualize("policyBlocks/2-set/");
+		//first policy (10,10)
+		environ.setGoal(10, 10);
+		environ.computePolicy("Goal:10-10");
+		
+		//second policy (10,8)
+		environ.setGoal(10, 8);
+		environ.computePolicy("Goal:10-8");	
 	}
 	
 	public void getPolicyMap(){
@@ -40,6 +42,11 @@ public class PolicyBlockOptionGenerator {
 	}
 	
 	public void merge(){
+		this.policySet = environ.getPolicyMap();
+		Policy a = policySet.get("Goal:10-10");
+		Policy b = policySet.get("Goal:10-8");
+		
+		
 		
 	}
 }

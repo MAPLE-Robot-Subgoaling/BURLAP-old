@@ -1,5 +1,6 @@
 package domain.PolicyBlock;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import domain.fourroomsdomain.FourRooms;
@@ -40,6 +41,7 @@ public class PolicyBlockDomain {
 	State initialState;
 	DiscreteStateHashFactory hashFactory;
 	HashMap<String,Policy> policies;
+	ArrayList<EpisodeAnalysis> episodes;
 	OOMDPPlanner planner;
 	double DISCOUNTFACTOR = 0.99;
 	
@@ -57,6 +59,7 @@ public class PolicyBlockDomain {
 		policyBlock.setMapToFourRooms();
 		domain = policyBlock.generateDomain();
 		policies = new HashMap<String, Policy>();
+		episodes = new ArrayList<EpisodeAnalysis>();
 		
 		//define the parser, reward, and termination conditions
 		sp = new GridWorldStateParser(domain);
@@ -66,8 +69,8 @@ public class PolicyBlockDomain {
 		
 		//set up initial state
 		initialState = GridWorldDomain.getOneAgentOneLocationState(domain);
-		GridWorldDomain.setAgent(initialState, 0, 0);
-		GridWorldDomain.setLocation(initialState, 0, 10, 10);
+		setAgent(0,0);
+		setGoal(10,10);
 		
 		//set up the state hashing system
 		hashFactory = new DiscreteStateHashFactory();
@@ -78,6 +81,14 @@ public class PolicyBlockDomain {
 	public void visualize(String output){
 		Visualizer v = GridWorldVisualizer.getVisualizer(domain, policyBlock.getMap());
 		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, domain, sp, output);
+	}
+	
+	public void setAgent(int x, int y){
+		GridWorldDomain.setAgent(initialState, x, y);
+	}
+	
+	public void setGoal(int x, int y){
+		GridWorldDomain.setLocation(initialState, 0, x, y);
 	}
 	
 	//Learning Algorithm
