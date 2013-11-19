@@ -1,7 +1,9 @@
 package domain.PolicyBlock;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
+import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
 
 //This class is designed to read in the options generated from the policy blocks and created options based on the 
@@ -10,15 +12,14 @@ import burlap.behavior.singleagent.Policy;
 public class PolicyBlockOptionGenerator {
 
 	PolicyBlockDomain environ;
-	HashMap<String, Policy> policySet;
-	HashMap<String, Policy> mergeSet = new HashMap<String, Policy>();
+	ArrayList<EpisodeAnalysis> episodes;
 	
 	//Main
 	public static void main(String args[]){
 		PolicyBlockOptionGenerator generator = new PolicyBlockOptionGenerator();
 		generator.generatePolicies();
-		generator.getPolicyMap();
-		generator.merge();
+		generator.showEpisodes();
+	//	generator.merge();
 	}
 	
 	//creates a new Policy Domain Object
@@ -28,25 +29,15 @@ public class PolicyBlockOptionGenerator {
 	
 	//Generates 5 iterations which contains 100 policies run via Q-Learning
 	public void generatePolicies(){	
-		//first policy (10,10)
-		environ.setGoal(10, 10);
-		environ.computePolicy("Goal:10-10");
-		
-		//second policy (10,8)
-		environ.setGoal(10, 8);
-		environ.computePolicy("Goal:10-8");	
+		environ.createEpisodes("policyBlocks");
 	}
 	
-	public void getPolicyMap(){
-		policySet = environ.getPolicyMap();
+	public void showEpisodes(){
+		environ.visualize("policyBlocks");
 	}
 	
 	public void merge(){
-		this.policySet = environ.getPolicyMap();
-		Policy a = policySet.get("Goal:10-10");
-		Policy b = policySet.get("Goal:10-8");
-		
-		
+		this.episodes = environ.episodes;
 		
 	}
 }

@@ -106,6 +106,38 @@ public class PolicyBlockDomain {
 		}
 	}
 	
+	public void createEpisodes(String output){
+		
+		if(!output.endsWith("/")){
+			output = output + "/";
+		}
+		
+		int i = 0;
+		LearningAgent agent = new QLearning(domain, rf, tf, 0.99, hashFactory, 0., 0.9); //create the QLearning agent
+		EpisodeAnalysis one = new EpisodeAnalysis();
+		EpisodeAnalysis two = new EpisodeAnalysis();
+		
+		setGoal(10, 10);
+		for(int j = 0; j < 100; j++){
+			one = agent.runLearningEpisodeFrom(initialState); //run the episode
+		}
+		
+		episodes.add(one);
+		one.writeToFile(String.format("%se%03d", output, i), sp); //record the episode
+		System.out.println("Goal 10-10 : " + one.numTimeSteps()); //print the performance of the episode
+		
+		i++;
+		
+		setGoal(10, 8);
+		for(int j = 0; j < 100; j++){
+			two = agent.runLearningEpisodeFrom(initialState); //run the episode
+		}
+		
+		episodes.add(two);
+		two.writeToFile(String.format("%se%03d", output, i), sp); //record the episode
+		System.out.println("Goal 10-8 : " + two.numTimeSteps()); //print the performance of the episode
+	}
+	
 	public void computePolicy(String str){
 		planner = new ValueIteration(domain, rf, tf, DISCOUNTFACTOR, hashFactory, 0.001, 100);
 		Policy p = new GreedyQPolicy((QComputablePlanner)planner);
