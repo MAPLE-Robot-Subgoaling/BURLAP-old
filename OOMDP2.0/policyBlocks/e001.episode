@@ -31,27 +31,47 @@ east
 #EL#
 5 1, 10 8
 #ES#
+west
+-1.0
+#EL#
+4 1, 10 8
+#ES#
+east
+-1.0
+#EL#
+5 1, 10 8
+#ES#
 east
 -1.0
 #EL#
 6 1, 10 8
 #ES#
-east
+north
 -1.0
 #EL#
-7 1, 10 8
+6 2, 10 8
 #ES#
 north
 -1.0
 #EL#
-7 2, 10 8
+6 3, 10 8
 #ES#
 east
 -1.0
 #EL#
-8 2, 10 8
+7 3, 10 8
 #ES#
-north
+east
+-1.0
+#EL#
+8 3, 10 8
+#ES#
+east
+-1.0
+#EL#
+9 3, 10 8
+#ES#
+west
 -1.0
 #EL#
 8 3, 10 8
@@ -66,37 +86,37 @@ north
 #EL#
 8 5, 10 8
 #ES#
-east
+north
 -1.0
 #EL#
-9 5, 10 8
+8 6, 10 8
 #ES#
-west
+south
 -1.0
 #EL#
 8 5, 10 8
 #ES#
+north
+-1.0
+#EL#
+8 6, 10 8
+#ES#
+north
+-1.0
+#EL#
+8 7, 10 8
+#ES#
 east
 -1.0
 #EL#
-9 5, 10 8
+9 7, 10 8
+#ES#
+north
+-1.0
+#EL#
+9 8, 10 8
 #ES#
 east
--1.0
-#EL#
-10 5, 10 8
-#ES#
-north
--1.0
-#EL#
-10 6, 10 8
-#ES#
-north
--1.0
-#EL#
-10 7, 10 8
-#ES#
-north
 -1.0
 #EL#
 10 8, 10 8
