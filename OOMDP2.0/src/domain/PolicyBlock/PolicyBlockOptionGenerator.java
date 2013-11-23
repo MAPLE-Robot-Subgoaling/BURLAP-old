@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
+import burlap.oomdp.core.State;
 
 //This class is designed to read in the options generated from the policy blocks and created options based on the 
 //merge, score, and subtract method described in the Pickett & Barto Paper: PolicyBlocks
@@ -43,34 +44,25 @@ public class PolicyBlockOptionGenerator {
 		EpisodeAnalysis e1 = episodes.get(0);
 		EpisodeAnalysis e2 = episodes.get(1);
 		
-		int sizeE1 = e1.stateSequence.size();
-		int sizeE2 = e2.stateSequence.size();
+		EpisodeAnalysis merged = new EpisodeAnalysis();
 		
-		EpisodeAnalysis mergedEpisodes = new EpisodeAnalysis();
-		
-		if(sizeE1 > sizeE2){
-			//vanilla check?
-			for(int i = 0; i < sizeE2; i++){
-				if(e1.stateSequence.get(i).equals(e2.stateSequence.get(i))){
-					mergedEpisodes.stateSequence.add(e1.stateSequence.get(i));
-					mergedEpisodes.actionSequence.add(e1.actionSequence.get(i));
-					mergedEpisodes.rewardSequence.add(e1.rewardSequence.get(i));
-				}
-			}
-		}else{
-			//vanilla check?
-			for(int i = 0; i < sizeE1; i++){
-				if(e1.stateSequence.get(i).equals(e2.stateSequence.get(i))){
-					mergedEpisodes.stateSequence.add(e1.stateSequence.get(i));
-					mergedEpisodes.actionSequence.add(e1.actionSequence.get(i));
-					mergedEpisodes.rewardSequence.add(e1.rewardSequence.get(i));
+		for(int i = 0; i < e1.stateSequence.size(); i++){
+			State s = e1.stateSequence.get(i);
+			
+			for(int j = 0; j < e2.stateSequence.size(); i++){
+				State p = e2.stateSequence.get(j);
+				
+				if(s.equals(p)){
+					merged.stateSequence.add(e1.stateSequence.get(i));
+					merged.actionSequence.add(e1.actionSequence.get(i));
+					merged.rewardSequence.add(e1.rewardSequence.get(i));
 				}
 			}
 		}
 		
 		//visualize it.
-		//environ.writeEpisode(mergedEpisodes, "policyBlocks");
-		System.out.println(mergedEpisodes.stateSequence);
+		environ.writeEpisode(merged, "policyBlocks");
+		System.out.println(merged.stateSequence);
 	}
 	
 }
