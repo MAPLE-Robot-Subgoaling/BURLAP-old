@@ -71,7 +71,7 @@ public class GroundedSingleAction {
 		}
 		
 		GroundedSingleAction go = (GroundedSingleAction)other;
-		if(this.action != go.action){
+		if(!this.action.actionName.equals(go.action.actionName)){
 			return false;
 		}
 		

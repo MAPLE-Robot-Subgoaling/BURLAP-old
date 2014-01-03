@@ -80,7 +80,9 @@ public abstract class OOMDPPlanner {
 		
 	}
 	
-	
+	public void setActions(List<Action> actions){
+		this.actions = actions;
+	}
 	
 	public TerminalFunction getTF(){
 		return tf;
@@ -88,6 +90,10 @@ public abstract class OOMDPPlanner {
 	
 	public RewardFunction getRF(){
 		return rf;
+	}
+	
+	public StateHashFactory getHashingFactory(){
+		return this.hashingFactory;
 	}
 	
 	public void setDebugCode(int code){

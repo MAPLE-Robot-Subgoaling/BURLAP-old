@@ -205,6 +205,10 @@ public class GridWorldDomain implements DomainGenerator {
 		}
 	}
 	
+	public void setObstacleInCell(int x, int y){
+		this.map[x][y] = 1;
+	}
+	
 	
 	/**
 	 * Returns the map being used for the domain
@@ -271,10 +275,10 @@ public class GridWorldDomain implements DomainGenerator {
 	}
 	
 	/**
-	 * WIll return a state object with a single agent object and n location objects
+	 * Will return a state object with a single agent object and n location objects
 	 * @param d the domain object that is used to specify the min/max dimensions
-	 * @param n the number of locaiton objects
-	 * @return a state object with a single agent object and a single location object
+	 * @param n the number of location objects
+	 * @return a state object with a single agent object and n location objects
 	 */
 	public static State getOneAgentNLocationState(Domain d, int n){
 		
@@ -325,7 +329,7 @@ public class GridWorldDomain implements DomainGenerator {
 	
 		GridWorldDomain gwdg = new GridWorldDomain(11, 11);
 		gwdg.setMapToFourRooms();
-		//gwdg.setProbSucceedTransitionDynamics(0.75);
+		gwdg.setProbSucceedTransitionDynamics(0.75);
 		
 		Domain d = gwdg.generateDomain();
 		

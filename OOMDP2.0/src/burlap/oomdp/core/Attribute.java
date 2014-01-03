@@ -119,6 +119,24 @@ public class Attribute {
 		
 	}
 	
+	
+	/**
+	 * Will create a new Attribute object with the same configuration and name as this one.
+	 * @param newDomain the domain to which the new attribute should be attached
+	 * @return the new attribute object
+	 */
+	public Attribute copy(Domain newDomain){
+		Attribute nd = new Attribute(newDomain, name, type);
+		nd.lowerLim = this.lowerLim;
+		nd.upperLim = this.upperLim;
+		nd.discValues = new ArrayList<String>(discValues);
+		nd.discValuesHash = new HashMap<String, Integer>(discValuesHash);
+		nd.hidden = this.hidden;
+		
+		
+		return nd;
+	}
+	
 	public void setLims(double lower, double upper){
 		this.lowerLim = lower;
 		this.upperLim = upper;
@@ -139,7 +157,19 @@ public class Attribute {
 		this.discValues = new ArrayList <String> (vals);
 		this.discValuesHash = new HashMap<String, Integer>();
 		for(int i = 0; i < discValues.size(); i++){
-			this.discValuesHash.put(vals.get(i), new Integer(i));
+			this.discValuesHash.put(vals.get(i), i);
+		}
+		
+		//set range
+		this.lowerLim = 0.0;
+		this.upperLim = discValues.size()-1;
+	}
+	
+	public void setDiscValues(String [] vals){
+		this.discValues = Arrays.asList(vals);
+		this.discValuesHash = new HashMap<String, Integer>();
+		for(int i = 0; i < discValues.size(); i++){
+			this.discValuesHash.put(discValues.get(i), i);
 		}
 		
 		//set range

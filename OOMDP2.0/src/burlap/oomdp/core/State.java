@@ -175,6 +175,21 @@ public class State {
 	}
 	
 	
+	public void renameObject(String originalName, String newName){
+		ObjectInstance o = objectMap.get(originalName);
+		o.setName(newName);
+		objectMap.remove(originalName);
+		objectMap.put(newName, o);
+	}
+	
+	public void renameObject(ObjectInstance o, String newName){
+		String originalName = o.getName();
+		o.setName(newName);
+		objectMap.remove(originalName);
+		objectMap.put(newName, o);
+	}
+	
+	
 	/**
 	 * This method computes a matching from objects in the receiver to value-identical objects in the parameter state so. The matching
 	 * is returned as a map from the object names in the receiving state to the matched objects in state so. If
@@ -748,6 +763,15 @@ public class State {
 		return res;
 	}
 	
+	
+	/**
+	 * Iterates through combinations. 
+	 * Modified code from: http://compprog.wordpress.com/tag/generating-combinations/
+	 * @param comb the last combination of elements selected
+	 * @param k number of elements in any combination (n choose k)
+	 * @param n number of possible elements (n choose k)
+	 * @return 0 when there are no more combinations; 1 when a new combination is generated
+	 */
 	private int nextComb(int [] comb, int k, int n){
 		
 		int i = k-1;

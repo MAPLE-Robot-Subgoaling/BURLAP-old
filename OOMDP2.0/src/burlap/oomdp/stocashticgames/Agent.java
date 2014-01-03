@@ -26,6 +26,10 @@ public abstract class Agent {
 		this.internalRewardFunction = jr;
 	}
 	
+	public JointReward getInternalRewardFunction() {
+		return this.internalRewardFunction;
+	}
+	
 	
 	public void joinWorld(World w, AgentType as){
 		agentType = as;

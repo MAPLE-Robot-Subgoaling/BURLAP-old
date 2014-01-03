@@ -12,6 +12,7 @@ import burlap.behavior.singleagent.learning.actorcritic.Actor;
 import burlap.behavior.singleagent.learning.actorcritic.CritiqueResult;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
+import burlap.datastructures.BoltzmannDistribution;
 import burlap.debugtools.RandomFactory;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.State;
@@ -27,7 +28,6 @@ public class BoltzmannActor extends Actor {
 	
 	protected Map<StateHashTuple, PolicyNode>		preferences;
 	
-	protected Random								rand;
 	
 	protected boolean								containsParameterizedActions = false;
 	
@@ -39,7 +39,6 @@ public class BoltzmannActor extends Actor {
 		
 		this.preferences = new HashMap<StateHashTuple, BoltzmannActor.PolicyNode>();
 		
-		this.rand = RandomFactory.getMapped(0);
 		
 		for(Action a : actions){
 			if(a.getParameterClasses().length > 0){
@@ -54,15 +53,7 @@ public class BoltzmannActor extends Actor {
 	public void updateFromCritqique(CritiqueResult critqiue) {
 		
 		StateHashTuple sh = this.hashingFactory.hashState(critqiue.getS());
-		PolicyNode node = this.preferences.get(sh);
-		if(node == null){
-			List <GroundedAction> gas = sh.s.getAllGroundedActionsFor(this.actions);
-			node = new PolicyNode(sh);
-			for(GroundedAction ga : gas){
-				node.addPreference(new ActionPreference(ga, 0.0));
-			}
-			this.preferences.put(sh, node);
-		}
+		PolicyNode node = this.getNode(sh);
 		
 		ActionPreference pref = this.getMatchingPreference(sh, critqiue.getA(), node);
 		pref.preference += this.learningRate * critqiue.getCritique();
@@ -89,39 +80,21 @@ public class BoltzmannActor extends Actor {
 	@Override
 	public List<ActionProb> getActionDistributionForState(State s) {
 		
-		List <GroundedAction> gas = s.getAllGroundedActionsFor(this.actions);
-		
 		StateHashTuple sh = this.hashingFactory.hashState(s);
-		PolicyNode node = this.preferences.get(sh);
-		if(node == null){
-			node = new PolicyNode(sh);
-			for(GroundedAction ga : gas){
-				node.addPreference(new ActionPreference(ga, 0.0));
-			}
-			this.preferences.put(sh, node);
-		}
+		PolicyNode node = this.getNode(sh);
 		
-		List <ActionProb> probs = new ArrayList<ActionProb>(gas.size());
-		double [] prefs = new double[gas.size()];
+		double [] prefs = new double[node.preferences.size()];
 		for(int i = 0; i < node.preferences.size(); i++){
 			prefs[i] = node.preferences.get(i).preference;
 		}
-		double max = this.max(prefs);
-		double [] translatedP = this.getTranslatedPrefs(prefs, max);
-		double sumexp = 0.;
-		for(int i = 0; i < translatedP.length; i++){
-			sumexp += Math.exp(translatedP[i]);
-		}
-		double loggedSumExp = Math.log(sumexp);
-		double shift = max + loggedSumExp;
 		
-		for(int i = 0; i < prefs.length; i++){
-			double p = Math.exp(prefs[i] - shift);
-			if(Double.isNaN(p)){
-				throw new RuntimeErrorException(new Error("Probability in Boltzmann policy distribution is NaN"));
-			}
+		BoltzmannDistribution bd = new BoltzmannDistribution(prefs);
+		double [] probsArray = bd.getProbabilities();
+		
+		List <ActionProb> probs = new ArrayList<ActionProb>(probsArray.length);
+		for(int i = 0; i < probsArray.length; i++){
 			ActionPreference ap = node.preferences.get(i);
-			probs.add(new ActionProb(ap.ga, p));
+			probs.add(new ActionProb(ap.ga, probsArray[i]));
 		}
 		
 		if(this.containsParameterizedActions){
@@ -145,6 +118,23 @@ public class BoltzmannActor extends Actor {
 		
 		
 		return probs;
+	}
+	
+	protected PolicyNode getNode(StateHashTuple sh){
+		
+		List <GroundedAction> gas = sh.s.getAllGroundedActionsFor(this.actions);
+		
+		PolicyNode node = this.preferences.get(sh);
+		if(node == null){
+			node = new PolicyNode(sh);
+			for(GroundedAction ga : gas){
+				node.addPreference(new ActionPreference(ga, 0.0));
+			}
+			this.preferences.put(sh, node);
+		}
+		
+		return node;
+		
 	}
 
 	@Override
@@ -183,22 +173,7 @@ public class BoltzmannActor extends Actor {
 	
 	
 	
-	protected double [] getTranslatedPrefs(double [] prefs, double c){
-		double [] translated = new double[prefs.length];
-		for(int i = 0; i < prefs.length; i++){
-			translated[i] = prefs[i] - c;
-		}
-		
-		return translated;
-	}
 	
-	protected double max(double [] darray){
-		double max = Double.NEGATIVE_INFINITY;
-		for(double d : darray){
-			max = Math.max(max, d);
-		}
-		return max;
-	}
 	
 	
 	
