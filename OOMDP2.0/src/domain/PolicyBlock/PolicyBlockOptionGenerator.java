@@ -54,9 +54,13 @@ public class PolicyBlockOptionGenerator {
 					State p = e1.stateSequence.get(j);
 					
 					if(s.equals(p)){
+						if(e0.actionSequence.size() <= i){
+							break;
+						}else{
 						merged.stateSequence.add(e0.stateSequence.get(i));
 						merged.actionSequence.add(e0.actionSequence.get(i));
 						merged.rewardSequence.add(e0.rewardSequence.get(i));
+						}
 					}
 				}
 			}
@@ -68,20 +72,29 @@ public class PolicyBlockOptionGenerator {
 					State p = e0.stateSequence.get(j);
 					
 					if(s.equals(p)){
+						if(e1.actionSequence.size() <= i){
+							break;
+						}else{
 						merged.stateSequence.add(e1.stateSequence.get(i));
 						merged.actionSequence.add(e1.actionSequence.get(i));
 						merged.rewardSequence.add(e1.rewardSequence.get(i));
+						}
 					}
 				}
 			}
 			
 		}
 		
+		System.out.println("\nMerging Done\n");
+		
+		for(int i = 0; i < merged.actionSequence.size(); i++){
+			System.out.println("\t" + merged.actionSequence.get(i));
+		}
 		
 		
 		//visualize it.
-		environ.writeEpisode(merged, "policyBlocks");
-		System.out.println(merged.stateSequence);
+		environ.writeEpisode(merged, "policyBlocks/");
+		
 	}
 	
 }

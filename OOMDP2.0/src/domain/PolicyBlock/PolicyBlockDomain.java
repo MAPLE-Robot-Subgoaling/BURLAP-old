@@ -107,7 +107,7 @@ public class PolicyBlockDomain {
 	}
 	
 	public void writeEpisode(EpisodeAnalysis obj, String output){
-		int i = 100;
+		int i = 500;
 		obj.writeToFile(String.format("%se%03d", output, i), sp); //record the episode
 	}
 	
