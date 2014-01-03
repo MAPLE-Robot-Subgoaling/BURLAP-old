@@ -15,6 +15,15 @@ import burlap.behavior.singleagent.planning.StateConditionTest;
 import burlap.behavior.singleagent.planning.deterministic.TFGoalCondition;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 
+import jxl.*;
+import jxl.write.*;
+import jxl.write.Number;
+import jxl.write.biff.RowsExceededException;
+import jxl.read.biff.BiffException;
+
+import java.io.File;
+import java.io.IOException;
+
 public class TestBehavior {
 	
 	GridWorldDomain				gwdg;
@@ -26,6 +35,7 @@ public class TestBehavior {
 	State						initialState;
 	DiscreteStateHashFactory	hashingFactory;
 	
+	Excel excelSheet;
 	
 	/**
 	 * @param args
@@ -40,11 +50,6 @@ public class TestBehavior {
 		//create the domain
 		gwdg = new GridWorldDomain(12, 12);
 		gwdg.makeEmptyMap();
-		
-//		gwdg.horizontalWall(0, 11, 0);
-//		gwdg.horizontalWall(0, 11, 11);
-//		gwdg.verticalWall(0, 11, 0);
-//		gwdg.verticalWall(0, 11, 11);
 		
 		gwdg.horizontalWall(0, 2, 5);
 		gwdg.horizontalWall(4, 5, 5);
@@ -70,7 +75,11 @@ public class TestBehavior {
 		//set up the state hashing system
 		hashingFactory = new DiscreteStateHashFactory();
 		hashingFactory.setAttributesForClass(GridWorldDomain.CLASSAGENT, 
-					domain.getObjectClass(GridWorldDomain.CLASSAGENT).attributeList); 
+					domain.getObjectClass(GridWorldDomain.CLASSAGENT).attributeList);
+		
+		
+		
+		excelSheet = new Excel("C:/Users/Michael/Desktop/data.xls");
 	}
 	
 	public void visualize(String outputPath){
@@ -92,8 +101,13 @@ public class TestBehavior {
 			EpisodeAnalysis ea = agent.runLearningEpisodeFrom(initialState); //run learning episode
 			ea.writeToFile(String.format("%se%03d", outputPath, i), sp); //record episode to a file
 			System.out.println(i + ": " + ea.numTimeSteps()); //print the performance of this episode
+			
+			// Records the data from each episode
+			excelSheet.recordData(i, ea.numTimeSteps());
 		}
 		
+		// Writes the data to the excel file and Closes the File
+		excelSheet.close();
 	}
 
 }
