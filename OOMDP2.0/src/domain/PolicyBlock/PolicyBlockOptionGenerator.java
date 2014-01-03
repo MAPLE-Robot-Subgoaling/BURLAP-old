@@ -41,24 +41,43 @@ public class PolicyBlockOptionGenerator {
 	public void merge(){
 		this.episodes = environ.episodes;
 		
-		EpisodeAnalysis e1 = episodes.get(0);
-		EpisodeAnalysis e2 = episodes.get(1);
+		EpisodeAnalysis e0 = episodes.get(0);
+		EpisodeAnalysis e1 = episodes.get(1);
 		
 		EpisodeAnalysis merged = new EpisodeAnalysis();
 		
-		for(int i = 0; i < e1.stateSequence.size(); i++){
-			State s = e1.stateSequence.get(i);
-			
-			for(int j = 0; j < e2.stateSequence.size(); i++){
-				State p = e2.stateSequence.get(j);
+		if(episodes.get(0).actionSequence.size() <= episodes.get(1).actionSequence.size()){
+			for(int i = 0; i < e0.stateSequence.size(); i++){
+				State s = e0.stateSequence.get(i);
 				
-				if(s.equals(p)){
-					merged.stateSequence.add(e1.stateSequence.get(i));
-					merged.actionSequence.add(e1.actionSequence.get(i));
-					merged.rewardSequence.add(e1.rewardSequence.get(i));
+				for(int j = 0; j < e0.stateSequence.size(); i++){
+					State p = e1.stateSequence.get(j);
+					
+					if(s.equals(p)){
+						merged.stateSequence.add(e0.stateSequence.get(i));
+						merged.actionSequence.add(e0.actionSequence.get(i));
+						merged.rewardSequence.add(e0.rewardSequence.get(i));
+					}
 				}
 			}
+		}else{
+			for(int i = 0; i < e1.stateSequence.size(); i++){
+				State s = e1.stateSequence.get(i);
+				
+				for(int j = 0; j < e1.stateSequence.size(); i++){
+					State p = e0.stateSequence.get(j);
+					
+					if(s.equals(p)){
+						merged.stateSequence.add(e1.stateSequence.get(i));
+						merged.actionSequence.add(e1.actionSequence.get(i));
+						merged.rewardSequence.add(e1.rewardSequence.get(i));
+					}
+				}
+			}
+			
 		}
+		
+		
 		
 		//visualize it.
 		environ.writeEpisode(merged, "policyBlocks");

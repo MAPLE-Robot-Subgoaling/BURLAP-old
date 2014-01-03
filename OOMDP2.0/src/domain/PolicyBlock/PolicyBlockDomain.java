@@ -129,7 +129,7 @@ public class PolicyBlockDomain {
 		
 		episodes.add(one);
 		one.writeToFile(String.format("%se%03d", output, i), sp); //record the episode
-		System.out.println("Goal 10-10 : " + one.numTimeSteps()); //print the performance of the episode
+		System.out.println("0) Goal 10-10 : " + one.numTimeSteps()); //print the performance of the episode
 		
 		i++;
 		
@@ -140,7 +140,7 @@ public class PolicyBlockDomain {
 		
 		episodes.add(two);
 		two.writeToFile(String.format("%se%03d", output, i), sp); //record the episode
-		System.out.println("Goal 10-8 : " + two.numTimeSteps()); //print the performance of the episode
+		System.out.println("1) Goal 10-8 : " + two.numTimeSteps()); //print the performance of the episode
 	}
 	
 	public void computePolicy(String str){
