@@ -1,5 +1,10 @@
 package domain.PolicyBlock;
 
+/**
+ * PolicyBlockDomain()
+ * Just to generate policies of four rooms for the option generator.
+ */
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -83,15 +88,17 @@ public class PolicyBlockDomain {
 		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, domain, sp, output);
 	}
 	
+	//sets up the agent's inital position
 	public void setAgent(int x, int y){
 		GridWorldDomain.setAgent(initialState, x, y);
 	}
 	
+	//sets up the agent's final position
 	public void setGoal(int x, int y){
 		GridWorldDomain.setLocation(initialState, 0, x, y);
 	}
 	
-	//Learning Algorithm
+	//Learning Algorithm - Q-learning
 	public void QLearn(String output){
 		if(!output.endsWith("/")){
 			output = output + "/";
@@ -106,43 +113,56 @@ public class PolicyBlockDomain {
 		}
 	}
 	
+	//Write the episode to the file
 	public void writeEpisode(EpisodeAnalysis obj, String output){
 		int i = 500;
 		obj.writeToFile(String.format("%se%03d", output, i), sp); //record the episode
 	}
 	
+	//called from OptionGenerator
+	/*
+	 * This is the main thing you should worry about. Here is where the two policies are generated.
+	 */
 	public void createEpisodes(String output){
 		
+		//setup the filepath
 		if(!output.endsWith("/")){
 			output = output + "/";
 		}
 		
 		int i = 0;
+		
+		//declarations
 		LearningAgent agent = new QLearning(domain, rf, tf, 0.99, hashFactory, 0., 0.9); //create the QLearning agent
 		EpisodeAnalysis one = new EpisodeAnalysis();
 		EpisodeAnalysis two = new EpisodeAnalysis();
 		
+		//for the first episode - keeps overwriting the episode 100 times (you may not get the most optimal one)
 		setGoal(10, 10);
 		for(int j = 0; j < 100; j++){
 			one = agent.runLearningEpisodeFrom(initialState); //run the episode
 		}
 		
+		//saves the episode to a file
 		episodes.add(one);
 		one.writeToFile(String.format("%se%03d", output, i), sp); //record the episode
 		System.out.println("0) Goal 10-10 : " + one.numTimeSteps()); //print the performance of the episode
 		
 		i++;
 		
+		//for the second episode
 		setGoal(10, 8);
 		for(int j = 0; j < 100; j++){
 			two = agent.runLearningEpisodeFrom(initialState); //run the episode
 		}
 		
+		//saves the episode to a file
 		episodes.add(two);
 		two.writeToFile(String.format("%se%03d", output, i), sp); //record the episode
 		System.out.println("1) Goal 10-8 : " + two.numTimeSteps()); //print the performance of the episode
 	}
 	
+	//policy computer - for later stuff
 	public void computePolicy(String str){
 		planner = new ValueIteration(domain, rf, tf, DISCOUNTFACTOR, hashFactory, 0.001, 100);
 		Policy p = new GreedyQPolicy((QComputablePlanner)planner);
