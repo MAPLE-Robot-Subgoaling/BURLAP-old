@@ -53,6 +53,8 @@ public class PolicyBlockOptionGenerator {
 				for(int j = 0; j < e0.stateSequence.size(); i++){
 					State p = e1.stateSequence.get(j);
 					
+					System.out.println("\t" + i + ") " + s.equals(p));
+					
 					if(s.equals(p)){
 						if(e0.actionSequence.size() <= i){
 							break;
@@ -70,6 +72,7 @@ public class PolicyBlockOptionGenerator {
 				
 				for(int j = 0; j < e1.stateSequence.size(); i++){
 					State p = e0.stateSequence.get(j);
+					System.out.println("\t" + i + ") " + s.equals(p));
 					
 					if(s.equals(p)){
 						if(e1.actionSequence.size() <= i){
