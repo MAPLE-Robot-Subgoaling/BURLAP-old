@@ -33,5 +33,4 @@ public class LocalSubgoalTF implements TerminalFunction {
 		return this.subgoalStateTest.satisfies(s);
 
 	}
-
 }

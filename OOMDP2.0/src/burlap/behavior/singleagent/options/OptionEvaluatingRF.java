@@ -23,7 +23,6 @@ public class OptionEvaluatingRF implements RewardFunction {
 		this.primitiveRF = rf;
 	}
 	
-
 	@Override
 	public double reward(State s, GroundedAction a, State sprime) {
 		

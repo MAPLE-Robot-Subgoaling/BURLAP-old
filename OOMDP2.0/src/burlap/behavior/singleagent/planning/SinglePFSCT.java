@@ -6,7 +6,6 @@ import burlap.oomdp.core.GroundedProp;
 import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
 
-
 public class SinglePFSCT implements StateConditionTest {
 
 	PropositionalFunction pf;

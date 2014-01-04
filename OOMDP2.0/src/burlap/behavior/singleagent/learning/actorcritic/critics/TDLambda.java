@@ -16,7 +16,6 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
-
 public class TDLambda implements Critic {
 
 	protected RewardFunction						rf;

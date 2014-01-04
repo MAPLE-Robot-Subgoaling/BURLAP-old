@@ -8,7 +8,6 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 
-
 /*
  * This class is just an option wrapper for a primitive action
  * This may be useful if a caller wants to universally support the option interface

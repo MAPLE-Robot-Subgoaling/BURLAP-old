@@ -8,8 +8,6 @@ import burlap.behavior.singleagent.planning.StateConditionTest;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
-
-
 /*
  * This Subgoal option's initiation states are defined by the set
  * of states for which its policy is defined

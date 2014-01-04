@@ -31,11 +31,6 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.visualizer.Visualizer;
 
-
-
-
-
-
 public class EpisodeSequenceVisualizer extends JFrame{
 
 private static final long serialVersionUID = 1L;

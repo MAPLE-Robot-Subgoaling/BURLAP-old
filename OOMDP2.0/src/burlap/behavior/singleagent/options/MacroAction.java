@@ -7,7 +7,6 @@ import burlap.behavior.singleagent.Policy.ActionProb;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
-
 public class MacroAction extends Option {
 
 	protected List<GroundedAction>				actionSequence;

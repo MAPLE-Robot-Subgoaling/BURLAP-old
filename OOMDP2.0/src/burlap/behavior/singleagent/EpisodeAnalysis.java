@@ -14,9 +14,6 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.common.NullAction;
 
-
-
-
 public class EpisodeAnalysis {
 
 	public List<State>									stateSequence;

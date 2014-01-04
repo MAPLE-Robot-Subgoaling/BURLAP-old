@@ -23,9 +23,6 @@ import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.common.NullAction;
 
-
-
-
 /*
  * Note: will the reward tracker work for 3-level hierarchical options with discounting?
  * I think not they will only work if the one step hierarchical action selection

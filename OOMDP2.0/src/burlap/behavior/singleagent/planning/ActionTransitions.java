@@ -10,7 +10,6 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.core.TransitionProbability;
 import burlap.oomdp.singleagent.GroundedAction;
 
-
 public class ActionTransitions {
 
 	public GroundedAction ga;

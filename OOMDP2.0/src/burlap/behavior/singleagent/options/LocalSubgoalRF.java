@@ -44,8 +44,6 @@ public class LocalSubgoalRF implements RewardFunction {
 		
 	}
 	
-	
-
 	@Override
 	public double reward(State s, GroundedAction a, State sprime) {
 		

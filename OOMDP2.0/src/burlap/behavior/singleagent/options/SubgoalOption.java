@@ -13,7 +13,6 @@ import burlap.behavior.singleagent.planning.StateConditionTestIterable;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
-
 public class SubgoalOption extends Option {
 
 	Policy						policy;

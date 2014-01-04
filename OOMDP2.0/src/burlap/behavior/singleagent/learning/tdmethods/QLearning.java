@@ -23,7 +23,6 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
-
 public class QLearning extends OOMDPPlanner implements QComputablePlanner, LearningAgent{
 
 	protected Map<StateHashTuple, QLearningStateNode>				qIndex;

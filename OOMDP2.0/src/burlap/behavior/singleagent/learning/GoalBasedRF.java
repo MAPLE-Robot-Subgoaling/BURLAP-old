@@ -39,5 +39,4 @@ public class GoalBasedRF implements RewardFunction {
 		
 		return 0.;
 	}
-
 }

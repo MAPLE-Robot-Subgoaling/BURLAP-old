@@ -7,7 +7,6 @@ import burlap.behavior.singleagent.QValue;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.singleagent.GroundedAction;
 
-
 public class QLearningStateNode {
 
 	public StateHashTuple			s;

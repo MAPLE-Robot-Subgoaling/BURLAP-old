@@ -34,7 +34,6 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
-
 public class GradientDescentSarsaLam extends OOMDPPlanner implements QComputablePlanner, LearningAgent {
 	
 	

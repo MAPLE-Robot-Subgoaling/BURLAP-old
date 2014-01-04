@@ -9,7 +9,6 @@ import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TransitionProbability;
 
-
 public class HashedTransitionProbability {
 
 	public StateHashTuple sh;

@@ -1,7 +1,6 @@
 package burlap.behavior.singleagent.planning;
 
 import burlap.oomdp.core.State;
-
 public interface StateConditionTestIterable extends StateConditionTest, Iterable<State> {
 	/*
 	 * This method is used to set the state context to enumerate over states.
