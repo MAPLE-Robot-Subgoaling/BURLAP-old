@@ -1,6 +1,5 @@
 package burlap.oomdp.core;
 
-
 public abstract class PropositionalFunction {
 
 	protected String					name;					//name of the propositional function
@@ -8,7 +7,6 @@ public abstract class PropositionalFunction {
 	protected String []					parameterClasses;		//list of class names for each parameter of the function
 	protected String []					parameterOrderGroup;	//setting two or more parameters to the same order group indicates that the function evaluate the same regardless of which specific object is set to each parameter
 	protected String					pfClass;				//optional; allows propositional functions to be grouped by class names
-	
 	
 	//parameterClasses is expected to be comma delimited with no unnecessary spaces
 	public PropositionalFunction(String name, Domain domain, String parameterClasses){

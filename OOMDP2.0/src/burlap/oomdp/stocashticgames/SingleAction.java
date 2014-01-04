@@ -5,7 +5,6 @@ import java.util.List;
 
 import burlap.oomdp.core.State;
 
-
 public abstract class SingleAction {
 
 	public String actionName;
@@ -13,7 +12,6 @@ public abstract class SingleAction {
 	public String [] parameterRenames;
 	
 	public SGDomain domain;
-	
 	
 	public abstract boolean isApplicableInState(State s, String actingAgent, String [] params);
 	

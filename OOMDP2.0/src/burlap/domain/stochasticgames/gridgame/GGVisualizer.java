@@ -14,8 +14,6 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.visualizer.ObjectPainter;
 import burlap.oomdp.visualizer.Visualizer;
 
-
-
 public class GGVisualizer {
 
 	public static Visualizer getVisualizer(int maxX, int maxY){

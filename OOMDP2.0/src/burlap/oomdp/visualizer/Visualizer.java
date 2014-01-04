@@ -11,11 +11,9 @@ import java.util.*;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 
-
 public class Visualizer extends Canvas{
 
 	private static final long serialVersionUID = 1L; //needed for Canvas extension
-
 	
 	private State							curState;					//the current state to be painted next
 	
@@ -24,8 +22,6 @@ public class Visualizer extends Canvas{
 	private Map <String, ObjectPainter>		specificObjectPainters;		//Map of painters that define how to paint specific objects; if an object it appears in both specific and general lists, the specific painter is used
 	
 	private Color							bgColor;					//the background color of the canvas
-	
-	
 	
 	public Visualizer(){
 		
@@ -36,7 +32,6 @@ public class Visualizer extends Canvas{
 		specificObjectPainters = new HashMap <String, ObjectPainter>();
 		
 		bgColor = Color.white;
-		
 	}
 	
 	public void setBGColor(Color c){
@@ -101,7 +96,5 @@ public class Visualizer extends Canvas{
 			
 		}
 		
-	}
-	
-	
+	}	
 }

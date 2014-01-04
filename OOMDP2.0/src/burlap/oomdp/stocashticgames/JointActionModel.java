@@ -6,7 +6,6 @@ import java.util.List;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TransitionProbability;
 
-
 public abstract class JointActionModel {
 
 	public State performJointAction(State s, JointAction ja){

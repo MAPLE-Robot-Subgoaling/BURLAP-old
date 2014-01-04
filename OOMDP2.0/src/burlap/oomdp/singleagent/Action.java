@@ -7,8 +7,6 @@ import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TransitionProbability;
 
-
-
 public abstract class Action {
 
 	protected String					name;									//name of the action
@@ -16,11 +14,9 @@ public abstract class Action {
 	protected String []					parameterClasses = new String[0];		//list of class names for each parameter of the action
 	protected String []					parameterOrderGroup = new String[0];	//setting two or more parameters to the same order group indicates that the action will be same regardless of which specific object is set to each parameter
 	
-	
 	public Action(){
 		//should not be called directly, but may be useful for subclasses of Action
 	}
-	
 	
 	//parameterClasses is expected to be comma delimited with no unnecessary spaces
 	public Action(String name, Domain domain, String parameterClasses){

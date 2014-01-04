@@ -8,7 +8,6 @@ import burlap.oomdp.core.TransitionProbability;
 import burlap.oomdp.stocashticgames.JointAction;
 import burlap.oomdp.stocashticgames.JointActionModel;
 
-
 public class StaticRepeatedGameActionModel extends JointActionModel {
 
 	public StaticRepeatedGameActionModel() {
@@ -28,5 +27,4 @@ public class StaticRepeatedGameActionModel extends JointActionModel {
 	protected void actionHelper(State s, JointAction ja) {
 		//do nothing, the state simply repeats itself
 	}
-
 }

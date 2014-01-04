@@ -2,7 +2,6 @@ package burlap.oomdp.core;
 
 import java.util.*;
 
-
 public class ObjectInstance {
 	
 	private ObjectClass					obClass;			//object class to which this object belongs
@@ -12,8 +11,6 @@ public class ObjectInstance {
 	private LinkedList <String>			pseudoClass;		//list of pseudo classes that have been assigned from parameterization
 	
 	private double [] 					obsFeatureVec;		//double representation of feature vector for easy manipulation (e.g., kd-trees)
-	
-	
 	
 	public ObjectInstance(ObjectClass obClass){
 		

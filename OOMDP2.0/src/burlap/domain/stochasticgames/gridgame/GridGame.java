@@ -16,7 +16,6 @@ import burlap.oomdp.stocashticgames.common.UniversalSingleAction;
 import burlap.oomdp.stocashticgames.explorers.SGVisualExplorer;
 import burlap.oomdp.visualizer.Visualizer;
 
-
 public class GridGame implements DomainGenerator {
 
 	public static final String				ATTX = "x";

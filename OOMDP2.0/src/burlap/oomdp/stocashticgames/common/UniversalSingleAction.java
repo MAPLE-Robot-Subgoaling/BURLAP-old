@@ -22,5 +22,4 @@ public class UniversalSingleAction extends SingleAction {
 	public boolean isApplicableInState(State s, String actingAgent, String [] params) {
 		return true;
 	}
-
 }

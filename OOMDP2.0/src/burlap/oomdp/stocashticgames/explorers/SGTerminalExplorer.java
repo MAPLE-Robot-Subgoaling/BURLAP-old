@@ -14,7 +14,6 @@ import burlap.oomdp.stocashticgames.JointReward;
 import burlap.oomdp.stocashticgames.SGDomain;
 import burlap.oomdp.stocashticgames.SingleAction;
 
-
 public class SGTerminalExplorer {
 
 	protected SGDomain					domain;
@@ -150,13 +149,11 @@ public class SGTerminalExplorer {
 			
 		}
 		
-		
 	}
 	
 	public void printState(State st){
 		
 		System.out.println(st.getStateDescription());
-		
-	}
 
+	}
 }

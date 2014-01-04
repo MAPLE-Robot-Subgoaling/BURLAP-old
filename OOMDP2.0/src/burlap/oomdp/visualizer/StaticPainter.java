@@ -9,8 +9,6 @@
  * defines how to do this
  */
 
-
-
 package burlap.oomdp.visualizer;
 
 import java.awt.Graphics2D;
@@ -18,10 +16,8 @@ import java.awt.Graphics2D;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.State;
 
-
 public interface StaticPainter {
-	
-	
+
 	/** 
 	 * @param g2 graphics context to which the static data should be painted
 	 * @param s the state to be painted

@@ -9,7 +9,4 @@ public class NullAbstractionNoCopy implements StateAbstraction{
 	public State abstraction(State s) {
 		return s;
 	}
-
-	
-
 }

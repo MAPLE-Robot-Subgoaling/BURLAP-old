@@ -16,7 +16,6 @@ public class GroundedAction {
 		this.init(a, p);
 	}
 	
-	
 	//may also take parameters as a single string that is comma delineated
 	public GroundedAction(Action a, String p){
 		
@@ -29,7 +28,6 @@ public class GroundedAction {
 		}
 		this.init(a, ps);
 	}
-	
 	
 	private void init(Action a, String [] p){
 		action = a;
@@ -45,7 +43,6 @@ public class GroundedAction {
 		return action.performAction(s, params);
 	}
 	
-
 	@Override
 	public String toString(){
 		StringBuffer buf = new StringBuffer();
@@ -56,7 +53,6 @@ public class GroundedAction {
 		
 		return buf.toString();
 	}
-	
 	
 	@Override
 	public boolean equals(Object other){

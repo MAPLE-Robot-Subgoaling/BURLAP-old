@@ -11,7 +11,6 @@ import burlap.oomdp.auxiliary.common.NullAbstraction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 
-
 public class World {
 
 	protected SGDomain							domain;
@@ -26,13 +25,10 @@ public class World {
 	protected SGStateGenerator					initialStateGenerator;
 	
 	protected StateAbstraction					abstractionForAgents;
-	
-	
+		
 	protected JointAction						lastJointAction;
 	
-	
 	protected int								debugId;
-	
 	
 	public World(SGDomain domain, JointActionModel jam, JointReward jr, TerminalFunction tf, SGStateGenerator sg){
 		this.init(domain, jam, jr, tf, sg, new NullAbstraction());

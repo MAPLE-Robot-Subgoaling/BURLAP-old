@@ -13,7 +13,6 @@ import burlap.oomdp.stocashticgames.AgentFactory;
 import burlap.oomdp.stocashticgames.World;
 import burlap.oomdp.stocashticgames.WorldGenerator;
 
-
 public class Tournament {
 
 	protected List<AgentFactory>			agents;
@@ -25,11 +24,7 @@ public class Tournament {
 	protected MatchSelector					selector;
 	protected WorldGenerator				worldGenerator;
 	
-	
-	
 	protected int							debugId = 25633;
-	
-	
 	
 	public Tournament(int maxStages, MatchSelector selector, WorldGenerator worldGenerator){
 		agents = new ArrayList<AgentFactory>();
@@ -39,7 +34,6 @@ public class Tournament {
 		this.worldGenerator = worldGenerator;
 		
 		this.numGames = 0;
-		
 	}
 	
 	public Tournament(int maxStages, int numGames, MatchSelector selector, WorldGenerator worldGenerator){
@@ -49,8 +43,7 @@ public class Tournament {
 		this.selector = selector;
 		this.worldGenerator = worldGenerator;
 		
-		this.numGames = numGames;
-		
+		this.numGames = numGames;	
 	}
 	
 	public Tournament(List <AgentFactory> agents, int maxStages, MatchSelector selector, WorldGenerator worldGenerator){

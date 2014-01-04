@@ -2,21 +2,17 @@ package burlap.oomdp.core;
 
 import burlap.oomdp.core.Attribute.AttributeType;
 
-
 public class Value {
 
 	private Attribute			attribute;		//defines the attribute kind of this value
 	private int					discVal;		//the value of the attribute if it is a discrete attribute
 	private double				realVal;		//the value of the attribute if it is a real value
 	
-	
-	
 	static public Value copyValueAttribute(Value v){
 		
 		return new Value(v.attribute);
 		
 	}
-	
 	
 	public Value(Attribute attribute){
 		

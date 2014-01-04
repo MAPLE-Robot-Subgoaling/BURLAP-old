@@ -15,8 +15,6 @@ public class SingleGoalPFRF implements RewardFunction {
 	double							goalReward;
 	double							nonGoalReward;
 	
-	
-	
 	public SingleGoalPFRF(PropositionalFunction pf){
 		this.pf = pf;
 		this.goalReward = 1.;
@@ -28,7 +26,6 @@ public class SingleGoalPFRF implements RewardFunction {
 		this.goalReward = goalReward;
 		this.nonGoalReward = nonGoalReward;
 	}
-	
 	
 	@Override
 	public double reward(State s, GroundedAction a, State sprime) {

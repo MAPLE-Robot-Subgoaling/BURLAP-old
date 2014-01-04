@@ -8,7 +8,6 @@ import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.Action;
 
-
 public class TerminalExplorer {
 	
 	private Domain					domain;

@@ -4,12 +4,8 @@
  * This kind of information is important for episode and goal-oriented MDPs
  */
 
-
 package burlap.oomdp.core;
 
-
 public interface TerminalFunction {
-	
 	public boolean isTerminal(State s);	
-	
 }

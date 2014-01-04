@@ -15,6 +15,4 @@ public interface DomainGenerator {
 	 * @return the newly instantiated Domain object.
 	 */
 	public Domain generateDomain();
-	
-	
 }

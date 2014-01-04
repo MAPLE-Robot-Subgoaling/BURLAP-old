@@ -11,5 +11,4 @@ public class MatchEntry {
 		this.agentType = at;
 		this.agentId = ai;
 	}
-
 }

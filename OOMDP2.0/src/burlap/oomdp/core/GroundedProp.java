@@ -1,6 +1,5 @@
 package burlap.oomdp.core;
 
-
 public class GroundedProp implements Cloneable{
 
 	public PropositionalFunction pf;

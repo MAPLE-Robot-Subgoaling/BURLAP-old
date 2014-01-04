@@ -7,12 +7,10 @@ import burlap.oomdp.stocashticgames.AgentType;
 import burlap.oomdp.stocashticgames.tournament.MatchEntry;
 import burlap.oomdp.stocashticgames.tournament.MatchSelector;
 
-
 public class AllPairWiseSameTypeMS implements MatchSelector {
 	
 	protected int n;
 	protected AgentType at;
-	
 	protected int p0;
 	protected int p1;
 	
@@ -52,5 +50,4 @@ public class AllPairWiseSameTypeMS implements MatchSelector {
 		p0 = 0;
 		p1 = 1;
 	}
-
 }

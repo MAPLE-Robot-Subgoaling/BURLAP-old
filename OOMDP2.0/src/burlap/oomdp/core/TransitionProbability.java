@@ -1,6 +1,5 @@
 package burlap.oomdp.core;
 
-
 public class TransitionProbability {
 
 	public State		s;

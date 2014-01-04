@@ -7,7 +7,6 @@ import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 
-
 public class SinglePFTF implements TerminalFunction {
 
 	PropositionalFunction			pf;
@@ -43,9 +42,7 @@ public class SinglePFTF implements TerminalFunction {
 					return true;
 				}
 			}
-		}
-		
+		}	
 		return false;
 	}
-
 }

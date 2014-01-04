@@ -4,7 +4,6 @@ import java.util.List;
 
 import burlap.oomdp.core.ObjectClass;
 
-
 public class AgentType {
 
 	public String						typeName;

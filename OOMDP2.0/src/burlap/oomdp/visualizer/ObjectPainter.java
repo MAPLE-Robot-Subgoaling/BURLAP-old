@@ -6,7 +6,6 @@ import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 
-
 public interface ObjectPainter {
 
 	/**
@@ -17,6 +16,4 @@ public interface ObjectPainter {
 	 * @param cHeight height of the canvas size
 	 */
 	public void paintObject(Graphics2D g2, State s, ObjectInstance ob, float cWidth, float cHeight);
-	
-	
 }

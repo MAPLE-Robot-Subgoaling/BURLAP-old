@@ -25,11 +25,9 @@ import burlap.oomdp.stocashticgames.SGDomain;
 import burlap.oomdp.stocashticgames.SingleAction;
 import burlap.oomdp.visualizer.Visualizer;
 
-
 public class SGVisualExplorer extends JFrame {
 
 	private static final long serialVersionUID = 1L;
-	
 	
 	private SGDomain								domain;
 	private JointActionModel						actionModel;

@@ -4,4 +4,5 @@ import burlap.oomdp.core.State;
 
 public interface StateGenerator {
 	public State generateState();
+	
 }

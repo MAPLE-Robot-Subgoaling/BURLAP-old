@@ -17,10 +17,7 @@ public class ConstantWorldGenerator implements WorldGenerator {
 	protected JointReward						jointRewardModel;
 	protected TerminalFunction					tf;
 	protected SGStateGenerator					initialStateGenerator;
-	
 	protected StateAbstraction					abstractionForAgents;
-	
-	
 	
 	public ConstantWorldGenerator(SGDomain domain, JointActionModel jam, JointReward jr, TerminalFunction tf, SGStateGenerator sg){
 		this.CWGInit(domain, jam, jr, tf, sg, new NullAbstraction());
@@ -39,10 +36,8 @@ public class ConstantWorldGenerator implements WorldGenerator {
 		this.abstractionForAgents = abstractionForAgents;
 	}
 	
-	
 	@Override
 	public World generateWorld() {
 		return new World(domain, worldModel, jointRewardModel, tf, initialStateGenerator, abstractionForAgents);
 	}
-
 }

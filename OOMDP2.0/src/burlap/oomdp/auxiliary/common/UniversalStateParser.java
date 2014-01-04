@@ -9,11 +9,9 @@ import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 
-
 public class UniversalStateParser implements StateParser {
 
 	protected Domain domain;
-	
 	
 	public UniversalStateParser(Domain domain){
 		this.domain = domain;
@@ -71,8 +69,6 @@ public class UniversalStateParser implements StateParser {
 			
 		}
 		
-		
 		return s;
 	}
-
 }

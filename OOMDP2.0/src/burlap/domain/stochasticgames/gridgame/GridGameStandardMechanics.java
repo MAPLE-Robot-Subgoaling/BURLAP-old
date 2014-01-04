@@ -16,13 +16,11 @@ import burlap.oomdp.stocashticgames.GroundedSingleAction;
 import burlap.oomdp.stocashticgames.JointAction;
 import burlap.oomdp.stocashticgames.JointActionModel;
 
-
 public class GridGameStandardMechanics extends JointActionModel {
 
 	Random 						rand;
 	Domain						domain;
 	double						pMoveThroughSWall;
-	
 	
 	public GridGameStandardMechanics(Domain d){
 		rand = RandomFactory.getMapped(0);
