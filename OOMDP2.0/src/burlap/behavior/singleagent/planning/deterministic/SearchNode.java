@@ -9,7 +9,6 @@ public class SearchNode {
 	public GroundedAction		generatingAction;
 	public SearchNode			backPointer;
 	
-	
 	public SearchNode(StateHashTuple s){
 		this.s = s;
 		this.generatingAction = null;

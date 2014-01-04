@@ -21,10 +21,8 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.common.UniformCostRF;
 
-
 public class DFS extends DeterministicPlanner {
 
-	
 	protected int				maxDepth;
 	protected boolean			maintainClosed;
 	protected boolean			optionsFirst;

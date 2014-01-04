@@ -25,14 +25,6 @@ public abstract class DeterministicPlanner extends OOMDPPlanner{
 	protected StateConditionTest						gc;
 	protected Map <StateHashTuple, GroundedAction>		internalPolicy;
 	
-	
-	
-	
-	
-	
-	
-	
-	
 	public void deterministicPlannerInit(Domain domain, RewardFunction rf, TerminalFunction tf, StateConditionTest gc, StateHashFactory hashingFactory){
 		
 		this.PlannerInit(domain, rf, tf, 1., hashingFactory); //goal condition doubles as termination function for detemrinistic planners 
@@ -41,8 +33,6 @@ public abstract class DeterministicPlanner extends OOMDPPlanner{
 	
 
 	}
-	
-
 	
 	public boolean cachedPlanForState(State s){
 		StateHashTuple sh = this.stateHash(s);

@@ -5,13 +5,11 @@ import java.util.List;
 import burlap.oomdp.core.State;
 import burlap.oomdp.stocashticgames.GroundedSingleAction;
 
-
 public abstract class Strategy {
 
 	public abstract GroundedSingleAction getAction(State s); //returns null when policy is undefined for s
 	public abstract List<SingleActionProb> getActionDistributionForState(State s); //returns null when policy is undefined for s
 	public abstract boolean isStochastic();
-	
 	
 	public class SingleActionProb{
 		public GroundedSingleAction ga;
@@ -21,7 +19,5 @@ public abstract class Strategy {
 			this.ga = ga;
 			this.pSelection = p;
 		}
-		
 	}
-
 }

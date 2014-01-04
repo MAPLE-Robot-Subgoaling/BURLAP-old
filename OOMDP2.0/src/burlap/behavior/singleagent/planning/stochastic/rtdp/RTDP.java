@@ -18,13 +18,11 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.RewardFunction;
 
-
 public class RTDP extends ValueFunctionPlanner {
 
 	protected Policy					rollOutPolicy;
 	protected int						numPasses;
 	protected int						maxDepth;
-	
 	
 	public RTDP(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, int numPasses, int maxDepth){
 		
@@ -35,9 +33,6 @@ public class RTDP extends ValueFunctionPlanner {
 		this.rollOutPolicy = new BoltzmannQPolicy(this, 0.1);
 		
 	}
-	
-	
-	
 	
 	public void setNumPasses(int p){
 		this.numPasses = p;

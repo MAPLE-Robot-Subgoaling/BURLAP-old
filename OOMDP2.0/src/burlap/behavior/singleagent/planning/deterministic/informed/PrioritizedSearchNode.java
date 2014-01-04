@@ -1,11 +1,9 @@
 package burlap.behavior.singleagent.planning.deterministic.informed;
 
 import java.util.Comparator;
-
 import burlap.behavior.singleagent.planning.deterministic.SearchNode;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.singleagent.GroundedAction;
-
 
 public class PrioritizedSearchNode extends SearchNode {
 

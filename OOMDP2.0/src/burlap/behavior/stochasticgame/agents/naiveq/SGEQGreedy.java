@@ -11,13 +11,11 @@ import burlap.oomdp.stocashticgames.AgentType;
 import burlap.oomdp.stocashticgames.GroundedSingleAction;
 import burlap.oomdp.stocashticgames.SingleAction;
 
-
 public class SGEQGreedy extends Strategy {
 
 	SGQLAgent		agent;
 	Random			rand;
 	double			e;
-	
 	
 	public SGEQGreedy(SGQLAgent a, double e) {
 		this.agent = a;
@@ -49,7 +47,6 @@ public class SGEQGreedy extends Strategy {
 			
 			
 		}
-		
 		
 		//otherwise select randomly
 		return gas.get(rand.nextInt(gas.size()));

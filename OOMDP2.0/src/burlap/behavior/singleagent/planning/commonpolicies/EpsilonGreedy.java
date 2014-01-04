@@ -17,7 +17,6 @@ import burlap.oomdp.singleagent.GroundedAction;
 
 
 public class EpsilonGreedy extends Policy implements PlannerDerivedPolicy{
-
 	protected QComputablePlanner		qplanner;
 	protected double					epsilon;
 	protected Random 					rand;

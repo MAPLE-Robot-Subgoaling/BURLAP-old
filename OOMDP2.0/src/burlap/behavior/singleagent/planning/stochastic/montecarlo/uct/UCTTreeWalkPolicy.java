@@ -11,8 +11,6 @@ import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
-
-
 /*
  * This policy is for use with UCT. Note that UCT can only guarantee the policy for the initial state of planning.
  * However, the policy from states that lie on the greedy path from the initial state are likely "okay" as well

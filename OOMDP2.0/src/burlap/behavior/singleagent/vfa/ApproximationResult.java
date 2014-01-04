@@ -8,12 +8,9 @@ public class ApproximationResult {
 	public List<StateFeature>		stateFeatures;
 	public List<FunctionWeight>		functionWeights;
 	
-	
 	public ApproximationResult(double predictedValue, List <StateFeature> stateFeatures, List <FunctionWeight> functionWeights) {
 		this.predictedValue = predictedValue;
 		this.stateFeatures = stateFeatures;
-		this.functionWeights = functionWeights;
-		
+		this.functionWeights = functionWeights;	
 	}
-
 }

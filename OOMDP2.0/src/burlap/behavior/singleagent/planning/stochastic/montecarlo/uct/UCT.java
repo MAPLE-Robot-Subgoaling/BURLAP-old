@@ -23,7 +23,6 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.RewardFunction;
 
-
 public class UCT extends OOMDPPlanner {
 
 	protected List<Map<StateHashTuple, UCTStateNode>> 			stateDepthIndex;
@@ -46,9 +45,7 @@ public class UCT extends OOMDPPlanner {
 	protected int												treeSize;
 	protected int												numVisits;
 	
-	protected Random											rand;
-	
-	
+	protected Random											rand;	
 	
 	public UCT(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, int horizon, int nRollouts, int explorationBias){
 		

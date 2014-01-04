@@ -8,7 +8,6 @@ import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 
-
 public class UCTStateNode {
 
 	public StateHashTuple			state;
@@ -31,9 +30,7 @@ public class UCTStateNode {
 				UCTActionNode an = constructor.generate(ga);
 				actionNodes.add(an);
 			}
-		}
-		
-		
+		}	
 		
 	}
 	

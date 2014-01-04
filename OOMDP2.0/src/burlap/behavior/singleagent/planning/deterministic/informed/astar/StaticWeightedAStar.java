@@ -2,7 +2,6 @@ package burlap.behavior.singleagent.planning.deterministic.informed.astar;
 
 import java.util.List;
 import java.util.Map;
-
 import burlap.behavior.singleagent.planning.StateConditionTest;
 import burlap.behavior.singleagent.planning.deterministic.informed.Heuristic;
 import burlap.behavior.singleagent.planning.deterministic.informed.PrioritizedSearchNode;
@@ -13,7 +12,6 @@ import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
-
 
 public class StaticWeightedAStar extends AStar {
 

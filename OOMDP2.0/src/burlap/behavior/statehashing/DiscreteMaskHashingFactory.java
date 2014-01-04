@@ -11,8 +11,6 @@ import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.Value;
 
-
-
 /**
  * Like the DiscreteStateHashFactory (which this class extends) this class computes unique hash codes for states
  * based on attributes that the client specifies to use. However, unlike the superclass, this class also performs

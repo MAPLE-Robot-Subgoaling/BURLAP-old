@@ -1,17 +1,14 @@
 package burlap.domain.singleagent.gridworld;
 
 import java.util.List;
-
 import burlap.oomdp.auxiliary.StateParser;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 
-
 public class GridWorldStateParser implements StateParser {
 
 	protected Domain				domain;
-	
 	
 	public GridWorldStateParser(int width, int height){
 		GridWorldDomain generator = new GridWorldDomain(width, height);
@@ -64,7 +61,6 @@ public class GridWorldStateParser implements StateParser {
 			GridWorldDomain.setLocation(s, i-1, lx, ly);
 			
 		}
-		
 		
 		return s;
 	}

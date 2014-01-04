@@ -2,15 +2,12 @@ package burlap.behavior.singleagent.vfa;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import burlap.oomdp.singleagent.GroundedAction;
-
 
 public class ActionFeaturesQuery {
 
 	public GroundedAction		queryAction;
 	public List<StateFeature>	features;
-	
 	
 	public ActionFeaturesQuery(GroundedAction queryAction) {
 		this.queryAction = queryAction;
@@ -32,7 +29,6 @@ public class ActionFeaturesQuery {
 		}
 		return false;
 	}
-	
 	
 	public static ActionFeaturesQuery getActionFeaturesForQueryFromSet(GroundedAction query, List <ActionFeaturesQuery> actionFeaturesSets){
 		for(ActionFeaturesQuery afq : actionFeaturesSets){

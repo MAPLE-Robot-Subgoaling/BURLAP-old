@@ -4,7 +4,6 @@ import java.util.List;
 
 import burlap.oomdp.singleagent.GroundedAction;
 
-
 public class ActionApproximationResult {
 
 	public GroundedAction			ga;
@@ -15,15 +14,12 @@ public class ActionApproximationResult {
 		this.approximationResult = approximationResult;
 	}
 	
-	
 	public static ActionApproximationResult extractApproximationForAction(List<ActionApproximationResult> approximations, GroundedAction ga){
 		for(ActionApproximationResult aar : approximations){
 			if(aar.ga.equals(ga)){
 				return aar;
 			}
-		}
-		
+		}	
 		return null;
 	}
-
 }

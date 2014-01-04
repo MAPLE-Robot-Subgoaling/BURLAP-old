@@ -14,12 +14,8 @@ import burlap.oomdp.core.Domain;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
-
 public class WeightedGreedy extends AStar {
-	
-	
 	protected double costWeight;
-	
 
 	public WeightedGreedy(Domain domain, RewardFunction rf, StateConditionTest gc, StateHashFactory hashingFactory, Heuristic heuristic, double costWeight) {
 		super(domain, rf, gc, hashingFactory, heuristic);

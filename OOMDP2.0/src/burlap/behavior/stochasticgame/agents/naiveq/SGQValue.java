@@ -2,6 +2,7 @@ package burlap.behavior.stochasticgame.agents.naiveq;
 
 import burlap.oomdp.stocashticgames.GroundedSingleAction;
 
+
 public class SGQValue {
 
 	public GroundedSingleAction			gsa;
@@ -16,5 +17,4 @@ public class SGQValue {
 		this.gsa = gsa;
 		this.q = q;
 	}
-
 }

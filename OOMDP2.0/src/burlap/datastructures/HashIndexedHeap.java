@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 //all methods are implemented for max heap; however, setting the max heap boolean to false causes the comparisons of all objects in this
 //method to flip integer sign, thereby making it a min heap
 
@@ -17,11 +16,6 @@ public class HashIndexedHeap <T> {
 	protected Map<T, Integer>				arrayIndexMap;
 	protected boolean						maxHeap;
 	protected Comparator<T>					priorityCompare;
-	
-	
-	
-	
-	
 	
 	public HashIndexedHeap(Comparator<T> pcompare){
 		nodesArray = new ArrayList<T>();

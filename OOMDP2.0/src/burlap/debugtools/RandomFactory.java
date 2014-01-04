@@ -2,16 +2,12 @@ package burlap.debugtools;
 
 import java.util.*;
 
-
-
-
 //Random factory that allows you to logically group various random generators
 //This is useful for if you have many classes that use stochashtic processes
 //but you want to have a fixed sequence across process execution for debug purposes.
 //to synchronize, just seed either a mapped random generator or the default in the
 //main method and use the get method to retrieve the random object for all other
 //classes. To break the fixed sequence, just construct it without a seed
-
 
 public class RandomFactory {
 
@@ -20,7 +16,6 @@ public class RandomFactory {
 	Random defaultRandom_;
 	Map <Integer, Random> intMapped;
 	Map <String, Random> stringMapped;
-	
 	
 	public static void main(String []args){
 		

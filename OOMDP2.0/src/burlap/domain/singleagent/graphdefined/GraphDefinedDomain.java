@@ -28,13 +28,9 @@ public class GraphDefinedDomain implements DomainGenerator {
 	public static final String												CLASSAGENT = "agent";
 	public static final String												BASEACTIONNAME = "action";
 	
-	
-	
 	protected int															numNodes;
 	protected int															maxActions;
 	protected Map<Integer, Map<Integer, Set<NodeTransitionProbibility>>>	transitionDynamics;
-	
-
 	
 	public GraphDefinedDomain(int numNodes) {
 		this.numNodes = numNodes;
@@ -46,7 +42,6 @@ public class GraphDefinedDomain implements DomainGenerator {
 		}
 		
 	}
-	
 	
 	public void setTransition(int srcNode, int action, int tNode, double p){
 		
@@ -64,7 +59,6 @@ public class GraphDefinedDomain implements DomainGenerator {
 		nts.add(ntp);
 
 	}
-	
 
 	@Override
 	public Domain generateDomain() {
@@ -84,8 +78,6 @@ public class GraphDefinedDomain implements DomainGenerator {
 		
 		return domain;
 	}
-	
-	
 	
 	public static State getState(Domain d, int sNode){
 		State s = new State();

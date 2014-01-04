@@ -8,7 +8,6 @@ public class DPrint {
 	static Map<Integer, Boolean> 	debugCodes = new HashMap<Integer, Boolean>();
 	static boolean					universalPrint = true;
 	
-	
 	public static void toggleUniversal(boolean mode){
 		universalPrint = mode;
 	}
@@ -50,5 +49,4 @@ public class DPrint {
 		}
 		return mb;
 	}
-
 }

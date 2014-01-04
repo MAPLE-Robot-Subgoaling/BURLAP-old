@@ -6,7 +6,6 @@ import burlap.oomdp.core.State;
 
 public class MultiStatePrePlanner {
 
-	
 	public static void runPlannerForAllInitStates(OOMDPPlanner planner, StateConditionTestIterable initialStates){
 		for(State s : initialStates){
 			planner.planFromState(s);

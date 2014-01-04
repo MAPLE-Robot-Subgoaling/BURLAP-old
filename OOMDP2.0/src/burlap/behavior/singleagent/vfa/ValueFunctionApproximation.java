@@ -13,7 +13,4 @@ public interface ValueFunctionApproximation {
 	public List<ActionApproximationResult> getStateActionValues(State s, List <GroundedAction> gas);
 	
 	public WeightGradient getWeightGradient(ApproximationResult approximationResult);
-	
-	
-	
 }

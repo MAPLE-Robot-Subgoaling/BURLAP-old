@@ -20,7 +20,6 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
-
 public class DynamicWeightedAStar extends AStar {
 
 	protected double										epsilon;

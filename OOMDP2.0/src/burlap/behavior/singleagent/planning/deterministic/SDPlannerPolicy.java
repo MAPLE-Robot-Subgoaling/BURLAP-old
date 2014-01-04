@@ -20,7 +20,6 @@ import burlap.oomdp.singleagent.GroundedAction;
  * @author James MacGlashan
  */
 
-
 public class SDPlannerPolicy extends Policy implements PlannerDerivedPolicy{
 
 	protected DeterministicPlanner dp;

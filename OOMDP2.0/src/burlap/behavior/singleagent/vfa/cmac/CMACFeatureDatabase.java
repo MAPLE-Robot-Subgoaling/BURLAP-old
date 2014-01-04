@@ -22,7 +22,6 @@ import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
-
 public class CMACFeatureDatabase implements FeatureDatabase {
 
 	public enum TilingArrangement{

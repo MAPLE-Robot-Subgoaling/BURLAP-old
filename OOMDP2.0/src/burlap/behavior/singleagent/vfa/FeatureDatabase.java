@@ -16,8 +16,6 @@ public interface FeatureDatabase {
 	 */
 	public List<StateFeature> getStateFeatures(State s);
 	
-	
-	
 	/**
 	 * Returns non-zero action features for all of provided actions in state s. This method should be implemented if it is to be used 
 	 * with algorithms that compute Q-values from action features or other values are the dependent on the actions.
@@ -28,7 +26,6 @@ public interface FeatureDatabase {
 	 */
 	public List<ActionFeaturesQuery> getActionFeaturesSets(State s, List <GroundedAction> actions);
 	
-	
 	/**
 	 * Enable or disable the database from generating new features. This method only needs to do anything if it creates features in an
 	 * online fashion. That is, if the set of possible state features is defined at construction, then this method does not need to do anything.
@@ -37,6 +34,4 @@ public interface FeatureDatabase {
 	 * @param toggle
 	 */
 	public void freezeDatabaseState(boolean toggle);
-	
-	
 }

@@ -22,10 +22,8 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
-
 public class IDAStar extends DeterministicPlanner {
 
-	
 	protected Heuristic									heuristic;
 	protected PSNComparator								nodeComparator;
 	

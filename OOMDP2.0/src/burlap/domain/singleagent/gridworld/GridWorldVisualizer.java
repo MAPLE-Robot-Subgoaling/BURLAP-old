@@ -11,11 +11,8 @@ import burlap.oomdp.visualizer.ObjectPainter;
 import burlap.oomdp.visualizer.StaticPainter;
 import burlap.oomdp.visualizer.Visualizer;
 
-
 public class GridWorldVisualizer {
 
-	
-	
 	public static Visualizer getVisualizer(Domain d, int [][] map){
 		
 		Visualizer v = new Visualizer();
@@ -26,8 +23,6 @@ public class GridWorldVisualizer {
 		
 		return v;
 	}
-	
-	
 	
 	public static class MapPainter implements StaticPainter{
 
@@ -65,17 +60,11 @@ public class GridWorldVisualizer {
 					
 						g2.fill(new Rectangle2D.Float(rx, ry, width, height));
 						
-					}
-					
+					}		
 				}
-			}
-			
+			}	
 		}
-		
-		
 	}
-	
-	
 	
 	public static class CellPainter implements ObjectPainter{
 

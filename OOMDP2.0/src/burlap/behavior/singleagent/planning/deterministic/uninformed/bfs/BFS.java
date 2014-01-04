@@ -19,13 +19,11 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.common.UniformCostRF;
 
-
 public class BFS extends DeterministicPlanner {
 
 	public BFS(Domain domain, StateConditionTest gc, StateHashFactory hashingFactory){
 		this.deterministicPlannerInit(domain, new UniformCostRF(), new NullTermination(), gc, hashingFactory);
 	}
-	
 	
 	@Override
 	public void planFromState(State initialState) {

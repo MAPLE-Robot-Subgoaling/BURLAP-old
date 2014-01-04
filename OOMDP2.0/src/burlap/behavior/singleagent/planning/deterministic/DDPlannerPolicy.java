@@ -11,8 +11,6 @@ import burlap.behavior.singleagent.planning.PlannerDerivedPolicy;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
-
-
 /**
  * This is a dynamic deterministic planner policy, which means
  * if the source deterministic planner has not already computed

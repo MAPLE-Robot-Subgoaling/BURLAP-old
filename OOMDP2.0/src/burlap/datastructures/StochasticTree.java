@@ -5,19 +5,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
 import burlap.debugtools.RandomFactory;
-
 
 public class StochasticTree <T>{
 
 	protected STNode					root;
 	protected Map<T, STNode>			nodeMap;
 	protected Random					rand;
-	
-	
-	
-	
+
 	public StochasticTree(){
 		this.init();
 	}

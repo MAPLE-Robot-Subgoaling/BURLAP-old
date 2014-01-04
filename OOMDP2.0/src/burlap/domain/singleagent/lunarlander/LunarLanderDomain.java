@@ -16,8 +16,6 @@ import burlap.oomdp.singleagent.explorer.TerminalExplorer;
 import burlap.oomdp.singleagent.explorer.VisualExplorer;
 import burlap.oomdp.visualizer.Visualizer;
 
-
-
 public class LunarLanderDomain implements DomainGenerator {
 
 	public static final String				XATTNAME = "xAtt"; //x attribute

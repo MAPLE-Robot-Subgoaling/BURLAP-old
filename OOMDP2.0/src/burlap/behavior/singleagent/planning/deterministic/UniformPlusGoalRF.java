@@ -13,6 +13,7 @@ public class UniformPlusGoalRF implements RewardFunction {
 		this.gc = gc;
 	}
 	
+	
 	@Override
 	public double reward(State s, GroundedAction a, State sprime) {
 		if(!gc.satisfies(sprime)){

@@ -11,7 +11,6 @@ import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 
-
 public class Tiling {
 
 	protected Map<String, List<AttributeTileSpecification>>				specification;

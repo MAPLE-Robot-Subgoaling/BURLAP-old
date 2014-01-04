@@ -19,7 +19,6 @@ import burlap.oomdp.stocashticgames.JointAction;
 import burlap.oomdp.stocashticgames.SGDomain;
 import burlap.oomdp.stocashticgames.SingleAction;
 
-
 public class SGQLAgent extends Agent {
 
 	protected Map <StateHashTuple, List<SGQValue>>						qMap;
@@ -30,7 +29,6 @@ public class SGQLAgent extends Agent {
 	protected double													defaultQ;
 	protected Strategy													strategy;
 	protected StateHashFactory											hashFactory;
-	
 	
 	public SGQLAgent(SGDomain d, double discount, double learningRate, StateHashFactory hashFactory) {
 		this.init(d);
@@ -67,7 +65,6 @@ public class SGQLAgent extends Agent {
 	@Override
 	public void gameStarting() {
 		//nothing to do
-
 	}
 
 	@Override

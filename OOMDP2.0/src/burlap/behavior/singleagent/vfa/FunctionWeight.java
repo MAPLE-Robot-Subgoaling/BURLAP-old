@@ -30,6 +30,4 @@ public class FunctionWeight {
 	public void setWeight(double w){
 		this.weightValue = w;
 	}
-	
-
 }

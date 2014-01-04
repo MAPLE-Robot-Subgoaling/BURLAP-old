@@ -17,10 +17,8 @@ import burlap.oomdp.core.Domain;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
-
 public class AStar extends BestFirst{
 
-	
 	protected Heuristic									heuristic;
 	protected Map <StateHashTuple, Double> 				cumulatedRewardMap;
 	protected double									lastComputedCumR;

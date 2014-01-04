@@ -5,7 +5,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import burlap.behavior.singleagent.planning.StateConditionTest;
 import burlap.behavior.singleagent.planning.deterministic.SearchNode;
 import burlap.behavior.statehashing.StateHashFactory;
@@ -16,14 +15,11 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
-
 public class LimitedMemoryDFS extends DFS {
 
 	protected int									memorySize;
 	protected LinkedList<StateHashTuple>			memoryQueue;
 	protected Map <StateHashTuple, Integer>			memoryStateDepth;
-	
-	
 	
 	public LimitedMemoryDFS(Domain domain, StateConditionTest gc, StateHashFactory hashingFactory, int maxDepth, 
 			boolean maintainClosed, boolean optionsFirst, int memorySize) {

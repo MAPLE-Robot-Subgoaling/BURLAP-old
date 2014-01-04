@@ -2,7 +2,6 @@ package burlap.debugtools;
 
 public class MyTimer{
 
-
 	private long startTime;
 	private long stopTime;
 	
@@ -10,7 +9,6 @@ public class MyTimer{
 	private int numTimers;
 	
 	boolean timing;
-	
 	
 	public static void main(String [] args){
 	

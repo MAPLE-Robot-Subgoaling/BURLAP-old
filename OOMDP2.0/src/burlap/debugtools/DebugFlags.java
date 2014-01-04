@@ -7,7 +7,6 @@ public class DebugFlags {
 
 	private static Map <Integer, Integer> flags;
 	
-	
 	public static void setFlag(int id, int v){
 		if(flags == null){
 			flags = new HashMap <Integer, Integer>();
@@ -26,6 +25,4 @@ public class DebugFlags {
 		}
 		return v;
 	}
-	
-	
 }

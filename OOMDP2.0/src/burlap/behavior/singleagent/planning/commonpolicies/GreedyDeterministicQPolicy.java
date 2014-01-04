@@ -14,7 +14,6 @@ import burlap.oomdp.singleagent.GroundedAction;
 
 
 public class GreedyDeterministicQPolicy extends Policy implements PlannerDerivedPolicy{
-
 	protected QComputablePlanner		qplanner;
 	
 	public GreedyDeterministicQPolicy() {

@@ -12,6 +12,7 @@ public class TFGoalCondition implements StateConditionTest {
 		this.tf = tf;
 	}
 	
+	
 	@Override
 	public boolean satisfies(State s) {
 		return tf.isTerminal(s);

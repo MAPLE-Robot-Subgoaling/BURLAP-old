@@ -12,7 +12,6 @@ import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 
-
 /**
  * This hash factory will producing hash codes that are unique for discrete OO-MDP domains. It should not be used
  * with non-discrete domains. If the default constructor is called and no other methods are specified,

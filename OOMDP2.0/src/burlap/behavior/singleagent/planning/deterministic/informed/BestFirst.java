@@ -12,10 +12,7 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 
-
 public abstract class BestFirst extends DeterministicPlanner {
-
-	
 	
 	public abstract double computeF(PrioritizedSearchNode parentNode, GroundedAction generatingAction, StateHashTuple successorState);
 	

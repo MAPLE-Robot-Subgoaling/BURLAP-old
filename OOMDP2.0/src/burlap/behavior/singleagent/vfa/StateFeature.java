@@ -10,7 +10,5 @@ public class StateFeature {
 		this.id = id;
 		this.value = value;
 	}
-	
-	
 
 }

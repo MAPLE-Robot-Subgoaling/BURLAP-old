@@ -1,6 +1,5 @@
 package burlap.behavior.statehashing;
 
-
 import burlap.oomdp.core.State;
 
 public class StateHashTuple {
@@ -8,15 +7,11 @@ public class StateHashTuple {
 	public State								s;
 	protected int								hashCode;
 	protected boolean							needToRecomputeHashCode;
-	
-	
-	
+
 	public StateHashTuple(State s){
 		this.s = s;
 		needToRecomputeHashCode = true;
 	}
-	
-	
 	
 	public void computeHashCode(){
 		

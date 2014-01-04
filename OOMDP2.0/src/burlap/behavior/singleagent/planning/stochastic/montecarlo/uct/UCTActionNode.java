@@ -8,14 +8,12 @@ import java.util.Map;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.singleagent.GroundedAction;
 
-
 public class UCTActionNode {
 
 	public GroundedAction								action;
 	public double										sumReturn;
 	public int											n;
 	public Map<StateHashTuple, List<UCTStateNode>>		successorStates;
-	
 	
 	public UCTActionNode(GroundedAction a){
 		action = a;

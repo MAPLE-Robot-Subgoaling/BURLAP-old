@@ -9,7 +9,6 @@ public class AttributeTileSpecification {
 	public double			windowSize;
 	public double			bucketBoundary;
 	
-	
 	public AttributeTileSpecification(String className, Attribute attribute, double windowSize){
 		this.className = className;
 		this.attribute = attribute;
@@ -22,5 +21,4 @@ public class AttributeTileSpecification {
 		this.windowSize = windowSize;
 		this.bucketBoundary = bucketBoundary;
 	}
-
 }

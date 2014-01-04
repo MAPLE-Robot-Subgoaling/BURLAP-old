@@ -8,8 +8,6 @@ import java.util.Map;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
-
-
 /**
  * This class is used for general purpose linear VFA. It only needs to be provided a FeatureDatabase object that will be used to store
  * retrieve state features. For every feature returned by the feature database, this class will automatically create a weight associated with it.
