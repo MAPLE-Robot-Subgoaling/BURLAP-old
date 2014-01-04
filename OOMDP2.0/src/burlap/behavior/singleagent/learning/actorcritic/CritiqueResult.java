@@ -32,7 +32,4 @@ public class CritiqueResult {
 	public double getCritique() {
 		return critique;
 	}
-
-	
-	
 }

@@ -14,7 +14,6 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
-
 public class ActorCritic extends OOMDPPlanner implements LearningAgent {
 
 	protected Actor													actor;
@@ -35,8 +34,6 @@ public class ActorCritic extends OOMDPPlanner implements LearningAgent {
 		numEpisodesToStore = 1;
 		this.PlannerInit(domain, rf, tf, gamma, null);
 	}
-	
-	
 	
 	public ActorCritic(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Actor actor, Critic critic, int maxEpisodeSize) {
 		this.actor = actor;
