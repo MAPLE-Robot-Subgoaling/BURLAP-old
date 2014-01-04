@@ -28,12 +28,9 @@ public class BFSRTDP extends RTDP {
 	
 	protected Policy												rollOutPolicy;
 	
-
 	protected int													dynamicPasses;
 	protected boolean												performedInitialPlan;
 	protected StateConditionTest									goalCondition;
-	
-	
 	
 	public BFSRTDP(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, int numPasses, int maxDepth){
 		
@@ -44,7 +41,6 @@ public class BFSRTDP extends RTDP {
 		this.goalCondition = null;
 
 	}
-	
 	
 	public BFSRTDP(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, StateHashFactory hashingFactory, int numPasses, int maxDepth, StateConditionTest goalCondition){
 		
