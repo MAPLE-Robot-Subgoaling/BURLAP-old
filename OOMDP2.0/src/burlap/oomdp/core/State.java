@@ -5,6 +5,12 @@ import java.util.*;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 
+
+/**
+ * State objects are a collection of Object Instances.
+ * @author James MacGlashan
+ *
+ */
 public class State {
 
 	
@@ -12,8 +18,7 @@ public class State {
 	private List <ObjectInstance>							hiddenObjectInstances;		//list of hidden object instances that facilitate domain dynamics and infer observable values
 	private Map <String, ObjectInstance>					objectMap;					//map from object names to their instances
 	
-	private Map <String, List <ObjectInstance>>				objectIndexByClass;			//map of object instances organized by (pseudo)class name
-	private Map <String, List <ObjectInstance>>				objectIndexByTrueClass;		//map of object instances organized by true class name
+	private Map <String, List <ObjectInstance>>				objectIndexByTrueClass;		//map of object instances organized by class name
 
 	
 	
@@ -22,6 +27,10 @@ public class State {
 	}
 	
 	
+	/**
+	 * Initializes this state as a deep copy of the object instances in the provided source state s
+	 * @param s the source state from which this state will be initialized.
+	 */
 	public State(State s){
 		
 		
@@ -37,22 +46,28 @@ public class State {
 		
 	}
 	
+	/**
+	 * Returns a deep copy of this state.
+	 * @return a deep copy of this state.
+	 */
 	public State copy(){
 		return new State(this);
 	}
 	
-	public void initDataStructures(){
+	protected void initDataStructures(){
 		
 		objectInstances = new ArrayList <ObjectInstance>();
 		hiddenObjectInstances = new ArrayList <ObjectInstance>();
 		objectMap = new HashMap <String, ObjectInstance>();
 		
-		objectIndexByClass = new HashMap <String, List <ObjectInstance>>();
-		
 		objectIndexByTrueClass = new HashMap <String, List <ObjectInstance>>();
 	}
 	
 	
+	/**
+	 * Adds object instance o to this state.
+	 * @param o the object instance to be added to this state.
+	 */
 	public void addObject(ObjectInstance o){
 		
 		String oname = o.getName();
@@ -80,20 +95,7 @@ public class State {
 	
 	private void addObjectClassIndexing(ObjectInstance o){
 		
-		String oclass = o.getPseudoClass();
 		String otclass = o.getTrueClassName();
-		
-		//manage pseudo indexing
-		if(objectIndexByClass.containsKey(oclass)){
-			objectIndexByClass.get(oclass).add(o);
-		}
-		else{
-			
-			ArrayList <ObjectInstance> classList = new ArrayList <ObjectInstance>();
-			classList.add(o);
-			objectIndexByClass.put(oclass, classList);
-			
-		}
 		
 		//manage true indexing
 		if(objectIndexByTrueClass.containsKey(otclass)){
@@ -110,11 +112,19 @@ public class State {
 	}
 	
 	
+	/**
+	 * Removes the object instance with the name oname from this state.
+	 * @param oname the name of the object instance to remove.
+	 */
 	public void removeObject(String oname){
 		this.removeObject(objectMap.get(oname));
 	}
 	
 	
+	/**
+	 * Removes the object instance o from this state.
+	 * @param o the object instance to remove from this state.
+	 */
 	public void removeObject(ObjectInstance o){
 		if(o == null){
 			return ;
@@ -139,27 +149,13 @@ public class State {
 		
 	}
 	
+	
+	
 	private void removeObjectClassIndexing(ObjectInstance o){
 		
-		String oclass = o.getPseudoClass();
-		List <ObjectInstance> classList = objectIndexByClass.get(oclass);
 		
 		String otclass = o.getTrueClassName();
 		List <ObjectInstance> classTList = objectIndexByTrueClass.get(otclass);
-		
-		//manage psuedo class
-		
-		//if this index has more than one entry, then we can just remove from it and be done
-		if(classList.size() > 1){
-			classList.remove(o);
-		}
-		else{
-			//otherwise we have to remove class entries for it since it's the only one
-			objectIndexByClass.remove(oclass);
-		}
-		
-		
-		//manage true class
 		
 		//if this index has more than one entry, then we can just remove from it and be done
 		if(classTList.size() > 1){
@@ -175,6 +171,11 @@ public class State {
 	}
 	
 	
+	/**
+	 * Renames the identifier for the object instance currently named originalName with the name newName.
+	 * @param originalName the original name of the object instance to be renamed in this state
+	 * @param newName the new name of the object instance
+	 */
 	public void renameObject(String originalName, String newName){
 		ObjectInstance o = objectMap.get(originalName);
 		o.setName(newName);
@@ -182,6 +183,12 @@ public class State {
 		objectMap.put(newName, o);
 	}
 	
+	
+	/**
+	 * Renames the identifier for object instance o in this state to newName.
+	 * @param o the object instance to rename in this state
+	 * @param newName the new name of the object instance
+	 */
 	public void renameObject(ObjectInstance o, String newName){
 		String originalName = o.getName();
 		o.setName(newName);
@@ -244,6 +251,7 @@ public class State {
 	
 	
 	
+	
 	@Override
 	public boolean equals(Object other){
 	
@@ -295,104 +303,45 @@ public class State {
 	}
 	
 	
-	public State parameterize(String [] params){
-		if(params.length == 0){
-			return this; //no parameters, it's the same state
-		}
-		
-		//otherwise label them accordingly
-		for(int i = 0; i < params.length; i++){
-			this.parameterize(params[i], "param" + i);
-		}
-		
-		return this;
-		
-	}
-	
-	public State parameterize(String [] params, String [] newClassNames){
-		if(params.length == 0){
-			return this; //no parameters, it's the same state
-		}
-		
-		//otherwise label them accordingly
-		for(int i = 0; i < params.length; i++){
-			this.parameterize(params[i], newClassNames[i]);
-		}
-		
-		return this;
-		
-	}
-	
-	public State deparameterize(String [] params){
-		if(params.length == 0){
-			return this; //no parameters, it's the same state
-		}
-		
-		//otherwise label them accordingly
-		for(int i = 0; i < params.length; i++){
-			this.deparameterize(params[i]);
-		}
-		
-		return this;
-		
-	}
-	
-	public void parameterize(String oname, String pseudoClassName){
-		
-		ObjectInstance o = objectMap.get(oname);
-		
-		if(o == null){
-			return ;
-		}
-		
-		//first remove the object indexing under its previous class
-		this.removeObjectClassIndexing(o);
-		
-		//now change the class name
-		o.pushPseudoClass(pseudoClassName);
-		
-		//now reorganize the object indexing by its new class
-		this.addObjectClassIndexing(o);
-		
-	}
-	
-	public void deparameterize(String oname){
-		
-		ObjectInstance o = objectMap.get(oname);
-		
-		if(o == null){
-			return ;
-		}
-		
-		//first remove the object indexing under its current class
-		this.removeObjectClassIndexing(o);
-		
-		//now change the class name to be what it was before this last parameterization
-		o.popPseudoClass();
-		
-		//now reorganize the object indexing by its new class
-		this.addObjectClassIndexing(o);
-		
-	}
-	
-	
-	
+	/**
+	 * Returns the number of observable and hidden object instances in this state.
+	 * @return the number of observable and hidden object instances in this state.
+	 */
 	public int numTotalObjets(){
 		return objectInstances.size() + hiddenObjectInstances.size();
 	}
 	
+	/**
+	 * Returns the number of observable object instances in this state.
+	 * @return the number of observable object instances in this state.
+	 */
 	public int numObservableObjects(){
 		return objectInstances.size();
 	}
 	
+	/**
+	 * Returns the number of hidden object instances in this state.
+	 * @return the number of hideen object instances in this state.
+	 */
 	public int numHiddenObjects(){
 		return hiddenObjectInstances.size();
 	}
 	
+	
+	/**
+	 * Returns the object in this state with the name oname
+	 * @param oname the name of the object instance to return
+	 * @return the object instance with the name oname or null if there is no object in this state named oname
+	 */
 	public ObjectInstance getObject(String oname){
 		return objectMap.get(oname);
 	}
 	
+	/**
+	 * Returns the observable object instance indexed at position i
+	 * @param i the index of the observable object instance to return
+	 * @return the observable object instance indexed at position i, or null if i > this.numObservableObjects()
+	 */
 	public ObjectInstance getObservableObjectAt(int i){
 		if(i > objectInstances.size()){
 			return null;
@@ -400,6 +349,12 @@ public class State {
 		return objectInstances.get(i);
 	}
 	
+	
+	/**
+	 * Returns the hidden object instance indexed at position i
+	 * @param i the index of the hidden object instance to return
+	 * @return the hidden object instance indexed at position i, or null if i > this.numHiddenObjects()
+	 */
 	public ObjectInstance getHiddenObjectAt(int i){
 		if(i > hiddenObjectInstances.size()){
 			return null;
@@ -407,28 +362,40 @@ public class State {
 		return hiddenObjectInstances.get(i);
 	}
 	
+	
+	/**
+	 * Returns the list of observable object instances in this state.
+	 * @return the list of observable object instances in this state.
+	 */
 	public List <ObjectInstance> getObservableObjects(){
 		return new ArrayList <ObjectInstance>(objectInstances);
 	}
 	
+	
+	/**
+	 * Returns the list of hidden object instances in this state.
+	 * @return the list of hidden object instances in this state.
+	 */
 	public List <ObjectInstance> getHiddenObjects(){
 		return new ArrayList <ObjectInstance>(hiddenObjectInstances);
 	}
 	
+	
+	/**
+	 * Returns the list of observable and hidden object instances in this state.
+	 * @return the list of observable and hidden object instances in this state.
+	 */
 	public List <ObjectInstance> getAllObjects(){
 		List <ObjectInstance> objects = new ArrayList <ObjectInstance>(objectInstances);
 		objects.addAll(hiddenObjectInstances);
 		return objects;
 	}
 	
-	public List <ObjectInstance> getObjectsOfClass(String oclass){
-		List <ObjectInstance> tmp = objectIndexByClass.get(oclass);
-		if(tmp == null){
-			return new ArrayList <ObjectInstance>();
-		}
-		return new ArrayList <ObjectInstance>(tmp);
-	}
-	
+	/**
+	 * Returns all objects that belong to the object class named oclass
+	 * @param oclass the name of the object class for which objects should be returned
+	 * @return all objects that belong to the object class named oclass
+	 */
 	public List <ObjectInstance> getObjectsOfTrueClass(String oclass){
 		List <ObjectInstance> tmp = objectIndexByTrueClass.get(oclass);
 		if(tmp == null){
@@ -437,18 +404,42 @@ public class State {
 		return new ArrayList <ObjectInstance>(tmp);
 	}
 	
-	public List <List <ObjectInstance>> getAllObjectsByClass(){
-		return new ArrayList<List<ObjectInstance>>(objectIndexByClass.values());
+	
+	/**
+	 * Returns the first indexed object of the object class named oclass
+	 * @param oclass the name of the object class for which the first indexed object should be returned.
+	 * @return the first indexed object of the object class named oclass
+	 */
+	public ObjectInstance getFirstObjectOfClass(String oclass){
+		List <ObjectInstance> obs = this.objectIndexByTrueClass.get(oclass);
+		if(obs != null && obs.size() > 0){
+			return obs.get(0);
+		}
+		return null;
 	}
 	
+	/**
+	 * Returns a set of of the object class names for all object classes that have instantiated objects in this state.
+	 * @return a set of of the object class names for all object classes that have instantiated objects in this state.
+	 */
+	public Set <String> getObjectClassesPresent(){
+		return new HashSet<String>(objectIndexByTrueClass.keySet());
+	}
+	
+	
+	/**
+	 * Returns a list of list of object instances, grouped by object class
+	 * @return a list of list of object instances, grouped by object class
+	 */
 	public List <List <ObjectInstance>> getAllObjectsByTrueClass(){
 		return new ArrayList<List<ObjectInstance>>(objectIndexByTrueClass.values());
 	}
 	
-	public Set <String> getObjectClassesPresent(){
-		return new HashSet<String>(objectIndexByClass.keySet());
-	}
 	
+	/**
+	 * Returns a string representation of this state using only observable object instances.
+	 * @return a string representation of this state using only observable object instances.
+	 */
 	public String getStateDescription(){
 		
 		String desc = "";
@@ -460,6 +451,11 @@ public class State {
 	
 	}
 	
+	
+	/**
+	 * Returns a string representation of this state using observable and hidden object instances.
+	 * @return a string representation of this state using observable and hidden object instances.
+	 */
 	public String getCompleteStateDescription(){
 		
 		String desc = "";
@@ -477,7 +473,11 @@ public class State {
 	
 	
 	
-	
+	/**
+	 * Returns all GroundedAction objects for the source action a in this state.
+	 * @param a the action from which to generate GroundedAction objects.
+	 * @return all GroundedAction objects for the source action a in this state.
+	 */
 	public List <GroundedAction> getAllGroundedActionsFor(Action a){
 		
 		List <GroundedAction> res = new ArrayList<GroundedAction>();
@@ -489,7 +489,7 @@ public class State {
 			return res; //no parameters so just the single ga without params
 		}
 		
-		List <List <String>> bindings = this.getPossibleBindingsGivenParamOrderGroups(a.getParameterClasses(), a.getParameterOrderGroups(), true);
+		List <List <String>> bindings = this.getPossibleBindingsGivenParamOrderGroups(a.getParameterClasses(), a.getParameterOrderGroups());
 		
 		for(List <String> params : bindings){
 			String [] aprams = params.toArray(new String[params.size()]);
@@ -502,6 +502,12 @@ public class State {
 		return res;
 	}
 	
+	
+	/**
+	 * Returns a list of GroundedAction objects for all grounded actions that can be generated from the provided list of actions.
+	 * @param actions the list of actions from which to generate GroudnedAction objects.
+	 * @return a list of GroundedAction objects for all grounded actions that can be generated from the provided list of actions.
+	 */
 	public List <GroundedAction> getAllGroundedActionsFor(List <Action> actions){
 		List <GroundedAction> res = new ArrayList<GroundedAction>(actions.size());
 		for(Action a : actions){
@@ -511,6 +517,12 @@ public class State {
 	}
 	
 	
+	
+	/**
+	 * Returns all GroundedProp objects for the source propositional function pf in this state.
+	 * @param pf the propositional function from which to generate GroundedProp objects.
+	 * @return all GroundedProp objects for the source propositional function pf in this state.
+	 */
 	public List <GroundedProp> getAllGroundedPropsFor(PropositionalFunction pf){
 		
 		List <GroundedProp> res = new ArrayList<GroundedProp>();
@@ -520,7 +532,7 @@ public class State {
 			return res; //no parameters so just the single gp without params
 		}
 		
-		List <List <String>> bindings = this.getPossibleBindingsGivenParamOrderGroups(pf.getParameterClasses(), pf.getParameterOrderGroups(), true);
+		List <List <String>> bindings = this.getPossibleBindingsGivenParamOrderGroups(pf.getParameterClasses(), pf.getParameterOrderGroups());
 		
 		for(List <String> params : bindings){
 			String [] aprams = params.toArray(new String[params.size()]);
@@ -532,6 +544,11 @@ public class State {
 	}
 	
 	
+	/**
+	 * Returns whether some GroundedProp of pf is true in this state
+	 * @param pf the propositional function to check
+	 * @return true if some GroundedProp of pf is true in this state; false otherwise
+	 */
 	public boolean somePFGroundingIsTrue(PropositionalFunction pf){
 		List <GroundedProp> gps = this.getAllGroundedPropsFor(pf);
 		for(GroundedProp gp : gps){
@@ -544,17 +561,22 @@ public class State {
 	}
 	
 	
-	public List <List <String>> getPossibleBindingsGivenParamOrderGroups(String [] paramClasses, String [] paramOrderGroups, boolean useTrueClass){
+	/**
+	 * Given an array of parameter object classes and an array of their corresponding parameter order groups,
+	 * returns all possible object instance bindings to the parameters, excluding bindings that are equivalent due
+	 * to the parameter order grouping.
+	 * @param paramClasses the name of object classes to which the bound object instances must belong
+	 * @param paramOrderGroups the parameter order group names.
+	 * @return A list of all possible object instance bindings for the parameters, were a binding is represented by a list of object instance names
+	 */
+	public List <List <String>> getPossibleBindingsGivenParamOrderGroups(String [] paramClasses, String [] paramOrderGroups){
 		
 		List <List <String>> res = new ArrayList <List<String>>();
 		List <List <String>> currentBindingSets = new ArrayList <List<String>>();
 		List <String> uniqueRenames = this.identifyUniqueClassesInParameters(paramOrderGroups);
 		List <String> uniqueParamClases = this.identifyUniqueClassesInParameters(paramClasses);
 		
-		Map <String, List <ObjectInstance>>	instanceMap = objectIndexByClass;
-		if(useTrueClass){
-			instanceMap = objectIndexByTrueClass;
-		}
+		Map <String, List <ObjectInstance>>	instanceMap = objectIndexByTrueClass;
 		
 		//first make sure we have objects for each class parameter; if not return empty list
 		for(String oclass : uniqueParamClases){
@@ -568,7 +590,7 @@ public class State {
 			}
 		}
 		
-		this.getPossibleRenameBindingsHelper(res, currentBindingSets, 0, objectInstances, uniqueRenames, paramClasses, paramOrderGroups, useTrueClass);
+		this.getPossibleRenameBindingsHelper(res, currentBindingSets, 0, objectInstances, uniqueRenames, paramClasses, paramOrderGroups);
 		
 		
 		return res;
@@ -578,14 +600,16 @@ public class State {
 	
 	
 	
-	
+	@Override
+	public String toString(){
+		return this.getCompleteStateDescription();
+	}
 	
 	
 	
 	
 	private void getPossibleRenameBindingsHelper(List <List <String>> res, List <List <String>> currentBindingSets, int bindIndex,
-			List <ObjectInstance> remainingObjects, List <String> uniqueOrderGroups, String [] paramClasses, String [] paramOrderGroups,
-			boolean useTrueClass){
+			List <ObjectInstance> remainingObjects, List <String> uniqueOrderGroups, String [] paramClasses, String [] paramOrderGroups){
 		
 		if(bindIndex == uniqueOrderGroups.size()){
 			//base case, put it all together and add it to the result
@@ -597,7 +621,7 @@ public class State {
 		
 		String r = uniqueOrderGroups.get(bindIndex);
 		String c = this.parameterClassAssociatedWithOrderGroup(r, paramOrderGroups, paramClasses);
-		List <ObjectInstance> cands = this.objectsMatchingClass(remainingObjects, c, useTrueClass);
+		List <ObjectInstance> cands = this.objectsMatchingClass(remainingObjects, c);
 		int k = this.numOccurencesOfOrderGroup(r, paramOrderGroups);
 		List <List <String>> combs = this.getAllCombinationsOfObjects(cands, k);
 		for(List <String> cb : combs){
@@ -610,7 +634,7 @@ public class State {
 			List <ObjectInstance> nextObsReamining = this.objectListDifference(remainingObjects, cb);
 			
 			//recursive step
-			this.getPossibleRenameBindingsHelper(res, nextBinding, bindIndex+1, nextObsReamining, uniqueOrderGroups, paramClasses, paramOrderGroups, useTrueClass);
+			this.getPossibleRenameBindingsHelper(res, nextBinding, bindIndex+1, nextObsReamining, uniqueOrderGroups, paramClasses, paramOrderGroups);
 			
 		}
 		
@@ -674,21 +698,16 @@ public class State {
 	}
 	
 	
-	private List <ObjectInstance> objectsMatchingClass(List <ObjectInstance> sourceObs, String cname, boolean useTrueClass){
+	private List <ObjectInstance> objectsMatchingClass(List <ObjectInstance> sourceObs, String cname){
 		
 		List <ObjectInstance> res = new ArrayList<ObjectInstance>(sourceObs.size());
 		
 		for(ObjectInstance o : sourceObs){
-			if(useTrueClass){
-				if(o.getTrueClassName().equals(cname)){
-					res.add(o);
-				}
+			
+			if(o.getTrueClassName().equals(cname)){
+				res.add(o);
 			}
-			else{
-				if(o.getPseudoClass().equals(cname)){
-					res.add(o);
-				}
-			}
+			
 		}
 		
 		return res;
@@ -697,10 +716,13 @@ public class State {
 	
 	
 	
-	//for renaming parameter listing
-	//comboSets: is a list of the bindings for each order group. For instance, if the order groups for each parameter were P, Q, P, Q, R; then there would be three lists
-	//orderGroupAssociatedWithSet: which order group each list of bindings in comboSets is for
-	//paramRenames: the parameter order groups for each parameter
+	/**
+	 * for a specific parameter order group, return a possible binding
+	 * @param comboSets is a list of the bindings for each order group. For instance, if the order groups for each parameter were P, Q, P, Q, R; then there would be three lists
+	 * @param orderGroupAssociatedWithSet which order group each list of bindings in comboSets is for
+	 * @param orderGroups the parameter order groups for each parameter
+	 * @return a binding as a list of object instance names
+	 */
 	private List <String> getBindngFromCombinationSet(List <List <String>> comboSets, List <String> orderGroupAssociatedWithSet, String [] orderGroups){
 		
 		List <String> res = new ArrayList <String>(orderGroups.length);
