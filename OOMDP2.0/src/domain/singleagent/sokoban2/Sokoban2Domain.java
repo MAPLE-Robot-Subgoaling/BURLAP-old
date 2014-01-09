@@ -4,6 +4,7 @@ import java.util.List;
 
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.learning.LearningAgent;
+import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
@@ -15,6 +16,7 @@ import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.SADomain;
+import burlap.oomdp.singleagent.common.SinglePFTF;
 import burlap.oomdp.singleagent.common.UniformCostRF;
 import burlap.oomdp.singleagent.explorer.VisualExplorer;
 import burlap.oomdp.visualizer.Visualizer;
@@ -79,6 +81,7 @@ public class Sokoban2Domain implements DomainGenerator {
 	public static Sokoban2Parser parser;
 	public static RewardFunction rf;
 	public static TerminalFunction tf;
+	
 	
 	
 	public static void main(String [] args){
@@ -232,8 +235,12 @@ public class Sokoban2Domain implements DomainGenerator {
 			domain.addPropositionalFunction(pf);
 		}
 		
+		//add the elements for the learning algorithm
+		
+		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
+		hashFactory.setAttributesForClass(CLASSAGENT, domain.getObjectClass(CLASSAGENT).attributeList);
 		rf = new UniformCostRF(); //always returns a reward of -1. since goal state ends action, it will be favored.
-		//tf = new SinglePFTF();
+		tf = new SinglePFTF(domain.getPropFunction(PFAGENTINROOM));
 		
 		return domain;
 	}
