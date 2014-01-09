@@ -507,8 +507,6 @@ public class Sokoban2Domain implements DomainGenerator {
 	}
 	
 	
-	
-	
 	public static void main(String [] args){
 		
 		Sokoban2Domain dgen = new Sokoban2Domain();
