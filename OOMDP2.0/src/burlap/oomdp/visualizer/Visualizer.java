@@ -1,100 +1,101 @@
 package burlap.oomdp.visualizer;
 
 
-import java.awt.Canvas;
 import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.util.*;
 
-import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 
-public class Visualizer extends Canvas{
+/**
+ * This class extends the {@link MultiLayerRenderer} class to provide a base instance of a {@link StateRenderLayer} in its render list
+ * and provides methods to directly access and interface with the {@link StateRenderLayer} instance. 
+ * <p/>
+ * The {@link StateRenderLayer} instance provides 2D visualization of states by being provided a set of classes that can paint
+ * ObjectInstnaces to the canvas as well as classes that can paint general domain information. Painters
+ * for object classes as well as specific object instances can be provided. If there is a painter
+ * for an object class and a painter for a specific object instance of that same class, then the specific object instance
+ * painter will be used to pain that object instead of the painter for that instnace's OO-MDP class.
+ * @author James MacGlashan
+ *
+ */
+public class Visualizer extends MultiLayerRenderer{
 
-	private static final long serialVersionUID = 1L; //needed for Canvas extension
+
+	private static final long serialVersionUID = 1L;
 	
-	private State							curState;					//the current state to be painted next
 	
-	private List <StaticPainter>			staticPainters;				//list of static painters that pain static non-object defined properties of the domain
-	private Map <String, ObjectPainter>		objectClassPainters;		//Map of painters that define how to paint each object class
-	private Map <String, ObjectPainter>		specificObjectPainters;		//Map of painters that define how to paint specific objects; if an object it appears in both specific and general lists, the specific painter is used
+	/**
+	 * The {@link StateRenderLayer} instance for visualizing OO-MDP states.
+	 */
+	protected StateRenderLayer			srender;
 	
-	private Color							bgColor;					//the background color of the canvas
+	
 	
 	public Visualizer(){
-		
-		curState = null;
-		
-		staticPainters = new ArrayList <StaticPainter>();
-		objectClassPainters = new HashMap <String, ObjectPainter>();
-		specificObjectPainters = new HashMap <String, ObjectPainter>();
-		
-		bgColor = Color.white;
+		super();
+		srender = new StateRenderLayer();
+		this.renderLayers.add(srender);
 	}
 	
+	/**
+	 * Sets the background color of the canvas
+	 * @param c the background color of the canvas
+	 */
 	public void setBGColor(Color c){
-		bgColor = c;
+		this.bgColor = c;
 	}
 	
+	/**
+	 * Adds a static painter for the domain.
+	 * @param sp the static painter to add.
+	 */
 	public void addStaticPainter(StaticPainter sp){
-		staticPainters.add(sp);
+		this.srender.addStaticPainter(sp);
 	}
 	
+	
+	/**
+	 * Adds a class that will paint objects that belong to a given OO-MDPclass.
+	 * @param className the name of the class that the provided painter can paint
+	 * @param op the painter
+	 */
 	public void addObjectClassPainter(String className, ObjectPainter op){
-		objectClassPainters.put(className, op);
+		this.srender.addObjectClassPainter(className, op);
 	}
 	
+	
+	/**
+	 * Adds a painter that will be used to paint a specific object in states
+	 * @param objectName the name of the object this painter is used to paint
+	 * @param op the painter
+	 */
 	public void addSpecificObjectPainter(String objectName, ObjectPainter op){
-		specificObjectPainters.put(objectName, op);
+		this.srender.addSpecificObjectPainter(objectName, op);
 	}
 	
-	public void updateState(State st){
-		curState = st;
+	/**
+	 * Returns the {@link StateRenderLayer} instance for visualizing OO-MDP states.
+	 * @return
+	 */
+	public StateRenderLayer getStateRenderLayer(){
+		return this.srender;
+	}
+	
+	
+	/**
+	 * Updates the state that needs to be painted and repaints.
+	 * @param s the state to paint
+	 */
+	public void updateState(State s){
+		this.srender.updateState(s);
 		repaint();
 	}
 	
-	public void paint(Graphics g){
-		
-		Graphics2D g2 = (Graphics2D) g;
-		
-		g2.setColor(bgColor);
-		g2.fill(new Rectangle(this.getWidth(), this.getHeight()));
-		
-		if(curState == null){
-			return ;
-		}
-		
-		float cWidth = (float)this.getWidth();
-		float cHeight = (float)this.getHeight();
-		
-		//draw the static properties
-		for(StaticPainter sp : staticPainters){
-			sp.paint(g2, curState, cWidth, cHeight);
-		}
-		
-		//draw each object if there is a painter to do so
-		List <ObjectInstance> objects = curState.getAllObjects();
-		for(ObjectInstance o : objects){
-			
-			//is there a specific object painter for this object?
-			if(specificObjectPainters.containsKey(o.getName())){
-				specificObjectPainters.get(o.getName()).paintObject(g2, curState, o, cWidth, cHeight);
-			}
-			else{ //otherwise see if we have a painter for this object's class
-				
-				//try the parameterized class first
-				if(objectClassPainters.containsKey(o.getPseudoClass())){
-					objectClassPainters.get(o.getPseudoClass()).paintObject(g2, curState, o, cWidth, cHeight);
-				}
-				else if(objectClassPainters.containsKey(o.getTrueClassName())){ //try true class if no entry for the parameterized class
-					objectClassPainters.get(o.getTrueClassName()).paintObject(g2, curState, o, cWidth, cHeight);
-				}
-				
-			}
-			
-		}
-		
-	}	
+	
+	
+	
+	
+	
+	
+	
+	
 }
