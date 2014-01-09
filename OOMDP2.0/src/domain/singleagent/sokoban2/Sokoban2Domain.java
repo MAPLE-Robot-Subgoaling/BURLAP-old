@@ -18,6 +18,7 @@ public class Sokoban2Domain implements DomainGenerator {
 
 	public static final String					ATTX = "x";
 	public static final String					ATTY = "y";
+	public static final String					ATTDIR = "direction"; //optionally added attribute to include the agent's direction
 	public static final String					ATTTOP = "top";
 	public static final String					ATTLEFT = "left";
 	public static final String					ATTBOTTOM = "bottom";
@@ -44,12 +45,14 @@ public class Sokoban2Domain implements DomainGenerator {
 	
 	
 	public static final String[] 				COLORS = new String[]{"blue",
-														"cyan", "green", "magenta", "orange", 
-														"pink", "red", "white", "yellow"};
+														"green", "magenta", 
+														"red", "yellow"};
 
-	public static final String[]				SHAPES = new String[]{"star", "moon",
-														"circle", "smiley", "square"};
+	public static final String[]				SHAPES = new String[]{"chair", "bag",
+														"backpack", "basket"};
 	
+	
+	public static final String[]				DIRECTIONS = new String[]{"north", "south", "east", "west"};
 	
 	protected static final String				PFRCOLORBASE = "roomIs";
 	protected static final String				PFBCOLORBASE = "blockIs";
@@ -60,6 +63,7 @@ public class Sokoban2Domain implements DomainGenerator {
 	
 	protected int								maxX = 24;
 	protected int								maxY = 24;
+	protected boolean							includeDirectionAttribute = false;;
 	
 	
 	public void setMaxX(int maxX){
@@ -68,6 +72,10 @@ public class Sokoban2Domain implements DomainGenerator {
 	
 	public void setMaxY(int maxY){
 		this.maxY = maxY;
+	}
+	
+	public void includeDirectionAttribute(boolean includeDirectionAttribute){
+		this.includeDirectionAttribute = includeDirectionAttribute;
 	}
 	
 	
@@ -100,10 +108,18 @@ public class Sokoban2Domain implements DomainGenerator {
 		Attribute shapeAtt = new Attribute(domain, ATTSHAPE, Attribute.AttributeType.DISC);
 		shapeAtt.setDiscValues(SHAPES);
 		
+		if(this.includeDirectionAttribute){
+			Attribute dirAtt = new Attribute(domain, ATTDIR, Attribute.AttributeType.DISC);
+			dirAtt.setDiscValues(DIRECTIONS);
+		}
+		
 		
 		ObjectClass agent = new ObjectClass(domain, CLASSAGENT);
 		agent.addAttribute(xatt);
 		agent.addAttribute(yatt);
+		if(this.includeDirectionAttribute){
+			agent.addAttribute(domain.getAttribute(ATTDIR));
+		}
 		
 		ObjectClass block = new ObjectClass(domain, CLASSBLOCK);
 		block.addAttribute(xatt);
@@ -187,6 +203,11 @@ public class Sokoban2Domain implements DomainGenerator {
 		ObjectInstance o = new ObjectInstance(domain.getObjectClass(CLASSAGENT), CLASSAGENT+0);
 		s.addObject(o);
 		
+		Attribute dirAtt = o.getObjectClass().getAttribute(ATTDIR);
+		if(dirAtt != null){
+			o.setValue(ATTDIR, "south");
+		}
+		
 		return s;
 		
 	}
@@ -203,7 +224,7 @@ public class Sokoban2Domain implements DomainGenerator {
 		setDoor(s, 1, 4, 2, 4, 2);
 		
 		setAgent(s, 6, 6);
-		setBlock(s, 0, 2, 2, "star", "yellow");
+		setBlock(s, 0, 2, 2, "basket", "red");
 		
 		
 		return s;
@@ -425,6 +446,23 @@ public class Sokoban2Domain implements DomainGenerator {
 				agent.setValue(ATTY, ny);
 			}
 			
+			
+			if(Sokoban2Domain.this.includeDirectionAttribute){
+				if(this.xdelta == 1){
+					agent.setValue(ATTDIR, "east");
+				}
+				else if(this.xdelta == -1){
+					agent.setValue(ATTDIR, "west");
+				}
+				else if(this.ydelta == 1){
+					agent.setValue(ATTDIR, "north");
+				}
+				else if(this.ydelta == -1){
+					agent.setValue(ATTDIR, "south");
+				}
+			}
+			
+			
 			return s;
 		}
 		
@@ -512,6 +550,7 @@ public class Sokoban2Domain implements DomainGenerator {
 	public static void main(String [] args){
 		
 		Sokoban2Domain dgen = new Sokoban2Domain();
+		dgen.includeDirectionAttribute(true);
 		Domain domain = dgen.generateDomain();
 		
 		State s = Sokoban2Domain.getClassicState(domain);
@@ -520,7 +559,7 @@ public class Sokoban2Domain implements DomainGenerator {
 		s.addObject(b2);
 		setBlock(s, 1, 3, 2, "moon", "red");*/
 		
-		Visualizer v = Sokoban2Visualizer.getVisualizer();
+		Visualizer v = Sokoban2Visualizer.getVisualizer("robotImages");
 		VisualExplorer exp = new VisualExplorer(domain, v, s);
 		
 		exp.addKeyAction("w", ACTIONNORTH);
