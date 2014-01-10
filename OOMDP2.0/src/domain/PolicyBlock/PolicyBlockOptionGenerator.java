@@ -6,6 +6,8 @@ import java.util.HashMap;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
 import burlap.oomdp.core.State;
+import burlap.oomdp.singleagent.Action;
+import burlap.oomdp.singleagent.GroundedAction;
 
 //This class is designed to read in the options generated from the policy blocks and created options based on the 
 //merge, score, and subtract method described in the Pickett & Barto Paper: PolicyBlocks
@@ -54,6 +56,11 @@ public class PolicyBlockOptionGenerator {
 		EpisodeAnalysis e0 = episodes.get(0);
 		EpisodeAnalysis e1 = episodes.get(1);
 		
+		/*for(int i = 0; i < 5; i++){
+			System.out.print("\te0: " + e0.actionSequence.get(i));
+			System.out.println("\te1: " + e1.actionSequence.get(i));
+		}*/
+		
 		//new blank episode for merging of the two policies
 		EpisodeAnalysis merged = new EpisodeAnalysis();
 		
@@ -65,15 +72,17 @@ public class PolicyBlockOptionGenerator {
 		 */
 		if(episodes.get(0).actionSequence.size() <= episodes.get(1).actionSequence.size()){
 			for(int i = 0; i < e0.stateSequence.size(); i++){
-				State s = e0.stateSequence.get(i); 			//collect the first state
+				State s = e0.stateSequence.get(i); 			//collect the first action
+				System.out.println(e0.stateSequence.get(i).hashCode());
 				
-				for(int j = 0; j < e0.stateSequence.size(); i++){
-					State p = e1.stateSequence.get(j); 		//collect the second state
+				for(int j = 0; j < e0.stateSequence.size(); j++){
+					State p = e1.stateSequence.get(j); 		//collect the second action
+					System.out.println("\t" + e1.stateSequence.get(j).hashCode());
 					
 					if(s.equals(p)){ 						//do we have a match
 						
 						//if you can figure out a better way to do this, by all means!!!
-						if(e0.actionSequence.size() <= i){
+						if(e1.actionSequence.size() <= i){
 							break;
 						}else{								//push the state-action-reward set into merged
 						merged.stateSequence.add(e0.stateSequence.get(i));
@@ -85,13 +94,15 @@ public class PolicyBlockOptionGenerator {
 			}
 		}else{
 			for(int i = 0; i < e1.stateSequence.size(); i++){
-				State s = e1.stateSequence.get(i);
+				State s = e0.stateSequence.get(i); 			//collect the first state
+				System.out.println(e0.stateSequence.get(i).hashCode());
 				
 				for(int j = 0; j < e1.stateSequence.size(); i++){
-					State p = e0.stateSequence.get(j);
+					State p = e1.stateSequence.get(j); 		//collect the second state
+					System.out.println("\t" + e1.stateSequence.get(j).hashCode());
 					
 					if(s.equals(p)){
-						if(e1.actionSequence.size() <= i){
+						if(e0.actionSequence.size() <= i){
 							break;
 						}else{
 						merged.stateSequence.add(e1.stateSequence.get(i));

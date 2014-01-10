@@ -50,6 +50,9 @@ public class Sokoban2Domain implements DomainGenerator {
 	public static final String					PFAGENTINDOOR = "agentInDoor";
 	public static final String					PFBLOCKINDOOR = "blockInDoor";
 	
+	//User defined Goal Condition
+	public static final String					PFATGOAL = "atGoal";
+	
 	
 	public static final String[] 				COLORS = new String[]{"blue",
 														"green", "magenta", 
