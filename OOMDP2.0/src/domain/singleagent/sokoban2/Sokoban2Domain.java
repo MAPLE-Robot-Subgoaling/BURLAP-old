@@ -2,6 +2,9 @@ package domain.singleagent.sokoban2;
 
 import java.util.List;
 
+import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.learning.LearningAgent;
+import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
@@ -9,8 +12,12 @@ import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
+import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.Action;
+import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.SADomain;
+import burlap.oomdp.singleagent.common.SinglePFTF;
+import burlap.oomdp.singleagent.common.UniformCostRF;
 import burlap.oomdp.singleagent.explorer.VisualExplorer;
 import burlap.oomdp.visualizer.Visualizer;
 
@@ -43,6 +50,9 @@ public class Sokoban2Domain implements DomainGenerator {
 	public static final String					PFAGENTINDOOR = "agentInDoor";
 	public static final String					PFBLOCKINDOOR = "blockInDoor";
 	
+	//User defined Goal Condition - Tenji
+	public static final String					PFATGOAL = "atGoal";
+	
 	
 	public static final String[] 				COLORS = new String[]{"blue",
 														"green", "magenta", 
@@ -65,6 +75,42 @@ public class Sokoban2Domain implements DomainGenerator {
 	protected int								maxY = 24;
 	protected boolean							includeDirectionAttribute = false;;
 	
+	//for the learning algorithm
+	public static final double LEARNINGRATE = 0.99;
+	public static final double DISCOUNTFACTOR = 0.95;
+	public static final double LAMBDA = 1.0;
+	public static LearningAgent Q;
+	public static EpisodeAnalysis analyzer;
+	public static Sokoban2Parser parser;
+	public static RewardFunction rf;
+	public static TerminalFunction tf;
+	
+	
+	
+	public static void main(String [] args){
+		
+		Sokoban2Domain dgen = new Sokoban2Domain();
+		dgen.includeDirectionAttribute(true);
+		Domain domain = dgen.generateDomain();
+		
+		State s = Sokoban2Domain.getClassicState(domain);
+		
+		/*ObjectInstance b2 = new ObjectInstance(domain.getObjectClass(CLASSBLOCK), CLASSBLOCK+1);
+		s.addObject(b2);
+		setBlock(s, 1, 3, 2, "moon", "red");*/
+		
+		Visualizer v = Sokoban2Visualizer.getVisualizer("robotImages");
+		VisualExplorer exp = new VisualExplorer(domain, v, s);
+		
+		exp.addKeyAction("w", ACTIONNORTH);
+		exp.addKeyAction("s", ACTIONSOUTH);
+		exp.addKeyAction("d", ACTIONEAST);
+		exp.addKeyAction("a", ACTIONWEST);
+		
+		exp.initGUI();
+		
+	}
+	
 	
 	public void setMaxX(int maxX){
 		this.maxX = maxX;
@@ -78,12 +124,15 @@ public class Sokoban2Domain implements DomainGenerator {
 		this.includeDirectionAttribute = includeDirectionAttribute;
 	}
 	
-	
+	/**
+	 * note: modified to include items for learning algorithms
+	 */
 	@Override
 	public Domain generateDomain() {
 		
 		SADomain domain = new SADomain();
 		
+		//declare the attributes associated with the domain
 		Attribute xatt = new Attribute(domain, ATTX, Attribute.AttributeType.DISC);
 		xatt.setDiscValuesForRange(0, maxX, 1);
 		
@@ -108,12 +157,24 @@ public class Sokoban2Domain implements DomainGenerator {
 		Attribute shapeAtt = new Attribute(domain, ATTSHAPE, Attribute.AttributeType.DISC);
 		shapeAtt.setDiscValues(SHAPES);
 		
+		//add the objects to the domain
+		domain.addAttribute(shapeAtt);
+		domain.addAttribute(colAtt);
+		domain.addAttribute(rightAtt);
+		domain.addAttribute(bottomAtt);
+		domain.addAttribute(leftAtt);
+		domain.addAttribute(topAtt);
+		domain.addAttribute(yatt);
+		domain.addAttribute(xatt);
+		
 		if(this.includeDirectionAttribute){
 			Attribute dirAtt = new Attribute(domain, ATTDIR, Attribute.AttributeType.DISC);
 			dirAtt.setDiscValues(DIRECTIONS);
+			domain.addAttribute(dirAtt); 		//add any existing attributes to the domain
 		}
 		
 		
+		//declare the objects associated with the domain
 		ObjectClass agent = new ObjectClass(domain, CLASSAGENT);
 		agent.addAttribute(xatt);
 		agent.addAttribute(yatt);
@@ -134,29 +195,55 @@ public class Sokoban2Domain implements DomainGenerator {
 		ObjectClass door = new ObjectClass(domain, CLASSDOOR);
 		this.addRectAtts(domain, door);
 		
+		//add the objects to the domain
+		domain.addObjectClass(block);
+		domain.addObjectClass(door);
+		domain.addObjectClass(room);
+		domain.addObjectClass(agent);
 		
+		//declare the actions
 		Action northAction = new MovementAction(ACTIONNORTH, domain, 0, 1);
 		Action southAction = new MovementAction(ACTIONSOUTH, domain, 0, -1);
 		Action eastAction = new MovementAction(ACTIONEAST, domain, 1, 0);
 		Action westAction = new MovementAction(ACTIONWEST, domain, -1, 0);
 		
+		//add the actions to the domain
+		domain.addAction(westAction);
+		domain.addAction(eastAction);
+		domain.addAction(southAction);
+		domain.addAction(northAction);
 		
-		
+		//declare + add the propositional functions
 		PropositionalFunction air = new PFInRegion(PFAGENTINROOM, domain, new String[]{CLASSAGENT, CLASSROOM}, true);
 		PropositionalFunction bir = new PFInRegion(PFBLOCKINROOM, domain, new String[]{CLASSBLOCK, CLASSROOM}, true);
+		
+		domain.addPropositionalFunction(bir);
+		domain.addPropositionalFunction(air);
 		
 		PropositionalFunction aid = new PFInRegion(PFAGENTINDOOR, domain, new String[]{CLASSAGENT, CLASSDOOR}, false);
 		PropositionalFunction bid = new PFInRegion(PFBLOCKINDOOR, domain, new String[]{CLASSBLOCK, CLASSDOOR}, false);
 		
+		domain.addPropositionalFunction(aid);
+		domain.addPropositionalFunction(bid);
+		
 		for(String col : COLORS){
 			PropositionalFunction pfr = new PFIsColor(PFRoomColorName(col), domain, new String[]{CLASSROOM}, col);
 			PropositionalFunction pfb = new PFIsColor(PFBlockColorName(col), domain, new String[]{CLASSBLOCK}, col);
+			domain.addPropositionalFunction(pfb);
+			domain.addPropositionalFunction(pfr);
 		}
 		
 		for(String shape : SHAPES){
 			PropositionalFunction pf = new PFIsShape(PFBlockShapeName(shape), domain, new String[]{CLASSBLOCK}, shape);
+			domain.addPropositionalFunction(pf);
 		}
 		
+		//add the elements for the learning algorithm
+		
+		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
+		hashFactory.setAttributesForClass(CLASSAGENT, domain.getObjectClass(CLASSAGENT).attributeList);
+		rf = new UniformCostRF(); //always returns a reward of -1. since goal state ends action, it will be favored.
+		tf = new SinglePFTF(domain.getPropFunction(PFAGENTINROOM));
 		
 		return domain;
 	}
@@ -469,7 +556,20 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 	}
 	
-	
+	public class PFGoal extends PropositionalFunction{
+
+		public PFGoal(String name, Domain domain, String[] parameterClasses) {
+			super(name, domain, parameterClasses);
+		}
+
+		@Override
+		public boolean isTrue(State st, String[] params) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+		
+		
+	}
 	
 	public class PFInRegion extends PropositionalFunction{
 
@@ -546,29 +646,5 @@ public class Sokoban2Domain implements DomainGenerator {
 	
 	
 	
-	
-	public static void main(String [] args){
-		
-		Sokoban2Domain dgen = new Sokoban2Domain();
-		dgen.includeDirectionAttribute(true);
-		Domain domain = dgen.generateDomain();
-		
-		State s = Sokoban2Domain.getClassicState(domain);
-		
-		/*ObjectInstance b2 = new ObjectInstance(domain.getObjectClass(CLASSBLOCK), CLASSBLOCK+1);
-		s.addObject(b2);
-		setBlock(s, 1, 3, 2, "moon", "red");*/
-		
-		Visualizer v = Sokoban2Visualizer.getVisualizer("robotImages");
-		VisualExplorer exp = new VisualExplorer(domain, v, s);
-		
-		exp.addKeyAction("w", ACTIONNORTH);
-		exp.addKeyAction("s", ACTIONSOUTH);
-		exp.addKeyAction("d", ACTIONEAST);
-		exp.addKeyAction("a", ACTIONWEST);
-		
-		exp.initGUI();
-		
-	}
 
 }

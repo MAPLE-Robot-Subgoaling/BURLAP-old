@@ -123,7 +123,7 @@ public class PolicyBlockDomain {
 	/*
 	 * This is the main thing you should worry about. Here is where the two policies are generated.
 	 */
-	public void createEpisodes(String output){
+	public void createEpisodes(String output, int number){
 		
 		//setup the filepath
 		if(!output.endsWith("/")){
@@ -137,6 +137,18 @@ public class PolicyBlockDomain {
 		EpisodeAnalysis one = new EpisodeAnalysis();
 		EpisodeAnalysis two = new EpisodeAnalysis();
 		
+		
+		//testing with variable number of episodes
+		for(int k = 0; k < number; k++)
+		{
+			setGoal(10-((int)(Math.random()*3)),10-((int)(Math.random()*3)));
+			for(int j = 0; j < 100; j++){
+				one = agent.runLearningEpisodeFrom(initialState); //run the episode
+			}
+			episodes.add(one);
+			System.out.println("Done: " + (k+1));
+		}
+		/*
 		//for the first episode - keeps overwriting the episode 100 times (you may not get the most optimal one)
 		setGoal(10, 10);
 		for(int j = 0; j < 100; j++){
@@ -160,6 +172,7 @@ public class PolicyBlockDomain {
 		episodes.add(two);
 		two.writeToFile(String.format("%se%03d", output, i), sp); //record the episode
 		System.out.println("1) Goal 10-8 : " + two.numTimeSteps()); //print the performance of the episode
+		*/
 	}
 	
 	//policy computer - for later stuff
