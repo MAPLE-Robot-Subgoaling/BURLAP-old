@@ -218,7 +218,7 @@ public class Sokoban2Domain implements DomainGenerator {
 		//PropositionalFunction bir = new PFInRegion(PFBLOCKINROOM, domain, new String[]{CLASSBLOCK, CLASSROOM}, true);
 		
 		//My PropFunction
-		PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSROOM});
+		PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSROOM}, true);
 		
 		//domain.addPropositionalFunction(bir);
 		domain.addPropositionalFunction(air);
@@ -557,9 +557,12 @@ public class Sokoban2Domain implements DomainGenerator {
 	}
 	
 	public class PFGoal extends PropositionalFunction{
-
-		public PFGoal(String name, Domain domain, String[] parameterClasses) {
+		
+		protected boolean falseIfInDoor;
+		
+		public PFGoal(String name, Domain domain, String[] parameterClasses, boolean falseIfInDoor) {
 			super(name, domain, parameterClasses);
+			this.falseIfInDoor = falseIfInDoor;
 		}
 
 		@Override
@@ -571,17 +574,27 @@ public class Sokoban2Domain implements DomainGenerator {
 			
 			ObjectInstance room = st.getObject(params[1]);
 			
+			//for some reason prints out all three colors a room can have
 			String color = room.getStringValForAttribute(ATTCOLOR);
+			System.out.println("\t" + color);
 			
-			//may cause an error here, calls for a green room.
+			
 			if(color.equals("green")){
+				
+				//prints every time, even though not in the green room all the time
 				System.out.println("In the Green Room!");
+				
+				if(this.falseIfInDoor){
+					if(doorContainingPoint(st, ax, ay) != null){
+						return false;
+					}
+				}
+				
+				//yet this works perfectly......
 				return regionContainsPoint(room, ax, ay);
 			}else{
 				return false;
 			}
-			
-			//may cause an error here, calls for a green room.
 			
 		}
 		
