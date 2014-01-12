@@ -13,6 +13,7 @@ import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.Value;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.SADomain;
@@ -214,32 +215,39 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 		//declare + add the propositional functions
 		PropositionalFunction air = new PFInRegion(PFAGENTINROOM, domain, new String[]{CLASSAGENT, CLASSROOM}, true);
-		PropositionalFunction bir = new PFInRegion(PFBLOCKINROOM, domain, new String[]{CLASSBLOCK, CLASSROOM}, true);
+		//PropositionalFunction bir = new PFInRegion(PFBLOCKINROOM, domain, new String[]{CLASSBLOCK, CLASSROOM}, true);
 		
+		//My PropFunction
+		PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSROOM}, true);
+		
+<<<<<<< HEAD
 		//My PropFunction
 		PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSROOM});
 		
 		domain.addPropositionalFunction(bir);
+=======
+		//domain.addPropositionalFunction(bir);
+>>>>>>> origin/tembot
 		domain.addPropositionalFunction(air);
 		domain.addPropositionalFunction(goal);
 		
-		PropositionalFunction aid = new PFInRegion(PFAGENTINDOOR, domain, new String[]{CLASSAGENT, CLASSDOOR}, false);
-		PropositionalFunction bid = new PFInRegion(PFBLOCKINDOOR, domain, new String[]{CLASSBLOCK, CLASSDOOR}, false);
+		//PropositionalFunction aid = new PFInRegion(PFAGENTINDOOR, domain, new String[]{CLASSAGENT, CLASSDOOR}, false);
+		//PropositionalFunction bid = new PFInRegion(PFBLOCKINDOOR, domain, new String[]{CLASSBLOCK, CLASSDOOR}, false);
 		
-		domain.addPropositionalFunction(aid);
-		domain.addPropositionalFunction(bid);
+	//	domain.addPropositionalFunction(aid);
+	//	domain.addPropositionalFunction(bid);
 		
-		for(String col : COLORS){
+	/*	for(String col : COLORS){
 			PropositionalFunction pfr = new PFIsColor(PFRoomColorName(col), domain, new String[]{CLASSROOM}, col);
 			PropositionalFunction pfb = new PFIsColor(PFBlockColorName(col), domain, new String[]{CLASSBLOCK}, col);
 			domain.addPropositionalFunction(pfb);
 			domain.addPropositionalFunction(pfr);
-		}
+		}*/
 		
-		for(String shape : SHAPES){
+	/*	for(String shape : SHAPES){
 			PropositionalFunction pf = new PFIsShape(PFBlockShapeName(shape), domain, new String[]{CLASSBLOCK}, shape);
 			domain.addPropositionalFunction(pf);
-		}
+		}*/
 		
 		//add the elements for the learning algorithm
 		
@@ -556,9 +564,12 @@ public class Sokoban2Domain implements DomainGenerator {
 	}
 	
 	public class PFGoal extends PropositionalFunction{
-
-		public PFGoal(String name, Domain domain, String[] parameterClasses) {
+		
+		protected boolean falseIfInDoor;
+		
+		public PFGoal(String name, Domain domain, String[] parameterClasses, boolean falseIfInDoor) {
 			super(name, domain, parameterClasses);
+			this.falseIfInDoor = falseIfInDoor;
 		}
 
 		@Override
@@ -569,9 +580,35 @@ public class Sokoban2Domain implements DomainGenerator {
 			int ay = agent.getDiscValForAttribute(ATTY);
 			
 			ObjectInstance room = st.getObject(params[1]);
+<<<<<<< HEAD
 			room.getName();
 			
 			return regionContainsPoint(room, ax, ay);
+=======
+			
+			//for some reason prints out all three colors a room can have
+			String color = room.getStringValForAttribute(ATTCOLOR);
+			System.out.println("\t" + color);
+			
+			
+			if(color.equals("green")){
+				
+				//prints every time, even though not in the green room all the time
+				System.out.println("In the Green Room!");
+				
+				if(this.falseIfInDoor){
+					if(doorContainingPoint(st, ax, ay) != null){
+						return false;
+					}
+				}
+				
+				//yet this works perfectly......
+				return regionContainsPoint(room, ax, ay);
+			}else{
+				return false;
+			}
+			
+>>>>>>> origin/tembot
 		}
 		
 		
