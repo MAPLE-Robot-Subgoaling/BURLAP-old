@@ -50,7 +50,7 @@ public class Sokoban2Domain implements DomainGenerator {
 	public static final String					PFAGENTINDOOR = "agentInDoor";
 	public static final String					PFBLOCKINDOOR = "blockInDoor";
 	
-	//User defined Goal Condition
+	//User defined Goal Condition - Tenji
 	public static final String					PFATGOAL = "atGoal";
 	
 	
@@ -556,7 +556,20 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 	}
 	
-	
+	public class PFGoal extends PropositionalFunction{
+
+		public PFGoal(String name, Domain domain, String[] parameterClasses) {
+			super(name, domain, parameterClasses);
+		}
+
+		@Override
+		public boolean isTrue(State st, String[] params) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+		
+		
+	}
 	
 	public class PFInRegion extends PropositionalFunction{
 
