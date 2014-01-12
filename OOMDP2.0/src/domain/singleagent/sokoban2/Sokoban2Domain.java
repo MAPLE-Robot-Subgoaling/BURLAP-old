@@ -220,14 +220,9 @@ public class Sokoban2Domain implements DomainGenerator {
 		//My PropFunction
 		PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSROOM}, true);
 		
-<<<<<<< HEAD
-		//My PropFunction
-		PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSROOM});
 		
-		domain.addPropositionalFunction(bir);
-=======
 		//domain.addPropositionalFunction(bir);
->>>>>>> origin/tembot
+
 		domain.addPropositionalFunction(air);
 		domain.addPropositionalFunction(goal);
 		
@@ -580,12 +575,7 @@ public class Sokoban2Domain implements DomainGenerator {
 			int ay = agent.getDiscValForAttribute(ATTY);
 			
 			ObjectInstance room = st.getObject(params[1]);
-<<<<<<< HEAD
-			room.getName();
-			
-			return regionContainsPoint(room, ax, ay);
-=======
-			
+
 			//for some reason prints out all three colors a room can have
 			String color = room.getStringValForAttribute(ATTCOLOR);
 			System.out.println("\t" + color);
@@ -608,7 +598,6 @@ public class Sokoban2Domain implements DomainGenerator {
 				return false;
 			}
 			
->>>>>>> origin/tembot
 		}
 		
 		
