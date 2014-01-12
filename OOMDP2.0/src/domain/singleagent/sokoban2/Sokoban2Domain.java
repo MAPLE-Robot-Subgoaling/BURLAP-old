@@ -61,7 +61,6 @@ public class Sokoban2Domain implements DomainGenerator {
 	public static final String[]				SHAPES = new String[]{"chair", "bag",
 														"backpack", "basket"};
 	
-	
 	public static final String[]				DIRECTIONS = new String[]{"north", "south", "east", "west"};
 	
 	protected static final String				PFRCOLORBASE = "roomIs";
@@ -217,8 +216,12 @@ public class Sokoban2Domain implements DomainGenerator {
 		PropositionalFunction air = new PFInRegion(PFAGENTINROOM, domain, new String[]{CLASSAGENT, CLASSROOM}, true);
 		PropositionalFunction bir = new PFInRegion(PFBLOCKINROOM, domain, new String[]{CLASSBLOCK, CLASSROOM}, true);
 		
+		//My PropFunction
+		PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSROOM});
+		
 		domain.addPropositionalFunction(bir);
 		domain.addPropositionalFunction(air);
+		domain.addPropositionalFunction(goal);
 		
 		PropositionalFunction aid = new PFInRegion(PFAGENTINDOOR, domain, new String[]{CLASSAGENT, CLASSDOOR}, false);
 		PropositionalFunction bid = new PFInRegion(PFBLOCKINDOOR, domain, new String[]{CLASSBLOCK, CLASSDOOR}, false);
@@ -256,8 +259,6 @@ public class Sokoban2Domain implements DomainGenerator {
 		oc.addAttribute(domain.getAttribute(ATTBOTTOM));
 		oc.addAttribute(domain.getAttribute(ATTRIGHT));
 	}
-	
-	
 	
 	public static String PFRoomColorName(String color){
 		String capped = firstLetterCapped(color);
@@ -372,8 +373,7 @@ public class Sokoban2Domain implements DomainGenerator {
 			s.addObject(o);
 		}
 	}
-	
-	
+
 	public static int maxRoomXExtent(State s){
 		
 		int max = 0;
@@ -401,7 +401,6 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 		return max;
 	}
-	
 	
 	protected static String firstLetterCapped(String s){
 		String firstLetter = s.substring(0, 1);
@@ -564,8 +563,15 @@ public class Sokoban2Domain implements DomainGenerator {
 
 		@Override
 		public boolean isTrue(State st, String[] params) {
-			// TODO Auto-generated method stub
-			return false;
+			
+			ObjectInstance agent = st.getObject(params[0]);
+			int ax = agent.getDiscValForAttribute(ATTX);
+			int ay = agent.getDiscValForAttribute(ATTY);
+			
+			ObjectInstance room = st.getObject(params[1]);
+			room.getName();
+			
+			return regionContainsPoint(room, ax, ay);
 		}
 		
 		
