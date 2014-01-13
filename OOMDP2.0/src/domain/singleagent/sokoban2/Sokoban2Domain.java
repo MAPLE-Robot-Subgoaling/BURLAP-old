@@ -3,11 +3,14 @@ package domain.singleagent.sokoban2;
 import java.util.List;
 
 import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
 import burlap.behavior.singleagent.learning.LearningAgent;
+import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.GroundedProp;
 import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.PropositionalFunction;
@@ -99,15 +102,33 @@ public class Sokoban2Domain implements DomainGenerator {
 		s.addObject(b2);
 		setBlock(s, 1, 3, 2, "moon", "red");*/
 		
-		Visualizer v = Sokoban2Visualizer.getVisualizer("robotImages");
-		VisualExplorer exp = new VisualExplorer(domain, v, s);
+		//Setting up Q-Learning
+		parser = new Sokoban2Parser(domain);
+		analyzer = new EpisodeAnalysis();
 		
-		exp.addKeyAction("w", ACTIONNORTH);
+		for(int i = 1; i <= 2; i++){
+			analyzer = new EpisodeAnalysis();
+
+			System.out.print("Episode " + i + ": ");
+			analyzer = Q.runLearningEpisodeFrom(s);
+			System.out.println("\tSteps: " + analyzer.numTimeSteps());
+			analyzer.writeToFile(String.format("output/e%03d", i), parser);
+
+			setAgent(s, 6, 6);
+			setBlock(s, 0, 2, 2, "basket", "red");
+		}
+		
+		
+		Visualizer v = Sokoban2Visualizer.getVisualizer("robotImages");
+		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, domain, parser, "output");
+		
+		
+		/*exp.addKeyAction("w", ACTIONNORTH);
 		exp.addKeyAction("s", ACTIONSOUTH);
 		exp.addKeyAction("d", ACTIONEAST);
 		exp.addKeyAction("a", ACTIONWEST);
 		
-		exp.initGUI();
+		exp.initGUI();*/
 		
 	}
 	
@@ -247,7 +268,9 @@ public class Sokoban2Domain implements DomainGenerator {
 		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
 		hashFactory.setAttributesForClass(CLASSAGENT, domain.getObjectClass(CLASSAGENT).attributeList);
 		rf = new UniformCostRF(); //always returns a reward of -1. since goal state ends action, it will be favored.
-		tf = new SinglePFTF(domain.getPropFunction(PFAGENTINROOM));
+		tf = new SinglePFTF(domain.getPropFunction(PFATGOAL));
+		//tf = new InRoomOfColorTF(domain, "green");
+		Q = new QLearning(domain, rf, tf, Sokoban2Domain.DISCOUNTFACTOR, hashFactory, 0.2, Sokoban2Domain.LEARNINGRATE, Integer.MAX_VALUE);
 		
 		return domain;
 	}
@@ -576,13 +599,10 @@ public class Sokoban2Domain implements DomainGenerator {
 			
 			//for some reason prints out all three colors a room can have
 			String color = room.getStringValForAttribute(ATTCOLOR);
-			System.out.println("\t" + color);
-			
 			
 			if(color.equals("green")){
 				
 				//prints every time, even though not in the green room all the time
-				System.out.println("In the Green Room!");
 				
 				if(this.falseIfInDoor){
 					if(doorContainingPoint(st, ax, ay) != null){
@@ -674,6 +694,31 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 	}
 	
+	public class InRoomOfColorTF implements TerminalFunction{
+
+		protected PropositionalFunction colorPF;
+		protected PropositionalFunction agentInRoomPF;
+
+		public InRoomOfColorTF(Domain domain, String colorName){
+			this.colorPF = domain.getPropFunction(Sokoban2Domain.PFRoomColorName(colorName));
+			this.agentInRoomPF = domain.getPropFunction(Sokoban2Domain.PFAGENTINROOM);
+		}
+
+		public boolean isTerminal(State s){
+			//find the room the agent is in
+			List <GroundedProp> inRoomGPs = s.getAllGroundedPropsFor(this.agentInRoomPF);
+			for(GroundedProp gp : inRoomGPs){
+				if(gp.isTrue(s)){
+					//then this gp holds the room parameter (param index 1) where the agent is
+					//check if that room object satisfies our color prop
+					return this.colorPF.isTrue(s, gp.params[1]);
+				}
+			}
+
+			return false;
+		}
+
+	}
 	
 	
 
