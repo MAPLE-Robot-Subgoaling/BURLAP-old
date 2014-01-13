@@ -32,9 +32,11 @@ public class PolicyBlockOptionGenerator {
 		Object[] output = unionSet(input);
 		for(int i = 0; i < ((EpisodeAnalysis[])(output[0])).length; i++)
 		{
-			System.out.print("\n" + ((String[])(output[1]))[i] + "     Score: " + Integer.toString(((int[])(output[2]))[i]));
-			visualize(((EpisodeAnalysis[])(output[0]))[i]);
+			System.out.print("\n" + ((String[])(output[1]))[i] + "\t\tScore: " + Integer.toString(((int[])(output[2]))[i]));
+			//visualize(((EpisodeAnalysis[])(output[0]))[i]);
 		}
+		
+		generator.showEpisodes();
 	}
 	
 	//creates a new Policy Domain Object

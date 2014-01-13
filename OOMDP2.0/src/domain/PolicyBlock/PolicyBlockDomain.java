@@ -134,16 +134,14 @@ public class PolicyBlockDomain {
 		
 		//declarations
 		LearningAgent agent = new QLearning(domain, rf, tf, 0.99, hashFactory, 0., 0.9); //create the QLearning agent
-		EpisodeAnalysis one = new EpisodeAnalysis();
-		EpisodeAnalysis two = new EpisodeAnalysis();
-		
+		EpisodeAnalysis one = new EpisodeAnalysis();		
 		
 		//testing with variable number of episodes
 		for(int k = 0; k < number; k++)
 		{
-			setGoal(10-((int)(Math.random()*3)),10-((int)(Math.random()*3)));
+			setGoal(10-((int)(Math.random()*3)),10-((int)(Math.random()*3))); //setting up a random goal state
 			for(int j = 0; j < 100; j++){
-				one = agent.runLearningEpisodeFrom(initialState); //run the episode
+				one = agent.runLearningEpisodeFrom(initialState); //run the episode - overwrites 100 times
 			}
 			episodes.add(one);
 			System.out.println("Done: " + (k+1));
