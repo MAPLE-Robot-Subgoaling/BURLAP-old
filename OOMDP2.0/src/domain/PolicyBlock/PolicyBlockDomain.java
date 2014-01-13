@@ -32,6 +32,7 @@ import burlap.behavior.singleagent.planning.StateConditionTest;
 import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
 import burlap.behavior.singleagent.planning.deterministic.TFGoalCondition;
 import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
+import burlap.behavior.statehashing.DiscreteMaskHashingFactory;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.oomdp.core.*;
 
@@ -44,7 +45,7 @@ public class PolicyBlockDomain {
 	TerminalFunction tf;
 	StateConditionTest goalCondition;
 	State initialState;
-	DiscreteStateHashFactory hashFactory;
+	DiscreteMaskHashingFactory hashFactory;
 	HashMap<String,Policy> policies;
 	ArrayList<EpisodeAnalysis> episodes;
 	OOMDPPlanner planner;
@@ -78,7 +79,7 @@ public class PolicyBlockDomain {
 		setGoal(10,10);
 		
 		//set up the state hashing system
-		hashFactory = new DiscreteStateHashFactory();
+		hashFactory = new DiscreteMaskHashingFactory();
 		hashFactory.setAttributesForClass(GridWorldDomain.CLASSAGENT, domain.getObjectClass(GridWorldDomain.CLASSAGENT).attributeList); //uses agent position to hash
 	}
 	
@@ -134,14 +135,16 @@ public class PolicyBlockDomain {
 		
 		//declarations
 		LearningAgent agent = new QLearning(domain, rf, tf, 0.99, hashFactory, 0., 0.9); //create the QLearning agent
-		EpisodeAnalysis one = new EpisodeAnalysis();		
+		EpisodeAnalysis one = new EpisodeAnalysis();
+		EpisodeAnalysis two = new EpisodeAnalysis();
+		
 		
 		//testing with variable number of episodes
 		for(int k = 0; k < number; k++)
 		{
-			setGoal(10-((int)(Math.random()*3)),10-((int)(Math.random()*3))); //setting up a random goal state
+			setGoal(10-((int)(Math.random()*4)),10-((int)(Math.random()*5)));
 			for(int j = 0; j < 100; j++){
-				one = agent.runLearningEpisodeFrom(initialState); //run the episode - overwrites 100 times
+				one = agent.runLearningEpisodeFrom(initialState); //run the episode
 			}
 			episodes.add(one);
 			System.out.println("Done: " + (k+1));

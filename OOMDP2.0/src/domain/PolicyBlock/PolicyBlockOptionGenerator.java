@@ -18,7 +18,7 @@ public class PolicyBlockOptionGenerator {
 	//Main
 	public static void main(String args[]){
 		//set number of policies to merge
-		int number = 6;
+		int number = 3;
 		PolicyBlockOptionGenerator generator = new PolicyBlockOptionGenerator();
 		generator.generatePolicies(number);
 		
@@ -29,14 +29,23 @@ public class PolicyBlockOptionGenerator {
 		for(int i = 0; i < input.length; i++)
 			input[i] = environ.episodes.get(i);
 		
-		Object[] output = unionSet(input);
-		for(int i = 0; i < ((EpisodeAnalysis[])(output[0])).length; i++)
+		ArrayList <Object> output = unionSet(input);
+		int max = 0;
+		for(int i = 0; i < ((ArrayList)(output.get(0))).size(); i++)
 		{
-			System.out.print("\n" + ((String[])(output[1]))[i] + "\t\tScore: " + Integer.toString(((int[])(output[2]))[i]));
-			//visualize(((EpisodeAnalysis[])(output[0]))[i]);
+			if(max < ((Integer)((ArrayList)output.get(2)).get(i)))
+				max = ((Integer)((ArrayList)output.get(2)).get(i));
+			System.out.print("\n" + ((ArrayList)(output.get(1))).get(i) + "\n  Score: " + Integer.toString((Integer)((ArrayList)output.get(2)).get(i)));
+			visualize((EpisodeAnalysis)(((ArrayList)(output.get(0))).get(i)));
 		}
+		System.out.println("Highest score: " + Integer.toString(max));
 		
-		generator.showEpisodes();
+		System.out.println(((int)(Math.pow(2, number))-1) + " possible policies\n" + ((ArrayList)output.get(0)).size() + " resulting policies");
+		
+		System.out.print("\n" + ((ArrayList)(output.get(1))).get(((ArrayList)output.get(2)).indexOf(max)) + "\n  Score: " + Integer.toString((Integer)((ArrayList)output.get(2)).get(((ArrayList)output.get(2)).indexOf(max))));
+		visualize((EpisodeAnalysis)(((ArrayList)(output.get(0))).get(((ArrayList)output.get(2)).indexOf(max))));
+		
+		
 	}
 	
 	//creates a new Policy Domain Object
@@ -81,7 +90,7 @@ public class PolicyBlockOptionGenerator {
 		for(int col = 10; col >= 0; col--)
 		{
 			//left-hand numbers
-			System.out.print((col + 1)%10/* + " "*/);
+			System.out.print((col)%10/* + " "*/);
 			for(int row = 0; row < 11; row++)
 			{
 				System.out.print(matrix[row][col]);
@@ -95,7 +104,7 @@ public class PolicyBlockOptionGenerator {
 		}
 		//bottom numbers
 		//System.out.print("   1  2  3  4  5  6  7  8  9  0  1 \n\n");
-		System.out.print("  1 2 3 4 5 6 7 8 9 0 1 \n\n");
+		System.out.print(" 0 1 2 3 4 5 6 7 8 9 0 \n\n");
 	}
 	
 	//pushes the generated episodes to the GUI
@@ -146,11 +155,12 @@ public class PolicyBlockOptionGenerator {
 	}
 	
 	//returns the union set of merged policies
-	public static Object[]  unionSet(EpisodeAnalysis[] set){
-		EpisodeAnalysis[] result = new EpisodeAnalysis[(int)(Math.pow(2, set.length) -1)];
-		String[] names = new String[(int)(Math.pow(2, set.length)-1)];
-		int[] depth = new  int[(int)(Math.pow(2, set.length)-1)];
-		int[] scores = new int[(int)(Math.pow(2, set.length)-1)];
+	public static ArrayList<Object>  unionSet(EpisodeAnalysis[] set){
+		ArrayList<EpisodeAnalysis> result = new ArrayList<EpisodeAnalysis>();
+		ArrayList<String> names = new ArrayList<String>();
+		ArrayList<Integer> depth = new  ArrayList<Integer>();
+		ArrayList<Integer> scores = new ArrayList<Integer>();
+		ArrayList<Integer> label = new ArrayList<Integer>();
 		//this loop seeks to exhaustively find the union set of the policies provided
 		//the variable "i" is treated as though it were in binary with each bit representing whether a specific policy is part of the merged policy or not
 		//"i" is split into the leading boolean non-zero bit and the other bits; the former is used to find the proper policy and the latter is used to find the already merged other policies (within the result array)
@@ -159,30 +169,49 @@ public class PolicyBlockOptionGenerator {
 		
 		//variable to store the number of binary digits used to represent previous merges
 		int n = 1;
-		for(int i = 1; i < Math.pow(2,  set.length); i++)
+		EpisodeAnalysis temp;
+		
+		double max = Math.pow(2, set.length);
+		
+		System.out.println("Merges complete:         (of " + ((int)(max/100000) + " * 100K)"));
+		
+		for(int i = 1; i < max; i++)
 		{
 			if(i == Math.pow(2,  n))
 				n++;
+			//System.out.println(label.indexOf(i-Math.pow(2, n-1)));
 			if(i-Math.pow(2, n-1) == 0)
 			{
-				result[i-1] = set[n-1];
-				names[i-1] = Integer.toString(n);
-				depth[i-1] = 1;
-				scores[i-1] = result[i-1].stateSequence.size();
+				label.add(i);
+				result.add(set[n-1]);
+				names.add(Integer.toString(n));
+				depth.add(1);
+				scores.add(result.get(label.indexOf(i)).stateSequence.size());
 			}
-			else
+			else if (label.indexOf(((int)(i-Math.pow(2, n-1)))) > -1/* && depth.get((int)(label.indexOf((int)(i-Math.pow(2, n-1))))) < 3*/) //toggling this bit causes longer pathways to be found, but not in as many policies
 			{
-				result[i-1] = merge(set[n-1], result[(int)(i-1-Math.pow(2, n-1))]);
-				names[i-1] = names[(int)(i-1-Math.pow(2, n-1))] + "+" + Integer.toString(n);
-				depth[i-1] = depth[(int)(i-1-Math.pow(2, n-1))] + 1;
-				scores[i-1] = result[i-1].stateSequence.size() * depth[i-1];
+				temp = merge(set[n-1], result.get((int)(label.indexOf((int)(i-Math.pow(2, n-1))))));
+				if(temp.stateSequence.size() > 0)
+				{
+				label.add(i);
+				result.add(merge(set[n-1], result.get((int)(label.indexOf((int)(i-Math.pow(2, n-1)))))));
+				names.add(names.get((int)(label.indexOf((int)(i-Math.pow(2, n-1))))) + "+" + Integer.toString(n));
+				depth.add(depth.get((int)(label.indexOf((int)(i-Math.pow(2, n-1))))) + 1);
+				scores.add(result.get(label.indexOf(i)).stateSequence.size() * depth.get(label.indexOf(i)));
+				}
 			}
 			
+			if(i%100000 == 0)
+				System.out.println(i/100000 + " * 100K");
+			else if (i%1000 == 0)
+				System.out.print(".");
+				
+			
 		}
-		Object[] output = new Object[3];
-		output[0] = result;
-		output[1] = names;
-		output[2] = scores;
+		ArrayList <Object> output = new ArrayList <Object>();
+		output.add(result);
+		output.add(names);
+		output.add(scores);
 		return output;
 	}
 	
