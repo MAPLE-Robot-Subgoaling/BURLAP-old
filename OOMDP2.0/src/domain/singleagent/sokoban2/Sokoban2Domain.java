@@ -106,7 +106,7 @@ public class Sokoban2Domain implements DomainGenerator {
 		parser = new Sokoban2Parser(domain);
 		analyzer = new EpisodeAnalysis();
 		
-		for(int i = 1; i <= 2; i++){
+		for(int i = 1; i <= 1; i++){
 			analyzer = new EpisodeAnalysis();
 
 			System.out.print("Episode " + i + ": ");
@@ -245,36 +245,35 @@ public class Sokoban2Domain implements DomainGenerator {
 		domain.addPropositionalFunction(air);
 		domain.addPropositionalFunction(goal);
 		
-		//PropositionalFunction aid = new PFInRegion(PFAGENTINDOOR, domain, new String[]{CLASSAGENT, CLASSDOOR}, false);
-		//PropositionalFunction bid = new PFInRegion(PFBLOCKINDOOR, domain, new String[]{CLASSBLOCK, CLASSDOOR}, false);
+		PropositionalFunction aid = new PFInRegion(PFAGENTINDOOR, domain, new String[]{CLASSAGENT, CLASSDOOR}, false);
+		PropositionalFunction bid = new PFInRegion(PFBLOCKINDOOR, domain, new String[]{CLASSBLOCK, CLASSDOOR}, false);
 		
-	//	domain.addPropositionalFunction(aid);
-	//	domain.addPropositionalFunction(bid);
+		domain.addPropositionalFunction(aid);
+		domain.addPropositionalFunction(bid);
 		
-	/*	for(String col : COLORS){
+		for(String col : COLORS){
 			PropositionalFunction pfr = new PFIsColor(PFRoomColorName(col), domain, new String[]{CLASSROOM}, col);
 			PropositionalFunction pfb = new PFIsColor(PFBlockColorName(col), domain, new String[]{CLASSBLOCK}, col);
 			domain.addPropositionalFunction(pfb);
 			domain.addPropositionalFunction(pfr);
-		}*/
+		}
 		
-	/*	for(String shape : SHAPES){
+		for(String shape : SHAPES){
 			PropositionalFunction pf = new PFIsShape(PFBlockShapeName(shape), domain, new String[]{CLASSBLOCK}, shape);
 			domain.addPropositionalFunction(pf);
-		}*/
+		}
 		
 		//add the elements for the learning algorithm
 		
 		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
 		hashFactory.setAttributesForClass(CLASSAGENT, domain.getObjectClass(CLASSAGENT).attributeList);
 		rf = new UniformCostRF(); //always returns a reward of -1. since goal state ends action, it will be favored.
-		tf = new SinglePFTF(domain.getPropFunction(PFATGOAL));
-		//tf = new InRoomOfColorTF(domain, "green");
+		//tf = new SinglePFTF(domain.getPropFunction(PFATGOAL));
+		tf = new InRoomOfColorTF(domain, "green");
 		Q = new QLearning(domain, rf, tf, Sokoban2Domain.DISCOUNTFACTOR, hashFactory, 0.2, Sokoban2Domain.LEARNINGRATE, Integer.MAX_VALUE);
 		
 		return domain;
 	}
-	
 	
 	
 	protected void addRectAtts(Domain domain, ObjectClass oc){
