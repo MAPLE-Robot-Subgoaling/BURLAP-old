@@ -6,6 +6,7 @@ package domain.PolicyBlock;
  */
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 import domain.fourroomsdomain.FourRooms;
@@ -29,11 +30,14 @@ import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.StateConditionTest;
+import burlap.behavior.singleagent.planning.ValueFunctionPlanner;
+import burlap.behavior.singleagent.planning.commonpolicies.GreedyDeterministicQPolicy;
 import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
 import burlap.behavior.singleagent.planning.deterministic.TFGoalCondition;
 import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
 import burlap.behavior.statehashing.DiscreteMaskHashingFactory;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
+import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.*;
 
 public class PolicyBlockDomain {
@@ -50,12 +54,14 @@ public class PolicyBlockDomain {
 	ArrayList<EpisodeAnalysis> episodes;
 	OOMDPPlanner planner;
 	double DISCOUNTFACTOR = 0.99;
+	Collection<StateHashTuple> stateSpace;
 	
 	//Main Function
 	public static void main(String[] args) {
 		PolicyBlockDomain blocks = new PolicyBlockDomain();
 		String output = "policyBlocks";
-		blocks.QLearn(output);
+		//blocks.QLearn(output);
+		blocks.computePolicy("policy-", 4, "outputPolicyBlocks");
 		blocks.visualize(output);
 	}
 	
@@ -66,6 +72,7 @@ public class PolicyBlockDomain {
 		domain = policyBlock.generateDomain();
 		policies = new HashMap<String, Policy>();
 		episodes = new ArrayList<EpisodeAnalysis>();
+		stateSpace = new ArrayList<StateHashTuple>();
 		
 		//define the parser, reward, and termination conditions
 		sp = new GridWorldStateParser(domain);
@@ -108,16 +115,16 @@ public class PolicyBlockDomain {
 		LearningAgent agent = new QLearning(domain, rf, tf, 0.99, hashFactory, 0., 0.9); //create the QLearning agent
 		
 		for(int i = 0; i < 100; i++){
-			EpisodeAnalysis ea = agent.runLearningEpisodeFrom(initialState); //run the episode
-			ea.writeToFile(String.format("%se%03d", output, i), sp); //record the episode
-			System.out.println("Episode "+ i + " : " + ea.numTimeSteps()); //print the performance of the episode
+			EpisodeAnalysis ea = agent.runLearningEpisodeFrom(initialState); 	//run the episode
+			ea.writeToFile(String.format("%se%03d", output, i), sp); 			//record the episode
+			System.out.println("Episode "+ i + " : " + ea.numTimeSteps()); 		//print the performance of the episode
 		}
 	}
 	
 	//Write the episode to the file
 	public void writeEpisode(EpisodeAnalysis obj, String output){
 		int i = 500;
-		obj.writeToFile(String.format("%se%03d", output, i), sp); //record the episode
+		obj.writeToFile(String.format("%se%03d", output, i), sp); 				//record the episode
 	}
 	
 	//called from OptionGenerator
@@ -131,12 +138,9 @@ public class PolicyBlockDomain {
 			output = output + "/";
 		}
 		
-		int i = 0;
-		
 		//declarations
 		LearningAgent agent = new QLearning(domain, rf, tf, 0.99, hashFactory, 0., 0.9); //create the QLearning agent
 		EpisodeAnalysis one = new EpisodeAnalysis();
-		EpisodeAnalysis two = new EpisodeAnalysis();
 		
 		
 		//testing with variable number of episodes
@@ -149,41 +153,39 @@ public class PolicyBlockDomain {
 			episodes.add(one);
 			System.out.println("Done: " + (k+1));
 		}
-		/*
-		//for the first episode - keeps overwriting the episode 100 times (you may not get the most optimal one)
-		setGoal(10, 10);
-		for(int j = 0; j < 100; j++){
-			one = agent.runLearningEpisodeFrom(initialState); //run the episode
-		}
-		
-		//saves the episode to a file
-		episodes.add(one);
-		one.writeToFile(String.format("%se%03d", output, i), sp); //record the episode
-		System.out.println("0) Goal 10-10 : " + one.numTimeSteps()); //print the performance of the episode
-		
-		i++;
-		
-		//for the second episode
-		setGoal(10, 8);
-		for(int j = 0; j < 100; j++){
-			two = agent.runLearningEpisodeFrom(initialState); //run the episode
-		}
-		
-		//saves the episode to a file
-		episodes.add(two);
-		two.writeToFile(String.format("%se%03d", output, i), sp); //record the episode
-		System.out.println("1) Goal 10-8 : " + two.numTimeSteps()); //print the performance of the episode
-		*/
 	}
 	
 	//policy computer - for later stuff
-	public void computePolicy(String str){
-		planner = new ValueIteration(domain, rf, tf, DISCOUNTFACTOR, hashFactory, 0.001, 100);
-		Policy p = new GreedyQPolicy((QComputablePlanner)planner);
-		policies.put(str, p);
+	public void computePolicy(String str, int number, String outputPath){
+	
+		//setup the filepath
+		if(!outputPath.endsWith("/")){
+			outputPath = outputPath + "/";
+		}
+		
+		for(int k =  0; k < number; k++){
+			
+			setAgent(0,0);
+			setGoal(10-((int)(Math.random()*4)),10-((int)(Math.random()*5)));
+			ValueFunctionPlanner plan = new ValueIteration(domain, rf, tf, DISCOUNTFACTOR, hashFactory, 0.001, 100);
+			plan.planFromState(initialState);
+			
+			//stateSpace = plan.transitionDynamincs.keySet(); error here, cannot access the statehashtuple set
+			
+			
+			Policy p = new GreedyDeterministicQPolicy((QComputablePlanner)plan);
+			p.evaluateBehavior(initialState, rf, tf).writeToFile(outputPath + str + k, sp);
+			policies.put(str+k, p);
+		}
+		
 	}
 	
 	public HashMap<String, Policy> getPolicyMap(){
 		return policies;
+	}
+	
+	public void visualizePolicies(String outputPath){
+		Visualizer v = GridWorldVisualizer.getVisualizer(domain, policyBlock.getMap());
+		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, domain, sp, outputPath);
 	}
 }
