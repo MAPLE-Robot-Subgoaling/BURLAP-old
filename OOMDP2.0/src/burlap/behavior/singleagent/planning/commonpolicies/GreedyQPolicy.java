@@ -16,7 +16,14 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
 
+
+/**
+ * A greedy policy that breaks ties by randomly choosing an action amongst the tied actions. This class requires a QComputablePlanner
+ * @author James MacGlashan
+ *
+ */
 public class GreedyQPolicy extends Policy implements PlannerDerivedPolicy{
+
 	protected QComputablePlanner		qplanner;
 	protected Random 					rand;
 	
@@ -26,11 +33,17 @@ public class GreedyQPolicy extends Policy implements PlannerDerivedPolicy{
 		rand = RandomFactory.getMapped(0);
 	}
 	
+	
+	/**
+	 * Initializes with a QComputablePlanner
+	 * @param qplanner the QComputablePlanner to use
+	 */
 	public GreedyQPolicy(QComputablePlanner planner){
 		qplanner = planner;
 		rand = RandomFactory.getMapped(0);
 	}
 	
+	@Override
 	public void setPlanner(OOMDPPlanner planner){
 		
 		if(!(planner instanceof QComputablePlanner)){
@@ -98,7 +111,10 @@ public class GreedyQPolicy extends Policy implements PlannerDerivedPolicy{
 	}
 
 
-	
+	@Override
+	public boolean isDefinedFor(State s) {
+		return true; //can always find q-values with default value
+	}
 	
 	
 	

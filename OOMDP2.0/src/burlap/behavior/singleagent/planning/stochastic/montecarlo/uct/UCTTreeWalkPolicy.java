@@ -7,36 +7,55 @@ import java.util.List;
 import java.util.Map;
 
 import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.planning.OOMDPPlanner;
+import burlap.behavior.singleagent.planning.PlannerDerivedPolicy;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
-/*
+
+
+/**
  * This policy is for use with UCT. Note that UCT can only guarantee the policy for the initial state of planning.
  * However, the policy from states that lie on the greedy path from the initial state are likely "okay" as well
  * since they were used for the determining which action to take in the initial state.
  * 
- *  This policy follows that by defining the policy for states that lie along the the greedy path of the UCT
- *  tree. Any state not visited by the greedy path in the UCT tree is excluded from the policy and will result
- *  in an error if this policy is queried for such a state.
+ * This class defines the policy for states that lie along the the greedy path of the UCT
+ * tree. Any state not visited by the greedy path in the UCT tree is excluded from the policy and will result
+ * in an error if this policy is queried for such a state.
  *  
- *  This policy is probably best used for deterministic MDPs, though it will work for stochastic ones as well.
- *  A more robust policy would cause the planner to be called at each state to build a new tree.
+ * A more robust policy would cause the planner to be called at each state to build a new tree.
+ * @author James MacGlashan
+ *
  */
-
-
-public class UCTTreeWalkPolicy extends Policy {
+public class UCTTreeWalkPolicy extends Policy implements PlannerDerivedPolicy{
 
 	UCT 									planner;
 	
 	Map<StateHashTuple, GroundedAction> 	policy;
 	
+	/**
+	 * Initializes the policy with the UCT planner
+	 * @param planner the UCT planner whose tree should be walked.
+	 */
 	public UCTTreeWalkPolicy(UCT planner){
 		this.planner = planner;
 		policy = null;
 	}
 	
+	@Override
+	public void setPlanner(OOMDPPlanner planner) {
+		if(!(planner instanceof UCT)){
+			throw new RuntimeException("Planner must be an instance of UCT");
+		}
+		this.planner = (UCT)planner;
+		
+	}
 	
+	
+	/**
+	 * computes a hash-backed policy for every state visited along the greedy path of the UCT tree.
+	 */
 	public void computePolicyFromTree(){
 		policy = new HashMap<StateHashTuple, GroundedAction>();
 		
@@ -70,7 +89,12 @@ public class UCTTreeWalkPolicy extends Policy {
 	}
 	
 	
-	//if there are ties, the first is chosen only since returns a deterministic policy
+	/**
+	 * Returns the {@link UCTActionNode} with the highest average sample return. Note that this does not use the upper confidence since
+	 * planning is completed.
+	 * @param snode the {@link UCTState} for which to get the best {@link UCTActionNode}.
+	 * @return the {@link UCTActionNode} with the highest average sample return.
+	 */
 	protected UCTActionNode getQGreedyNode(UCTStateNode snode){
 		
 		double maxQ = Double.NEGATIVE_INFINITY;
@@ -97,7 +121,12 @@ public class UCTTreeWalkPolicy extends Policy {
 			this.computePolicyFromTree();
 		}
 		
-		return policy.get(planner.stateHash(s));
+		GroundedAction ga = policy.get(planner.stateHash(s));
+		if(ga == null){
+			throw new PolicyUndefinedException();
+		}
+		
+		return ga;
 	}
 
 	@Override
@@ -109,7 +138,7 @@ public class UCTTreeWalkPolicy extends Policy {
 		
 		GroundedAction ga = policy.get(planner.stateHash(s));
 		if(ga == null){
-			return null; //error policy undefined
+			throw new PolicyUndefinedException();
 		}
 		
 		List <ActionProb> res = new ArrayList<Policy.ActionProb>();
@@ -123,5 +152,21 @@ public class UCTTreeWalkPolicy extends Policy {
 	public boolean isStochastic() {
 		return false; //although UCT solves stochastic MDPs, the policy returned here is deterministic and greedy
 	}
+
+	@Override
+	public boolean isDefinedFor(State s) {
+		if(policy == null){
+			this.computePolicyFromTree();
+		}
+		GroundedAction ga = policy.get(planner.stateHash(s));
+		if(ga == null){
+			return false;
+		}
+		
+		return true;
+	}
+
+
+	
 
 }

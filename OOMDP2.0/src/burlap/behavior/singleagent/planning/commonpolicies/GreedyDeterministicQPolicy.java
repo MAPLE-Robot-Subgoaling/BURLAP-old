@@ -13,17 +13,28 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
 
+/**
+ * A greedy policy that breaks ties by choosing the first action with the maximum value. This class requires a QComputablePlanner
+ * @author James MacGlashan
+ *
+ */
 public class GreedyDeterministicQPolicy extends Policy implements PlannerDerivedPolicy{
+
 	protected QComputablePlanner		qplanner;
 	
 	public GreedyDeterministicQPolicy() {
 		qplanner = null;
 	}
 	
+	/**
+	 * Initializes with a QComputablePlanner
+	 * @param qplanner the QComputablePlanner to use
+	 */
 	public GreedyDeterministicQPolicy(QComputablePlanner qplanner){
 		this.qplanner = qplanner;
 	}
 	
+	@Override
 	public void setPlanner(OOMDPPlanner planner){
 		
 		if(!(planner instanceof QComputablePlanner)){
@@ -58,6 +69,11 @@ public class GreedyDeterministicQPolicy extends Policy implements PlannerDerived
 	@Override
 	public boolean isStochastic() {
 		return false;
+	}
+	
+	@Override
+	public boolean isDefinedFor(State s) {
+		return true; //can always find q-values with default value
 	}
 
 }

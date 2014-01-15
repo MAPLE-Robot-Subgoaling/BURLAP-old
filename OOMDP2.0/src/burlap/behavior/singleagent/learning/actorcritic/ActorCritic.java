@@ -14,27 +14,84 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
+
+/**
+ * This is a general class structure for implementing Actor-critic learning. The kind of actor critic learning performed
+ * can be modified by swapping out different {@link Actor} and {@link Critic} objects. The general structure of the 
+ * learning algorithm is for the {@link Actor} class to be queried for an action given the current state of the world.
+ * That action is taken and a resulting state is observed. The {@link Critic} is then asked to critique this behavior
+ * which is returned in a {@link CritqueResult} object and then passed along to the {@link Actor} so that the actor may
+ * update is behavior accordingly.
+ * 
+ * @author James MacGlashan
+ *
+ */
 public class ActorCritic extends OOMDPPlanner implements LearningAgent {
 
+	
+	/**
+	 * The actor component to use.
+	 */
 	protected Actor													actor;
+	
+	/**
+	 * The critic component to use
+	 */
 	protected Critic												critic;
 	
+	/**
+	 * The maximum number of steps of an episode before the agent will manually terminate it.This is defaulted
+	 * to Integer.MAX_VALUE.
+	 */
 	protected int													maxEpisodeSize = Integer.MAX_VALUE;
 	
+	/**
+	 * The number of simulated learning episodes to use when the {@link planFromState(State)} method is called.
+	 */
 	protected int													numEpisodesForPlanning;
 	
+	
+	/**
+	 * The saved and most recent learning episodes this agent has performed. 
+	 */
 	protected LinkedList<EpisodeAnalysis>							episodeHistory;
+	
+	/**
+	 * The number of most recent learning episodes to store.
+	 */
 	protected int													numEpisodesToStore;
 	
+	
+	
+	/**
+	 * Initializes the learning algorithm.
+	 * @param domain the domain in which to learn
+	 * @param rf the reward function to use
+	 * @param tf the terminal state function to use
+	 * @param gamma the discount factor
+	 * @param actor the actor component to use to select actions
+	 * @param critic the critic component to use to critique 
+	 */
 	public ActorCritic(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Actor actor, Critic critic) {
 		this.actor = actor;
 		this.critic = critic;
 		numEpisodesForPlanning = 1;
 		this.episodeHistory = new LinkedList<EpisodeAnalysis>();
 		numEpisodesToStore = 1;
-		this.PlannerInit(domain, rf, tf, gamma, null);
+		this.plannerInit(domain, rf, tf, gamma, null);
 	}
 	
+	
+	/**
+	 * Initializes the learning algorithm.
+	 * @param domain the domain in which to learn
+	 * @param rf the reward function to use
+	 * @param tf the terminal state function to use
+	 * @param gamma the discount factor
+	 * @param actor the actor component to use to select actions
+	 * @param critic the critic component to use to critique 
+	 * @param maxEpisodeSize the maximum number of steps the agent will take in a learning episode before the agent gives up.
+	 */
 	public ActorCritic(Domain domain, RewardFunction rf, TerminalFunction tf, double gamma, Actor actor, Critic critic, int maxEpisodeSize) {
 		this.actor = actor;
 		this.critic = critic;
@@ -42,7 +99,7 @@ public class ActorCritic extends OOMDPPlanner implements LearningAgent {
 		numEpisodesForPlanning = 1;
 		this.episodeHistory = new LinkedList<EpisodeAnalysis>();
 		numEpisodesToStore = 1;
-		this.PlannerInit(domain, rf, tf, gamma, null);
+		this.plannerInit(domain, rf, tf, gamma, null);
 	}
 	
 	
@@ -55,8 +112,14 @@ public class ActorCritic extends OOMDPPlanner implements LearningAgent {
 		
 	}
 
+	
 	@Override
 	public EpisodeAnalysis runLearningEpisodeFrom(State initialState) {
+		return this.runLearningEpisodeFrom(initialState, maxEpisodeSize);
+	}
+	
+	@Override
+	public EpisodeAnalysis runLearningEpisodeFrom(State initialState, int maxSteps) {
 		
 		EpisodeAnalysis ea = new EpisodeAnalysis(initialState);
 		
@@ -65,7 +128,7 @@ public class ActorCritic extends OOMDPPlanner implements LearningAgent {
 		this.critic.initializeEpisode(curState);
 		
 		int timeSteps = 0;
-		while(!tf.isTerminal(curState) && timeSteps < this.maxEpisodeSize){
+		while(!tf.isTerminal(curState) && timeSteps < maxSteps){
 			
 			GroundedAction ga = this.actor.getAction(curState);
 			State nextState = ga.executeIn(curState);
@@ -113,6 +176,12 @@ public class ActorCritic extends OOMDPPlanner implements LearningAgent {
 		}
 	}
 	
+	
+	/**
+	 * Returns the policy/actor of this learning algorithm. Note that all {@link Actor} objects are also
+	 * Policy objects.
+	 * @return the policy/actor of this learning algorithm.
+	 */
 	public Policy getPolicy(){
 		return this.actor;
 	}
