@@ -170,7 +170,7 @@ public class PolicyBlockDomain {
 			ValueFunctionPlanner plan = new ValueIteration(domain, rf, tf, DISCOUNTFACTOR, hashFactory, 0.001, 100);
 			plan.planFromState(initialState);
 			
-			//stateSpace = plan.transitionDynamincs.keySet(); error here, cannot access the statehashtuple set
+			
 			
 			
 			Policy p = new GreedyDeterministicQPolicy((QComputablePlanner)plan);
