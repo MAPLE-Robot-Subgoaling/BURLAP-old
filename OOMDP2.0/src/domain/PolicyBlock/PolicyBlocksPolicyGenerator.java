@@ -64,19 +64,19 @@ public class PolicyBlocksPolicyGenerator {
 	 * and passes it to merge.
 	 */
 	public void runMerge(){
-		Iterator<?> it = policies.entrySet().iterator();
+		Iterator<?> it = stateSpace.entrySet().iterator();
 		int limit = 0; //to stop pulling more than 2 policies
 		
-		List<State> stateSeq_A = null;
+		List<StateHashTuple> stateSeq_A = null;
 		Policy policy_A = null;
 		
-		List<State> stateSeq_B = null;
+		List<StateHashTuple> stateSeq_B = null;
 		Policy policy_B = null;
 		
 		while(it.hasNext()){
 			
 			@SuppressWarnings("unchecked")
-			Map.Entry<List<State>, Policy> pairs = (Map.Entry<List<State>, Policy>)it.next();
+			Map.Entry<List<StateHashTuple>, Policy> pairs = (Map.Entry<List<StateHashTuple>, Policy>)it.next();
 			
 			if(limit == 1){
 				
@@ -93,7 +93,7 @@ public class PolicyBlocksPolicyGenerator {
 			limit++;
 		}
 		
-		if(stateSeq_A == null && stateSeq_B == null && policy_A == null && policy_B == null) //quick check
+		if(stateSeq_A == null || stateSeq_B == null || policy_A == null || policy_B == null) //quick check
 			System.out.println("Did not assign Value Correctly");
 		else{
 			this.merge(stateSeq_A, stateSeq_B, policy_A, policy_B);
@@ -105,38 +105,34 @@ public class PolicyBlocksPolicyGenerator {
 	 * checks to see with state sequence is shorter, cycles through state by state.
 	 * The algorithm may need to be altered/fixed
 	 */
-	public void merge(List<State> stateSeqA, List<State> stateSeqB, Policy policyA, Policy policyB){
-		Map<State, GroundedAction> intersection = new HashMap<State, GroundedAction>();
+	public void merge(List<StateHashTuple> stateSeqA, List<StateHashTuple> stateSeqB, Policy policyA, Policy policyB){
+		Map<StateHashTuple, GroundedAction> intersection = new HashMap<StateHashTuple, GroundedAction>();
 		
 		
 		if(stateSeqA.size() <= stateSeqB.size()){
 			
 			for(int i = 0; i < stateSeqA.size()-1; i++){
-				State s = stateSeqA.get(i);
+				State s = stateSeqA.get(i).s;
 				for(int j = 0; j < stateSeqB.size()-1; j++){
-					State p = stateSeqB.get(j);
+					State p = stateSeqB.get(j).s;
 					boolean common = true;
 					
-					/*
-					 * gonna try something different here - in the next build
-					 * more similar to the older implementation
-					 */
-					if(!(policyA.getAction(s).toString().equals(policyB.getAction(p).toString()))){
+					if(s.equals(p) && (policyA.getAction(s).toString().equals(policyB.getAction(p).toString()))){
 						common = false;
 						break;
 					}
 					
 					if(common)
-						intersection.put(s,policyA.getAction(s));
+						intersection.put(stateSeqA.get(i),policyA.getAction(s));
 				}
 			}
 			
 		}else{
 			
 			for(int i = 0; i < stateSeqB.size()-1; i++){
-				State s = stateSeqB.get(i);
+				State s = stateSeqB.get(i).s;
 				for(int j = 0; j < stateSeqA.size()-1; j++){
-					State p = stateSeqA.get(j);
+					State p = stateSeqA.get(j).s;
 					boolean common = true;
 					
 					if(!(policyB.getAction(s).equals(policyA.getAction(p)))){
@@ -145,7 +141,7 @@ public class PolicyBlocksPolicyGenerator {
 					}
 					
 					if(common)
-						intersection.put(s,policyB.getAction(s));
+						intersection.put(stateSeqB.get(i),policyB.getAction(s));
 				}
 				
 			}
@@ -160,7 +156,7 @@ public class PolicyBlocksPolicyGenerator {
 			//hashcode of the state + the GroundedAction attached to the state
 			
 			@SuppressWarnings("unchecked")
-			Map.Entry<State, GroundedAction> pairs = (Map.Entry<State, GroundedAction>)it.next();
+			Map.Entry<StateHashTuple, GroundedAction> pairs = (Map.Entry<StateHashTuple, GroundedAction>)it.next();
 			System.out.println(pairs.getKey().hashCode() + "\t" + pairs.getValue().toString());
 		}
 	}
