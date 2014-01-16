@@ -8,6 +8,7 @@ package domain.PolicyBlock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 
 import domain.fourroomsdomain.FourRooms;
 
@@ -50,11 +51,12 @@ public class PolicyBlockDomain {
 	StateConditionTest goalCondition;
 	State initialState;
 	DiscreteMaskHashingFactory hashFactory;
-	HashMap<String,Policy> policies;
+	HashMap<List<State>, Policy> stateSpace;
+	HashMap<Collection<StateHashTuple>, Policy> hashStateSpace;
 	ArrayList<EpisodeAnalysis> episodes;
 	OOMDPPlanner planner;
 	double DISCOUNTFACTOR = 0.99;
-	Collection<StateHashTuple> stateSpace;
+	
 	
 	//Main Function
 	public static void main(String[] args) {
@@ -70,9 +72,10 @@ public class PolicyBlockDomain {
 		policyBlock = new GridWorldDomain(11,11);
 		policyBlock.setMapToFourRooms();
 		domain = policyBlock.generateDomain();
-		policies = new HashMap<String, Policy>();
+		stateSpace = new HashMap<List<State>, Policy>();
+		hashStateSpace = new HashMap<Collection<StateHashTuple>, Policy>();
 		episodes = new ArrayList<EpisodeAnalysis>();
-		stateSpace = new ArrayList<StateHashTuple>();
+		
 		
 		//define the parser, reward, and termination conditions
 		sp = new GridWorldStateParser(domain);
@@ -170,18 +173,32 @@ public class PolicyBlockDomain {
 			ValueFunctionPlanner plan = new ValueIteration(domain, rf, tf, DISCOUNTFACTOR, hashFactory, 0.001, 100);
 			plan.planFromState(initialState);
 			
+			//collects the state list
+			List<State> states = plan.getAllStates();
+			List<StateHashTuple> hashStateTuple = new ArrayList<StateHashTuple>();
 			
+			//hashes the state according to the attributes defined
+			for(State s:states){
+				hashStateTuple.add(plan.stateHash(s));
+			}
 			
-			
+			//policy object
 			Policy p = new GreedyDeterministicQPolicy((QComputablePlanner)plan);
 			p.evaluateBehavior(initialState, rf, tf).writeToFile(outputPath + str + k, sp);
-			policies.put(str+k, p);
+			
+			//saves the collection/list and policy object to hash map
+			stateSpace.put(states, p);
+			hashStateSpace.put(hashStateTuple, p);
 		}
 		
 	}
 	
-	public HashMap<String, Policy> getPolicyMap(){
-		return policies;
+	public HashMap<List<State>, Policy> getPolicyMap(){
+		return stateSpace;
+	}
+	
+	public HashMap<Collection<StateHashTuple>, Policy> getHashPolicyMap(){
+		return hashStateSpace;
 	}
 	
 	public void visualizePolicies(String outputPath){
