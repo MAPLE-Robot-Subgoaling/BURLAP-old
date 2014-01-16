@@ -76,6 +76,25 @@ public class PolicyBlockPolicy extends Policy{
 		return true;
 	}
 	
+	public EpisodeAnalysis justDoIt(){
+		EpisodeAnalysis result = new EpisodeAnalysis();
+		
+		int steps = 0;
+		
+		for(StateHashTuple sh: stateSpace.keySet()){
+			
+			if(steps >= stateSpace.keySet().size()-1)
+				break;
+			
+			result.addState(sh.s);
+			result.addAction(stateSpace.get(sh));
+			result.addReward(1);
+			steps++;
+		}
+		
+		return result;
+	}
+	
 	public EpisodeAnalysis evaluateBehavior(RewardFunction rf){
 		EpisodeAnalysis res = new EpisodeAnalysis();
 		
@@ -83,7 +102,7 @@ public class PolicyBlockPolicy extends Policy{
 		
 		for(StateHashTuple s: stateSpace.keySet()){
 			
-			if(size <= stateSpace.keySet().size() - 1)
+			if(size >= stateSpace.keySet().size() - 1)
 				break;
 			
 			res.addState(s.s); //add the state
