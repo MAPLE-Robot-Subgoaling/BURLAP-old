@@ -22,9 +22,9 @@ public class PolicyBlocksPolicyGenerator {
 	
 	public static void main(String args[]){
 		PolicyBlocksPolicyGenerator generator = new PolicyBlocksPolicyGenerator("PolicyBlocks/");
-		generator.generatePolicies("GW-", 3);	//generates 3 policies
+		//generator.generatePolicies("GW-", 3);	//generates 3 policies
 		generator.visualizePolicies();					//shows the generated policies
-		generator.runMerge();							//strips the info needed, and calls merge()	
+		//generator.runMerge();							//strips the info needed, and calls merge()	
 		
 	}
 	

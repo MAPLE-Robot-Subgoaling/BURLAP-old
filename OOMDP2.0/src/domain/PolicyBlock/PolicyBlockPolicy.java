@@ -76,16 +76,21 @@ public class PolicyBlockPolicy extends Policy{
 		return true;
 	}
 	
-	
 	public EpisodeAnalysis evaluateBehavior(RewardFunction rf){
 		EpisodeAnalysis res = new EpisodeAnalysis();
 		
+		int size = 0;
+		
 		for(StateHashTuple s: stateSpace.keySet()){
+			
+			if(size <= stateSpace.keySet().size() - 1)
+				break;
+			
 			res.addState(s.s); //add the state
 			
 			State cur = s.s;
 			this.followAndRecordPolicy(res, cur, rf);
-			
+			size++;
 		}
 		
 		return res;

@@ -195,7 +195,7 @@ public class PolicyBlockDomain {
 	
 	public void showPolicy(StateHashTuple s, PolicyBlockPolicy p, String output, int numSteps){
 		String str = "merged";
-		p.evaluateBehavior(rf).writeToFile(output, sp);
+		p.evaluateBehavior(rf).writeToFile(output + str, sp);
 		System.out.println("Written to the file.");
 		this.visualizePolicies(output);
 	}
