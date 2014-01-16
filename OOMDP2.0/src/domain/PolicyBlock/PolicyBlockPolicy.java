@@ -3,10 +3,12 @@ package domain.PolicyBlock;
 import java.util.HashMap;
 import java.util.List;
 
+import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.singleagent.RewardFunction;
 
 /**
  * For PolicyBlocks:
@@ -72,6 +74,50 @@ public class PolicyBlockPolicy extends Policy{
 	public boolean isDefinedFor(State s) {
 		// TODO Auto-generated method stub
 		return true;
+	}
+	
+	
+	public EpisodeAnalysis evaluateBehavior(RewardFunction rf){
+		EpisodeAnalysis res = new EpisodeAnalysis();
+		
+		for(StateHashTuple s: stateSpace.keySet()){
+			res.addState(s.s); //add the state
+			
+			State cur = s.s;
+			this.followAndRecordPolicy(res, cur, rf);
+			
+		}
+		
+		return res;
+	}
+	
+	private void followAndRecordPolicy(EpisodeAnalysis ea, State cur, RewardFunction rf){
+		State next = null;
+		
+		//follow Policy - no support for options (atm)
+		GroundedAction ga = this.getAction(cur);
+		
+		if(ga == null){
+			throw new PolicyUndefinedException();
+		}
+		
+		if(ga.action.isPrimitive() || !this.evaluateDecomposesOptions){
+			next = ga.executeIn(cur);
+			double r = rf.reward(cur, ga, next);
+			
+			//record result
+			ea.recordTransitionTo(next, ga, r);
+		}
+	}
+	
+	public static class PolicyUndefinedException extends RuntimeException{
+
+		private static final long serialVersionUID = 1L;
+		
+		public PolicyUndefinedException(){
+			super("Policy is undefined for provided state");
+		}
+		
 	}
 
 }

@@ -21,8 +21,8 @@ public class PolicyBlocksPolicyGenerator {
 	List<Policy> merged;
 	
 	public static void main(String args[]){
-		PolicyBlocksPolicyGenerator generator = new PolicyBlocksPolicyGenerator("outputPolicyBlocks");
-		generator.generatePolicies("gridWorld-", 3);	//generates 3 policies
+		PolicyBlocksPolicyGenerator generator = new PolicyBlocksPolicyGenerator("PolicyBlocks/");
+		generator.generatePolicies("GW-", 3);	//generates 3 policies
 		generator.visualizePolicies();					//shows the generated policies
 		generator.runMerge();							//strips the info needed, and calls merge()	
 		
@@ -155,7 +155,7 @@ public class PolicyBlocksPolicyGenerator {
 			
 		}
 		
-		Policy result = new PolicyBlockPolicy((HashMap<StateHashTuple, GroundedAction>)intersection);
+		PolicyBlockPolicy result = new PolicyBlockPolicy((HashMap<StateHashTuple, GroundedAction>)intersection);
 		//int numSteps = intersection.keySet().size()-1;
 		environ.showPolicy(firstState, result, this.outputPath, 3);
 	}
