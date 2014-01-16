@@ -37,6 +37,8 @@ public class PolicyBlocksPolicyGenerator {
 		this.outputPath = outputPath;
 	}
 	
+	
+	
 	//generates a hashmap of different policies used via Value Iteration Planner 
 	public void generatePolicies(String name, int number){
 		environ.computePolicy(name, number, outputPath);
@@ -108,12 +110,15 @@ public class PolicyBlocksPolicyGenerator {
 	public void merge(List<StateHashTuple> stateSeqA, List<StateHashTuple> stateSeqB, Policy policyA, Policy policyB){
 		Map<StateHashTuple, GroundedAction> intersection = new HashMap<StateHashTuple, GroundedAction>();
 		
+		StateHashTuple firstState;
 		
 		if(stateSeqA.size() <= stateSeqB.size()){
 			
-			for(int i = 0; i < stateSeqA.size()-1; i++){
+			firstState = stateSeqA.get(0);
+			
+			for(int i = 0; i < stateSeqA.size(); i++){
 				State s = stateSeqA.get(i).s;
-				for(int j = 0; j < stateSeqB.size()-1; j++){
+				for(int j = 0; j < stateSeqB.size(); j++){
 					State p = stateSeqB.get(j).s;
 					boolean common = true;
 					
@@ -129,13 +134,15 @@ public class PolicyBlocksPolicyGenerator {
 			
 		}else{
 			
-			for(int i = 0; i < stateSeqB.size()-1; i++){
+			firstState = stateSeqB.get(0);
+			
+			for(int i = 0; i < stateSeqB.size(); i++){
 				State s = stateSeqB.get(i).s;
-				for(int j = 0; j < stateSeqA.size()-1; j++){
+				for(int j = 0; j < stateSeqA.size(); j++){
 					State p = stateSeqA.get(j).s;
 					boolean common = true;
 					
-					if(!(policyB.getAction(s).equals(policyA.getAction(p)))){
+					if(s.equals(p) && (policyA.getAction(p).toString().equals(policyB.getAction(s).toString()))){
 						common = false;
 						break;
 					}
@@ -148,17 +155,9 @@ public class PolicyBlocksPolicyGenerator {
 			
 		}
 		
-		Iterator<?> it = intersection.entrySet().iterator();
-		
-		while(it.hasNext()){
-			
-			//prints all the items associated with the hashmap
-			//hashcode of the state + the GroundedAction attached to the state
-			
-			@SuppressWarnings("unchecked")
-			Map.Entry<StateHashTuple, GroundedAction> pairs = (Map.Entry<StateHashTuple, GroundedAction>)it.next();
-			System.out.println(pairs.getKey().hashCode() + "\t" + pairs.getValue().toString());
-		}
+		Policy result = new PolicyBlockPolicy((HashMap<StateHashTuple, GroundedAction>)intersection);
+		//int numSteps = intersection.keySet().size()-1;
+		environ.showPolicy(firstState, result, this.outputPath, 3);
 	}
 	
 	//James' Algorithm (currently unchecked, not functional)

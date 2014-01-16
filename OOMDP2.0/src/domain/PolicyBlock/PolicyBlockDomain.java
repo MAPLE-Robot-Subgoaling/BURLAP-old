@@ -193,6 +193,11 @@ public class PolicyBlockDomain {
 		
 	}
 	
+	public void showPolicy(StateHashTuple s, Policy p, String output, int numSteps){
+		p.evaluateBehavior(s.s, rf, numSteps).writeToFile(output + "P-merged", sp);
+		this.visualizePolicies(output);
+	}
+	
 	public HashMap<List<State>, Policy> getPolicyMap(){
 		return stateSpace;
 	}

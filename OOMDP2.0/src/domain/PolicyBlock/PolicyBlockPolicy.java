@@ -22,7 +22,7 @@ import burlap.oomdp.singleagent.GroundedAction;
 public class PolicyBlockPolicy extends Policy{
 	
 	//Main Data Struture to Simulate a merged Policy
-	HashMap<StateHashTuple, GroundedAction> stateSpace;
+	public HashMap<StateHashTuple, GroundedAction> stateSpace;
 	
 	//Main Policy Constructor, creates a blank 
 	public PolicyBlockPolicy(){
