@@ -122,7 +122,7 @@ public class PolicyBlocksPolicyGenerator {
 					State p = stateSeqB.get(j).s;
 					boolean common = true;
 					
-					if(s.equals(p) && (policyA.getAction(s).toString().equals(policyB.getAction(p).toString()))){
+					if(s.equals(p) && (policyA.getAction(s).toString().equals(policyB.getAction(p).toString()))){ //found the prob
 						common = false;
 						break;
 					}
