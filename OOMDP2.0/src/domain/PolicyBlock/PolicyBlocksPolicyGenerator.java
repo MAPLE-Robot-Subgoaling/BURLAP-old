@@ -138,18 +138,24 @@ public class PolicyBlocksPolicyGenerator {
 		Map<StateHashTuple, GroundedAction> intersection = new HashMap<StateHashTuple, GroundedAction>();
 		
 		StateHashTuple firstState;
+		int count = 0;
+		
+		System.out.println("\nA:" + stateSeqA.size() + "\tB:" + stateSeqB.size());
 		
 		if(stateSeqA.size() <= stateSeqB.size()){
-			
 			firstState = stateSeqA.get(0);
 			
 			for(int i = 0; i < stateSeqA.size(); i++){
 				State s = stateSeqA.get(i).s;
 				for(int j = 0; j < stateSeqB.size(); j++){
 					State p = stateSeqB.get(j).s;
-
-					if(s.toString().equals(p.toString()) && (policyA.getAction(p).toString().equals(policyB.getAction(s).toString())))
+					
+					System.out.println(s.equals(p) + ":" + policyA.getAction(s).equals(policyB.getAction(p)));
+					
+					if(s.equals(p) && (policyA.getAction(s).equals(policyB.getAction(p)))){
 						intersection.put(stateSeqB.get(i),policyB.getAction(s));
+						count++;
+					}		
 				}
 			}
 			
@@ -162,16 +168,25 @@ public class PolicyBlocksPolicyGenerator {
 				for(int j = 0; j < stateSeqA.size(); j++){
 					State p = stateSeqA.get(j).s;
 					
-					if(s.toString().equals(p.toString()) && (policyA.getAction(p).toString().equals(policyB.getAction(s).toString())))
-						intersection.put(stateSeqB.get(i),policyB.getAction(s));
+					System.out.println(s.equals(p) + ":" + policyA.getAction(p).equals(policyB.getAction(s)));
 					
+					if(s.equals(p) && (policyA.getAction(p).equals(policyB.getAction(s)))){
+						intersection.put(stateSeqB.get(i),policyB.getAction(s));
+						count++;
+					}		
 				}
-				
 			}
-			
 		}
 		
 		PolicyBlockPolicy result = new PolicyBlockPolicy((HashMap<StateHashTuple, GroundedAction>)intersection);
+		
+		System.out.println(result.stateSpace.values().size());
+		System.out.println("\t" + count);
+		
+		for(GroundedAction action: result.stateSpace.values()){
+			System.out.println("\t" + action);
+		}
+		
 		//int numSteps = intersection.keySet().size()-1;
 		environ.showPolicy(firstState, result, this.outputPath, 3);
 	}
