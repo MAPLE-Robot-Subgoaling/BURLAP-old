@@ -7,8 +7,14 @@ import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
 import burlap.oomdp.core.State;
 
-//This class is designed to read in the options generated from the policy blocks and created options based on the 
-//merge, score, and subtract method described in the Pickett & Barto Paper: PolicyBlocks
+/**
+ * Class: PolicyBlockPolicyGenerator
+ * 
+ * This class is designed to run the merge operations for the policy blocks algorithm
+ * 
+ * @author Tenji Tembo
+ *
+ */
 
 public class PolicyBlockOptionGenerator {
 
@@ -21,9 +27,6 @@ public class PolicyBlockOptionGenerator {
 		int number = 3;
 		PolicyBlockOptionGenerator generator = new PolicyBlockOptionGenerator();
 		generator.generatePolicies(number);
-		
-		//generator.merge(environ.episodes.get(0), environ.episodes.get(1));
-		//generator.showEpisodes();
 		
 		EpisodeAnalysis[] input = new EpisodeAnalysis[number];
 		for(int i = 0; i < input.length; i++)
@@ -143,14 +146,7 @@ public class PolicyBlockOptionGenerator {
 				}
 			}
 		
-		//System.out.println("\nMerging Done\n");
-		
-		//visualize it.
 		environ.writeEpisode(merged, "policyBlocks/");
-		//visualize(e0);
-		//visualize(e1);
-		//visualize(merged);
-		
 		return merged;
 	}
 	

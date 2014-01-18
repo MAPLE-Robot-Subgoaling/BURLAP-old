@@ -22,10 +22,8 @@ public class PolicyBlocksPolicyGenerator {
 	
 	public static void main(String args[]){
 		PolicyBlocksPolicyGenerator generator = new PolicyBlocksPolicyGenerator("PolicyBlocks/");
-		generator.generatePolicies("GW-", 3);	//generates 3 policies
-		//generator.visualizePolicies();					//shows the generated policies
+		generator.generatePolicies("GW-", 3);			//generates 3 policies
 		generator.runMerge();							//strips the info needed, and calls merge()	
-		
 	}
 	
 	//creates a new policy block domain object
@@ -98,35 +96,8 @@ public class PolicyBlocksPolicyGenerator {
 		if(stateSeq_A == null || stateSeq_B == null || policy_A == null || policy_B == null) //quick check
 			System.out.println("Did not assign Value Correctly");
 		else{
-			
 			this.merge(stateSeq_A, stateSeq_B, policy_A, policy_B);
-			//this.intersection(stateSeq_A);
 		}
-	}
-	
-	
-	public void mergeIt(List<StateHashTuple> stateSeqA, List<StateHashTuple> stateSeqB, Policy policyA, Policy policyB){
-		
-		System.out.println("\n" + stateSeqA.hashCode() + ":" + stateSeqB.hashCode());
-		
-		StateHashTuple firstState = stateSeqA.get(0);
-		Map<StateHashTuple, GroundedAction> intersection = new HashMap<StateHashTuple, GroundedAction>();
-		
-		for(int i = 0; i < stateSeqA.size()-1; i++){
-			State s = stateSeqA.get(i).s;
-			for(int j = 0; j < stateSeqB.size()-1; j++){
-				State p = stateSeqB.get(j).s;
-				
-				if(s.equals(p) && (policyA.getAction(p).toString().equals(policyB.getAction(s).toString())))
-					intersection.put(stateSeqB.get(i),policyB.getAction(s));
-				else
-					break;
-			}
-		}
-		
-		PolicyBlockPolicy result = new PolicyBlockPolicy((HashMap<StateHashTuple, GroundedAction>)intersection);
-		//int numSteps = intersection.keySet().size()-1;
-		environ.showPolicy(firstState, result, this.outputPath, 3);
 	}
 	
 	/*
@@ -140,21 +111,17 @@ public class PolicyBlocksPolicyGenerator {
 		StateHashTuple firstState;
 		int count = 0;
 		
-		System.out.println("\nA:" + stateSeqA.size() + "\tB:" + stateSeqB.size());
-		
 		if(stateSeqA.size() <= stateSeqB.size()){
 			firstState = stateSeqA.get(0);
 			
 			for(int i = 0; i < stateSeqA.size(); i++){
-				State s = stateSeqA.get(i).s;
+				StateHashTuple s = stateSeqA.get(i);
 				for(int j = 0; j < stateSeqB.size(); j++){
-					State p = stateSeqB.get(j).s;
+					StateHashTuple p = stateSeqB.get(j);
 					
-					if(s.equals(p))
-						System.out.println(s.equals(p) + ":" + policyA.getAction(s).equals(policyB.getAction(p)));
-					
-					if(s.equals(p) || (policyA.getAction(s).equals(policyB.getAction(p)))){
-						intersection.put(stateSeqB.get(i),policyB.getAction(s));
+					//Fixed Here
+					if(s.equals(p) && (policyA.getAction(s.s).equals(policyB.getAction(p.s)))){
+						intersection.put(stateSeqB.get(i),policyB.getAction(s.s));
 						count++;
 					}		
 				}
@@ -165,31 +132,24 @@ public class PolicyBlocksPolicyGenerator {
 			firstState = stateSeqB.get(0);
 			
 			for(int i = 0; i < stateSeqB.size(); i++){
-				State s = stateSeqB.get(i).s;
+				StateHashTuple s = stateSeqB.get(i);
 				for(int j = 0; j < stateSeqA.size(); j++){
-					State p = stateSeqA.get(j).s;
+					StateHashTuple p = stateSeqA.get(j);
 					
-					if(s.equals(p))
-						System.out.println(s.equals(p) + ":" + policyA.getAction(p).equals(policyB.getAction(s)));
-					
-					if(s.equals(p) || (policyA.getAction(p).equals(policyB.getAction(s)))){
-						intersection.put(stateSeqB.get(i),policyB.getAction(s));
+					//Fixed
+					if(s.equals(p) && (policyA.getAction(p.s).equals(policyB.getAction(s.s)))){
+						intersection.put(stateSeqB.get(i),policyB.getAction(s.s));
 						count++;
 					}		
 				}
 			}
 		}
 		
+		//result of the merging objects
 		PolicyBlockPolicy result = new PolicyBlockPolicy((HashMap<StateHashTuple, GroundedAction>)intersection);
 		
-		System.out.println(result.stateSpace.values().size());
-		System.out.println("\t" + count);
+		System.out.println("Total Succesful Merges: " + count);
 		
-		for(GroundedAction action: result.stateSpace.values()){
-			System.out.println("\t" + action);
-		}
-		
-		//int numSteps = intersection.keySet().size()-1;
 		environ.showPolicy(firstState, result, this.outputPath, 3);
 	}
 	
