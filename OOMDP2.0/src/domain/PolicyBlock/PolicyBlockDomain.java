@@ -63,7 +63,7 @@ public class PolicyBlockDomain {
 		PolicyBlockDomain blocks = new PolicyBlockDomain();
 		String output = "policyBlocks";
 		//blocks.QLearn(output);
-		blocks.computePolicy("policy-", 4, "outputPolicyBlocks");
+		blocks.computePolicy("policy-", 4, "PolicyBlocks");
 		blocks.visualize(output);
 	}
 	
