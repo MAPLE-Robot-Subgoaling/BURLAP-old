@@ -150,9 +150,10 @@ public class PolicyBlocksPolicyGenerator {
 				for(int j = 0; j < stateSeqB.size(); j++){
 					State p = stateSeqB.get(j).s;
 					
-					System.out.println(s.equals(p) + ":" + policyA.getAction(s).equals(policyB.getAction(p)));
+					if(s.equals(p))
+						System.out.println(s.equals(p) + ":" + policyA.getAction(s).equals(policyB.getAction(p)));
 					
-					if(s.equals(p) && (policyA.getAction(s).equals(policyB.getAction(p)))){
+					if(s.equals(p) || (policyA.getAction(s).equals(policyB.getAction(p)))){
 						intersection.put(stateSeqB.get(i),policyB.getAction(s));
 						count++;
 					}		
@@ -168,9 +169,10 @@ public class PolicyBlocksPolicyGenerator {
 				for(int j = 0; j < stateSeqA.size(); j++){
 					State p = stateSeqA.get(j).s;
 					
-					System.out.println(s.equals(p) + ":" + policyA.getAction(p).equals(policyB.getAction(s)));
+					if(s.equals(p))
+						System.out.println(s.equals(p) + ":" + policyA.getAction(p).equals(policyB.getAction(s)));
 					
-					if(s.equals(p) && (policyA.getAction(p).equals(policyB.getAction(s)))){
+					if(s.equals(p) || (policyA.getAction(p).equals(policyB.getAction(s)))){
 						intersection.put(stateSeqB.get(i),policyB.getAction(s));
 						count++;
 					}		
