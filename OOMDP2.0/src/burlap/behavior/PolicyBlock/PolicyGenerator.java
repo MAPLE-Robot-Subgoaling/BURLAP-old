@@ -80,6 +80,8 @@ public class PolicyGenerator {
 		List<StateHashTuple> stateSeq_B = null;
 		Policy policy_B = null;
 		
+		
+		//merges two regular policies (greedyQ)
 		while(it.hasNext()){
 			
 			@SuppressWarnings("unchecked")
@@ -104,7 +106,29 @@ public class PolicyGenerator {
 			System.out.println("Did not assign Value Correctly");
 		else{
 			this.merge(stateSeq_A, stateSeq_B, policy_A, policy_B);
+			System.out.println("Merged items: " + mergedSpace.size());
 		}
+		
+		//attempt to merge GreedyQ with a PolicyBlockPolicy
+		Iterator<?> temp = mergedSpace.entrySet().iterator();
+		System.out.println(temp.hasNext());
+		limit = 0;
+		
+		do{
+			@SuppressWarnings("unchecked")
+			Map.Entry<List<StateHashTuple>, Policy> pairs = (Map.Entry<List<StateHashTuple>, Policy>)temp.next();
+			stateSeq_A = pairs.getKey();
+			policy_A = pairs.getValue();
+			//it.remove();
+			
+		}while(false); //stop after one iteration
+		
+		if(stateSeq_A == null || stateSeq_B == null || policy_A == null || policy_B == null) //quick check
+			System.out.println("Did not assign Value Correctly");
+		else{
+			this.merge(stateSeq_A, stateSeq_B, policy_A, policy_B);
+		}
+		
 	}
 	
 	/*
@@ -154,11 +178,9 @@ public class PolicyGenerator {
 	public void writePolicies(){
 		int i = 0;
 		
-		
-		
 		for(PolicyBlockPolicy p: mergedSpace.values()){
-			if(p != null)
-				environ.writePolicy(p, outputPath + "merged-" + i);
+			environ.writePolicy(p, outputPath + "merged-" + i);
+			i++;
 		}
 	}
 	
