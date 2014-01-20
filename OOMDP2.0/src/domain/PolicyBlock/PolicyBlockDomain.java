@@ -23,6 +23,7 @@ import burlap.oomdp.stocashticgames.Agent;
 import burlap.oomdp.visualizer.Visualizer;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.behavior.PolicyBlock.PolicyBlockPolicy;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
 import burlap.behavior.singleagent.Policy;
@@ -53,7 +54,7 @@ public class PolicyBlockDomain {
 	DiscreteMaskHashingFactory hashFactory;
 	HashMap<List<State>, Policy> stateSpace;
 	HashMap<Collection<StateHashTuple>, Policy> hashStateSpace;
-	ArrayList<EpisodeAnalysis> episodes;
+	public ArrayList<EpisodeAnalysis> episodes;
 	OOMDPPlanner planner;
 	double DISCOUNTFACTOR = 0.99;
 	

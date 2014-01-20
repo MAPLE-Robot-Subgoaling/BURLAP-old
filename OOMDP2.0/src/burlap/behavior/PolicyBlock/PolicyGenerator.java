@@ -1,4 +1,4 @@
-package domain.PolicyBlock;
+package burlap.behavior.PolicyBlock;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,12 +7,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import domain.PolicyBlock.PolicyBlockDomain;
+
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.*;
 import burlap.oomdp.singleagent.GroundedAction;
 
-public class PolicyBlocksPolicyGenerator {
+public class PolicyGenerator {
 
 	//declaration of PolicyBlocks
 	static PolicyBlockDomain environ;
@@ -22,13 +24,13 @@ public class PolicyBlocksPolicyGenerator {
 	List<Policy> merged;
 	
 	public static void main(String args[]){
-		PolicyBlocksPolicyGenerator generator = new PolicyBlocksPolicyGenerator("PolicyBlocks/");
+		PolicyGenerator generator = new PolicyGenerator("PolicyBlocks/");
 		generator.generatePolicies("GW-", 3);			//generates 3 policies
 		generator.runMerge();							//strips the info needed, and calls merge()	
 	}
 	
 	//creates a new policy block domain object
-	public PolicyBlocksPolicyGenerator(String outputPath){
+	public PolicyGenerator(String outputPath){
 		environ = new PolicyBlockDomain();
 		policies = new HashMap<List<State>, Policy>();
 		stateSpace = environ.getHashPolicyMap();

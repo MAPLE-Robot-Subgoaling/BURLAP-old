@@ -1,7 +1,9 @@
-package domain.PolicyBlock;
+package burlap.behavior.PolicyBlock;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import domain.PolicyBlock.PolicyBlockDomain;
 
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
@@ -16,7 +18,7 @@ import burlap.oomdp.core.State;
  *
  */
 
-public class PolicyBlockOptionGenerator {
+public class TrajectoryGenerator {
 
 	static PolicyBlockDomain environ;
 	ArrayList<EpisodeAnalysis> episodes;
@@ -25,7 +27,7 @@ public class PolicyBlockOptionGenerator {
 	public static void main(String args[]){
 		//set number of policies to merge
 		int number = 3;
-		PolicyBlockOptionGenerator generator = new PolicyBlockOptionGenerator();
+		TrajectoryGenerator generator = new TrajectoryGenerator();
 		generator.generatePolicies(number);
 		
 		EpisodeAnalysis[] input = new EpisodeAnalysis[number];
@@ -52,7 +54,7 @@ public class PolicyBlockOptionGenerator {
 	}
 	
 	//creates a new Policy Domain Object
-	public PolicyBlockOptionGenerator(){
+	public TrajectoryGenerator(){
 		environ = new PolicyBlockDomain();
 	}
 	
