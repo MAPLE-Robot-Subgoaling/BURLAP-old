@@ -218,9 +218,8 @@ public class PolicyBlockDomain {
 	
 	//shows the policies from the output - Must contain a PolicyBlockPolicy to run
 	//Note: modify name for mutiple merged Policies.
-	public void showPolicy(StateHashTuple s, PolicyBlockPolicy p, String output, int numSteps){
-		p.justDoIt().writeToFile(output + "merged", sp);
-		this.visualizePolicies(output);
+	public void writePolicy(PolicyBlockPolicy p, String output){
+		p.justDoIt().writeToFile(output, sp);
 	}
 	
 	//collects the map of states to policies
