@@ -110,7 +110,7 @@ public class PolicyGenerator {
 		}
 		
 		//attempt to merge GreedyQ with a PolicyBlockPolicy
-		Iterator<?> temp = mergedSpace.entrySet().iterator();
+		/*Iterator<?> temp = mergedSpace.entrySet().iterator();
 		System.out.println(temp.hasNext());
 		limit = 0;
 		
@@ -127,7 +127,7 @@ public class PolicyGenerator {
 			System.out.println("Did not assign Value Correctly");
 		else{
 			this.merge(stateSeq_A, stateSeq_B, policy_A, policy_B);
-		}
+		}*/
 		
 	}
 	
