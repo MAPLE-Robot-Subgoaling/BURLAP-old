@@ -1,11 +1,23 @@
 package domain.singleagent.sokoban2;
 
+import java.util.Iterator;
 import java.util.List;
 
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
+import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.learning.LearningAgent;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
+import burlap.behavior.singleagent.options.LocalSubgoalRF;
+import burlap.behavior.singleagent.options.LocalSubgoalTF;
+import burlap.behavior.singleagent.options.Option;
+import burlap.behavior.singleagent.options.SubgoalOption;
+import burlap.behavior.singleagent.planning.OOMDPPlanner;
+import burlap.behavior.singleagent.planning.PlannerDerivedPolicy;
+import burlap.behavior.singleagent.planning.StateConditionTest;
+import burlap.behavior.singleagent.planning.StateConditionTestIterable;
+import burlap.behavior.singleagent.planning.commonpolicies.GreedyDeterministicQPolicy;
+import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Attribute;
@@ -106,7 +118,7 @@ public class Sokoban2Domain implements DomainGenerator {
 		parser = new Sokoban2Parser(domain);
 		analyzer = new EpisodeAnalysis();
 		
-		for(int i = 1; i <= 1; i++){
+		for(int i = 1; i <= 100; i++){
 			analyzer = new EpisodeAnalysis();
 
 			System.out.print("Episode " + i + ": ");
@@ -342,7 +354,6 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 	}
 	
-	
 	public static void setAgent(State s, int x, int y){
 		ObjectInstance o = s.getFirstObjectOfClass(CLASSAGENT);
 		o.setValue(ATTX, x);
@@ -480,7 +491,6 @@ public class Sokoban2Domain implements DomainGenerator {
 		return null;
 		
 	}
-	
 	
 	public static boolean wallAt(State s, ObjectInstance r, int x, int y){
 		
@@ -649,7 +659,6 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 	}
 	
-	
 	public class PFIsColor extends PropositionalFunction{
 		
 		protected String colorName;
@@ -670,7 +679,6 @@ public class Sokoban2Domain implements DomainGenerator {
 		}
 
 	}
-	
 	
 	public class PFIsShape extends PropositionalFunction{
 
@@ -719,6 +727,82 @@ public class Sokoban2Domain implements DomainGenerator {
 
 	}
 	
+	//Can double as Initiation Condition and Subgoal Terminal Condition
+	public class InRoomStateCheck implements StateConditionTestIterable{
+
+		protected InRoomOfColorTF roomTF;
+		protected Domain domain;
+		
+		public InRoomStateCheck(Domain domain, String Color){
+			this.roomTF = new InRoomOfColorTF(domain, Color);
+			this.domain = domain;
+		}
+		
+		//Gonna Try Calling a TF to see if it works
+		//Technically it's boolean so it should be fine.
+		public boolean satisfies(State s) {
+			return roomTF.isTerminal(s);
+		}
+
+		@Override
+		public Iterator<State> iterator() {
+			
+			return new Iterator<State>(){
+				
+				public boolean hasNext(){
+					State s = new State();
+					
+					s.addObject(new ObjectInstance(domain.getObjectClass(CLASSAGENT),CLASSAGENT+0));
+					return roomTF.isTerminal(s);
+				}
+				
+				public State next(){
+					return null;
+				}
+				
+				public void remove(){
+					
+				}
+				
+			};
+		}
+
+		@Override
+		public void setStateContext(State s) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		
+		
+	}
 	
+	public class AtRoomStateCheck implements StateConditionTest{
+		protected InRoomOfColorTF roomTF;
+		
+		public AtRoomStateCheck(Domain domain, String Color){
+			roomTF = new InRoomOfColorTF(domain, Color);
+		}
+		
+		//Gonna Try Calling a TF to see if it works
+		//Technically it's boolean so it should be fine.
+		public boolean satisfies(State s) {
+			return roomTF.isTerminal(s);
+		}
+		
+	}
+	
+	public Option getRoomOption(String name, Domain domain, String startRoom, String goalRoom){
+		StateConditionTest start = new InRoomStateCheck(domain, startRoom);
+		StateConditionTest end = new InRoomStateCheck(domain, goalRoom);
+		
+		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
+		hashFactory.setAttributesForClass(CLASSAGENT, domain.getObjectClass(CLASSAGENT).attributeList);
+		
+		OOMDPPlanner planner = new ValueIteration(domain, new LocalSubgoalRF(start, end), new LocalSubgoalTF(start, end), 0.99, hashFactory, 0.001, 50);
+		Policy p = new GreedyDeterministicQPolicy();
+		
+		return new SubgoalOption(name, p, start, end);
+	}
 
 }

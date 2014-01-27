@@ -1,10 +1,14 @@
 package burlap.behavior.PolicyBlock;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.options.Option;
+import burlap.behavior.singleagent.planning.StateConditionTestIterable;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
@@ -115,6 +119,12 @@ public class PolicyBlockPolicy extends Policy{
 		return res;
 	}
 	
+	
+	//Policy converted to an option automatically. 
+	public Option toOption(){
+		
+	}
+	
 	private void followAndRecordPolicy(EpisodeAnalysis ea, State cur, RewardFunction rf){
 		State next = null;
 		
@@ -140,6 +150,50 @@ public class PolicyBlockPolicy extends Policy{
 		
 		public PolicyUndefinedException(){
 			super("Policy is undefined for provided state");
+		}
+		
+	}
+	
+	public class startPolicy implements StateConditionTestIterable{
+
+		
+		@Override
+		public boolean satisfies(State s) {
+			for(StateHashTuple hash: stateSpace.keySet()){
+				if(s.equals(hash.s))
+					return true;
+			}
+			return false;
+		}
+
+		@Override
+		public Iterator<State> iterator() {
+			
+			ArrayList<State> hashedStates = new ArrayList<State>();
+			
+			//Doesn't like StateHashTuples, so convert to states
+			for(StateHashTuple sh: stateSpace.keySet()){
+				hashedStates.add(sh.s);
+			}
+			
+			Iterator<State> it = hashedStates.iterator();
+			
+			return it;
+			
+			
+			@Override
+			protected State next(){
+				for(StateHashTuple sh: stateSpace.keySet()){
+					if(sh.s.equals(it.next()))
+						return sh.s;
+				}
+			}
+			
+		}
+
+		@Override
+		public void setStateContext(State s) {
+			
 		}
 		
 	}
