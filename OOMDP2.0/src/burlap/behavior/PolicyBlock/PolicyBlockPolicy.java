@@ -154,6 +154,7 @@ public class PolicyBlockPolicy extends Policy{
 		
 	}
 	
+	//Iterable State ConditionTest to check find the start space for the policy.
 	public class startPolicy implements StateConditionTestIterable{
 
 		
@@ -167,35 +168,39 @@ public class PolicyBlockPolicy extends Policy{
 		}
 
 		@Override
-		public Iterator<State> iterator() {
+		public Iterator iterator() {
 			
-			ArrayList<State> hashedStates = new ArrayList<State>();
-			
-			//Doesn't like StateHashTuples, so convert to states
-			for(StateHashTuple sh: stateSpace.keySet()){
-				hashedStates.add(sh.s);
-			}
-			
-			Iterator<State> it = hashedStates.iterator();
-			
-			return it;
-			
-			
-			@Override
-			protected State next(){
-				for(StateHashTuple sh: stateSpace.keySet()){
-					if(sh.s.equals(it.next()))
-						return sh.s;
+			return new Iterator(){
+				
+				Iterator it = stateSpace.entrySet().iterator();
+
+				@Override
+				public boolean hasNext() {
+					
+					return it.hasNext();
 				}
-			}
+
+				@Override
+				public Object next() {
+					
+					return it.next();
+				}
+
+				@Override
+				public void remove() {
+					throw new UnsupportedOperationException();
+				}
+				
+			};
 			
 		}
 
 		@Override
 		public void setStateContext(State s) {
-			
+			//ignore for now...
 		}
 		
 	}
 
+	
 }
