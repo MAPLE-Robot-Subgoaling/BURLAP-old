@@ -119,11 +119,6 @@ public class PolicyBlockPolicy extends Policy{
 	}
 	
 	
-	//Policy converted to an option automatically. 
-	public Option toOption(){
-		
-	}
-	
 	private void followAndRecordPolicy(EpisodeAnalysis ea, State cur, RewardFunction rf){
 		State next = null;
 		

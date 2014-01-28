@@ -21,9 +21,11 @@ import burlap.oomdp.core.State;
 public class TrajectoryGenerator {
 
 	static PolicyBlockDomain environ;
-	ArrayList<EpisodeAnalysis> episodes;
+	static ArrayList<EpisodeAnalysis> episodes = new ArrayList<EpisodeAnalysis>();
+	static ArrayList<TrajectoryPolicy> policies = new ArrayList<TrajectoryPolicy>();
 	
 	//Main
+	@SuppressWarnings("rawtypes")
 	public static void main(String args[]){
 		//set number of policies to merge
 		int number = 3;
@@ -41,16 +43,17 @@ public class TrajectoryGenerator {
 			if(max < ((Integer)((ArrayList)output.get(2)).get(i)))
 				max = ((Integer)((ArrayList)output.get(2)).get(i));
 			System.out.print("\n" + ((ArrayList)(output.get(1))).get(i) + "\n  Score: " + Integer.toString((Integer)((ArrayList)output.get(2)).get(i)));
-			visualize((EpisodeAnalysis)(((ArrayList)(output.get(0))).get(i)));
+			//visualize((EpisodeAnalysis)(((ArrayList)(output.get(0))).get(i)));
 		}
-		System.out.println("Highest score: " + Integer.toString(max));
 		
-		System.out.println(((int)(Math.pow(2, number))-1) + " possible policies\n" + ((ArrayList)output.get(0)).size() + " resulting policies");
+		//System.out.println("Highest score: " + Integer.toString(max));
 		
-		System.out.print("\n" + ((ArrayList)(output.get(1))).get(((ArrayList)output.get(2)).indexOf(max)) + "\n  Score: " + Integer.toString((Integer)((ArrayList)output.get(2)).get(((ArrayList)output.get(2)).indexOf(max))));
-		visualize((EpisodeAnalysis)(((ArrayList)(output.get(0))).get(((ArrayList)output.get(2)).indexOf(max))));
+		//System.out.println(((int)(Math.pow(2, number))-1) + " possible policies\n" + ((ArrayList)output.get(0)).size() + " resulting policies");
 		
+		//System.out.print("\n" + ((ArrayList)(output.get(1))).get(((ArrayList)output.get(2)).indexOf(max)) + "\n  Score: " + Integer.toString((Integer)((ArrayList)output.get(2)).get(((ArrayList)output.get(2)).indexOf(max))));
+		//visualize((EpisodeAnalysis)(((ArrayList)(output.get(0))).get(((ArrayList)output.get(2)).indexOf(max))));
 		
+		convertToPolicies();
 	}
 	
 	//creates a new Policy Domain Object
@@ -148,6 +151,7 @@ public class TrajectoryGenerator {
 				}
 			}
 		
+		episodes.add(merged);
 		environ.writeEpisode(merged, "policyBlocks/");
 		return merged;
 	}
@@ -213,4 +217,10 @@ public class TrajectoryGenerator {
 		return output;
 	}
 	
+	//converts the merges into policies
+	public static void convertToPolicies(){
+		for(EpisodeAnalysis obj: episodes){
+			policies.add(new TrajectoryPolicy(obj));
+		}
+	}
 }
