@@ -26,6 +26,23 @@ public class TrajectoryPolicy extends Policy{
 		
 		return null;
 	}
+	
+	public EpisodeAnalysis justDoIt(){
+		EpisodeAnalysis result = new EpisodeAnalysis();
+		
+		int steps = 0;
+		
+		for(State s: trajectory.stateSequence){
+			if(steps >= trajectory.stateSequence.size()-1)
+				break;
+			result.addState(trajectory.stateSequence.get(steps));
+			result.addAction(trajectory.actionSequence.get(steps));
+			result.addReward(1);
+			steps++;
+		}
+		
+		return result;
+	}
 
 	@Override
 	public List<ActionProb> getActionDistributionForState(State s) {

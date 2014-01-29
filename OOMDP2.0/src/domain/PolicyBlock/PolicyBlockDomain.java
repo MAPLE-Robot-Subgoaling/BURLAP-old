@@ -24,6 +24,7 @@ import burlap.oomdp.visualizer.Visualizer;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.behavior.PolicyBlock.PolicyBlockPolicy;
+import burlap.behavior.PolicyBlock.TrajectoryPolicy;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
 import burlap.behavior.singleagent.Policy;
@@ -220,6 +221,10 @@ public class PolicyBlockDomain {
 	//Note: modify name for mutiple merged Policies.
 	public void writePolicy(PolicyBlockPolicy p, String output){
 		p.justDoIt().writeToFile(output, sp);
+	}
+	
+	public void writeTrajectory(TrajectoryPolicy t, String output){
+		t.justDoIt().writeToFile(output, sp);
 	}
 	
 	//collects the map of states to policies

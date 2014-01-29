@@ -23,13 +23,14 @@ public class TrajectoryGenerator {
 	static PolicyBlockDomain environ;
 	static ArrayList<EpisodeAnalysis> episodes = new ArrayList<EpisodeAnalysis>();
 	static ArrayList<TrajectoryPolicy> policies = new ArrayList<TrajectoryPolicy>();
+	static String outputPath;
 	
 	//Main
 	@SuppressWarnings("rawtypes")
 	public static void main(String args[]){
 		//set number of policies to merge
 		int number = 3;
-		TrajectoryGenerator generator = new TrajectoryGenerator();
+		TrajectoryGenerator generator = new TrajectoryGenerator("Trajectory/");
 		generator.generatePolicies(number);
 		
 		EpisodeAnalysis[] input = new EpisodeAnalysis[number];
@@ -43,22 +44,27 @@ public class TrajectoryGenerator {
 			if(max < ((Integer)((ArrayList)output.get(2)).get(i)))
 				max = ((Integer)((ArrayList)output.get(2)).get(i));
 			System.out.print("\n" + ((ArrayList)(output.get(1))).get(i) + "\n  Score: " + Integer.toString((Integer)((ArrayList)output.get(2)).get(i)));
-			//visualize((EpisodeAnalysis)(((ArrayList)(output.get(0))).get(i)));
+			visualize((EpisodeAnalysis)(((ArrayList)(output.get(0))).get(i)));
 		}
 		
-		//System.out.println("Highest score: " + Integer.toString(max));
+		System.out.println("Highest score: " + Integer.toString(max));
 		
-		//System.out.println(((int)(Math.pow(2, number))-1) + " possible policies\n" + ((ArrayList)output.get(0)).size() + " resulting policies");
+		System.out.println(((int)(Math.pow(2, number))-1) + " possible policies\n" + ((ArrayList)output.get(0)).size() + " resulting policies");
 		
-		//System.out.print("\n" + ((ArrayList)(output.get(1))).get(((ArrayList)output.get(2)).indexOf(max)) + "\n  Score: " + Integer.toString((Integer)((ArrayList)output.get(2)).get(((ArrayList)output.get(2)).indexOf(max))));
-		//visualize((EpisodeAnalysis)(((ArrayList)(output.get(0))).get(((ArrayList)output.get(2)).indexOf(max))));
+		System.out.print("\n" + ((ArrayList)(output.get(1))).get(((ArrayList)output.get(2)).indexOf(max)) + "\n  Score: " + Integer.toString((Integer)((ArrayList)output.get(2)).get(((ArrayList)output.get(2)).indexOf(max))));
+		visualize((EpisodeAnalysis)(((ArrayList)(output.get(0))).get(((ArrayList)output.get(2)).indexOf(max))));
 		
+		
+		//Converting to Policy Objects in order to visualize
 		convertToPolicies();
+		writeTrajectories();
+		generator.showEpisodes();
 	}
 	
 	//creates a new Policy Domain Object
-	public TrajectoryGenerator(){
+	public TrajectoryGenerator(String outputPath){
 		environ = new PolicyBlockDomain();
+		this.outputPath = outputPath;
 	}
 	
 	//Generates "number" iterations which contains 100 policies run via Q-Learning
@@ -117,7 +123,7 @@ public class TrajectoryGenerator {
 	
 	//pushes the generated episodes to the GUI
 	public void showEpisodes(){
-		environ.visualize("policyBlocks");
+		environ.visualize(outputPath);
 	}
 	
 	/*
@@ -152,7 +158,6 @@ public class TrajectoryGenerator {
 			}
 		
 		episodes.add(merged);
-		environ.writeEpisode(merged, "policyBlocks/");
 		return merged;
 	}
 	
@@ -220,7 +225,19 @@ public class TrajectoryGenerator {
 	//converts the merges into policies
 	public static void convertToPolicies(){
 		for(EpisodeAnalysis obj: episodes){
-			policies.add(new TrajectoryPolicy(obj));
+			if(obj.stateSequence.size() != 0){
+				System.out.println("\t\t" + obj.stateSequence.size());
+				policies.add(new TrajectoryPolicy(obj));
+			}
+		}
+	}
+	
+	public static void writeTrajectories(){
+		int i = 0;
+		
+		for(TrajectoryPolicy p: policies){
+			environ.writeTrajectory(p, outputPath + "merged-" + i);
+			i++;
 		}
 	}
 }
