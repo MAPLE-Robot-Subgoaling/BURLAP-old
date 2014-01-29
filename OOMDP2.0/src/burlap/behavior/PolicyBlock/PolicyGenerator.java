@@ -110,7 +110,7 @@ public class PolicyGenerator {
 		}
 		
 		//attempt to merge GreedyQ with a PolicyBlockPolicy
-		/*Iterator<?> temp = mergedSpace.entrySet().iterator();
+		Iterator<?> temp = mergedSpace.entrySet().iterator();
 		System.out.println(temp.hasNext());
 		limit = 0;
 		
@@ -126,8 +126,17 @@ public class PolicyGenerator {
 		if(stateSeq_A == null || stateSeq_B == null || policy_A == null || policy_B == null) //quick check
 			System.out.println("Did not assign Value Correctly");
 		else{
+			
+			/*
+			 * This is just to test merging between two different kinds of policies. It works, and we are able to merge,
+			 * we just need to be able to merge successively. 
+			 * 
+			 * We need to re-write the loop to continously merge until we get a set of merged policies. 
+			 */
+			
 			this.merge(stateSeq_A, stateSeq_B, policy_A, policy_B);
-		}*/
+			System.out.println("Merged items: " + mergedSpace.size());
+		}
 		
 	}
 	
@@ -148,8 +157,11 @@ public class PolicyGenerator {
 					StateHashTuple p = stateSeqB.get(j);
 					
 					if(s.equals(p) && (policyA.getAction(s.s).equals(policyB.getAction(p.s)))){
-						intersection.put(stateSeqB.get(i),policyB.getAction(s.s));
+						
+						intersection.put(stateSeqA.get(i),policyA.getAction(s.s));
 						stateList.add(s);
+						
+						
 					}		
 				}
 			}
@@ -162,8 +174,11 @@ public class PolicyGenerator {
 					StateHashTuple p = stateSeqA.get(j);
 					
 					if(s.equals(p) && (policyA.getAction(p.s).equals(policyB.getAction(s.s)))){
+						
 						intersection.put(stateSeqB.get(i),policyB.getAction(s.s));
 						stateList.add(s);
+						
+						
 					}		
 				}
 			}
@@ -172,7 +187,14 @@ public class PolicyGenerator {
 		//result of the merging objects
 		PolicyBlockPolicy result = new PolicyBlockPolicy((HashMap<StateHashTuple, GroundedAction>)intersection);
 		
+		
+		/*
+		 *So what happens is that Java doesn't allow for duplicate keys. So if the keys turn out to have the same
+		 *stateSpace but different associated actions, Java doesn't care, it get's overwritten. That's why for now
+		 *only one merged policy shows up. 
+		 */
 		mergedSpace.put(stateList, result);
+		
 	}
 	
 	public void writePolicies(){
