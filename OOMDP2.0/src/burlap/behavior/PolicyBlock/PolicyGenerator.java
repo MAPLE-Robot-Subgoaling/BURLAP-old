@@ -69,6 +69,9 @@ public class PolicyGenerator {
 	 * calls Merge()
 	 * Strips out the policy object and associated state collection from it
 	 * and passes it to merge.
+	 * 
+	 * This whole function needs to be restructured so that we are able to 
+	 * generate multiple merges (similar to Trajectory Generator's unionSet)
 	 */
 	public void runMerge(){
 		Iterator<?> it = initailSpace.entrySet().iterator();
@@ -106,12 +109,11 @@ public class PolicyGenerator {
 			System.out.println("Did not assign Value Correctly");
 		else{
 			this.merge(stateSeq_A, stateSeq_B, policy_A, policy_B);
-			System.out.println("Merged items: " + mergedSpace.size());
+			System.out.println("GreedyQ - Merged items: " + mergedSpace.size());
 		}
 		
-		//attempt to merge GreedyQ with a PolicyBlockPolicy
+		//attempt to merge GreedyQ - the second one - with a PolicyBlockPolicy
 		Iterator<?> temp = mergedSpace.entrySet().iterator();
-		System.out.println(temp.hasNext());
 		limit = 0;
 		
 		do{
@@ -131,11 +133,11 @@ public class PolicyGenerator {
 			 * This is just to test merging between two different kinds of policies. It works, and we are able to merge,
 			 * we just need to be able to merge successively. 
 			 * 
-			 * We need to re-write the loop to continously merge until we get a set of merged policies. 
+			 * We need to re-write the loop to continously merge until we get a set of merged policies.
 			 */
 			
 			this.merge(stateSeq_A, stateSeq_B, policy_A, policy_B);
-			System.out.println("Merged items: " + mergedSpace.size());
+			System.out.println("Hybrid - Merged items: " + mergedSpace.size());
 		}
 		
 	}

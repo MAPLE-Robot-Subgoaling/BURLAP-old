@@ -80,6 +80,12 @@ public class PolicyBlockPolicy extends Policy{
 		return true;
 	}
 	
+	/*
+	 * Badly named
+	 * justDoIt() - takes a Policy Object and evaluates it's behavior with a 
+	 * reward of 1, instead of the actual received reward. 
+	 * --Note: all policyblock learning algorithms use a uniform reward of 1.
+	 */
 	public EpisodeAnalysis justDoIt(){
 		EpisodeAnalysis result = new EpisodeAnalysis();
 		
@@ -87,6 +93,7 @@ public class PolicyBlockPolicy extends Policy{
 		
 		for(StateHashTuple sh: stateSpace.keySet()){
 			
+			//limiter - no action taken at goal state, so stop one before. 
 			if(steps >= stateSpace.keySet().size()-1)
 				break;
 			
@@ -99,6 +106,10 @@ public class PolicyBlockPolicy extends Policy{
 		return result;
 	}
 	
+	/*
+	 * evaluates the behavior but requires the reward function used
+	 * in the learning algorithm previously 
+	 */
 	public EpisodeAnalysis evaluateBehavior(RewardFunction rf){
 		EpisodeAnalysis res = new EpisodeAnalysis();
 		
@@ -119,7 +130,9 @@ public class PolicyBlockPolicy extends Policy{
 		return res;
 	}
 	
-	
+	/*
+	 * Records the policy into an Episode analysis object. 
+	 */
 	private void followAndRecordPolicy(EpisodeAnalysis ea, State cur, RewardFunction rf){
 		State next = null;
 		
@@ -152,6 +165,11 @@ public class PolicyBlockPolicy extends Policy{
 	//Iterable State ConditionTest to check find the start space for the policy.
 	public class startPolicy implements StateConditionTestIterable{
 
+		/*
+		 * (non-Javadoc)
+		 * @see burlap.behavior.singleagent.planning.StateConditionTest#satisfies(burlap.oomdp.core.State)
+		 * This class is defined for the option methods. Will probably be pushed into a different class or something. 
+		 */
 		
 		@Override
 		public boolean satisfies(State s) {
@@ -162,6 +180,13 @@ public class PolicyBlockPolicy extends Policy{
 			return false;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Iterable#iterator()
+		 * The iterator is based off of the stateSpace (the actual policy object)
+		 * Hopefully no errors arise when iterating through states to make it an option.
+		 */
+		
 		@Override
 		public Iterator iterator() {
 			
