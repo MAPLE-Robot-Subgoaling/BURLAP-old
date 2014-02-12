@@ -30,6 +30,7 @@ import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.learning.LearningAgent;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
+import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.StateConditionTest;
@@ -123,7 +124,8 @@ public class PolicyBlockDomain {
 		for(int i = 0; i < 100; i++){
 			EpisodeAnalysis ea = agent.runLearningEpisodeFrom(initialState); 	//run the episode
 			ea.writeToFile(String.format("%se%03d", output, i), sp); 			//record the episode
-			System.out.println("Episode "+ i + " : " + ea.numTimeSteps()); 		//print the performance of the episode
+			//System.out.println("Episode "+ i + " : " + ea.numTimeSteps()); 		//print the performance of the episode
+			System.out.print(".");
 		}
 	}
 	
@@ -241,5 +243,11 @@ public class PolicyBlockDomain {
 	public void visualizePolicies(String outputPath){
 		Visualizer v = GridWorldVisualizer.getVisualizer(domain, policyBlock.getMap());
 		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, domain, sp, outputPath);
+	}
+	
+	public void addOptions(ArrayList<Option> options){
+		 for(Option o:options){
+			 domain.addAction(o);
+		 }
 	}
 }

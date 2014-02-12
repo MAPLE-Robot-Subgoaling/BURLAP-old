@@ -58,7 +58,12 @@ public class TrajectoryPolicy extends Policy{
 
 	@Override
 	public boolean isDefinedFor(State s) {
-		// TODO Auto-generated method stub
+		
+		for(State iter: trajectory.stateSequence){
+			if(iter.equals(s))
+				return true;
+		}
+		
 		return false;
 	}
 

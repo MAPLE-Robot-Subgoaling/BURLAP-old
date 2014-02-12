@@ -7,6 +7,9 @@ import domain.PolicyBlock.PolicyBlockDomain;
 
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.options.Option;
+import burlap.behavior.singleagent.options.PolicyDefinedSubgoalOption;
+import burlap.behavior.singleagent.planning.StateConditionTest;
 import burlap.oomdp.core.State;
 
 /**
@@ -27,11 +30,10 @@ public class TrajectoryGenerator {
 	
 	//Main
 	@SuppressWarnings("rawtypes")
-	public static void main(String args[]){
+	public void runSim(int num){
 		//set number of policies to merge
-		int number = 3;
-		TrajectoryGenerator generator = new TrajectoryGenerator("Trajectory/");
-		generator.generatePolicies(number);
+		int number = num;
+		this.generatePolicies(number);
 		
 		EpisodeAnalysis[] input = new EpisodeAnalysis[number];
 		for(int i = 0; i < input.length; i++)
@@ -56,9 +58,9 @@ public class TrajectoryGenerator {
 		
 		
 		//Converting to Policy Objects in order to visualize
-		convertToPolicies();
-		writeTrajectories();
-		generator.showEpisodes();
+		this.convertToPolicies();
+		this.writeTrajectories();
+		this.showEpisodes();
 	}
 	
 	//creates a new Policy Domain Object
@@ -223,21 +225,54 @@ public class TrajectoryGenerator {
 	}
 	
 	//converts the merges into policies
-	public static void convertToPolicies(){
+	public void convertToPolicies(){
 		for(EpisodeAnalysis obj: episodes){
 			if(obj.stateSequence.size() != 0){
-				System.out.println("\t\t" + obj.stateSequence.size());
 				policies.add(new TrajectoryPolicy(obj));
 			}
 		}
 	}
 	
-	public static void writeTrajectories(){
+	public void writeTrajectories(){
 		int i = 0;
 		
 		for(TrajectoryPolicy p: policies){
 			environ.writeTrajectory(p, outputPath + "merged-" + i);
 			i++;
 		}
+	}
+	
+	public ArrayList<Option> createOptions(){
+		ArrayList<Option> options = new ArrayList<Option>();
+		int i = 0;
+		
+		for(Policy p: policies){
+			
+			options.add(new PolicyDefinedSubgoalOption("option-"+i, p, new PolicyStateCheck(p)));
+			i++;
+		}
+		
+		
+		for(Option o: options){
+			System.out.println("\tOptions:" + o.hashCode());
+		}
+		
+		return options;
+	}
+	
+	class PolicyStateCheck implements StateConditionTest{
+
+		Policy pol;
+		
+		public PolicyStateCheck(Policy p){
+			this.pol = p;
+		}
+		
+		@Override
+		public boolean satisfies(State s) {
+			
+			return pol.isDefinedFor(s);
+		}
+		
 	}
 }
