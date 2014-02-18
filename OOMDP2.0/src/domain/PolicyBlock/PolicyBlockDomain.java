@@ -1,8 +1,13 @@
 package domain.PolicyBlock;
 
 /**
- * PolicyBlockDomain()
- * Just to generate policies of four rooms for the option generator.
+ * PolicyBlockDomain
+ * 		The main Domain Class used to generate the Trajectory and 
+ * 		Policy objects needed for running Trajectory merge, and Policy
+ * 		Merge as well. 
+ * 
+ * 		The interfaces define the functions needed to run the functions
+ * 		nessecary for creating the policy blocks. 
  */
 
 import java.util.ArrayList;
@@ -24,6 +29,7 @@ import burlap.oomdp.visualizer.Visualizer;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.behavior.PolicyBlock.PolicyBlockPolicy;
+import burlap.behavior.PolicyBlock.TrajectoryInterface;
 import burlap.behavior.PolicyBlock.TrajectoryPolicy;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
@@ -44,7 +50,7 @@ import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.*;
 
-public class PolicyBlockDomain {
+public class PolicyBlockDomain implements TrajectoryInterface{
 
 	GridWorldDomain policyBlock;
 	Domain domain;
@@ -121,11 +127,13 @@ public class PolicyBlockDomain {
 		
 		LearningAgent agent = new QLearning(domain, rf, tf, 0.99, hashFactory, 0., 0.9); //create the QLearning agent
 		
-		for(int i = 0; i < 100; i++){
+		for(int i = 1; i <= 100; i++){
 			EpisodeAnalysis ea = agent.runLearningEpisodeFrom(initialState); 	//run the episode
 			ea.writeToFile(String.format("%se%03d", output, i), sp); 			//record the episode
 			//System.out.println("Episode "+ i + " : " + ea.numTimeSteps()); 		//print the performance of the episode
 			System.out.print(".");
+			if(i % 10 == 0)
+				System.out.println();
 		}
 	}
 	
@@ -140,6 +148,9 @@ public class PolicyBlockDomain {
 	 * according to trajectories determined after running Q-Learning, and build options based off of that. 
 	 * @param output - the filepath for printing the results
 	 * @param number - number of episodes to create
+	 * 
+	 * Note:
+	 * 		switch to a Planner such as Value Iteration...
 	 */
 	public void createEpisodes(String output, int number){
 		
@@ -169,6 +180,15 @@ public class PolicyBlockDomain {
 			episodes.add(one); //add the episode to the set of trajectories
 			System.out.println("Done: " + (k+1));
 		}
+		
+		
+		//Working on the new policies to generate...
+		OOMDPPlanner planner = new ValueIteration(domain, rf, tf, 0.99, hashFactory, 0.001, 100);
+		planner.planFromState(initialState);
+		
+		Policy p = new GreedyQPolicy((QComputablePlanner)planner);
+		p.evaluateBehavior(initialState, rf, tf).writeToFile(output, sp);
+		
 	}
 	
 	/**
@@ -225,6 +245,11 @@ public class PolicyBlockDomain {
 		p.justDoIt().writeToFile(output, sp);
 	}
 	
+	/**
+	 * For Trajectory Merge
+	 * @param t
+	 * @param output
+	 */
 	public void writeTrajectory(TrajectoryPolicy t, String output){
 		t.justDoIt().writeToFile(output, sp);
 	}
@@ -244,6 +269,7 @@ public class PolicyBlockDomain {
 		Visualizer v = GridWorldVisualizer.getVisualizer(domain, policyBlock.getMap());
 		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, domain, sp, outputPath);
 	}
+	
 	
 	public void addOptions(ArrayList<Option> options){
 		 for(Option o:options){

@@ -23,12 +23,24 @@ import burlap.oomdp.core.State;
 
 public class TrajectoryGenerator {
 
-	static PolicyBlockDomain environ;
-	static ArrayList<EpisodeAnalysis> episodes = new ArrayList<EpisodeAnalysis>();
-	static ArrayList<TrajectoryPolicy> policies = new ArrayList<TrajectoryPolicy>();
-	static String outputPath;
+	protected PolicyBlockDomain environ;
+	protected ArrayList<EpisodeAnalysis> episodes = new ArrayList<EpisodeAnalysis>();
+	protected ArrayList<TrajectoryPolicy> policies = new ArrayList<TrajectoryPolicy>();
+	protected String outputPath;
 	
-	//Main
+	/**
+	 * runSim() - controls the run of the Trajectory Merging in a domain.
+	 * 
+	 * Note:the printing of the merged policies can be cleaned up, because the are visualized in 
+	 * 		showEpisodes() + also needs to be cleaned up as well
+	 * 
+	 * Description: 
+	 * 		Main class for generating and running the policies needed for visualization purposes. The
+	 * 		Episode Anaylsis Trajectories only contain the best possible path afer being generated from 
+	 * 		a number of random policy goal states 
+	 * 
+	 * @param num - the number of policies to perform merging with
+	 */
 	@SuppressWarnings("rawtypes")
 	public void runSim(int num){
 		//set number of policies to merge
@@ -63,19 +75,35 @@ public class TrajectoryGenerator {
 		this.showEpisodes();
 	}
 	
-	//creates a new Policy Domain Object
+	/**
+	 * TrajectoryGenerator() - a TrajectoryGenerator Object
+	 * @param outputPath - the string file path where the trajectories are saved.
+	 */
 	public TrajectoryGenerator(String outputPath){
 		environ = new PolicyBlockDomain();
+		
+		if(!outputPath.contains("/"))
+			outputPath = outputPath + "/";
+		
 		this.outputPath = outputPath;
 	}
 	
-	//Generates "number" iterations which contains 100 policies run via Q-Learning
+	/**
+	 * generatePolicies() - Generates "number" iterations which contains 100 policies run via Q-Learning
+	 * @param number - takes the number of desired trajectories stored in the object and generates them.  
+	 */
 	public void generatePolicies(int number){	
 		environ.createEpisodes("policyBlocks", number);
 	}
 	
-	//Displays an ASCII map of a GridWorld domain policy
-	public static void visualize(EpisodeAnalysis merged){
+	/**
+	 * visualize() - Displays an ASCII map of a GridWorld domain policy
+	 * @param merged - the EA obj to be visualized.
+	 * 
+	 * Note:
+	 * 		this can go or be cleaned up. Each of the merged policies are able to be visualized.  
+	 */
+	public void visualize(EpisodeAnalysis merged){
 		//initializes an empty map array
 		char[][] matrix = new char[11][11];
 		for(int x = 0; x < 11; x++)
@@ -136,7 +164,7 @@ public class TrajectoryGenerator {
 	 * 
 	 * If so, it takes the state-action-reward set and writes it to the episode analysis object.
 	*/
-	public static EpisodeAnalysis merge(EpisodeAnalysis e0, EpisodeAnalysis e1){
+	public EpisodeAnalysis merge(EpisodeAnalysis e0, EpisodeAnalysis e1){
 		
 		//new blank episode for merging of the two policies
 		EpisodeAnalysis merged = new EpisodeAnalysis();
@@ -163,8 +191,12 @@ public class TrajectoryGenerator {
 		return merged;
 	}
 	
-	//returns the union set of merged policies
-	public static ArrayList<Object>  unionSet(EpisodeAnalysis[] set){
+	/**
+	 * unionSet() - returns the union set of merged policies
+	 * @param set - the array set of all the merged trajectory objects needed to merge
+	 * @return - the merged Arraylist of all the merged policies. 
+	 */
+	public ArrayList<Object>  unionSet(EpisodeAnalysis[] set){
 		ArrayList<EpisodeAnalysis> result = new ArrayList<EpisodeAnalysis>();
 		ArrayList<String> names = new ArrayList<String>();
 		ArrayList<Integer> depth = new  ArrayList<Integer>();
@@ -224,7 +256,9 @@ public class TrajectoryGenerator {
 		return output;
 	}
 	
-	//converts the merges into policies
+	/**
+	 * convertToPolicies() - converts the merges into policies
+	 */
 	public void convertToPolicies(){
 		for(EpisodeAnalysis obj: episodes){
 			if(obj.stateSequence.size() != 0){
@@ -233,6 +267,9 @@ public class TrajectoryGenerator {
 		}
 	}
 	
+	/**
+	 * writeTrajectories() - writes the trajectories merged to the file output path
+	 */
 	public void writeTrajectories(){
 		int i = 0;
 		
@@ -242,6 +279,11 @@ public class TrajectoryGenerator {
 		}
 	}
 	
+	/**
+	 * createOptions() - takes the merged set of policies, and converts them into 
+	 * Policy Based Options
+	 * @return - An ArrayList of merged policies. 
+	 */
 	public ArrayList<Option> createOptions(){
 		ArrayList<Option> options = new ArrayList<Option>();
 		int i = 0;
@@ -260,7 +302,12 @@ public class TrajectoryGenerator {
 		return options;
 	}
 	
-	class PolicyStateCheck implements StateConditionTest{
+	/**
+	 * Class - PolicyStateCheck - responsible for running the policy state check
+	 * @author Tenji Tembo
+	 *
+	 */
+	private class PolicyStateCheck implements StateConditionTest{
 
 		Policy pol;
 		
@@ -270,7 +317,6 @@ public class TrajectoryGenerator {
 		
 		@Override
 		public boolean satisfies(State s) {
-			
 			return pol.isDefinedFor(s);
 		}
 		

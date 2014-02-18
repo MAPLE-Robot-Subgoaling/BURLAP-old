@@ -19,7 +19,6 @@ public class FourRoomsOptions {
 		TrajectoryGenerator trajectory = new TrajectoryGenerator(trajectory_output);
 		
 		//running the original domain via Q-Learning
-		
 		System.out.println("Running Q-learning");
 		domain.QLearn(original_output);
 		domain.visualize(original_output);
@@ -27,7 +26,6 @@ public class FourRoomsOptions {
 		//running trajectory generator with 3 generated policies
 		System.out.println("Creating Trajectory Options...");
 		trajectory.runSim(3);
-		
 		ArrayList<Option> options = trajectory.createOptions();
 		System.out.println("Number of Options: " + options.size());
 		domain.addOptions(options);
