@@ -12,6 +12,7 @@ public class FourRoomsOptions {
 	 */
 	public static void main(String[] args) {
 		
+		//Setup of the intial Experiment
 		String trajectory_output = "Trajectory/";
 		String original_output = "Original/";
 		String options_output = "Options/";

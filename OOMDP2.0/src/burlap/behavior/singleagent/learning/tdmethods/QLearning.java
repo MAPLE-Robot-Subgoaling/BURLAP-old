@@ -467,6 +467,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 			}
 			else{
 				Option o = (Option)action.action;
+				System.out.println(o.getName());
 				r = o.getLastCumulativeReward();
 				int n = o.getLastNumSteps();
 				discount = Math.pow(this.gamma, n);

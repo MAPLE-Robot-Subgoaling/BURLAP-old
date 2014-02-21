@@ -20,8 +20,10 @@ public class TrajectoryPolicy extends Policy{
 		// TODO Auto-generated method stub
 		
 		for(int i = 0; i < trajectory.stateSequence.size(); i++){
-			if(s.equals(trajectory.stateSequence.get(i)))
+			if(s.equals(trajectory.stateSequence.get(i))){
+					System.out.println("\t\tTriggered!");
 					return trajectory.actionSequence.get(i);
+			}
 		}
 		
 		return null;

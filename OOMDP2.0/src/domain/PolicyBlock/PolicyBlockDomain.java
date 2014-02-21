@@ -21,6 +21,7 @@ import burlap.domain.singleagent.gridworld.*;
 import burlap.oomdp.auxiliary.StateParser;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectInstance;	
+import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.common.SinglePFTF;
 import burlap.oomdp.singleagent.common.UniformCostRF;
@@ -274,6 +275,12 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 	public void addOptions(ArrayList<Option> options){
 		 for(Option o:options){
 			 domain.addAction(o);
+		 }
+		 
+		 System.out.println("\tPrinting all Actions/Options:");
+		 
+		 for(Action a:domain.getActions()){
+			 System.out.println("\t\t--" + a.getName());
 		 }
 	}
 }

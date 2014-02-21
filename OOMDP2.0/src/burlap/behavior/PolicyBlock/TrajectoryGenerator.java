@@ -289,7 +289,6 @@ public class TrajectoryGenerator {
 		int i = 0;
 		
 		for(Policy p: policies){
-			
 			options.add(new PolicyDefinedSubgoalOption("option-"+i, p, new PolicyStateCheck(p)));
 			i++;
 		}
