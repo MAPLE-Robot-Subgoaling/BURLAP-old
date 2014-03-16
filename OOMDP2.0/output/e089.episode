@@ -1,0 +1,418 @@
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,6,6
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,6,5
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,6,4
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,6,3
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,5,3
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,4,3
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,3,3
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,3,2
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,3,1
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,4,1
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,4,1
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,3,1
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,4,1
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,5,1
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,6,1
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,5,1
+#ES#
+north
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,5,2
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,5,1
+#ES#
+north
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,5,2
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,4,2
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,2,2 agent,3,2
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,2
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,3,2
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,3,1
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,3,1
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,4,1
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,4,1
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,3,1
+#ES#
+north
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,3,2
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,3,1
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,1
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,1
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,1,1
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,1,1
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,1,1
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,1
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,1
+#ES#
+north
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,2
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,3,2
+#ES#
+north
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,3,3
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,3,2
+#ES#
+north
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,3,3
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,4,3
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,5,3
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,4,3
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,4,2
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,4,1
+#ES#
+north
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,4,2
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,5,2
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,5,1
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,5,1
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,6,1
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,6,1
+#ES#
+north
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,6,2
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,6,1
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,5,1
+#ES#
+north
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,5,2
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,4,2
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,4,1
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,5,1
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,4,1
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,5,1
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,6,1
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,5,1
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,5,1
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,4,1
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,4,1
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,3,1
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,1
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,1,1
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,1,1
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,1,1
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,1
+#ES#
+north
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,2
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,1
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,1
+#ES#
+east
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,3,1
+#ES#
+south
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,3,1
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,1
+#ES#
+north
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,2
+#ES#
+west
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,2
+#ES#
+north
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,3
+#ES#
+north
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,4
+#ES#
+north
+-1.0
+#EL#
+room,3,0,4,8,0 room,1,0,8,4,4 room,0,4,8,8,4 door,6,4,6,4 door,2,4,2,4 block,3,3,1,2 agent,2,5
+#ES#
