@@ -1,13 +1,28 @@
 package domain.singleagent.sokoban2;
 
+import java.util.Iterator;
 import java.util.List;
 
 import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
+import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.learning.LearningAgent;
+import burlap.behavior.singleagent.learning.tdmethods.QLearning;
+import burlap.behavior.singleagent.options.LocalSubgoalRF;
+import burlap.behavior.singleagent.options.LocalSubgoalTF;
+import burlap.behavior.singleagent.options.Option;
+import burlap.behavior.singleagent.options.SubgoalOption;
+import burlap.behavior.singleagent.planning.OOMDPPlanner;
+import burlap.behavior.singleagent.planning.PlannerDerivedPolicy;
+import burlap.behavior.singleagent.planning.StateConditionTest;
+import burlap.behavior.singleagent.planning.StateConditionTestIterable;
+import burlap.behavior.singleagent.planning.commonpolicies.GreedyDeterministicQPolicy;
+import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.GroundedProp;
 import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.PropositionalFunction;
@@ -99,15 +114,33 @@ public class Sokoban2Domain implements DomainGenerator {
 		s.addObject(b2);
 		setBlock(s, 1, 3, 2, "moon", "red");*/
 		
-		Visualizer v = Sokoban2Visualizer.getVisualizer("robotImages");
-		VisualExplorer exp = new VisualExplorer(domain, v, s);
+		//Setting up Q-Learning
+		parser = new Sokoban2Parser(domain);
+		analyzer = new EpisodeAnalysis();
 		
-		exp.addKeyAction("w", ACTIONNORTH);
+		for(int i = 1; i <= 100; i++){
+			analyzer = new EpisodeAnalysis();
+
+			System.out.print("Episode " + i + ": ");
+			analyzer = Q.runLearningEpisodeFrom(s);
+			System.out.println("\tSteps: " + analyzer.numTimeSteps());
+			analyzer.writeToFile(String.format("output/e%03d", i), parser);
+
+			setAgent(s, 6, 6);
+			setBlock(s, 0, 2, 2, "basket", "red");
+		}
+		
+		
+		Visualizer v = Sokoban2Visualizer.getVisualizer("robotImages");
+		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, domain, parser, "output");
+		
+		
+		/*exp.addKeyAction("w", ACTIONNORTH);
 		exp.addKeyAction("s", ACTIONSOUTH);
 		exp.addKeyAction("d", ACTIONEAST);
 		exp.addKeyAction("a", ACTIONWEST);
 		
-		exp.initGUI();
+		exp.initGUI();*/
 		
 	}
 	
@@ -220,9 +253,13 @@ public class Sokoban2Domain implements DomainGenerator {
 		//My PropFunction
 		PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSROOM}, true);
 		
+<<<<<<< HEAD
 		
 		//domain.addPropositionalFunction(bir);
 
+=======
+		//domain.addPropositionalFunction(bir);
+>>>>>>> tembot
 		domain.addPropositionalFunction(air);
 		domain.addPropositionalFunction(goal);
 		
@@ -249,11 +286,12 @@ public class Sokoban2Domain implements DomainGenerator {
 		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
 		hashFactory.setAttributesForClass(CLASSAGENT, domain.getObjectClass(CLASSAGENT).attributeList);
 		rf = new UniformCostRF(); //always returns a reward of -1. since goal state ends action, it will be favored.
-		tf = new SinglePFTF(domain.getPropFunction(PFAGENTINROOM));
+		//tf = new SinglePFTF(domain.getPropFunction(PFATGOAL));
+		tf = new InRoomOfColorTF(domain, "green");
+		Q = new QLearning(domain, rf, tf, Sokoban2Domain.DISCOUNTFACTOR, hashFactory, 0.2, Sokoban2Domain.LEARNINGRATE, Integer.MAX_VALUE);
 		
 		return domain;
 	}
-	
 	
 	
 	protected void addRectAtts(Domain domain, ObjectClass oc){
@@ -321,7 +359,6 @@ public class Sokoban2Domain implements DomainGenerator {
 		return s;
 		
 	}
-	
 	
 	public static void setAgent(State s, int x, int y){
 		ObjectInstance o = s.getFirstObjectOfClass(CLASSAGENT);
@@ -461,7 +498,6 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 	}
 	
-	
 	public static boolean wallAt(State s, ObjectInstance r, int x, int y){
 		
 		int top = r.getDiscValForAttribute(ATTTOP);
@@ -575,16 +611,25 @@ public class Sokoban2Domain implements DomainGenerator {
 			int ay = agent.getDiscValForAttribute(ATTY);
 			
 			ObjectInstance room = st.getObject(params[1]);
+<<<<<<< HEAD
 
 			//for some reason prints out all three colors a room can have
 			String color = room.getStringValForAttribute(ATTCOLOR);
 			System.out.println("\t" + color);
 			
+=======
+			
+			//for some reason prints out all three colors a room can have
+			String color = room.getStringValForAttribute(ATTCOLOR);
+>>>>>>> tembot
 			
 			if(color.equals("green")){
 				
 				//prints every time, even though not in the green room all the time
+<<<<<<< HEAD
 				System.out.println("In the Green Room!");
+=======
+>>>>>>> tembot
 				
 				if(this.falseIfInDoor){
 					if(doorContainingPoint(st, ax, ay) != null){
@@ -632,7 +677,6 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 	}
 	
-	
 	public class PFIsColor extends PropositionalFunction{
 		
 		protected String colorName;
@@ -653,7 +697,6 @@ public class Sokoban2Domain implements DomainGenerator {
 		}
 
 	}
-	
 	
 	public class PFIsShape extends PropositionalFunction{
 
@@ -676,7 +719,108 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 	}
 	
+	public class InRoomOfColorTF implements TerminalFunction{
+
+		protected PropositionalFunction colorPF;
+		protected PropositionalFunction agentInRoomPF;
+
+		public InRoomOfColorTF(Domain domain, String colorName){
+			this.colorPF = domain.getPropFunction(Sokoban2Domain.PFRoomColorName(colorName));
+			this.agentInRoomPF = domain.getPropFunction(Sokoban2Domain.PFAGENTINROOM);
+		}
+
+		public boolean isTerminal(State s){
+			//find the room the agent is in
+			List <GroundedProp> inRoomGPs = s.getAllGroundedPropsFor(this.agentInRoomPF);
+			for(GroundedProp gp : inRoomGPs){
+				if(gp.isTrue(s)){
+					//then this gp holds the room parameter (param index 1) where the agent is
+					//check if that room object satisfies our color prop
+					return this.colorPF.isTrue(s, gp.params[1]);
+				}
+			}
+
+			return false;
+		}
+
+	}
 	
+	//Can double as Initiation Condition and Subgoal Terminal Condition
+	public class InRoomStateCheck implements StateConditionTestIterable{
+
+		protected InRoomOfColorTF roomTF;
+		protected Domain domain;
+		
+		public InRoomStateCheck(Domain domain, String Color){
+			this.roomTF = new InRoomOfColorTF(domain, Color);
+			this.domain = domain;
+		}
+		
+		//Gonna Try Calling a TF to see if it works
+		//Technically it's boolean so it should be fine.
+		public boolean satisfies(State s) {
+			return roomTF.isTerminal(s);
+		}
+
+		@Override
+		public Iterator<State> iterator() {
+			
+			return new Iterator<State>(){
+				
+				public boolean hasNext(){
+					State s = new State();
+					
+					s.addObject(new ObjectInstance(domain.getObjectClass(CLASSAGENT),CLASSAGENT+0));
+					return roomTF.isTerminal(s);
+				}
+				
+				public State next(){
+					return null;
+				}
+				
+				public void remove(){
+					
+				}
+				
+			};
+		}
+
+		@Override
+		public void setStateContext(State s) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		
+		
+	}
 	
+	public class AtRoomStateCheck implements StateConditionTest{
+		protected InRoomOfColorTF roomTF;
+		
+		public AtRoomStateCheck(Domain domain, String Color){
+			roomTF = new InRoomOfColorTF(domain, Color);
+		}
+		
+		//Gonna Try Calling a TF to see if it works
+		//Technically it's boolean so it should be fine.
+		public boolean satisfies(State s) {
+			return roomTF.isTerminal(s);
+		}
+		
+	}
+	
+	public Option getRoomOption(String name, Domain domain, String startRoom, String goalRoom){
+		StateConditionTest start = new InRoomStateCheck(domain, startRoom);
+		StateConditionTest end = new InRoomStateCheck(domain, goalRoom);
+		
+		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
+		hashFactory.setAttributesForClass(CLASSAGENT, domain.getObjectClass(CLASSAGENT).attributeList);
+		
+		OOMDPPlanner planner = new ValueIteration(domain, new LocalSubgoalRF(start, end), new LocalSubgoalTF(start, end), 0.99, hashFactory, 0.001, 50);
+		Policy p = new GreedyDeterministicQPolicy();
+		
+		return new SubgoalOption(name, p, start, end);
+	}
 
 }

@@ -13,7 +13,11 @@ import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.common.NullAction;
 
 
-
+/**
+ * This abstract class is used to store a policy for a domain that can be queried and perform common operations with the policy.
+ * @author James MacGlashan
+ *
+ */
 public abstract class Policy {
 
 	protected boolean evaluateDecomposesOptions = true;
@@ -43,7 +47,7 @@ public abstract class Policy {
 	 */
 	public abstract boolean isStochastic();
 	
-	
+	public abstract boolean isDefinedFor(State s);
 	
 	/**
 	 * Will return the probability of this policy taking action ga in state s
@@ -53,6 +57,9 @@ public abstract class Policy {
 	 */
 	public double getProbOfAction(State s, GroundedAction ga){
 		List <ActionProb> probs = this.getActionDistributionForState(s);
+		if(probs == null || probs.size() == 0){
+			throw new PolicyUndefinedException();
+		}
 		for(ActionProb ap : probs){
 			if(ap.ga.equals(ga)){
 				return ap.pSelection;
@@ -61,6 +68,18 @@ public abstract class Policy {
 		return 0.;
 	}
 	
+	
+	public static double getProbOfActionGivenDistribution(State s, GroundedAction ga, List<ActionProb> distribution){
+		if(distribution == null || distribution.size() == 0){
+			throw new RuntimeException("Distribution is null or empty, cannot return probability for given action.");
+		}
+		for(ActionProb ap : distribution){
+			if(ap.ga.equals(ga)){
+				return ap.pSelection;
+			}
+		}
+		return 0.;
+	}
 	
 	/**
 	 * A helper method for defining deterministic policies. This method relies on the getAction method being
@@ -72,6 +91,9 @@ public abstract class Policy {
 	 */
 	protected List <ActionProb> getDeterministicPolicy(State s){
 		GroundedAction ga = this.getAction(s);
+		if(ga == null){
+			throw new PolicyUndefinedException();
+		}
 		ActionProb ap = new ActionProb(ga, 1.);
 		List <ActionProb> aps = new ArrayList<Policy.ActionProb>();
 		aps.add(ap);
@@ -86,12 +108,15 @@ public abstract class Policy {
 	 * the subclass needs to only define the getActionDistribution method and the getAction method can simply
 	 * call this method to return an action.
 	 * @param s
-	 * @return
+	 * @return a GroundedAction to take
 	 */
 	protected GroundedAction sampleFromActionDistribution(State s){
 		Random rand = RandomFactory.getMapped(0);
 		double roll = rand.nextDouble();
 		List <ActionProb> probs = this.getActionDistributionForState(s);
+		if(probs == null || probs.size() == 0){
+			throw new PolicyUndefinedException();
+		}
 		double sump = 0.;
 		for(ActionProb ap : probs){
 			sump += ap.pSelection;
@@ -208,6 +233,9 @@ public abstract class Policy {
 		
 		//follow policy
 		GroundedAction ga = this.getAction(cur);
+		if(ga == null){
+			throw new PolicyUndefinedException();
+		}
 		if(ga.action.isPrimitive() || !this.evaluateDecomposesOptions){
 			next = ga.executeIn(cur);
 			double r = rf.reward(cur, ga, next);
@@ -253,13 +281,48 @@ public abstract class Policy {
 	
 	
 	
+	/**
+	 * Class for storing an action and probability tuple. The probability represents the probability that the action will be selected.
+	 * @author James MacGlashan
+	 *
+	 */
 	public static class ActionProb{
+		
+		/**
+		 * The action to be considered.
+		 */
 		public GroundedAction ga;
+		
+		/**
+		 * The probability of the action being selected.
+		 */
 		public double pSelection;
 		
+		
+		/**
+		 * Initializes the action, probability tuple.
+		 * @param ga the action to be considered
+		 * @param p the probability of the action being selected.
+		 */
 		public ActionProb(GroundedAction ga, double p){
 			this.ga = ga;
 			this.pSelection = p;
+		}
+		
+	}
+	
+	
+	/**
+	 * RuntimeException to be thrown when a Policy is queried for a state in which the policy is undefined.
+	 * @author James MacGlashan
+	 *
+	 */
+	public static class PolicyUndefinedException extends RuntimeException{
+
+		private static final long serialVersionUID = 1L;
+		
+		public PolicyUndefinedException(){
+			super("Policy is undefined for provided state");
 		}
 		
 	}

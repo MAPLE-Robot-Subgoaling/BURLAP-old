@@ -1,0 +1,73 @@
+#EL#
+0 0, 8 6
+#ES#
+north
+-1.0
+#EL#
+0 1, 8 6
+#ES#
+east
+-1.0
+#EL#
+1 1, 8 6
+#ES#
+east
+-1.0
+#EL#
+2 1, 8 6
+#ES#
+east
+-1.0
+#EL#
+3 1, 8 6
+#ES#
+east
+-1.0
+#EL#
+4 1, 8 6
+#ES#
+east
+-1.0
+#EL#
+5 1, 8 6
+#ES#
+east
+-1.0
+#EL#
+6 1, 8 6
+#ES#
+north
+-1.0
+#EL#
+6 2, 8 6
+#ES#
+north
+-1.0
+#EL#
+6 3, 8 6
+#ES#
+east
+-1.0
+#EL#
+7 3, 8 6
+#ES#
+east
+-1.0
+#EL#
+8 3, 8 6
+#ES#
+north
+-1.0
+#EL#
+8 4, 8 6
+#ES#
+north
+-1.0
+#EL#
+8 5, 8 6
+#ES#
+north
+-1.0
+#EL#
+8 6, 8 6
+#ES#

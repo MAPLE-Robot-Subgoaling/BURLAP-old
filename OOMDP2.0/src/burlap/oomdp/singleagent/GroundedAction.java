@@ -1,9 +1,15 @@
 package burlap.oomdp.singleagent;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 
 /**
- * 
+ * A grounded action contains a reference to an action and the names of object instances that
+ * are bound to the Action's parameters.
  * @author James
  *
  */
@@ -12,11 +18,22 @@ public class GroundedAction {
 	public Action action;
 	public String [] params;
 	
+	
+	/**
+	 * Initializes the GroundedAction with the given Action reference and action parameters.
+	 * @param a the action reference
+	 * @param p a String array of object parameters for the action
+	 */
 	public GroundedAction(Action a, String [] p){
 		this.init(a, p);
 	}
 	
-	//may also take parameters as a single string that is comma delineated
+	
+	/**
+	 * Initializes the GroundedAction with the given Action reference and action parameters.
+	 * @param a the action reference
+	 * @param p a comma delineated String representing the object parameters for the action.
+	 */
 	public GroundedAction(Action a, String p){
 		
 		String [] ps = null;
@@ -28,6 +45,7 @@ public class GroundedAction {
 		}
 		this.init(a, ps);
 	}
+	
 	
 	private void init(Action a, String [] p){
 		action = a;
@@ -43,6 +61,54 @@ public class GroundedAction {
 		return action.performAction(s, params);
 	}
 	
+	/**
+	 * Returns the action name for this grounded action.
+	 * @return the action name for this grounded action.
+	 */
+	public String actionName(){
+		return this.action.getName();
+	}
+	
+	/**
+	 * This method will translate this object's parameters that were assigned for a given source state, into object parameters in the
+	 * target state that are equal. This method is useful if a domain uses parameterized actions and is object identifier invariant.
+	 * If the domain of this grounded aciton's action is object identifier dependent, then no translation will occur
+	 * and this object will be returned. This object will also be returned if it is a parameterless action.
+	 * @param sourceState the source state from which this objects parameters were bound.
+	 * @param targetState a target state with potentially different object identifiers for equivalent values.
+	 * @return a grounded action object whose parameters have been translated to the target state object identifiers
+	 */
+	public GroundedAction translateParameters(State sourceState, State targetState){
+		
+		if(this.params.length == 0 || this.action.domain.isObjectIdentifierDependent()){
+			//no need to translate a parameterless action or an action that belongs to a name dependent domain
+			return this;
+		}
+		
+		Set <String> matchedObjects = new HashSet<String>();
+		String [] nparams = new String[this.params.length];
+		int i = 0;
+		for(String oname : this.params){
+			ObjectInstance o = sourceState.getObject(oname);
+			List<ObjectInstance> cands = targetState.getObjectsOfTrueClass(o.getObjectClass().name);
+			for(ObjectInstance cand : cands){
+				if(matchedObjects.contains(cand.getName())){
+					continue ;
+				}
+				if(o.valueEquals(cand)){
+					nparams[i] = o.getName();
+					matchedObjects.add(o.getName());
+					break;
+				}
+			}
+			
+			i++;
+		}
+		
+		return new GroundedAction(action, nparams);
+	}
+	
+
 	@Override
 	public String toString(){
 		StringBuffer buf = new StringBuffer();
@@ -53,6 +119,12 @@ public class GroundedAction {
 		
 		return buf.toString();
 	}
+	
+	@Override
+	public int hashCode(){
+		return this.action.getName().hashCode();
+	}
+	
 	
 	@Override
 	public boolean equals(Object other){
