@@ -252,14 +252,6 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 		//My PropFunction
 		PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSROOM}, true);
-		
-<<<<<<< HEAD
-		
-		//domain.addPropositionalFunction(bir);
-
-=======
-		//domain.addPropositionalFunction(bir);
->>>>>>> tembot
 		domain.addPropositionalFunction(air);
 		domain.addPropositionalFunction(goal);
 		
@@ -611,25 +603,10 @@ public class Sokoban2Domain implements DomainGenerator {
 			int ay = agent.getDiscValForAttribute(ATTY);
 			
 			ObjectInstance room = st.getObject(params[1]);
-<<<<<<< HEAD
-
-			//for some reason prints out all three colors a room can have
-			String color = room.getStringValForAttribute(ATTCOLOR);
-			System.out.println("\t" + color);
-			
-=======
 			
 			//for some reason prints out all three colors a room can have
-			String color = room.getStringValForAttribute(ATTCOLOR);
->>>>>>> tembot
-			
+			String color = room.getStringValForAttribute(ATTCOLOR);			
 			if(color.equals("green")){
-				
-				//prints every time, even though not in the green room all the time
-<<<<<<< HEAD
-				System.out.println("In the Green Room!");
-=======
->>>>>>> tembot
 				
 				if(this.falseIfInDoor){
 					if(doorContainingPoint(st, ax, ay) != null){
