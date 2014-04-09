@@ -257,13 +257,9 @@ public class Sokoban2Domain implements DomainGenerator {
 		PropositionalFunction bow = new PFOnWall(PFBLOCKONWALL, domain, new String[]{CLASSBLOCK, CLASSROOM});
 		
 		//My PropFunction
-<<<<<<< HEAD
-		PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSROOM}, true);
-=======
 		//PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSBLOCK, CLASSROOM}, true);
 		
 		domain.addPropositionalFunction(bir);
->>>>>>> tembot
 		domain.addPropositionalFunction(air);
 		domain.addPropositionalFunction(bow);
 		//domain.addPropositionalFunction(goal);
