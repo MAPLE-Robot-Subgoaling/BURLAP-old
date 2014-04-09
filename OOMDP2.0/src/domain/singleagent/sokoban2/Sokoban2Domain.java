@@ -65,6 +65,7 @@ public class Sokoban2Domain implements DomainGenerator {
 	public static final String					PFBLOCKINROOM = "blockInRoom";
 	public static final String					PFAGENTINDOOR = "agentInDoor";
 	public static final String					PFBLOCKINDOOR = "blockInDoor";
+	public static final String					PFBLOCKONWALL = "blockOnWall";
 	
 	//User defined Goal Condition - Tenji
 	public static final String					PFATGOAL = "atGoal";
@@ -112,13 +113,13 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 		/*ObjectInstance b2 = new ObjectInstance(domain.getObjectClass(CLASSBLOCK), CLASSBLOCK+1);
 		s.addObject(b2);
-		setBlock(s, 1, 3, 2, "moon", "red");*/
+		setBlock(s, 1, 3, 2, "chair", "red");*/
 		
 		//Setting up Q-Learning
 		parser = new Sokoban2Parser(domain);
 		analyzer = new EpisodeAnalysis();
 		
-		for(int i = 1; i <= 100; i++){
+		for(int i = 1; i <= 1; i++){
 			analyzer = new EpisodeAnalysis();
 
 			System.out.print("Episode " + i + ": ");
@@ -220,6 +221,10 @@ public class Sokoban2Domain implements DomainGenerator {
 		block.addAttribute(yatt);
 		block.addAttribute(colAtt);
 		block.addAttribute(shapeAtt);
+	
+		if(this.includeDirectionAttribute){
+			block.addAttribute(domain.getAttribute(ATTDIR));
+		}
 		
 		ObjectClass room = new ObjectClass(domain, CLASSROOM);
 		this.addRectAtts(domain, room);
@@ -248,14 +253,16 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 		//declare + add the propositional functions
 		PropositionalFunction air = new PFInRegion(PFAGENTINROOM, domain, new String[]{CLASSAGENT, CLASSROOM}, true);
-		//PropositionalFunction bir = new PFInRegion(PFBLOCKINROOM, domain, new String[]{CLASSBLOCK, CLASSROOM}, true);
+		PropositionalFunction bir = new PFInRegion(PFBLOCKINROOM, domain, new String[]{CLASSBLOCK, CLASSROOM}, true);
+		PropositionalFunction bow = new PFOnWall(PFBLOCKONWALL, domain, new String[]{CLASSBLOCK, CLASSROOM});
 		
 		//My PropFunction
-		PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSROOM}, true);
+		//PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSBLOCK, CLASSROOM}, true);
 		
-		//domain.addPropositionalFunction(bir);
+		domain.addPropositionalFunction(bir);
 		domain.addPropositionalFunction(air);
-		domain.addPropositionalFunction(goal);
+		domain.addPropositionalFunction(bow);
+		//domain.addPropositionalFunction(goal);
 		
 		PropositionalFunction aid = new PFInRegion(PFAGENTINDOOR, domain, new String[]{CLASSAGENT, CLASSDOOR}, false);
 		PropositionalFunction bid = new PFInRegion(PFBLOCKINDOOR, domain, new String[]{CLASSBLOCK, CLASSDOOR}, false);
@@ -281,7 +288,7 @@ public class Sokoban2Domain implements DomainGenerator {
 		hashFactory.setAttributesForClass(CLASSAGENT, domain.getObjectClass(CLASSAGENT).attributeList);
 		rf = new UniformCostRF(); //always returns a reward of -1. since goal state ends action, it will be favored.
 		//tf = new SinglePFTF(domain.getPropFunction(PFATGOAL));
-		tf = new InRoomOfColorTF(domain, "green");
+		tf = new TaskDoneTF(domain, "green");
 		Q = new QLearning(domain, rf, tf, Sokoban2Domain.DISCOUNTFACTOR, hashFactory, 0.2, Sokoban2Domain.LEARNINGRATE, Integer.MAX_VALUE);
 		
 		return domain;
@@ -493,7 +500,7 @@ public class Sokoban2Domain implements DomainGenerator {
 	}
 	
 	public static boolean wallAt(State s, ObjectInstance r, int x, int y){
-		
+				
 		int top = r.getDiscValForAttribute(ATTTOP);
 		int left = r.getDiscValForAttribute(ATTLEFT);
 		int bottom = r.getDiscValForAttribute(ATTBOTTOM);
@@ -511,6 +518,26 @@ public class Sokoban2Domain implements DomainGenerator {
 		}
 		
 		return false;
+	}
+	
+	public static boolean wallCheck(State s, ObjectInstance room, ObjectInstance item, int x, int y){
+		int top = room.getDiscValForAttribute(ATTTOP);
+		int bottom = room.getDiscValForAttribute(ATTBOTTOM);
+		int left = room.getDiscValForAttribute(ATTLEFT);
+		int right = room.getDiscValForAttribute(ATTRIGHT);
+		
+		//agent along wall of room check
+		if(((x == left || x == right) && y >= bottom && y <= top) || ((y == bottom || y == top) && x >= left && x <= right)){
+			
+			//then only way for this to be a valid pos is if a door contains this point
+			ObjectInstance door = doorContainingPoint(s, x, y);
+			if(door == null){
+				return true;
+			}
+			
+		}
+		
+		return false;		
 	}
 	
 	public class MovementAction extends Action{
@@ -604,7 +631,11 @@ public class Sokoban2Domain implements DomainGenerator {
 			int ax = agent.getDiscValForAttribute(ATTX);
 			int ay = agent.getDiscValForAttribute(ATTY);
 			
-			ObjectInstance room = st.getObject(params[1]);
+			ObjectInstance block = st.getObject(params[1]);
+			int bx = block.getDiscValForAttribute(ATTX);
+			int by = block.getDiscValForAttribute(ATTY);
+			
+			ObjectInstance room = st.getObject(params[2]);
 			
 			//for some reason prints out all three colors a room can have
 			String color = room.getStringValForAttribute(ATTCOLOR);
@@ -629,6 +660,7 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 		
 	}
+	
 	
 	public class PFInRegion extends PropositionalFunction{
 
@@ -657,6 +689,22 @@ public class Sokoban2Domain implements DomainGenerator {
 			
 		}
 		
+	}
+	
+	public class PFOnWall extends PropositionalFunction{
+		
+		public PFOnWall(String name, Domain domain, String [] params){
+			super(name, domain, params);
+		}
+		
+		public boolean isTrue(State s, String[] params){
+			ObjectInstance o = s.getObject(params[0]);
+			ObjectInstance r = s.getObject(params[1]);
+			int x = o.getDiscValForAttribute(ATTX);
+			int y = o.getDiscValForAttribute(ATTY);
+			
+			return wallAt(s, r, x, y);
+		}
 	}
 	
 	public class PFIsColor extends PropositionalFunction{
@@ -704,16 +752,17 @@ public class Sokoban2Domain implements DomainGenerator {
 	public class InRoomOfColorTF implements TerminalFunction{
 
 		protected PropositionalFunction colorPF;
-		protected PropositionalFunction agentInRoomPF;
+		protected PropositionalFunction PF;
 
-		public InRoomOfColorTF(Domain domain, String colorName){
+		public InRoomOfColorTF(Domain domain, String colorName, String PF){
 			this.colorPF = domain.getPropFunction(Sokoban2Domain.PFRoomColorName(colorName));
-			this.agentInRoomPF = domain.getPropFunction(Sokoban2Domain.PFAGENTINROOM);
+			this.PF = domain.getPropFunction(PF);
 		}
 
 		public boolean isTerminal(State s){
 			//find the room the agent is in
-			List <GroundedProp> inRoomGPs = s.getAllGroundedPropsFor(this.agentInRoomPF);
+			List <GroundedProp> inRoomGPs = s.getAllGroundedPropsFor(this.PF);
+			
 			for(GroundedProp gp : inRoomGPs){
 				if(gp.isTrue(s)){
 					//then this gp holds the room parameter (param index 1) where the agent is
@@ -727,14 +776,75 @@ public class Sokoban2Domain implements DomainGenerator {
 
 	}
 	
+	public class TaskDoneTF implements TerminalFunction{
+		
+		protected PropositionalFunction colorPF;
+		protected PropositionalFunction agentInRoomPF;
+		protected PropositionalFunction blockInRoomPF;
+		protected PropositionalFunction blockOnWallPF;
+		
+		public TaskDoneTF(Domain domain, String colorName){
+			this.colorPF = domain.getPropFunction(Sokoban2Domain.PFRoomColorName(colorName));
+			this.agentInRoomPF = domain.getPropFunction(Sokoban2Domain.PFAGENTINROOM);
+			this.blockOnWallPF = domain.getPropFunction(Sokoban2Domain.PFBLOCKONWALL);
+			this.blockInRoomPF = domain.getPropFunction(Sokoban2Domain.PFBLOCKINROOM);
+		}
+
+		@Override
+		public boolean isTerminal(State s) {
+			// TODO Auto-generated method stub
+			
+			List<GroundedProp> blockOnWallGP = s.getAllGroundedPropsFor(this.blockOnWallPF);
+			List<GroundedProp> agentInRoomGP = s.getAllGroundedPropsFor(this.agentInRoomPF);
+			List<GroundedProp> blockInRoomGP = s.getAllGroundedPropsFor(this.blockInRoomPF);
+			
+			boolean agent = false;
+			boolean blockWall = false;
+			boolean blockRoom = false;
+
+			for(GroundedProp gp : agentInRoomGP){
+				if(gp.isTrue(s)){
+					agent = this.colorPF.isTrue(s, gp.params[1]);
+				}
+				//System.out.println(agent);
+			}
+			
+			for(GroundedProp gp : blockOnWallGP){
+				System.out.println(gp.pf.getName());
+				if(gp.isTrue(s)){
+					blockWall = true;
+					break;
+				}
+				System.out.println("\t" + blockWall);
+			}
+			
+			for(GroundedProp gp: blockInRoomGP){
+				if(gp.isTrue(s))
+					blockRoom = this.colorPF.isTrue(s, gp.params[1]);
+				//System.out.println("\t\t" + blockRoom);
+			}
+			
+			if(blockWall) //if block is on the wall, then stop
+				return true;
+			else if(!blockWall && agent && blockRoom) //if block is not on the wall, and the block and the agent are in the room, stop
+				return true;
+			else	//continue running, not done.
+				return false;
+		}
+		
+	}
+	
+	
 	//Can double as Initiation Condition and Subgoal Terminal Condition
 	public class InRoomStateCheck implements StateConditionTestIterable{
 
 		protected InRoomOfColorTF roomTF;
 		protected Domain domain;
+		protected String CLASS;
 		
-		public InRoomStateCheck(Domain domain, String Color){
-			this.roomTF = new InRoomOfColorTF(domain, Color);
+		public InRoomStateCheck(Domain domain, String Color, String CLASS){
+			this.roomTF = new InRoomOfColorTF(domain, Color, CLASS);
+			this.CLASS = CLASS;
 			this.domain = domain;
 		}
 		
@@ -752,36 +862,29 @@ public class Sokoban2Domain implements DomainGenerator {
 				public boolean hasNext(){
 					State s = new State();
 					
-					s.addObject(new ObjectInstance(domain.getObjectClass(CLASSAGENT),CLASSAGENT+0));
+					//Chec
+					s.addObject(new ObjectInstance(domain.getObjectClass(CLASS),CLASS+0));
 					return roomTF.isTerminal(s);
 				}
 				
-				public State next(){
-					return null;
-				}
+				public State next(){return null;}
 				
-				public void remove(){
-					
-				}
-				
+				public void remove(){}
 			};
 		}
 
 		@Override
 		public void setStateContext(State s) {
 			// TODO Auto-generated method stub
-			
 		}
-		
-		
 		
 	}
 	
 	public class AtRoomStateCheck implements StateConditionTest{
 		protected InRoomOfColorTF roomTF;
 		
-		public AtRoomStateCheck(Domain domain, String Color){
-			roomTF = new InRoomOfColorTF(domain, Color);
+		public AtRoomStateCheck(Domain domain, String Color, String CLASS){
+			roomTF = new InRoomOfColorTF(domain, Color, CLASS);
 		}
 		
 		//Gonna Try Calling a TF to see if it works
@@ -792,12 +895,12 @@ public class Sokoban2Domain implements DomainGenerator {
 		
 	}
 	
-	public Option getRoomOption(String name, Domain domain, String startRoom, String goalRoom){
-		StateConditionTest start = new InRoomStateCheck(domain, startRoom);
-		StateConditionTest end = new InRoomStateCheck(domain, goalRoom);
+	public Option getRoomOption(String name, Domain domain, String startRoom, String goalRoom, String CLASS){
+		StateConditionTest start = new InRoomStateCheck(domain, startRoom, CLASS);
+		StateConditionTest end = new InRoomStateCheck(domain, goalRoom, CLASS);
 		
 		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
-		hashFactory.setAttributesForClass(CLASSAGENT, domain.getObjectClass(CLASSAGENT).attributeList);
+		hashFactory.setAttributesForClass(CLASS, domain.getObjectClass(CLASS).attributeList);
 		
 		OOMDPPlanner planner = new ValueIteration(domain, new LocalSubgoalRF(start, end), new LocalSubgoalTF(start, end), 0.99, hashFactory, 0.001, 50);
 		Policy p = new GreedyDeterministicQPolicy();
