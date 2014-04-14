@@ -128,13 +128,14 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 		
 		LearningAgent agent = new QLearning(domain, rf, tf, 0.99, hashFactory, 0., 0.9); //create the QLearning agent
 		
+		int steps = 0;
+		
 		for(int i = 1; i <= 100; i++){
 			EpisodeAnalysis ea = agent.runLearningEpisodeFrom(initialState); 	//run the episode
 			ea.writeToFile(String.format("%se%03d", output, i), sp); 			//record the episode
+			steps += ea.numTimeSteps();
 			//System.out.println("Episode "+ i + " : " + ea.numTimeSteps()); 		//print the performance of the episode
-			System.out.print(".");
-			if(i % 10 == 0)
-				System.out.println();
+			System.out.println("Total Steps: " + steps);
 		}
 	}
 	
@@ -274,7 +275,8 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 	
 	public void addOptions(ArrayList<Option> options){
 		 for(Option o:options){
-			 domain.addAction(o);
+			 Action temp = o;
+			 domain.addAction(temp);
 		 }
 		 
 		 System.out.println("\tPrinting all Actions/Options:");
