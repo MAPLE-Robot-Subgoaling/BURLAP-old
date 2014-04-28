@@ -6,9 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.stocashticgames.SingleAction;
+import burlap.oomdp.stochasticgames.SingleAction;
 
 
+
+/**
+ * A domain subclass for single agent domains. This class adds data structures to index the actions that can be taken
+ * by the agent in the domain.
+ * @author James MacGlashan
+ *
+ */
 public class SADomain extends Domain {
 
 	protected List <Action>							actions;				//list of actions
@@ -20,6 +27,38 @@ public class SADomain extends Domain {
 		actionMap = new HashMap <String, Action>();
 	}
 
+	
+	/**
+	 * Clears all action observers for all actions in this domain and then sets them to have the single action observer provided
+	 * @param observer the single action observer to set all actions to use.
+	 */
+	public void setActionObserverForAllAction(ActionObserver observer){
+		for(Action a : this.actions){
+			a.clearAllActionsObservers();
+			a.addActionObserver(observer);
+		}
+	}
+	
+	/**
+	 * Adss the action observer to all actions associated with this domain. Actions added to this domain after this method is called
+	 * will have to have the observer set for them independently or by a subsequent call to this method.
+	 * @param observer the observer to set all actions to use.
+	 */
+	public void addActionObserverForAllAction(ActionObserver observer){
+		for(Action a : this.actions){
+			a.addActionObserver(observer);
+		}
+	}
+	
+	/**
+	 * Clears all action observers for all action in this domain.
+	 */
+	public void clearAllActionObserversForAllActions(){
+		for(Action a : this.actions){
+			a.clearAllActionsObservers();
+		}
+	}
+	
 	
 	@Override
 	public void addAction(Action act){
