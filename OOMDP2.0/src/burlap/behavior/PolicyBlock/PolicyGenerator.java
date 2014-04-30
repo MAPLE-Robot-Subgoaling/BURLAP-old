@@ -252,7 +252,7 @@ public class PolicyGenerator {
 							System.out.println("S:"+s.s.hashCode() + "::P:" +p.s.hashCode());
 							System.out.println("S-A:" + policyA.getAction(s.s) + "::P-A:" + policyB.getAction(p.s));
 						}
-						intersection.put(stateSeqA.get(i),policyA.getAction(s.s));
+						intersection.put(stateSeqA.get(i),(GroundedAction) policyA.getAction(s.s));
 						stateList.add(s);
 						
 						
@@ -273,7 +273,7 @@ public class PolicyGenerator {
 							System.out.println("S:"+s.s.hashCode() + "::P:" +p.s.hashCode());
 							System.out.println("S-A:" + policyA.getAction(s.s) + "::P-A:" + policyB.getAction(p.s));
 						}
-						intersection.put(stateSeqB.get(i),policyB.getAction(s.s));
+						intersection.put(stateSeqB.get(i),(GroundedAction) policyB.getAction(s.s));
 						stateList.add(s);
 						
 						
@@ -323,7 +323,7 @@ public class PolicyGenerator {
 							System.out.println("S-A:" + policyA.getAction(s.s) + "::P-A:" + policyB.getAction(p.s));
 						}
 						
-						intersection.put(stateSeqA.get(i),policyA.getAction(s.s));
+						intersection.put(stateSeqA.get(i),(GroundedAction) policyA.getAction(s.s));
 						stateList.add(s);
 						
 						
@@ -345,7 +345,7 @@ public class PolicyGenerator {
 							System.out.println("S:"+s.s.hashCode() + "::P:" +p.s.hashCode());
 							System.out.println("S-A:" + policyA.getAction(s.s) + "::P-A:" + policyB.getAction(p.s));
 						}
-						intersection.put(stateSeqB.get(i),policyB.getAction(s.s));
+						intersection.put(stateSeqB.get(i),(GroundedAction) policyB.getAction(s.s));
 						stateList.add(s);
 						
 						
