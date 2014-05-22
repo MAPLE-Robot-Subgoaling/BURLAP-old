@@ -29,15 +29,15 @@ public class PolicyGenerator {
 		generator.generatePolicies("GW-", 3);			//generates 3 policies
 		//generator.runMerge();							//strips the info needed, and calls merge()
 		generator.runMerge2();		//strips all 3 policies and performs a UnionMerge
-		generator.writePolicies();						//writes the values to a file
-		generator.visualizePolicies();					//outputs the policies onto the screen
+		//generator.writePolicies();						//writes the values to a file
+		//generator.visualizePolicies();					//outputs the policies onto the screen
 	}
 	
 	//creates a new policy block domain object
 	public PolicyGenerator(String outputPath){
 		environ = new PolicyBlockDomain();
 		policies = new HashMap<List<State>, Policy>();
-		initailSpace = environ.getHashPolicyMap();
+		//initailSpace = environ.getHashPolicyMap();
 		mergedSpace = new HashMap<Collection<StateHashTuple>, PolicyBlockPolicy>();
 		merged = new ArrayList<Policy>();
 		this.outputPath = outputPath;
@@ -49,7 +49,7 @@ public class PolicyGenerator {
 	public void generatePolicies(String name, int number){
 		environ.computePolicy(name, number, outputPath);
 		policies = environ.getPolicyMap();
-		
+		initailSpace = environ.getHashPolicyMap();
 	}
 	
 	//prints the policies
@@ -73,13 +73,18 @@ public class PolicyGenerator {
 		while(it.hasNext()) //moves all policies into the "initial" ArrayList
 		{
 			Map.Entry<List<StateHashTuple>, Policy> pairs = (Map.Entry<List<StateHashTuple>, Policy>)it.next();
-			List<Object> temp = new ArrayList<Object>();
-			temp.add(pairs.getKey());
-			temp.add(pairs.getValue());
-			initial.add(temp); //policies are in the form of a List (first Object is the StateSequence, second is the Policy)
+			//List<Object> temp = new ArrayList<Object>();
+			System.out.println(pairs.getKey().hashCode());
+			System.out.println(pairs.getValue().hashCode());
+			it.remove();
+			//temp.add(pairs.getKey());
+			//temp.add(pairs.getValue());
+			//initial.add(temp); //policies are in the form of a List (first Object is the StateSequence, second is the Policy)
 		}
 		
-		List finalPolicy = score(unionMerge(3, initial));
+		//System.out.println(initial.size() + "\n");
+		
+		//List finalPolicy = score(unionMerge(3, initial));
 		
 		
 	}
@@ -163,6 +168,8 @@ public class PolicyGenerator {
 	public List score(ArrayList comb)
 	{
 		ArrayList rungCand = new ArrayList(); //List of the largest policy on each "rung" (that is: largest policy resulting from a pair-merging, largest from a triplet-merging, and so forth)
+		
+		System.out.println(comb.get(0));
 		
 		for(int i = 0; i < comb.size(); i++) //loops through each "rung"
 		{
