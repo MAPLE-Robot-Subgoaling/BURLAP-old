@@ -257,12 +257,12 @@ public class Sokoban2Domain implements DomainGenerator {
 		PropositionalFunction bow = new PFOnWall(PFBLOCKONWALL, domain, new String[]{CLASSBLOCK, CLASSROOM});
 		
 		//My PropFunction
-		//PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSBLOCK, CLASSROOM}, true);
+		PropositionalFunction goal = new PFGoal(PFATGOAL, domain, new String[]{CLASSAGENT, CLASSBLOCK, CLASSROOM}, true);
 		
 		domain.addPropositionalFunction(bir);
 		domain.addPropositionalFunction(air);
 		domain.addPropositionalFunction(bow);
-		//domain.addPropositionalFunction(goal);
+		domain.addPropositionalFunction(goal);
 		
 		PropositionalFunction aid = new PFInRegion(PFAGENTINDOOR, domain, new String[]{CLASSAGENT, CLASSDOOR}, false);
 		PropositionalFunction bid = new PFInRegion(PFBLOCKINDOOR, domain, new String[]{CLASSBLOCK, CLASSDOOR}, false);
@@ -287,8 +287,8 @@ public class Sokoban2Domain implements DomainGenerator {
 		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
 		hashFactory.setAttributesForClass(CLASSAGENT, domain.getObjectClass(CLASSAGENT).attributeList);
 		rf = new UniformCostRF(); //always returns a reward of -1. since goal state ends action, it will be favored.
-		//tf = new SinglePFTF(domain.getPropFunction(PFATGOAL));
-		tf = new TaskDoneTF(domain, "green");
+		tf = new SinglePFTF(domain.getPropFunction(PFATGOAL));
+		//tf = new TaskDoneTF(domain, "green");
 		Q = new QLearning(domain, rf, tf, Sokoban2Domain.DISCOUNTFACTOR, hashFactory, 0.2, Sokoban2Domain.LEARNINGRATE, Integer.MAX_VALUE);
 		
 		return domain;

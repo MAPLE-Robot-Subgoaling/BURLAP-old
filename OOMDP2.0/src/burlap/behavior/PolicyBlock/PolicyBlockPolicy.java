@@ -97,6 +97,7 @@ public class PolicyBlockPolicy extends Policy{
 			if(steps >= stateSpace.keySet().size()-1)
 				break;
 			
+			//add the information and increment
 			result.addState(sh.s);
 			result.addAction(stateSpace.get(sh));
 			result.addReward(1);
@@ -152,6 +153,7 @@ public class PolicyBlockPolicy extends Policy{
 		}
 	}
 	
+	//Exception Class - just to define the 
 	public static class PolicyUndefinedException extends RuntimeException{
 
 		private static final long serialVersionUID = 1L;
