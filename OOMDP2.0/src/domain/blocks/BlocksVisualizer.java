@@ -1,6 +1,7 @@
 package domain.blocks;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 
@@ -23,7 +24,7 @@ public class BlocksVisualizer {
 		Visualizer v = new Visualizer();
 		
 		v.addStaticPainter(new BlocksPainter(d));
-		v.addObjectClassPainter(BlocksDomain.CLASSBLOCK, new CellPainter(d, Color.blue));
+		v.addObjectClassPainter(BlocksDomain.CLASSBLOCK, new CellPainter(d, Color.cyan));
 		v.addObjectClassPainter(BlocksDomain.CLASSCLAW, new CellPainter(d, Color.red));
 		
 		return v;
@@ -79,7 +80,11 @@ public class BlocksVisualizer {
 			float ry = cHeight - height - ob.getDiscValForAttribute(BlocksDomain.ATTY)*height;
 			
 			g2.fill(new Rectangle2D.Float(rx + 5, ry + 5, width - 5, height - 5));
+
+			g2.setColor(Color.black);
+			g2.setFont(new Font("Arial", Font.BOLD, 22));
+			g2.drawString(ob.getName().replace(ob.getTrueClassName(), ""), rx + width / 2, ry + height / 2);
 			
-		}		
+		}
 	}
 }
