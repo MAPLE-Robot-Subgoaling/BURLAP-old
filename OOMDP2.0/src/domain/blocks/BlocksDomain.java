@@ -364,10 +364,17 @@ public class BlocksDomain implements DomainGenerator {
 		@Override
 		public boolean isTrue(State st, String[] params) {
 			ObjectInstance block = st.getObject(params[0]);
+			ObjectInstance claw = st.getObjectsOfTrueClass(CLASSCLAW).get(0);
+
+			int x = block.getDiscValForAttribute(ATTX);
+			int y = block.getDiscValForAttribute(ATTY);
+
+			if(x == claw.getDiscValForAttribute(ATTX) && y == claw.getDiscValForAttribute(ATTY)) {
+				return false;
+			}
 
 			for(ObjectInstance b2 : st.getObjectsOfTrueClass(CLASSBLOCK)) {
-				if(block.getDiscValForAttribute(ATTX) == b2.getDiscValForAttribute(ATTX) &&
-						block.getDiscValForAttribute(ATTY) + 1 == b2.getDiscValForAttribute(ATTY)) {
+				if(x == b2.getDiscValForAttribute(ATTX) && y + 1 == b2.getDiscValForAttribute(ATTY)) {
 					return  false;
 				}
 			}
