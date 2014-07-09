@@ -1,0 +1,4 @@
+*.prefs
+.metadata/
+EarlyTerminationTest/
+*.class
