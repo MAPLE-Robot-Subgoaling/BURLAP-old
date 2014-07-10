@@ -74,6 +74,7 @@ public class FourRoomsDomain implements DomainGenerator {
 		Domain d = frd.generateDomain();
 		
 		State s = FourRoomsDomain.getCleanState();
+	
 		setAgent(s, 1, 1);
 		setGoal(s, 5, 5);
 		

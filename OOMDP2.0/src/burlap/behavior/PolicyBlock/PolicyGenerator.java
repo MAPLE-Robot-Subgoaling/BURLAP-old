@@ -25,12 +25,19 @@ public class PolicyGenerator {
 	List<Policy> merged;
 	
 	public static void main(String args[]){
+		
 		PolicyGenerator generator = new PolicyGenerator("PolicyBlocks/");
-		generator.generatePolicies("GW-", 3);			//generates 3 policies
+		generator.generatePolicies("GW-", 4);			//generates 3 policies
+		
+		for(List<State> s: generator.policies.keySet()){
+			System.out.println(s.get(0)+"************");
+		}
+		
 		//generator.runMerge();							//strips the info needed, and calls merge()
-		generator.runMerge2();		//strips all 3 policies and performs a UnionMerge
-		generator.writePolicies();						//writes the values to a file
+		//generator.runMerge2();		//strips all 3 policies and performs a UnionMerge
+		//generator.writePolicies();						//writes the values to a file
 		generator.visualizePolicies();					//outputs the policies onto the screen
+		
 	}
 	
 	//creates a new policy block domain object
@@ -42,14 +49,12 @@ public class PolicyGenerator {
 		merged = new ArrayList<Policy>();
 		this.outputPath = outputPath;
 	}
-	
-	
+
 	
 	//generates a hashmap of different policies used via Value Iteration Planner 
 	public void generatePolicies(String name, int number){
 		environ.computePolicy(name, number, outputPath);
 		policies = environ.getPolicyMap();
-		
 	}
 	
 	//prints the policies
@@ -283,7 +288,8 @@ public class PolicyGenerator {
 		}
 		
 		//result of the merging objects
-		PolicyBlockPolicy result = new PolicyBlockPolicy((HashMap<StateHashTuple, GroundedAction>)intersection);
+		PolicyBlockPolicy result = new PolicyBlockPolicy(.99);
+		result.setStateSpace((HashMap<StateHashTuple, GroundedAction>)intersection);
 		
 		
 		/*
@@ -355,7 +361,9 @@ public class PolicyGenerator {
 		}
 		
 		//result of the merging objects
-		PolicyBlockPolicy result = new PolicyBlockPolicy((HashMap<StateHashTuple, GroundedAction>)intersection);
+		PolicyBlockPolicy result = new PolicyBlockPolicy(.99);
+		result.setStateSpace((HashMap<StateHashTuple, GroundedAction>)intersection);
+	
 		
 		System.out.println("\tFinal-StateSpace: " + result.stateSpace.size());
 		

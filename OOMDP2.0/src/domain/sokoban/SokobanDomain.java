@@ -113,7 +113,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		int wLocation = -1;
 		int sLocation = -1;
 
-		if (args.length == 0 || args[0].equals("-help")){
+/*		if (args.length == 0 || args[0].equals("-help")){
 			System.out.println("Usage: SokobanDomain [-c commandsfile] [-t] [-v] [-f statefile]");
 			System.out.println("-c runs a set of commands from a text file");
 			System.out.println("-d runs a set of commands from a directory of text files");
@@ -123,7 +123,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 			System.out.println("-w will prevent the creation of walls (warning: this may have unintented consequences)");
 			System.exit(0);
 		}
-
+*/
 		//check for all flags
 		for (int i = 0; i < args.length; i++){
 			if (args[i].equals("-v") && vLocation == -1){ vLocation = i; }
@@ -181,6 +181,8 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 
 		State st = constructor.getCleanState();
 
+		
+		
 		//load a file
 		if (fLocation != -1){
 			BufferedReader in = null;
@@ -255,6 +257,18 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 			block2.setValue(COLORATTNAME, "red");
 			block2.setValue(SHAPEATTNAME, "star");
 
+			 Map<String, Set<PropositionalFunction>> ms = domain.getPropositionlFunctionsMap();
+			 
+			 for (Map.Entry<String, Set<PropositionalFunction>> entry : ms.entrySet()) {
+				 String key = entry.getKey();
+				 Set<PropositionalFunction> value = entry.getValue();
+				 
+				 System.out.println(key + " " + value);
+			 }
+			 
+			//System.out.println()
+			//System.out.println();
+			
 		}
 
 		//assign keys for command line interface
@@ -333,9 +347,103 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 			exp.addKeyAction("a", ACTIONWEST);
 			exp.addKeyAction("d", ACTIONEAST);
 			exp.initGUI();
-		}		
+		}	
+		
 	}
 
+	public ArrayList<State> getAllStates(SokobanDomain constructor,State st) {
+		ArrayList<String> totalRoomList = new ArrayList<String>();
+		ArrayList<String> totalBlockList = new ArrayList<String>();
+		ArrayList<String> totalAgentList = new ArrayList<String>();
+		ArrayList<String> totalDoorList = new ArrayList<String>();
+		ArrayList<State> stateList = new ArrayList<State>();
+		
+		int numRooms = 0;
+		int numDoors = 0;
+		int numAgents = 0;
+		int numBlocks = 0;	
+		
+		Boolean f1 = true;
+		Boolean f2 = true;
+		
+		for (ObjectInstance obj : st.getAllObjects()) {
+			String str = obj.getName().substring(0,obj.getName().length()-1);
+			
+			if (str.equals("room")) {
+				numRooms += 1;
+			} else if (str.equals("agent")) {
+				numAgents += 1;
+			} else if (str.equals("door")) {
+				numDoors += 1;
+			} else if (str.equals("block")) {
+				numBlocks += 1;
+			}
+			
+			if ((numRooms == 1 && str.equals("room")) || (numBlocks == 1 && str.equals("block")) || (numAgents == 1 && str.equals("agent")) || (numDoors == 1 && str.equals("door"))) {
+				for (int n = 0;n < colors.size();n++) {
+					for (int i = MINX;i <= MAXX;i++) {
+						for (int j = MINY;j <= MAXY;j++) {
+							for (int k = MINX;k <= MAXX;k++) {
+								for (int w = MINY;w <= MAXY;w++) {
+									if (str.equals("room")) {
+										String [] roomList = new String[]{"room"+",",""+n+",",""+i+",",""+j+",",""+k+",",""+w};
+										totalRoomList.add(SokobanDomain.arrToString(roomList));
+									} else if (str.equals("agent") && f1) {
+										if (k == 9 && w == 9) {
+											f1 = false;
+										}
+										String [] agentList = new String[]{"agent"+",",""+k+",",""+w};
+										totalAgentList.add(SokobanDomain.arrToString(agentList));
+									} else if (str.equals("door") && n == 0) {
+										String [] doorList = new String[]{"door"+",",""+i+",",""+j+",",""+k+",",""+w};
+										totalDoorList.add(SokobanDomain.arrToString(doorList));										
+									} else if (str.equals("block") && f2) {
+										if (k == 9 && w == 9) {
+											f2 = false;
+										}
+										for (int t = 0;t < shapes.size();t++) {
+											String [] blockList = new String[]{"block"+",",""+n+",",""+t+",",""+k+",",""+w};
+											totalBlockList.add(SokobanDomain.arrToString(blockList));
+										}			
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		for (int i = 0;i < numAgents;i++) {
+			for (String agent : totalAgentList) {
+				for (int j = 0;j < numRooms;j++) {
+					for (String room : totalRoomList) {
+						for (int k = 0;k < numBlocks;k++) {
+							for (String block : totalBlockList) {
+								for (int l = 0;l < numDoors;l++) {
+									for (String door : totalDoorList) {
+										stateList.add(constructor.stringToState(agent+" "+room+" "+block+" "+door));
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return stateList;
+	}
+	
+	public static String arrToString(String [] stringList) {
+		String out = "";
+		for (String s : stringList) {
+			out += s;
+		}
+		
+		return out;
+	}
+	
 	/**
 	 * Creates the domain by assigning ranges to all discrete attributes, associating them with object types,
 	 * and associating all actions with the domain
@@ -1037,6 +1145,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		String[] objects = str.split(" ");
 		for (int i = 0; i < objects.length; i++){
 			String[] splitobject = objects[i].split(",");
+			
 			if (splitobject[0].equals("room")){
 				ObjectInstance room = new ObjectInstance(SOKOBANDOMAIN.getObjectClass(ROOMCLASS), ROOMCLASS + rooms);
 				room.setValue(COLORATTNAME, colors.get(Integer.parseInt(splitobject[1])));
@@ -1076,6 +1185,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		this.createMap(st);
 		return st;
 	}
+	
 	
 	public static void runTrajectory(SokobanDomain constructor, Domain domain, State st, String file){
 		BufferedReader in = null;

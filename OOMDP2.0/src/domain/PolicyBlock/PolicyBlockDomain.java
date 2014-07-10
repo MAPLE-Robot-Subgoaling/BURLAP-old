@@ -56,16 +56,16 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 	GridWorldDomain policyBlock;
 	Domain domain;
 	StateParser sp;
-	RewardFunction rf;
-	TerminalFunction tf;
+	public RewardFunction rf;
+	public TerminalFunction tf;
 	StateConditionTest goalCondition;
 	State initialState;
-	DiscreteMaskHashingFactory hashFactory;
+	public DiscreteMaskHashingFactory hashFactory;
 	HashMap<List<State>, Policy> stateSpace;
 	HashMap<Collection<StateHashTuple>, Policy> hashStateSpace;
 	public ArrayList<EpisodeAnalysis> episodes;
 	OOMDPPlanner planner;
-	double DISCOUNTFACTOR = 0.99;
+	public double DISCOUNTFACTOR = 0.99;
 	
 	
 	/**
@@ -89,9 +89,9 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 		
 		//define the parser, reward, and termination conditions
 		sp = new GridWorldStateParser(domain);
-		rf = new UniformCostRF();
-		tf = new SinglePFTF(domain.getPropFunction(GridWorldDomain.PFATLOCATION));
-		goalCondition = new TFGoalCondition(tf);
+		setRf(new UniformCostRF());
+		setTf(new SinglePFTF(domain.getPropFunction(GridWorldDomain.PFATLOCATION)));
+		goalCondition = new TFGoalCondition(getTf());
 		
 		//set up initial state
 		initialState = GridWorldDomain.getOneAgentOneLocationState(domain);
@@ -100,8 +100,8 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 		
 		//set up the state hashing system - this discretises the state 
 		//to merge according to the attributes by the agent
-		hashFactory = new DiscreteMaskHashingFactory();
-		hashFactory.setAttributesForClass(GridWorldDomain.CLASSAGENT, domain.getObjectClass(GridWorldDomain.CLASSAGENT).attributeList); //uses agent position to hash
+		setHashFactory(new DiscreteMaskHashingFactory());
+		getHashFactory().setAttributesForClass(GridWorldDomain.CLASSAGENT, domain.getObjectClass(GridWorldDomain.CLASSAGENT).attributeList); //uses agent position to hash
 	}
 	
 	//create the visualizer for the policyBlock
@@ -126,7 +126,7 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 			output = output + "/";
 		}
 		
-		LearningAgent agent = new QLearning(domain, rf, tf, 0.99, hashFactory, 0., 0.9); //create the QLearning agent
+		LearningAgent agent = new QLearning(domain, getRf(), getTf(), 0.99, getHashFactory(), 0., 0.9); //create the QLearning agent
 		
 		int steps = 0;
 		
@@ -162,7 +162,7 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 		}
 		
 		//declarations
-		LearningAgent agent = new QLearning(domain, rf, tf, 0.99, hashFactory, 0., 0.9); //create the QLearning agent
+		LearningAgent agent = new QLearning(domain, getRf(), getTf(), 0.99, getHashFactory(), 0., 0.9); //create the QLearning agent
 		EpisodeAnalysis one = new EpisodeAnalysis();
 		
 		
@@ -185,11 +185,11 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 		
 		
 		//Working on the new policies to generate...
-		OOMDPPlanner planner = new ValueIteration(domain, rf, tf, 0.99, hashFactory, 0.001, 100);
+		OOMDPPlanner planner = new ValueIteration(domain, getRf(), getTf(), 0.99, getHashFactory(), 0.001, 100);
 		planner.planFromState(initialState);
 		
 		Policy p = new GreedyQPolicy((QComputablePlanner)planner);
-		p.evaluateBehavior(initialState, rf, tf).writeToFile(output, sp);
+		p.evaluateBehavior(initialState, getRf(), getTf()).writeToFile(output, sp);
 		
 	}
 	
@@ -218,11 +218,12 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 			setGoal(10-((int)(Math.random()*4)),10-((int)(Math.random()*5)));
 			
 			//defining and running the VI Planner
-			ValueFunctionPlanner plan = new ValueIteration(domain, rf, tf, DISCOUNTFACTOR, hashFactory, 0.001, 100);
+			ValueFunctionPlanner plan = new ValueIteration(domain, getRf(), getTf(), getDISCOUNTFACTOR(), getHashFactory(), 0.001, 100);
 			plan.planFromState(initialState);
 			
 			//collects the state list
 			List<State> states = plan.getAllStates();
+		
 			List<StateHashTuple> hashStateTuple = new ArrayList<StateHashTuple>();
 			
 			//hashes the state according to the attributes defined
@@ -232,7 +233,7 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 			
 			//Create the Policy Object from the Planner
 			Policy p = new GreedyDeterministicQPolicy((QComputablePlanner)plan);
-			p.evaluateBehavior(initialState, rf, tf).writeToFile(outputPath + str + k, sp);
+			p.evaluateBehavior(initialState, getRf(), getTf()).writeToFile(outputPath + str + k, sp);
 			
 			//saves the collection/list and policy object to hash map
 			stateSpace.put(states, p);
@@ -284,5 +285,37 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 		 for(Action a:domain.getActions()){
 			 System.out.println("\t\t--" + a.getName());
 		 }
+	}
+
+	public RewardFunction getRf() {
+		return rf;
+	}
+
+	public void setRf(RewardFunction rf) {
+		this.rf = rf;
+	}
+
+	public TerminalFunction getTf() {
+		return tf;
+	}
+
+	public void setTf(TerminalFunction tf) {
+		this.tf = tf;
+	}
+
+	public double getDISCOUNTFACTOR() {
+		return DISCOUNTFACTOR;
+	}
+
+	public void setDISCOUNTFACTOR(double dISCOUNTFACTOR) {
+		DISCOUNTFACTOR = dISCOUNTFACTOR;
+	}
+
+	public DiscreteMaskHashingFactory getHashFactory() {
+		return hashFactory;
+	}
+
+	public void setHashFactory(DiscreteMaskHashingFactory hashFactory) {
+		this.hashFactory = hashFactory;
 	}
 }
