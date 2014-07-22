@@ -49,6 +49,7 @@ public class FourRooms implements DomainGenerator {
 	//Attributes, Actions, and PropFuncs
 	public static final String ATTX = "x";
 	public static final String ATTY = "y";
+	public static final String COLORATTNAME = "colorAtt";
 	public static final String CLASSAGENT = "agent";
 	public static final String CLASSGOAL = "goal";
 	public static final String ACTIONNORTH = "north";
@@ -75,6 +76,9 @@ public class FourRooms implements DomainGenerator {
 	public static RewardFunction rf;
 	public static TerminalFunction tf;
 
+	public static final ArrayList<String> colors = new ArrayList<String>(Arrays.asList(new String[]{"white", "blue",
+			"red"}));
+	
 	/**
 	 * main() - starts the program
 	 * @param args - none for now...
@@ -84,7 +88,7 @@ public class FourRooms implements DomainGenerator {
 		Domain d = frd.generateDomain();
 		State s = FourRooms.getCleanState();
 		setAgent(s, 1, 1);
-		setGoal(s, 11, 11);
+		setGoal(s, 3, 3);
 		int expMode = 2;
 
 		if(expMode == 0){	
@@ -202,20 +206,32 @@ public class FourRooms implements DomainGenerator {
 
 		Attribute yatt = new Attribute(DOMAIN, ATTY, Attribute.AttributeType.DISC);
 		yatt.setDiscValuesForRange(0, MAXY, 1);
+		
+		Attribute color = new Attribute(DOMAIN, COLORATTNAME,0);
+		color.setDiscValues(colors);
 
 		DOMAIN.addAttribute(xatt);
 		DOMAIN.addAttribute(yatt);
-
+		DOMAIN.addAttribute(color);
+		
 		ObjectClass agentClass = new ObjectClass(DOMAIN, CLASSAGENT);
 		agentClass.addAttribute(xatt);
 		agentClass.addAttribute(yatt);
+		agentClass.addAttribute(color);
 
 		ObjectClass goalClass = new ObjectClass(DOMAIN, CLASSGOAL);
 		goalClass.addAttribute(xatt);
 		goalClass.addAttribute(yatt);
-
+		goalClass.addAttribute(color);
+		
+		ObjectClass randomThing = new ObjectClass(DOMAIN,"random");
+		randomThing.addAttribute(xatt);
+		randomThing.addAttribute(yatt);
+		randomThing.addAttribute(color);
+		
 		DOMAIN.addObjectClass(goalClass);
 		DOMAIN.addObjectClass(agentClass);
+		DOMAIN.addObjectClass(randomThing);
 
 		Action north = new PrimitiveOption(new NorthAction(ACTIONNORTH, DOMAIN, ""));
 		Action south = new PrimitiveOption(new SouthAction(ACTIONSOUTH, DOMAIN, ""));
@@ -251,7 +267,14 @@ public class FourRooms implements DomainGenerator {
 		//the order of the objects determines the order in which they are drawn -Richard
 		s.addObject(new ObjectInstance(DOMAIN.getObjectClass(CLASSGOAL), CLASSGOAL+0));
 		s.addObject(new ObjectInstance(DOMAIN.getObjectClass(CLASSAGENT), CLASSAGENT+0));
+		s.addObject(new ObjectInstance(DOMAIN.getObjectClass("random"),"random"));
 
+		ObjectInstance block = s.getObjectsOfTrueClass("random").get(0);
+
+		block.setValue(ATTX,10);
+		block.setValue(ATTY,10);
+		block.setValue(COLORATTNAME, 0);
+		
 		return s;
 	}
 
@@ -259,12 +282,14 @@ public class FourRooms implements DomainGenerator {
 		ObjectInstance agent = s.getObjectsOfTrueClass(CLASSAGENT).get(0);
 		agent.setValue(ATTX, x);
 		agent.setValue(ATTY, y);
+		agent.setValue(COLORATTNAME, "white");
 	}
 
 	public static void setGoal(State s, int x, int y){
 		ObjectInstance goal = s.getObjectsOfTrueClass(CLASSGOAL).get(0);
 		goal.setValue(ATTX, x);
 		goal.setValue(ATTY, y);
+		goal.setValue(COLORATTNAME, "red");
 	}
 
 	public static void generateMap(){

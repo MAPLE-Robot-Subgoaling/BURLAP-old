@@ -95,12 +95,11 @@ public class ObjectClass {
 	 * @param atts the attributes to define this object class
 	 */
 	public void setAttributes(List <Attribute> atts){
-		
 		attributeList.clear();
 		observableAttributeIndices.clear();
 		attributeMap.clear();
 		attributeIndex.clear();
-		
+
 		for(Attribute att: atts){
 			this.addAttribute(att);
 		}

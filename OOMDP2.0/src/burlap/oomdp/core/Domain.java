@@ -14,7 +14,6 @@ import burlap.oomdp.stocashticgames.SingleAction;
  */
 public abstract class Domain {
 	
-	
 	protected List <ObjectClass>						objectClasses;			//list of object classes
 	protected Map <String, ObjectClass>					objectClassMap;			//look up object classes by name
 	

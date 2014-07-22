@@ -32,7 +32,6 @@ import burlap.oomdp.singleagent.RewardFunction;
 public class PolicyBlockPolicy extends EpsilonGreedy {
 	
 	public Map<StateHashTuple, GroundedAction> policy;
-	public HashMap<StateHashTuple, GroundedAction> stateSpace;
 	
 	public PolicyBlockPolicy(double epsilon) {
 		this(null, epsilon);
@@ -47,9 +46,7 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 		policy.put(((OOMDPPlanner) qplanner).stateHash(s), a);
 	}
 
-	public void setStateSpace(HashMap<StateHashTuple, GroundedAction> stateSpace) {
-		this.stateSpace = stateSpace;
-	}
+
 	
 	/**
 	 * For getting the learned state-action mapping offline
