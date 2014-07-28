@@ -13,6 +13,7 @@ import burlap.behavior.singleagent.ValueFunctionInitialization;
 import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
+import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
@@ -29,7 +30,7 @@ import burlap.oomdp.singleagent.RewardFunction;
  * Q-values by using the transition dynamics and the stored value function.
  * <p/>
  * Note that by default ValueFunction planners will cache the transition dynamics so that they do not have to be procedurally generated
- * by the {@link burlap.oomdp.singleaction.Action}. Transition dynamic caching can be disable by calling the {@link toggleUseCachedTransitionDynamics(boolean)}
+ * by the {@link burlap.oomdp.singleagent.Action}. Transition dynamic caching can be disable by calling the {@link #toggleUseCachedTransitionDynamics(boolean)}
  * method. This may be desirable if the transition dynamics are expected to change with time, such as when the model is being learned in model-based RL.
  * @author James MacGlashan
  *
@@ -98,12 +99,27 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 	}
 	
 	
+	@Override
+	public void resetPlannerResults(){
+		this.mapToStateIndex.clear();
+		this.valueFunction.clear();
+		this.transitionDynamics.clear();
+	}
+	
 	/**
 	 * Sets the value function initialization to use.
 	 * @param vfInit the object that defines how to initializes the value function.
 	 */
 	public void setValueFunctionInitialization(ValueFunctionInitialization vfInit){
 		this.valueInitializer = vfInit;
+	}
+	
+	/**
+	 * Returns the value initialization function used.
+	 * @return the value initialization function used.
+	 */
+	public ValueFunctionInitialization getValueFunctionInitialization(){
+		return this.valueInitializer;
 	}
 	
 	
@@ -132,7 +148,7 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 	/**
 	 * Returns the value function evaluation of the given hashed state. If the value is not stored, then the default value
 	 * specified by the ValueFunctionInitialization object of this class is returned.
-	 * @param s the hashed state to evaluate.
+	 * @param sh the hashed state to evaluate.
 	 * @return the value function evaluation of the given state.
 	 */
 	public double value(StateHashTuple sh){
@@ -188,7 +204,7 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 	
 	
 	@Override
-	public QValue getQ(State s, GroundedAction a){
+	public QValue getQ(State s, AbstractGroundedAction a){
 		
 		
 		if(this.useCachedTransitions){
@@ -205,13 +221,13 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 			if(this.containsParameterizedActions && !this.domain.isObjectIdentifierDependent()){
 				matching = sh.s.getObjectMatchingTo(indexSH.s, false);
 			}
-			return this.getQ(sh, a, matching);
+			return this.getQ(sh, (GroundedAction)a, matching);
 			
 		}
 		else{
 			
 			StateHashTuple sh = this.stateHash(s);
-			double dq = this.computeQ(sh, a);
+			double dq = this.computeQ(sh, (GroundedAction)a);
 			
 			QValue q = new QValue(s, a, dq);
 			

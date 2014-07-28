@@ -21,7 +21,7 @@ public class FourRoomsOptions {
 		
 		//running the original domain via Q-Learning
 		System.out.println("Running Q-learning");
-		//domain.QLearn(original_output);
+		domain.QLearn(original_output);
 		domain.visualize(original_output);
 		
 		//running trajectory generator with 3 generated policies
@@ -34,7 +34,7 @@ public class FourRoomsOptions {
 		//Running with Options
 		//System.out.println("\nRunning with Options");
 		//domain.QLearn(options_output);
-		domain.visualize(options_output);
+		//domain.visualize(options_output);
 		
 	}
 

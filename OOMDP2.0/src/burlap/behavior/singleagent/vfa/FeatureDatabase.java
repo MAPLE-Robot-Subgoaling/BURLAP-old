@@ -6,6 +6,11 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
 
+/**
+ * An interface for defining a database of state features that can be returned for any given input state or input state-action pair.
+ * @author James MacGlashan
+ *
+ */
 public interface FeatureDatabase {
 	
 	/**
@@ -15,6 +20,8 @@ public interface FeatureDatabase {
 	 * @return the features for state s
 	 */
 	public List<StateFeature> getStateFeatures(State s);
+	
+	
 	
 	/**
 	 * Returns non-zero action features for all of provided actions in state s. This method should be implemented if it is to be used 
@@ -26,6 +33,7 @@ public interface FeatureDatabase {
 	 */
 	public List<ActionFeaturesQuery> getActionFeaturesSets(State s, List <GroundedAction> actions);
 	
+	
 	/**
 	 * Enable or disable the database from generating new features. This method only needs to do anything if it creates features in an
 	 * online fashion. That is, if the set of possible state features is defined at construction, then this method does not need to do anything.
@@ -34,4 +42,6 @@ public interface FeatureDatabase {
 	 * @param toggle
 	 */
 	public void freezeDatabaseState(boolean toggle);
+	
+	
 }

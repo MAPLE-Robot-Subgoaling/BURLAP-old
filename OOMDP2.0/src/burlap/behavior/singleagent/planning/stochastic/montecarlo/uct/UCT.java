@@ -96,7 +96,7 @@ public class UCT extends OOMDPPlanner {
 	
 	/**
 	 * Returns the root node of the UCT tree.
-	 * @return
+	 * @return the root node of the UCT tree.
 	 */
 	public UCTStateNode getRoot(){
 		return root;
@@ -155,6 +155,15 @@ public class UCT extends OOMDPPlanner {
 		}
 		DPrint.cl(debugCode, "\nRollouts: " + numRollOutsFromRoot + "; Best Action Expected Return: " + this.bestReturnAction(root).averageReturn());
 
+	}
+	
+	@Override
+	public void resetPlannerResults(){
+		this.mapToStateIndex.clear();
+		this.stateDepthIndex.clear();
+		this.statesToStateNodes.clear();
+		this.root = null;
+		this.numRollOutsFromRoot = 0;
 	}
 	
 	/*
@@ -267,7 +276,7 @@ public class UCT extends OOMDPPlanner {
 	 * Returns true if rollouts and planning should cease. Planning will stop
 	 * if the planner is told to terminate upon finding a goal and one was found, or if
 	 * the maximum number of rollouts have already been performed.
-	 * @return 
+	 * @return true if rollouts and planning should cease; false otherwise.
 	 */
 	public boolean stopPlanning(){
 		if(foundGoal){
