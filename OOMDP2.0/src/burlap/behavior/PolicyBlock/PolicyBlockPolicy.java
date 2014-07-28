@@ -2,19 +2,24 @@ package burlap.behavior.PolicyBlock;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.swing.AbstractAction;
-
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.QValue;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
+import burlap.behavior.singleagent.options.Option;
+import burlap.behavior.singleagent.options.SubgoalOption;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
+import burlap.behavior.singleagent.planning.StateConditionTestIterable;
 import burlap.behavior.singleagent.planning.commonpolicies.EpsilonGreedy;
+import burlap.behavior.singleagent.planning.deterministic.TFGoalCondition;
 import burlap.behavior.statehashing.StateHashTuple;
+import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.State;
+import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
@@ -30,44 +35,41 @@ import burlap.oomdp.singleagent.RewardFunction;
  *
  */
 public class PolicyBlockPolicy extends EpsilonGreedy {
-	
 	public Map<StateHashTuple, GroundedAction> policy;
-	public HashMap<StateHashTuple, GroundedAction> stateSpace;
 	
 	public PolicyBlockPolicy(double epsilon) {
 		this(null, epsilon);
 	}
-	
 	public PolicyBlockPolicy(QLearning qplanner, double epsilon) {
 		super(qplanner, epsilon);
 		policy = new HashMap<StateHashTuple, GroundedAction>();
+	}
+	
+	public Option createOption(String name, TerminalFunction tf) {
+		return new SubgoalOption(name, this, new StartPolicyTest(), new TFGoalCondition(tf));		
 	}
 	
 	public void addEntry(State s, GroundedAction a) {
 		policy.put(((OOMDPPlanner) qplanner).stateHash(s), a);
 	}
 
-	public void setStateSpace(HashMap<StateHashTuple, GroundedAction> stateSpace) {
-		this.stateSpace = stateSpace;
-	}
-	
 	/**
 	 * For getting the learned state-action mapping offline
 	 * If Q-values are equal for two actions, it picks the first action
 	 * @param s - the state
 	 * @return the action corresponding to the state
 	 */
-	public GroundedAction getCorrectAction(State s) {
+	public AbstractGroundedAction getCorrectAction(State s) {
 		List<QValue> qValues = super.qplanner.getQs(s);
 		List<QValue> maxActions = new ArrayList<QValue>();
 		maxActions.add(qValues.get(0));
 		
 		double maxQ = qValues.get(0).q;
-		for (int i = 1; i < qValues.size(); i++){
+		for (int i = 1; i < qValues.size(); i++) {
 			QValue q = qValues.get(i);
-			if (q.q == maxQ){
+			if (q.q == maxQ) {
 				maxActions.add(q);
-			} else if (q.q > maxQ){
+			} else if (q.q > maxQ) {
 				maxActions.clear();
 				maxActions.add(q);
 				maxQ = q.q;
@@ -76,21 +78,19 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 		
 		return maxActions.get(0).a;
 	}
-	
 	@Override
-	public GroundedAction getAction(State s) {
+	public AbstractGroundedAction getAction(State s) {
 		List<QValue> qValues = super.qplanner.getQs(s);
-		GroundedAction corr = getCorrectAction(s);
+		AbstractGroundedAction corr = getCorrectAction(s);
 		policy.put(((OOMDPPlanner) qplanner).stateHash(s), (GroundedAction) corr);
 		
 		double roll = rand.nextDouble();
-		if (roll <= epsilon){
+		if (roll <= epsilon) {
 			return qValues.get(rand.nextInt(qValues.size())).a;
 		}
 		
 		return corr;
 	}
-	
 	
 	public PolicyBlockPolicy mergeWith(PolicyBlockPolicy otherPolicy) {
 		// TODO Fix how to initialize a merged policy, the problem is that
@@ -149,7 +149,6 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 	 */
 	public EpisodeAnalysis justDoIt() {
 		EpisodeAnalysis result = new EpisodeAnalysis();
-		
 		int steps = 0;
 		
 		for (Entry<StateHashTuple, GroundedAction> e: policy.entrySet()) {
@@ -174,7 +173,6 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 	 */
 	public EpisodeAnalysis evaluateBehavior(RewardFunction rf) {
 		EpisodeAnalysis res = new EpisodeAnalysis();
-		
 		int size = 0;
 		
 		for (Entry<StateHashTuple, GroundedAction> e: policy.entrySet()) {
@@ -221,5 +219,50 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 			super("Policy is undefined for provided state");
 		}
 	}
+	
+	public class StartPolicyTest implements StateConditionTestIterable {
+		/*
+		 * (non-Javadoc)
+		 * @see burlap.behavior.singleagent.planning.StateConditionTest#satisfies(burlap.oomdp.core.State)
+		 * This class is defined for the option methods. Checks if the state given exists in the policy.
+		 */
+		@Override
+		public boolean satisfies(State s) {
+			for (Entry<StateHashTuple, GroundedAction> e: policy.entrySet()) {
+				if (e.getKey().equals(s)) {
+					return true;
+				}
+			}
+			
+			return false;
+		}
 
+		@Override
+		public Iterator<State> iterator() {
+			return new Iterator<State>() {
+				StateHashTuple[] ss = (StateHashTuple[]) policy.keySet().toArray();
+				int i = 0;
+				
+				@Override
+				public boolean hasNext() {
+					return i < ss.length - 1;
+				}
+
+				@Override
+				public State next() {
+					State s = ss[i].s;
+					i++;
+					return s;
+				}
+
+				@Override
+				public void remove() {
+					throw new UnsupportedOperationException();
+				}
+			};
+		}
+
+		@Override
+		public void setStateContext(State s) { }
+	}
 }
