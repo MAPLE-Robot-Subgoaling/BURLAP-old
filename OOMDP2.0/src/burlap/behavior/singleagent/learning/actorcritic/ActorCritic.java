@@ -20,7 +20,7 @@ import burlap.oomdp.singleagent.RewardFunction;
  * can be modified by swapping out different {@link Actor} and {@link Critic} objects. The general structure of the 
  * learning algorithm is for the {@link Actor} class to be queried for an action given the current state of the world.
  * That action is taken and a resulting state is observed. The {@link Critic} is then asked to critique this behavior
- * which is returned in a {@link CritqueResult} object and then passed along to the {@link Actor} so that the actor may
+ * which is returned in a {@link CritiqueResult} object and then passed along to the {@link Actor} so that the actor may
  * update is behavior accordingly.
  * 
  * @author James MacGlashan
@@ -130,7 +130,7 @@ public class ActorCritic extends OOMDPPlanner implements LearningAgent {
 		int timeSteps = 0;
 		while(!tf.isTerminal(curState) && timeSteps < maxSteps){
 			
-			GroundedAction ga = this.actor.getAction(curState);
+			GroundedAction ga = (GroundedAction)this.actor.getAction(curState);
 			State nextState = ga.executeIn(curState);
 			double r = this.rf.reward(curState, ga, nextState);
 			
@@ -174,6 +174,15 @@ public class ActorCritic extends OOMDPPlanner implements LearningAgent {
 		for(int i = 0; i < numEpisodesForPlanning; i++){
 			this.runLearningEpisodeFrom(initialState);
 		}
+	}
+	
+	
+	@Override
+	public void resetPlannerResults(){
+		this.episodeHistory.clear();
+		this.mapToStateIndex.clear();
+		this.actor.resetData();
+		this.critic.resetData();
 	}
 	
 	

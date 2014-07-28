@@ -3,7 +3,6 @@ package burlap.behavior.singleagent.planning.deterministic.informed.astar;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import burlap.behavior.singleagent.planning.StateConditionTest;
 import burlap.behavior.singleagent.planning.deterministic.DeterministicPlanner;
@@ -15,18 +14,45 @@ import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.debugtools.DPrint;
 import burlap.oomdp.auxiliary.common.NullTermination;
-import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
+
+/**
+ * Iteratively deepening A* implementation.
+ * 
+ * <p/>
+ * If a terminal function is provided via the setter method defined for OO-MDPs, then the BestFirst search algorithm will not expand any nodes
+ * that are terminal states, as if there were no actions that could be executed from that state. Note that terminal states
+ * are not necessarily the same as goal states, since there could be a fail condition from which the agent cannot act, but
+ * that is not explicitly represented in the transition dynamics.
+ * @author James MacGlashan
+ *
+ */
 public class IDAStar extends DeterministicPlanner {
 
+	/**
+	 * The heuristic to use
+	 */
 	protected Heuristic									heuristic;
+	
+	/**
+	 * The comparator to use for checking which nodes to expand first.
+	 */
 	protected PSNComparator								nodeComparator;
 	
+	
+	/**
+	 * Initializes the planner.
+	 * @param domain the domain in which to plan
+	 * @param rf the reward function that represents costs as negative reward
+	 * @param gc should evaluate to true for goal states; false otherwise
+	 * @param hashingFactory the state hashing factory to use
+	 * @param heuristic the planning heuristic. Should return non-positive values.
+	 */
 	public IDAStar(Domain domain, RewardFunction rf, StateConditionTest gc, StateHashFactory hashingFactory, Heuristic heuristic){
 		
 		this.deterministicPlannerInit(domain, rf, new NullTermination(), gc, hashingFactory);
@@ -51,7 +77,7 @@ public class IDAStar extends DeterministicPlanner {
 		
 		PrioritizedSearchNode initialPSN = new PrioritizedSearchNode(sih, heuristic.h(initialState));
 		double nextMinR = initialPSN.priority;
-		//double nextMinR = -97;
+		
 		
 		PrioritizedSearchNode solutionNode = null;
 		while(solutionNode == null){
@@ -81,6 +107,14 @@ public class IDAStar extends DeterministicPlanner {
 
 	}
 	
+	
+	/**
+	 * Recursive method to perform A* up to a f-score depth
+	 * @param lastNode the node to expand
+	 * @param minR the minimum cumulative reward at which to stop the search (in other terms the maximum cost)
+	 * @param cumulatedReward the amount of reward accumulated at this node
+	 * @return a search node with the goal state, or null if there is no path within the reward requirements from this node
+	 */
 	protected PrioritizedSearchNode FLimtedDFS(PrioritizedSearchNode lastNode, double minR, double cumulatedReward){
 		
 		if(lastNode.priority < minR){
@@ -88,6 +122,9 @@ public class IDAStar extends DeterministicPlanner {
 		}
 		if(this.planEndNode(lastNode)){
 			return lastNode; //succeed condition
+		}
+		if(this.tf.isTerminal(lastNode.s.s)){
+			return null; //treat like a dead end if we're at a terminal state
 		}
 		
 		
@@ -147,7 +184,11 @@ public class IDAStar extends DeterministicPlanner {
 	
 	
 	
-	
+	/**
+	 * Returns true if the search node wraps a goal state.
+	 * @param node the node to check
+	 * @return true if the search node wraps a goal state; false otherwise.
+	 */
 	protected boolean planEndNode(SearchNode node){
 		
 		if(gc.satisfies(node.s.s)){
@@ -160,7 +201,11 @@ public class IDAStar extends DeterministicPlanner {
 	
 	
 	
-	
+	/**
+	 * Returns true if the search node has not be visited previously on the current search path.
+	 * @param psn the search node to check.
+	 * @return true if the search node has not be visited previously on the current search path; false otherwise.
+	 */
 	protected boolean lastStateOnPathIsNew(PrioritizedSearchNode psn){
 		
 		PrioritizedSearchNode cmpNode = (PrioritizedSearchNode)psn.backPointer;

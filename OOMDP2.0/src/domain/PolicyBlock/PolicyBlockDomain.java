@@ -25,7 +25,7 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.common.SinglePFTF;
 import burlap.oomdp.singleagent.common.UniformCostRF;
-import burlap.oomdp.stocashticgames.Agent;
+//import burlap.oomdp.stocashticgames.Agent;
 import burlap.oomdp.visualizer.Visualizer;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
@@ -239,7 +239,7 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 			stateSpace.put(states, p);
 			hashStateSpace.put(hashStateTuple, p);
 		}
-		
+			
 	}
 	
 	//shows the policies from the output - Must contain a PolicyBlockPolicy to run
@@ -264,6 +264,7 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 	
 	//collected the map of hashed states to policies
 	public HashMap<Collection<StateHashTuple>, Policy> getHashPolicyMap(){
+		System.out.println("\tSize: " + hashStateSpace.size());
 		return hashStateSpace;
 	}
 	
