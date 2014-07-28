@@ -90,7 +90,6 @@ public class State {
 		
 		this.addObjectClassIndexing(o);
 		
-		
 	}
 	
 	private void addObjectClassIndexing(ObjectInstance o){

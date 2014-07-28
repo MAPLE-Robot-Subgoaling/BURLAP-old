@@ -109,6 +109,7 @@ public class TaxiWorldDomain implements DomainGenerator {
 >>>>>>> 7c13e514d259d621b604a406c4ad92ca7916a36c
             setAgent(s, 4, 5);
             setGoal(s, 4, 5);
+            
             for (int j = 1; j <= MAXPASS; j++) {
                 setPassenger(s, j, passPos[j - 1][0], passPos[j - 1][1]);
             }

@@ -3,6 +3,11 @@ package domain.sokoban;
 import java.io.*;
 import java.util.*;
 
+import domain.fourroomsdomain.FourRooms;
+import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.learning.LearningAgent;
+import burlap.behavior.singleagent.learning.tdmethods.QLearning;
+import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.auxiliary.StateParser;
 import burlap.oomdp.core.Attribute;
@@ -11,8 +16,10 @@ import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
+import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.SADomain;
 import burlap.oomdp.singleagent.explorer.TerminalExplorer;
 import burlap.oomdp.singleagent.explorer.VisualExplorer;
@@ -31,6 +38,10 @@ import burlap.oomdp.visualizer.Visualizer;
  */
 public class SokobanDomain implements DomainGenerator, StateParser {
 
+	public static 						RewardFunction rf;
+	public static 						TerminalFunction tf;
+	public static 						LearningAgent Q;
+	public static 						EpisodeAnalysis analyzer;
 	public static final String			XATTNAME = "xAtt";
 	public static final String			YATTNAME = "yAtt";
 	public static final String			TOPYATTNAME = "topYAtt";	
@@ -180,8 +191,6 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		Domain domain = constructor.generateDomain();
 
 		State st = constructor.getCleanState();
-
-		
 		
 		//load a file
 		if (fLocation != -1){
@@ -457,6 +466,9 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 
 		//otherwise construct it!
 		SOKOBANDOMAIN = new SADomain();
+		analyzer = new EpisodeAnalysis();
+		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
+		Q = new QLearning(SOKOBANDOMAIN, rf, tf, FourRooms.DISCOUNTFACTOR, hashFactory, 0.2, FourRooms.LEARNINGRATE, Integer.MAX_VALUE);
 
 		Attribute xAtt = new Attribute(SOKOBANDOMAIN, XATTNAME);
 		xAtt.setDiscValuesForRange(MINX, MAXX, 1);
