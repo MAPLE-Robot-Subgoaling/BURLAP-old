@@ -10,7 +10,6 @@ import burlap.behavior.singleagent.learning.LearningAgent;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.learning.tdmethods.SarsaLam;
 import burlap.behavior.singleagent.options.PrimitiveOption;
-import burlap.behavior.singleagent.options.SubgoalOption;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.StateConditionTest;

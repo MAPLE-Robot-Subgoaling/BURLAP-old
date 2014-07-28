@@ -5,11 +5,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import burlap.behavior.learningrate.ConstantLR;
+import burlap.behavior.learningrate.LearningRate;
 import burlap.behavior.singleagent.learning.actorcritic.Actor;
 import burlap.behavior.singleagent.learning.actorcritic.CritiqueResult;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.datastructures.BoltzmannDistribution;
+import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.Action;
@@ -18,7 +21,7 @@ import burlap.oomdp.singleagent.GroundedAction;
 
 /**
  * And Actor component whose policy is defined by a Boltzmann distribution over action preferences. This actor stores
- * state-action preferences tabularly and therefore requires a {@link burlap.behavior.singleagent.statehashing.StateHashFactory} to perform lookups.
+ * state-action preferences tabularly and therefore requires a {@link burlap.behavior.statehashing.StateHashFactory} to perform lookups.
  * @author James MacGlashan
  *
  */
@@ -42,7 +45,7 @@ public class BoltzmannActor extends Actor {
 	/**
 	 * The learning rate used to update action preferences in response to critiques.
 	 */
-	protected double								learningRate;
+	protected LearningRate							learningRate;
 	
 	/**
 	 * A map from (hashed) states to Policy nodes; the latter of which contains the action preferences
@@ -68,7 +71,7 @@ public class BoltzmannActor extends Actor {
 		this.domain = domain;
 		this.actions = new ArrayList<Action>(domain.getActions());
 		this.hashingFactory = hashingFactory;
-		this.learningRate = learningRate;
+		this.learningRate = new ConstantLR(learningRate);
 		
 		this.preferences = new HashMap<StateHashTuple, BoltzmannActor.PolicyNode>();
 		
@@ -81,6 +84,15 @@ public class BoltzmannActor extends Actor {
 		}
 		
 	}
+	
+	
+	/**
+	 * Sets the learning rate function to use.
+	 * @param lr the learning rate function to use.
+	 */
+	public void setLearningRate(LearningRate lr){
+		this.learningRate = lr;
+	}
 
 	@Override
 	public void updateFromCritqique(CritiqueResult critqiue) {
@@ -88,8 +100,10 @@ public class BoltzmannActor extends Actor {
 		StateHashTuple sh = this.hashingFactory.hashState(critqiue.getS());
 		PolicyNode node = this.getNode(sh);
 		
+		double learningRate = this.learningRate.pollLearningRate(sh.s, critqiue.getA());
+		
 		ActionPreference pref = this.getMatchingPreference(sh, critqiue.getA(), node);
-		pref.preference += this.learningRate * critqiue.getCritique();
+		pref.preference += learningRate * critqiue.getCritique();
 		
 
 	}
@@ -106,7 +120,7 @@ public class BoltzmannActor extends Actor {
 	}
 
 	@Override
-	public GroundedAction getAction(State s) {
+	public AbstractGroundedAction getAction(State s) {
 		return this.sampleFromActionDistribution(s);
 	}
 
@@ -140,7 +154,7 @@ public class BoltzmannActor extends Actor {
 					translated.add(ap);
 				}
 				else{
-					ActionProb tap = new ActionProb(this.translateAction(ap.ga, matching), ap.pSelection);
+					ActionProb tap = new ActionProb(this.translateAction((GroundedAction)ap.ga, matching), ap.pSelection);
 					translated.add(tap);
 				}
 			}
@@ -185,6 +199,12 @@ public class BoltzmannActor extends Actor {
 	@Override
 	public boolean isDefinedFor(State s) {
 		return true; //can always create equal-probable action preferences for a new state
+	}
+	
+	@Override
+	public void resetData() {
+		this.preferences.clear();
+		this.learningRate.resetDecay();
 	}
 	
 	
@@ -308,5 +328,7 @@ public class BoltzmannActor extends Actor {
 		}
 		
 	}
+
+	
 
 }

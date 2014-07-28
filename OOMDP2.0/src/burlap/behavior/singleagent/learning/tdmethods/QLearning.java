@@ -7,6 +7,8 @@ import java.util.Map;
 
 import javax.management.RuntimeErrorException;
 
+import burlap.behavior.learningrate.ConstantLR;
+import burlap.behavior.learningrate.LearningRate;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.QValue;
@@ -18,6 +20,7 @@ import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.commonpolicies.EpsilonGreedy;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
+import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
@@ -52,9 +55,9 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	protected ValueFunctionInitialization							qInitFunction;
 	
 	/**
-	 * A constant learning rate parameter
+	 * The learning rate function used.
 	 */
-	protected double												learningRate;
+	protected LearningRate											learningRate;
 	
 	/**
 	 * The learning policy to use. Typically these will be policies that link back to this object so that they change as the Q-value estimate change.
@@ -85,7 +88,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	/**
 	 * The maximum Q-value change that occurred in the last learning episode.
 	 */
-	protected double												maxQChangeInLastEpisode;
+	protected double												maxQChangeInLastEpisode = Double.POSITIVE_INFINITY;
 	
 	
 	/**
@@ -113,7 +116,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	
 	/**
 	 * Initializes Q-learning with 0.1 epsilon greedy policy, the same Q-value initialization everywhere, and places no limit on the number of steps the 
-	 * agent can take in an episode. By default the agent will only save the last learning episode and a call to the {@link planFromState(State)} method
+	 * agent can take in an episode. By default the agent will only save the last learning episode and a call to the {@link #planFromState(State)} method
 	 * will cause the planner to use only one episode for planning; this should probably be changed to a much larger value if you plan on using this
 	 * algorithm as a planning algorithm.
 	 * @param domain the domain in which to learn
@@ -131,7 +134,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	
 	
 	/**
-	 * Initializes Q-learning with 0.1 epsilon greedy policy, the same Q-value initialization everywhere. By default the agent will only save the last learning episode and a call to the {@link planFromState(State)} method
+	 * Initializes Q-learning with 0.1 epsilon greedy policy, the same Q-value initialization everywhere. By default the agent will only save the last learning episode and a call to the {@link #planFromState(State)} method
 	 * will cause the planner to use only one episode for planning; this should probably be changed to a much larger value if you plan on using this
 	 * algorithm as a planning algorithm.
 	 * @param domain the domain in which to learn
@@ -152,7 +155,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	/**
 	 * Initializes the same Q-value initialization everywhere. Note that if the provided policy is derived from the Q-value of this learning agent (as it should be),
 	 * you may need to set the policy to point to this object after call this constructor; the constructor will not do this automatically in case it was by design
-	 * to use the policy that was learned in some other domain. By default the agent will only save the last learning episode and a call to the {@link planFromState(State)} method
+	 * to use the policy that was learned in some other domain. By default the agent will only save the last learning episode and a call to the {@link #planFromState(State)} method
 	 * will cause the planner to use only one episode for planning; this should probably be changed to a much larger value if you plan on using this
 	 * algorithm as a planning algorithm.
 	 * @param domain the domain in which to learn
@@ -174,7 +177,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	/**
 	 * Initializes the algorithm. Note that if the provided policy is derived from the Q-value of this learning agent (as it should be),
 	 * you may need to set the policy to point to this object after call this constructor; the constructor will not do this automatically in case it was by design
-	 * to use the policy that was learned in some other domain. By default the agent will only save the last learning episode and a call to the {@link planFromState(State)} method
+	 * to use the policy that was learned in some other domain. By default the agent will only save the last learning episode and a call to the {@link #planFromState(State)} method
 	 * will cause the planner to use only one episode for planning; this should probably be changed to a much larger value if you plan on using this
 	 * algorithm as a planning algorithm.
 	 * @param domain the domain in which to learn
@@ -195,7 +198,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	
 	
 	/**
-	 * Initializes the algorithm. By default the agent will only save the last learning episode and a call to the {@link planFromState(State)} method
+	 * Initializes the algorithm. By default the agent will only save the last learning episode and a call to the {@link #planFromState(State)} method
 	 * will cause the planner to use only one episode for planning; this should probably be changed to a much larger value if you plan on using this
 	 * algorithm as a planning algorithm.
 	 * @param domain the domain in which to learn
@@ -213,7 +216,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 		
 		this.plannerInit(domain, rf, tf, gamma, hashingFactory);
 		this.qIndex = new HashMap<StateHashTuple, QLearningStateNode>();
-		this.learningRate = learningRate;
+		this.learningRate = new ConstantLR(learningRate);
 		this.learningPolicy = learningPolicy;
 		this.maxEpisodeSize = maxEpisodeSize;
 		this.qInitFunction = qInitFunction;
@@ -225,6 +228,15 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 		maxQChangeForPlanningTermination = 0.;
 
 		
+	}
+	
+	
+	/**
+	 * Sets the learning rate function to use
+	 * @param lr the learning rate function to use
+	 */
+	public void setLearningRateFunction(LearningRate lr){
+		this.learningRate = lr;
 	}
 	
 	/**
@@ -245,8 +257,8 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	}
 	
 	/**
-	 * Sets the maximum number of episodes that will be performed when the {@link planFromState(State)} method is called.
-	 * @param n the maximum number of episodes that will be performed when the {@link planFromState(State)} method is called.
+	 * Sets the maximum number of episodes that will be performed when the {@link #planFromState(State)} method is called.
+	 * @param n the maximum number of episodes that will be performed when the {@link #planFromState(State)} method is called.
 	 */
 	public void setMaximumEpisodesForPlanning(int n){
 		if(n > 0){
@@ -258,7 +270,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	}
 	
 	/**
-	 * Sets a max change in the Q-function threshold that will cause the {@link planFromState(State)} to stop planning
+	 * Sets a max change in the Q-function threshold that will cause the {@link #planFromState(State)} to stop planning
 	 * when it is achieved.
 	 * @param m the maximum allowable change in the Q-function before planning stops
 	 */
@@ -331,8 +343,8 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	}
 
 	@Override
-	public QValue getQ(State s, GroundedAction a) {
-		return this.getQ(this.stateHash(s), a);
+	public QValue getQ(State s, AbstractGroundedAction a) {
+		return this.getQ(this.stateHash(s), (GroundedAction)a);
 	}
 	
 	
@@ -447,7 +459,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 		
 		while(!tf.isTerminal(curState.s) && eStepCounter < maxSteps){
 			
-			GroundedAction action = learningPolicy.getAction(curState.s);
+			GroundedAction action = (GroundedAction)learningPolicy.getAction(curState.s);
 			QValue curQ = this.getQ(curState, action);
 			
 			StateHashTuple nextState = this.stateHash(action.executeIn(curState.s));
@@ -467,7 +479,6 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 			}
 			else{
 				Option o = (Option)action.action;
-				System.out.println(o.getName());
 				r = o.getLastCumulativeReward();
 				int n = o.getLastNumSteps();
 				discount = Math.pow(this.gamma, n);
@@ -485,7 +496,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 			double oldQ = curQ.q;
 			
 			//update Q-value
-			curQ.q = curQ.q + this.learningRate * (r + (discount * maxQ) - curQ.q);
+			curQ.q = curQ.q + this.learningRate.pollLearningRate(curState.s, action) * (r + (discount * maxQ) - curQ.q);
 			
 			double deltaQ = Math.abs(oldQ - curQ.q);
 			if(deltaQ > maxQChangeInLastEpisode){
@@ -527,6 +538,16 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	@Override
 	public List<EpisodeAnalysis> getAllStoredLearningEpisodes() {
 		return episodeHistory;
+	}
+	
+	
+	@Override
+	public void resetPlannerResults(){
+		this.mapToStateIndex.clear();
+		this.qIndex.clear();
+		this.episodeHistory.clear();
+		this.eStepCounter = 0;
+		this.maxQChangeInLastEpisode = Double.POSITIVE_INFINITY;
 	}
 
 }

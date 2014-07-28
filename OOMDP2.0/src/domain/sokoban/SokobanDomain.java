@@ -350,28 +350,28 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		//otherwise construct it!
 		SOKOBANDOMAIN = new SADomain();
 
-		Attribute xAtt = new Attribute(SOKOBANDOMAIN, XATTNAME, 0);
+		Attribute xAtt = new Attribute(SOKOBANDOMAIN, XATTNAME);
 		xAtt.setDiscValuesForRange(MINX, MAXX, 1);
 
-		Attribute topXAtt = new Attribute(SOKOBANDOMAIN, TOPXATTNAME, 0);
+		Attribute topXAtt = new Attribute(SOKOBANDOMAIN, TOPXATTNAME);
 		topXAtt.setDiscValuesForRange(MINX, MAXX, 1);
 
-		Attribute bottomXAtt = new Attribute(SOKOBANDOMAIN, BOTTOMXATTNAME, 0);
+		Attribute bottomXAtt = new Attribute(SOKOBANDOMAIN, BOTTOMXATTNAME);
 		bottomXAtt.setDiscValuesForRange(MINX, MAXX, 1);
 
-		Attribute yAtt = new Attribute(SOKOBANDOMAIN, YATTNAME, 0);
+		Attribute yAtt = new Attribute(SOKOBANDOMAIN, YATTNAME);
 		yAtt.setDiscValuesForRange(MINY, MAXY, 1);
 
-		Attribute topYAtt = new Attribute(SOKOBANDOMAIN, TOPYATTNAME, 0);
+		Attribute topYAtt = new Attribute(SOKOBANDOMAIN, TOPYATTNAME);
 		topYAtt.setDiscValuesForRange(MINY, MAXY, 1);
 
-		Attribute bottomYAtt = new Attribute(SOKOBANDOMAIN, BOTTOMYATTNAME, 0);
+		Attribute bottomYAtt = new Attribute(SOKOBANDOMAIN, BOTTOMYATTNAME);
 		bottomYAtt.setDiscValuesForRange(MINY, MAXY, 1);
 
-		Attribute colorAtt = new Attribute(SOKOBANDOMAIN, COLORATTNAME, 0);
+		Attribute colorAtt = new Attribute(SOKOBANDOMAIN, COLORATTNAME);
 		colorAtt.setDiscValues(colors);
 
-		Attribute shapeAtt = new Attribute(SOKOBANDOMAIN, SHAPEATTNAME, 0);
+		Attribute shapeAtt = new Attribute(SOKOBANDOMAIN, SHAPEATTNAME);
 		shapeAtt.setDiscValues(shapes);
 
 		ObjectClass aClass = new ObjectClass(SOKOBANDOMAIN, AGENTCLASS);

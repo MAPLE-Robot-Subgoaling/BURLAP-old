@@ -9,10 +9,22 @@ import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 
+
+
+/**
+ * A StateParser class that can convert states for any possible input domain.
+ * @author James MacGlashan
+ *
+ */
 public class UniversalStateParser implements StateParser {
 
 	protected Domain domain;
 	
+	
+	/**
+	 * This parser only requires that the source domain for the states is provided.
+	 * @param domain the domain for which the states will be converted.
+	 */
 	public UniversalStateParser(Domain domain){
 		this.domain = domain;
 	}
@@ -69,6 +81,8 @@ public class UniversalStateParser implements StateParser {
 			
 		}
 		
+		
 		return s;
 	}
+
 }

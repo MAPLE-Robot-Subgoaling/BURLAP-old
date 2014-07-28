@@ -19,11 +19,33 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.common.UniformCostRF;
 
+/**
+ * Implements Breadth-first search.
+ * 
+ * <p/>
+ * If a terminal function is provided via the setter method defined for OO-MDPs, then the search algorithm will not expand any nodes
+ * that are terminal states, as if there were no actions that could be executed from that state. Note that terminal states
+ * are not necessarily the same as goal states, since there could be a fail condition from which the agent cannot act, but
+ * that is not explicitly represented in the transition dynamics.
+ * 
+ * 
+ * @author James MacGlashan
+ *
+ */
 public class BFS extends DeterministicPlanner {
 
+	
+	/**
+	 * BFS only needs reference to the domain, goal conditions, and hashing factory. The reward function is considered UniformCost, but is
+	 * not used. No states are considered terminal states, but planning will stop when it finds the goal state.
+	 * @param domain the domain in which to plan
+	 * @param gc the test for goal states
+	 * @param hashingFactory the state hashing factory to use.
+	 */
 	public BFS(Domain domain, StateConditionTest gc, StateHashFactory hashingFactory){
 		this.deterministicPlannerInit(domain, new UniformCostRF(), new NullTermination(), gc, hashingFactory);
 	}
+	
 	
 	@Override
 	public void planFromState(State initialState) {
@@ -58,6 +80,10 @@ public class BFS extends DeterministicPlanner {
 			if(gc.satisfies(s)){
 				lastVistedNode = node;
 				break;
+			}
+			
+			if(this.tf.isTerminal(s)){
+				continue; //don't expand terminal states
 			}
 			
 			//first get all grounded actions for this state
