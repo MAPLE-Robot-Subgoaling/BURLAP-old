@@ -91,6 +91,56 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 		return corr;
 	}
 	
+	
+	public PolicyBlockPolicy mergeWith(PolicyBlockPolicy otherPolicy) {
+		// TODO Fix how to initialize a merged policy, the problem is that
+		// the initialization parameters for a policyblock policy are
+		// used for the learning agent.
+		PolicyBlockPolicy merged = new PolicyBlockPolicy(this.epsilon);
+		
+		for (Entry<StateHashTuple, GroundedAction> e : policy.entrySet()) {
+			// Comparison is simply whether the given state corresponds to the
+			// same action
+			// TODO Figure out if the StateHashTuple object correctly gets the
+			// right action from both HashMaps (whether HashMap returns based on
+			// equality or not).
+			if (otherPolicy.policy.get(e.getKey()).equals(e.getValue())) {
+				merged.policy.put(e.getKey(), e.getValue());
+			}
+		}
+		
+		return merged;
+	}
+	
+	// TODO Ask someone if the order of merging ever matters
+	static public ArrayList<PolicyBlockPolicy> unionMerge(List<PolicyBlockPolicy> policies, int depth) {
+		ArrayList<PolicyBlockPolicy> mergedPolicies = new ArrayList<PolicyBlockPolicy>();
+		
+		// Do a pairwise merge of all initial policies
+		for (int i = 0; i < policies.size(); i++) {
+			PolicyBlockPolicy a = policies.get(i);
+			for (int j = i; j < policies.size(); j++) {
+				PolicyBlockPolicy b = policies.get(j);
+				mergedPolicies.add(a.mergeWith(b));
+			}
+		}
+		
+		// Do pairwise merge of all initial policies with all merged policies
+		// to a given depth.
+		for (int i = 0; i < depth; i++) {
+			int initialSize = mergedPolicies.size();
+			for (int j = 0; j < initialSize; j++) {
+				PolicyBlockPolicy m = mergedPolicies.get(j);
+				for (int k = 0; k < policies.size(); k++) {
+					PolicyBlockPolicy p = policies.get(k);
+					mergedPolicies.add(p.mergeWith(m));
+				}
+			}
+		}
+		
+		return mergedPolicies;
+	}
+	
 	/*
 	 * Badly named
 	 * justDoIt() - takes a Policy Object and evaluates it's behavior with a 
