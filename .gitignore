@@ -2,3 +2,9 @@
 .metadata/
 EarlyTerminationTest/
 *.class
+*.episode
+*.project
+*.classpath
+bin/
+output/
+.settings/
