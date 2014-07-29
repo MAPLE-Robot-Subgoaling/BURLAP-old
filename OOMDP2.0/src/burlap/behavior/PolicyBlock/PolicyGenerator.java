@@ -14,6 +14,12 @@ import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.*;
 import burlap.oomdp.singleagent.GroundedAction;
 
+/* THIS FILE HAD DEPENDENCIES ON AN OLD IMPLEMENTATION OF PolicyBlockPolicy.
+ * Since PolicyBlockPolicy has be updated, the code in this file will not
+ * work correctly.  It is currently maintained for possible use later and to
+ * prevent any errors from old files that still use it.
+ */
+
 public class PolicyGenerator {
 
 	//declaration of PolicyBlocks
@@ -257,7 +263,7 @@ public class PolicyGenerator {
 							System.out.println("S:"+s.s.hashCode() + "::P:" +p.s.hashCode());
 							System.out.println("S-A:" + policyA.getAction(s.s) + "::P-A:" + policyB.getAction(p.s));
 						}
-						intersection.put(stateSeqA.get(i),policyA.getAction(s.s));
+						//intersection.put(stateSeqA.get(i),policyA.getAction(s.s));
 						stateList.add(s);
 						
 						
@@ -278,7 +284,7 @@ public class PolicyGenerator {
 							System.out.println("S:"+s.s.hashCode() + "::P:" +p.s.hashCode());
 							System.out.println("S-A:" + policyA.getAction(s.s) + "::P-A:" + policyB.getAction(p.s));
 						}
-						intersection.put(stateSeqB.get(i),policyB.getAction(s.s));
+						//intersection.put(stateSeqB.get(i),policyB.getAction(s.s));
 						stateList.add(s);
 						
 						
@@ -289,7 +295,7 @@ public class PolicyGenerator {
 		
 		//result of the merging objects
 		PolicyBlockPolicy result = new PolicyBlockPolicy(.99);
-		result.setStateSpace((HashMap<StateHashTuple, GroundedAction>)intersection);
+		//result.setStateSpace((HashMap<StateHashTuple, GroundedAction>)intersection);
 		
 		
 		/*
@@ -329,7 +335,7 @@ public class PolicyGenerator {
 							System.out.println("S-A:" + policyA.getAction(s.s) + "::P-A:" + policyB.getAction(p.s));
 						}
 						
-						intersection.put(stateSeqA.get(i),policyA.getAction(s.s));
+						//intersection.put(stateSeqA.get(i),policyA.getAction(s.s));
 						stateList.add(s);
 						
 						
@@ -351,7 +357,7 @@ public class PolicyGenerator {
 							System.out.println("S:"+s.s.hashCode() + "::P:" +p.s.hashCode());
 							System.out.println("S-A:" + policyA.getAction(s.s) + "::P-A:" + policyB.getAction(p.s));
 						}
-						intersection.put(stateSeqB.get(i),policyB.getAction(s.s));
+						//intersection.put(stateSeqB.get(i),policyB.getAction(s.s));
 						stateList.add(s);
 						
 						
@@ -362,10 +368,10 @@ public class PolicyGenerator {
 		
 		//result of the merging objects
 		PolicyBlockPolicy result = new PolicyBlockPolicy(.99);
-		result.setStateSpace((HashMap<StateHashTuple, GroundedAction>)intersection);
+		//result.setStateSpace((HashMap<StateHashTuple, GroundedAction>)intersection);
 	
 		
-		System.out.println("\tFinal-StateSpace: " + result.stateSpace.size());
+		//System.out.println("\tFinal-StateSpace: " + result.stateSpace.size());
 		
 		output.add(stateList);
 		output.add(result);

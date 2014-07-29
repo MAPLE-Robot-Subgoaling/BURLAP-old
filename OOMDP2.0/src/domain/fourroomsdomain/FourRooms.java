@@ -206,7 +206,7 @@ public class FourRooms implements DomainGenerator {
 		Attribute yatt = new Attribute(DOMAIN, ATTY, Attribute.AttributeType.DISC);
 		yatt.setDiscValuesForRange(0, MAXY, 1);
 		
-		Attribute color = new Attribute(DOMAIN, COLORATTNAME,0);
+		Attribute color = new Attribute(DOMAIN, COLORATTNAME, Attribute.AttributeType.DISC);
 		color.setDiscValues(colors);
 
 		DOMAIN.addAttribute(xatt);

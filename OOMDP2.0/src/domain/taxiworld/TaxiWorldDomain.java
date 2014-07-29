@@ -89,24 +89,13 @@ public class TaxiWorldDomain implements DomainGenerator {
         Domain d = txd.generateDomain();
         State s = getCleanState();
         parser = new TaxiWorldStateParser();
-<<<<<<< HEAD
-        int[][] passPos = getRandomSpots(MAXPASS);
-        // int[][] passPos = {
-        //     {1, 1},
-        //     {1, 2},
-        //     {1, 3},
-        //     {1, 4}
-        // };
 
-        for (int i = 1; i <= 2000; i++) {
-=======
         // int[][] passPos = getRandomSpots(MAXPASS);
         int[][] passPos = {
             {1, 1},
             {1, 2}
         };
         for (int i = 1; i <= 1000; i++) {
->>>>>>> 7c13e514d259d621b604a406c4ad92ca7916a36c
             setAgent(s, 4, 5);
             setGoal(s, 4, 5);
             
@@ -170,12 +159,8 @@ public class TaxiWorldDomain implements DomainGenerator {
      * @param rest all of the other arrays in the ordering
      * @return a concatenation of all arrays passed
      */
-<<<<<<< HEAD
-    public static <T> T[] arrConcat(T[] first, T[]... rest) {
-=======
     @SafeVarargs
 	public static <T> T[] arrConcat(T[] first, T[]... rest) {
->>>>>>> 7c13e514d259d621b604a406c4ad92ca7916a36c
         int totalLength = first.length;
         for (T[] array: rest) {
             totalLength += array.length;
@@ -197,12 +182,10 @@ public class TaxiWorldDomain implements DomainGenerator {
         if (DOMAIN != null) {
             return DOMAIN;
         }
-<<<<<<< HEAD
-=======
+        
         if (MAXPASS == null) {
         	throw new RuntimeException("Maximum number of passengers not set; set MAXPASS.");
         }
->>>>>>> 7c13e514d259d621b604a406c4ad92ca7916a36c
 
         DOMAIN = new SADomain();
         generateMap();
@@ -727,9 +710,4 @@ public class TaxiWorldDomain implements DomainGenerator {
             return false;
         }
     }
-<<<<<<< HEAD
-    
-
-=======
->>>>>>> 7c13e514d259d621b604a406c4ad92ca7916a36c
 }
