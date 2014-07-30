@@ -186,5 +186,11 @@ public class AbstractedPolicy {
 		}
 	}
 	
+	// TODO Implement an abstracting method that takes grounded policies and abstracts
+	// them to the most abstract level with respect to all grounded policies.
+	public static ArrayList<AbstractedPolicy> abstractAll(ArrayList<PolicyBlockPolicy> groundedPolicies) {
+		return new ArrayList<AbstractedPolicy>();
+	}
+	
 	
 }
