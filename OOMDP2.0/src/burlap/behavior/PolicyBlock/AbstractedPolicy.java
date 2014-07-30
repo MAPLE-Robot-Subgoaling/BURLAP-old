@@ -1,52 +1,104 @@
 package burlap.behavior.PolicyBlock;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
-import domain.fourroomsdomain.FourRooms;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import domain.taxiworld.TaxiWorldDomain;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.learning.LearningAgent;
+import burlap.behavior.statehashing.StateHashTuple;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
-
+import burlap.oomdp.singleagent.GroundedAction;
 
 public class AbstractedPolicy {
-
-	public PolicyBlockPolicy abstractedPolicy;
+	private Map<StateHashTuple, GroundedAction> abstractedPolicy;
+	private List<PolicyBlockPolicy> originalPolicies;
 	public State newState;
 	public List<ObjectInstance> droppedAttr;
 	public List<ObjectInstance> droppedObj;
 	
-	public static void main(String args[]){	
-
-        FourRooms fr = new FourRooms();        
-        Domain d1 = fr.generateDomain();
-        State s1 = FourRooms.getCleanState();
-        
-        FourRooms.setAgent(s1, 1, 1);
-        FourRooms.setGoal(s1, 11, 11);
+	public static void main(String args[]){
+		TaxiWorldDomain.MAXPASS = 1;
 		
-        //note: epsilon value of 0
-        PolicyBlockPolicy newPolicy1 = new PolicyBlockPolicy((QLearning)FourRooms.Q,0);
-        
-        ((QLearning) FourRooms.Q).setLearningPolicy(newPolicy1);
-        EpisodeAnalysis ea = new EpisodeAnalysis();
+		TaxiWorldDomain td1 = new TaxiWorldDomain();
+		td1.generateDomain();
+		State s1 = TaxiWorldDomain.getCleanState();
+        int[][] passPos1 = {
+                {1, 1}
+        };
+		PolicyBlockPolicy newPolicy1 = new PolicyBlockPolicy((QLearning) TaxiWorldDomain.Q, 0.9);
+        ((QLearning) TaxiWorldDomain.Q).setLearningPolicy(newPolicy1);
+        for (int i = 0; i < 1000; i++) {
+            TaxiWorldDomain.setAgent(s1, 4, 5);
+            TaxiWorldDomain.setGoal(s1, 4, 5);
+            
+            for (int j = 1; j <= TaxiWorldDomain.MAXPASS; j++) {
+            	TaxiWorldDomain.setPassenger(s1, j, passPos1[j - 1][0], passPos1[j - 1][1]);
+            }
 
-        for(int i=0;i < 2000;i++) {
-			ea = FourRooms.Q.runLearningEpisodeFrom(s1);
-		}
+            TaxiWorldDomain.analyzer = new EpisodeAnalysis();
+            //System.out.print("Episode " + i + ": ");
+            TaxiWorldDomain.analyzer = TaxiWorldDomain.Q.runLearningEpisodeFrom(s1);
+            if (i % 1000 == 0) {
+            	System.out.println("1: " + i);
+            }
+            //System.out.println("\tSteps: " + TaxiWorldDomain.analyzer.numTimeSteps());
+        }
+		
+		TaxiWorldDomain td2 = new TaxiWorldDomain();
+		td2.generateDomain();
+		State s2 = TaxiWorldDomain.getCleanState();
+        int[][] passPos2 = {
+                {1, 3}
+        };
+		PolicyBlockPolicy newPolicy2 = new PolicyBlockPolicy((QLearning) TaxiWorldDomain.Q, 0.9);
+        ((QLearning) TaxiWorldDomain.Q).setLearningPolicy(newPolicy2);
+        for (int i = 0; i < 1000; i++) {
+            TaxiWorldDomain.setAgent(s2, 4, 5);
+            TaxiWorldDomain.setGoal(s2, 4, 5);
+            
+            for (int j = 1; j <= TaxiWorldDomain.MAXPASS; j++) {
+            	TaxiWorldDomain.setPassenger(s2, j, passPos2[j - 1][0], passPos2[j - 1][1]);
+            }
+
+            TaxiWorldDomain.analyzer = new EpisodeAnalysis();
+            //System.out.print("Episode " + i + ": ");
+            TaxiWorldDomain.analyzer = TaxiWorldDomain.Q.runLearningEpisodeFrom(s2);
+            if (i % 1000 == 0) {
+            	System.out.println("2: " + i);
+            }
+            //System.out.println("\tSteps: " + TaxiWorldDomain.analyzer.numTimeSteps());
+        }
         
-        System.out.println("Original state:");
-        System.out.println(s1.getCompleteStateDescription());
-        System.out.println("--------");
-        AbstractedPolicy ap = new AbstractedPolicy(d1,s1,newPolicy1,FourRooms.Q,FourRooms.MAP);
-        System.out.println("State after abstraction:");
-        System.out.println(ap.newState.getCompleteStateDescription());
-        
-}
+        ArrayList<PolicyBlockPolicy> pis = new ArrayList<PolicyBlockPolicy>();
+        pis.add(newPolicy1);
+        pis.add(newPolicy2);
+		for (AbstractedPolicy ap: unionMerge(pis, pis.size())) {
+			System.out.println(ap.abstractedPolicy.size());
+			System.out.println("*************\n");
+		}        
+	}
+	
+	public AbstractedPolicy() {
+		abstractedPolicy = new HashMap<StateHashTuple, GroundedAction>();
+		originalPolicies = new ArrayList<PolicyBlockPolicy>();
+	}
+	
+	// TODO Once abstraction is implemented, have all of the dropped objects copied as well
+	public AbstractedPolicy(AbstractedPolicy p) {
+		this();
+		this.abstractedPolicy.putAll(p.abstractedPolicy);
+		this.originalPolicies.addAll(p.originalPolicies);
+	}
 
 	/**
 	 * Abstracts away any attributes/objects that don't affect the original policy.
@@ -154,6 +206,104 @@ public class AbstractedPolicy {
 				
 	}
 	
+	public boolean isSameAbstraction(AbstractedPolicy other) {
+		return this.originalPolicies.equals(other.originalPolicies);
+	}
+	
+	public AbstractedPolicy mergeWith(AbstractedPolicy otherPolicy) {
+		if (!isSameAbstraction(otherPolicy))
+			throw new IllegalArgumentException("Not the same level of abstraction.");
+
+		AbstractedPolicy merged = new AbstractedPolicy();
+		merged.originalPolicies.addAll(this.originalPolicies);
+		
+		for (Entry<StateHashTuple, GroundedAction> e : abstractedPolicy.entrySet()) {
+			// Comparison is simply whether the given state corresponds to the
+			// same action
+			GroundedAction a = otherPolicy.abstractedPolicy.get(e.getKey());
+			if (a != null && a.equals(e.getValue())) {
+				merged.abstractedPolicy.put(e.getKey(), e.getValue());
+			}
+		}
+		
+		return merged;
+	}
+	
+	/**
+	 * This method assumes that the order of merging is commutative.
+	 * @param abstractedPolicies - this list is modified as part of the recursion (becomes 1 element after all recursion is done).
+	 * @return
+	 */
+	public static AbstractedPolicy merge(List<AbstractedPolicy> abstractedPolicies) {
+		if (abstractedPolicies == null || abstractedPolicies.isEmpty())
+			throw new IllegalArgumentException("Cannot pass a null or empty list of abstracted policies to merge.");
+		
+		ArrayList<AbstractedPolicy> newPolicies = new ArrayList<>();
+		newPolicies.addAll(abstractedPolicies);
+		AbstractedPolicy merged = new AbstractedPolicy(newPolicies.get(0));
+		
+		for (int i = 1; i < newPolicies.size(); i++) {
+			merged = merged.mergeWith(newPolicies.get(i));
+		}
+		
+		return merged;
+	}
+
+	/**
+	 * Generates the powerset to a certain depth, excluding the empty set
+	 * @param list
+	 * @param depth
+	 * @return
+	 */
+	private static <T> List<List<T>> powerset(Collection<T> list, int depth) {
+		if (depth < 1 || depth > list.size()) {
+			throw new IllegalArgumentException("Need a depth >= 1 and <= " + list.size());
+		}
+		List<List<T>> ps = new ArrayList<List<T>>();
+		ps.add(new ArrayList<T>());   // add the empty set
+		
+		// for every item in the original list
+		for (T item : list) {
+			List<List<T>> newPs = new ArrayList<List<T>>();
+			
+			for (List<T> subset : ps) {
+				// copy all of the current powerset's subsets
+				newPs.add(subset);
+				
+				// plus the subsets appended with the current item
+				List<T> newSubset = new ArrayList<T>(subset);
+				newSubset.add(item);
+				if (newSubset.size() <= depth) {
+					newPs.add(newSubset);
+				}
+			}
+ 
+			// powerset is now powerset of list.subList(0, list.indexOf(item)+1)
+			ps = newPs;
+		}
+	  
+		ps.remove(0);
+		return ps;
+	}
+
+	// TODO Assuming abstraction happens at the top level, rather than abstracting each of the n-tuples with respect to each other
+	/**
+	 * 
+	 * @param policies
+	 * @param depth
+	 * @return
+	 */
+	public static List<AbstractedPolicy> unionMerge(List<PolicyBlockPolicy> policies, int depth) {
+		ArrayList<AbstractedPolicy> abstractPolicies = abstractAll(policies);
+		ArrayList<AbstractedPolicy> mergedPolicies = new ArrayList<>();
+		
+		for (List<AbstractedPolicy> ps: powerset(abstractPolicies, depth)) {
+			mergedPolicies.add(merge(ps));
+		}
+		
+		return mergedPolicies;
+	}
+	
 	/**
 	 * Removes attribute from an ObjectInstance
 	 * @param d
@@ -188,9 +338,34 @@ public class AbstractedPolicy {
 	
 	// TODO Implement an abstracting method that takes grounded policies and abstracts
 	// them to the most abstract level with respect to all grounded policies.
-	public static ArrayList<AbstractedPolicy> abstractAll(ArrayList<PolicyBlockPolicy> groundedPolicies) {
-		return new ArrayList<AbstractedPolicy>();
+	/**
+	 * Right now, this method assumes that all of the policies are in the same domain and makes a simple copy of the policy
+	 * @param policies
+	 * @return
+	 */
+	public static ArrayList<AbstractedPolicy> abstractAll(List<PolicyBlockPolicy> policies) {
+		ArrayList<AbstractedPolicy> abstractedPolicies = new ArrayList<>();
+		
+		for (PolicyBlockPolicy p: policies) {
+			AbstractedPolicy newP = new AbstractedPolicy();
+			newP.originalPolicies.addAll(policies);
+			newP.abstractedPolicy.putAll(p.policy);
+			abstractedPolicies.add(newP);
+		}
+		
+		return abstractedPolicies;
 	}
 	
-	
+	@Override
+	/**
+	 * TODO make this method use string builder
+	 */
+	public String toString() {
+		String out = "";
+		for (Entry<StateHashTuple, GroundedAction> e: abstractedPolicy.entrySet()) {
+			out += e.getKey().hashCode() + ": " + e.getValue() + "\n";
+		}
+		
+		return out;
+	}
 }
