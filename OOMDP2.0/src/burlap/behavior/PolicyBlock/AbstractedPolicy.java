@@ -286,19 +286,17 @@ public class AbstractedPolicy {
 		return ps;
 	}
 
-	// TODO Assuming abstraction happens at the top level, rather than abstracting each of the n-tuples with respect to each other
 	/**
-	 * 
+	 * Abstraction happens on a per-group basis of policies to merge.
 	 * @param policies
 	 * @param depth
 	 * @return
 	 */
 	public static List<AbstractedPolicy> unionMerge(List<PolicyBlockPolicy> policies, int depth) {
-		ArrayList<AbstractedPolicy> abstractPolicies = abstractAll(policies);
 		ArrayList<AbstractedPolicy> mergedPolicies = new ArrayList<AbstractedPolicy>();
 		
-		for (List<AbstractedPolicy> ps: powerset(abstractPolicies, depth)) {
-			mergedPolicies.add(merge(ps));
+		for (List<PolicyBlockPolicy> ps: powerset(policies, depth)) {
+			mergedPolicies.add(merge(abstractAll(ps)));
 		}
 		
 		return mergedPolicies;
