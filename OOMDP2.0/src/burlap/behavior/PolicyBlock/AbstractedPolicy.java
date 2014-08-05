@@ -85,7 +85,60 @@ public class AbstractedPolicy {
 		for (AbstractedPolicy ap: unionMerge(pis, pis.size())) {
 			System.out.println(ap.abstractedPolicy.size());
 			System.out.println("*************\n");
-		}        
+		}     
+
+		FourRooms fr = new FourRooms();
+		Domain d = fr.generateDomain();
+
+		AbstractDomain ad1 = new AbstractDomain();
+		Domain finalDomain2 = ad1.generateDomain(d);
+		
+		State ss1 = FourRooms.getCleanState();
+		State ss2 = FourRooms.getCleanState();
+
+		ObjectInstance agent1 = ss1.getObjectsOfTrueClass("agent").get(0);
+		ObjectInstance agent2 = ss2.getObjectsOfTrueClass("agent").get(0);
+
+		ObjectInstance goal1 = ss1.getObjectsOfTrueClass("goal").get(0);
+		ObjectInstance goal2 = ss2.getObjectsOfTrueClass("goal").get(0);
+		
+		agent1.setValue("x", 1);
+		agent1.setValue("y", 1);
+		
+		agent2.setValue("x", 1);
+		agent2.setValue("y", 1);
+		
+		goal1.setValue("x", 11);
+		goal1.setValue("y",11);
+		
+		goal2.setValue("x", 11);
+		goal2.setValue("y", 11);
+		
+		ObjectInstance block1 = new ObjectInstance(finalDomain2.getObjectClass("random"),"random"+0);
+		block1.setValue("x", 5);
+		block1.setValue("y", 2);
+		
+		ObjectInstance block2 = new ObjectInstance(finalDomain2.getObjectClass("random"),"random"+1);
+		block1.setValue("x", 7);
+		block1.setValue("y", 4);
+		
+		ObjectInstance block3 = new ObjectInstance(finalDomain2.getObjectClass("random"),"random"+2);
+		block1.setValue("x", 3);
+		block1.setValue("y", 3);
+
+		ss2.addObject(block1);
+		ss2.addObject(block2);
+		
+		ss1.addObject(block3);
+		ss1.addObject(block1);
+		ss1.addObject(block2);
+
+		PolicyBlockPolicy p = new PolicyBlockPolicy((QLearning)FourRooms.Q,0);
+		((QLearning)FourRooms.Q).setLearningPolicy(p);
+        EpisodeAnalysis ea = new EpisodeAnalysis();
+		ea = FourRooms.Q.runLearningEpisodeFrom(ss2);
+		
+		abstractPolicy(ea.actionSequence,FourRooms.Q,ss1,ss2);
 	}
 	
 	public AbstractedPolicy() {
@@ -100,6 +153,287 @@ public class AbstractedPolicy {
 		this.originalPolicies.addAll(p.originalPolicies);
 	}
 
+	public static PolicyBlockPolicy abstractPolicy(List<GroundedAction> actionSequence,LearningAgent la,State s1,State s2) {
+		Map<String,Integer> lciMap = leastCommonIntersectionState(s1,s2);
+		 
+		State s = findLimitingState(generateLCIMappingState(s1),generateLCIMappingState(s2),s1,s2);
+		 
+		ArrayList<ArrayList<ObjectInstance>> listFromMapping =  getListFromMapping(lciMap,s);
+
+		ArrayList<ArrayList<ObjectInstance>> listOfCombinations = findCombinations(listFromMapping,0,new ArrayList<ObjectInstance>(), new ArrayList<ArrayList<ObjectInstance>>());
+		
+		return score(actionSequence,la,listOfCombinations);
+	}
+	
+	/**
+	 * Scores all possible abstractions and finds the abstraction with the lowest error
+	 * @param original
+	 * @param la
+	 * @param objList
+	 * @return
+	 */
+	public static PolicyBlockPolicy score(List<GroundedAction> original,LearningAgent la,ArrayList<ArrayList<ObjectInstance>> objList) {
+		PolicyBlockPolicy newPolicy = null;
+		PolicyBlockPolicy toReturn = newPolicy;
+		double error = 0;
+		double oldError = 0;
+		Boolean flag = true;
+		
+		for (ArrayList<ObjectInstance> ol : objList) {
+			State st = new State();
+
+			for (ObjectInstance o : ol) {
+				st.addObject(o);
+			}
+			
+			newPolicy = new PolicyBlockPolicy((QLearning)la,0);
+			((QLearning)la).setLearningPolicy(newPolicy);
+	        EpisodeAnalysis ea = new EpisodeAnalysis();
+			ea = la.runLearningEpisodeFrom(st);
+			
+			error = findDifference(original,ea.actionSequence);
+
+			if (error < oldError) {
+				toReturn = newPolicy;
+				oldError = error;
+				flag = false;
+			}
+
+		}
+		
+		if (flag) {
+			toReturn = newPolicy;
+		}
+		
+		return toReturn;
+	}
+	
+	/**
+	 * Finds quantitative difference between two ArrayLists
+	 * Used for calculating error
+	 * @param actionSequence
+	 * @param actionSequence2
+	 * @return
+	 */
+	public static double findDifference(List<GroundedAction> actionSequence,List<GroundedAction> actionSequence2) {
+		double error = 0;
+		int i = 0;
+		
+		while (i < actionSequence.size() && i < actionSequence2.size()) {
+			if (!actionSequence.get(i).equals(actionSequence2.get(i))) {
+				error++;
+			}
+			i++;
+		}
+		
+		if ((i >= actionSequence.size() && i < actionSequence2.size())) {
+			error += actionSequence2.size() - i;
+		} else if (i >= actionSequence2.size() && i < actionSequence.size()) {
+			error += actionSequence.size() - i;
+		}
+		
+		return error/actionSequence.size();
+	}
+	
+	/**
+	 * Makes state given a list of ObjectInstances
+	 * @param objList
+	 * @return
+	 */
+	public static State makeStateWith(ArrayList<ArrayList<ObjectInstance>> objList) {
+		State s = new State();
+		
+		for (ArrayList<ObjectInstance> oList : objList) {
+			for (ObjectInstance o : oList) {
+				s.addObject(o);
+			}
+		}
+		
+		return s;
+	}
+	
+	/**
+	 * Orders list of ObjectInstance into alphabetical order
+	 * @param unordered
+	 * @return
+	 */
+	public static ArrayList<ObjectInstance> orderOI (ArrayList<ObjectInstance> unordered) {
+		ArrayList<ObjectInstance> ordered = new ArrayList<ObjectInstance>(unordered.size());
+		List<String> nameList = new ArrayList<String>();
+		
+		for (ObjectInstance o : unordered) {
+			nameList.add(o.getName());
+		}
+		
+		Collections.sort(nameList);
+		
+		for (String s : nameList) {
+			for (ObjectInstance obj : unordered) {
+				if (s.equals(obj.getName())) {
+					ordered.add(obj);
+				}
+			}
+		}
+		
+		return ordered;
+	}
+	
+	/**
+	 * Finds all combinations of multidimensional ArrayList
+	 * Used for generating all possibilities of objects to drop
+	 * @param objList
+	 * @param index
+	 * @param output
+	 * @param finalOutput
+	 * @return
+	 */
+	public static ArrayList<ArrayList<ObjectInstance>> findCombinations(ArrayList<ArrayList<ObjectInstance>> objList, int index, ArrayList<ObjectInstance> output,ArrayList<ArrayList<ObjectInstance>> finalOutput){
+		if(index == objList.size()){		
+			ArrayList<ObjectInstance> orderedOutput = new ArrayList<ObjectInstance>(orderOI(output));
+			
+			if (!finalOutput.contains(orderedOutput) && orderedOutput.size() == objList.size()) {
+				finalOutput.add(orderedOutput);
+			}
+
+		}
+	    else{
+	        for(int i=0 ; i<objList.get(index).size(); i++){
+	        	if (!output.contains(objList.get(index).get(i))) {
+	        		output.add(objList.get(index).get(i));
+	        	}
+	        	
+	            findCombinations(objList,index+1,output,finalOutput);
+	            //output.remove(output.size() - 1);  
+	        }
+	    }
+		
+		return finalOutput;
+	}
+	
+	/**
+	 * Finds list that corresponds to the mapping provided. If there are more than one of a type of object,
+	 * duplicates that list as many times as there are that object.
+	 * @param map
+	 * @param s
+	 * @return
+	 */
+	public static ArrayList<ArrayList<ObjectInstance>> getListFromMapping(Map<String,Integer> map,State s) {
+		ArrayList<ArrayList<ObjectInstance>> objList = new ArrayList<ArrayList<ObjectInstance>>();
+		ArrayList<ArrayList<ObjectInstance>> toAdd = new ArrayList<ArrayList<ObjectInstance>>();
+		int i = 1;
+		
+		for (Map.Entry<String,Integer> entry : map.entrySet()) {
+			objList.add(getListOfObject(s,entry.getKey()));
+		}
+		
+		for (ArrayList<ObjectInstance> o : objList) {
+			while (o.size() > i) {
+				toAdd.add(o);
+				i += 1;
+			}
+			i = 1;
+		}
+		
+		for (ArrayList<ObjectInstance> o : toAdd) {
+			objList.add(o);
+		}
+		
+		return objList;
+	}
+	
+	/**
+	 * Generates list of one type of object in a domain.
+	 * @param s
+	 * @param name
+	 * @return
+	 */
+	public static ArrayList<ObjectInstance> getListOfObject(State s,String name) {
+		
+		ArrayList<ObjectInstance> objList = new ArrayList<ObjectInstance>();
+		
+		for (ObjectInstance o : s.getAllObjects()) {
+			if (o.getObjectClass().name.equals(name)) {
+				objList.add(o);
+			}
+		}
+
+		return objList;
+	}
+	
+	
+	/**
+	 * Generates the map to be used by leastCommonIntersectionState()
+	 * @param s - State to be mapped
+	 * @return  Map that includes the names of the objects and their frequency
+	 */
+	public static Map<String,Integer> generateLCIMappingState(State s) {
+		Map<String,Integer> domainCount = new HashMap<String,Integer>();
+		
+		for(ObjectInstance o : s.getAllObjects()) {
+			if (domainCount.containsKey(o.getObjectClass().name)) {
+				domainCount.replace(o.getObjectClass().name, domainCount.get(o.getObjectClass().name)+1);
+			} else {
+				domainCount.put(o.getObjectClass().name,1);
+			}	
+		}
+		
+		return domainCount;
+	}
+	
+	/**
+	 * Generates the Least Common Intersection of two states.
+	 * @param a
+	 * @param b
+	 * @return Map of ObjectClass name and frequency
+	 */
+	public static Map<String,Integer> leastCommonIntersectionState(State a,State b){
+		
+		Map<String,Integer> domain1Count = generateLCIMappingState(a);
+		Map<String,Integer> domain2Count = generateLCIMappingState(b);
+		ArrayList<String> toRemove = new ArrayList<String>();
+		
+		for (Map.Entry<String,Integer> entry : domain1Count.entrySet()) {
+			if (domain2Count.containsKey(entry.getKey())) {
+				if (entry.getValue() < domain2Count.get(entry.getKey())) {
+					domain2Count.replace(entry.getKey(),domain2Count.get(entry.getKey()));
+					//System.out.println(domain2Count.get(entry.getKey()) + " " + entry.getKey());
+				} 
+			} else {
+				domain2Count.remove(entry.getKey());
+			}
+		}
+		
+		for (Map.Entry<String, Integer> entry : domain2Count.entrySet()) {
+			if (!domain1Count.containsKey(entry.getKey())) {
+				toRemove.add(entry.getKey());
+			}
+		}
+		
+		for (String s : toRemove) {
+			domain2Count.remove(s);
+		}
+		
+		return domain2Count;
+	}
+
+	/**
+	 * Finds the state that refers to the least common intersection of 2 states.
+	 * @param d1 Map of state in (ObjectClass name, frequency) form.
+	 * @param d2
+	 * @param s1
+	 * @param s2
+	 * @return State that limits the intersection
+	 */
+	public static State findLimitingState(Map<String,Integer> d1,Map<String,Integer> d2,State s1,State s2) {
+		
+		for (Map.Entry<String, Integer> entry1 : d1.entrySet()) {
+			if (!d2.containsKey(entry1.getKey()) || d2.containsKey(entry1.getKey()) && d2.get(entry1.getKey()) < entry1.getValue()) {
+				return s2;
+			} 
+		}
+		return s1;
+	}
+	
 	/**
 	 * Abstracts away any attributes/objects that don't affect the original policy.
 	 * **Assumes x and y attributes are named "x" and "y", respectively.
