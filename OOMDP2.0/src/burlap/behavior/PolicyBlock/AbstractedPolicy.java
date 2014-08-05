@@ -238,7 +238,7 @@ public class AbstractedPolicy {
 		if (abstractedPolicies == null || abstractedPolicies.isEmpty())
 			throw new IllegalArgumentException("Cannot pass a null or empty list of abstracted policies to merge.");
 		
-		ArrayList<AbstractedPolicy> newPolicies = new ArrayList<>();
+		ArrayList<AbstractedPolicy> newPolicies = new ArrayList<AbstractedPolicy>();
 		newPolicies.addAll(abstractedPolicies);
 		AbstractedPolicy merged = new AbstractedPolicy(newPolicies.get(0));
 		
@@ -295,7 +295,7 @@ public class AbstractedPolicy {
 	 */
 	public static List<AbstractedPolicy> unionMerge(List<PolicyBlockPolicy> policies, int depth) {
 		ArrayList<AbstractedPolicy> abstractPolicies = abstractAll(policies);
-		ArrayList<AbstractedPolicy> mergedPolicies = new ArrayList<>();
+		ArrayList<AbstractedPolicy> mergedPolicies = new ArrayList<AbstractedPolicy>();
 		
 		for (List<AbstractedPolicy> ps: powerset(abstractPolicies, depth)) {
 			mergedPolicies.add(merge(ps));
@@ -344,7 +344,7 @@ public class AbstractedPolicy {
 	 * @return
 	 */
 	public static ArrayList<AbstractedPolicy> abstractAll(List<PolicyBlockPolicy> policies) {
-		ArrayList<AbstractedPolicy> abstractedPolicies = new ArrayList<>();
+		ArrayList<AbstractedPolicy> abstractedPolicies = new ArrayList<AbstractedPolicy>();
 		
 		for (PolicyBlockPolicy p: policies) {
 			AbstractedPolicy newP = new AbstractedPolicy();
