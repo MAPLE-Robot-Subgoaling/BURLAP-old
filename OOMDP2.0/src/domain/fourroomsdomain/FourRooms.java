@@ -189,9 +189,6 @@ public class FourRooms implements DomainGenerator {
 		}
 	}
 
-	
-
-	@Override
 	public Domain generateDomain(){		
 		if(DOMAIN != null)
 			return DOMAIN;
@@ -205,28 +202,21 @@ public class FourRooms implements DomainGenerator {
 
 		Attribute yatt = new Attribute(DOMAIN, ATTY, Attribute.AttributeType.DISC);
 		yatt.setDiscValuesForRange(0, MAXY, 1);
-		
-		Attribute color = new Attribute(DOMAIN, COLORATTNAME, Attribute.AttributeType.DISC);
-		color.setDiscValues(colors);
 
 		DOMAIN.addAttribute(xatt);
 		DOMAIN.addAttribute(yatt);
-		DOMAIN.addAttribute(color);
 		
 		ObjectClass agentClass = new ObjectClass(DOMAIN, CLASSAGENT);
 		agentClass.addAttribute(xatt);
 		agentClass.addAttribute(yatt);
-		agentClass.addAttribute(color);
 
 		ObjectClass goalClass = new ObjectClass(DOMAIN, CLASSGOAL);
 		goalClass.addAttribute(xatt);
 		goalClass.addAttribute(yatt);
-		goalClass.addAttribute(color);
 		
 		ObjectClass randomThing = new ObjectClass(DOMAIN,"random");
 		randomThing.addAttribute(xatt);
 		randomThing.addAttribute(yatt);
-		randomThing.addAttribute(color);
 		
 		DOMAIN.addObjectClass(goalClass);
 		DOMAIN.addObjectClass(agentClass);
@@ -266,13 +256,6 @@ public class FourRooms implements DomainGenerator {
 		//the order of the objects determines the order in which they are drawn -Richard
 		s.addObject(new ObjectInstance(DOMAIN.getObjectClass(CLASSGOAL), CLASSGOAL+0));
 		s.addObject(new ObjectInstance(DOMAIN.getObjectClass(CLASSAGENT), CLASSAGENT+0));
-		s.addObject(new ObjectInstance(DOMAIN.getObjectClass("random"),"random"));
-
-		ObjectInstance block = s.getObjectsOfTrueClass("random").get(0);
-
-		block.setValue(ATTX,10);
-		block.setValue(ATTY,10);
-		block.setValue(COLORATTNAME, 0);
 		
 		return s;
 	}
@@ -442,7 +425,7 @@ public class FourRooms implements DomainGenerator {
 		 * @param State s
 		 * @return boolean true or false
 		 */
-		@Override
+		
 		public boolean satisfies(State s) {
 			ObjectInstance agentState = s.getObject(CLASSAGENT+0);
 			ObjectInstance agentCondition = condition.getObject(CLASSAGENT+0);

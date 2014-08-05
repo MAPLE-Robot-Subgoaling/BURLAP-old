@@ -2,11 +2,14 @@ package burlap.behavior.PolicyBlock;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import domain.AbstractDomain.AbstractDomain;
+import domain.fourroomsdomain.FourRooms;
 import domain.taxiworld.TaxiWorldDomain;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.learning.LearningAgent;
@@ -27,7 +30,7 @@ public class AbstractedPolicy {
 	public List<ObjectInstance> droppedObj;
 	
 	public static void main(String args[]){
-		TaxiWorldDomain.MAXPASS = 1;
+		/*TaxiWorldDomain.MAXPASS = 1;
 		
 		TaxiWorldDomain td1 = new TaxiWorldDomain();
 		td1.generateDomain();
@@ -86,7 +89,7 @@ public class AbstractedPolicy {
 			System.out.println(ap.abstractedPolicy.size());
 			System.out.println("*************\n");
 		}     
-
+*/
 		FourRooms fr = new FourRooms();
 		Domain d = fr.generateDomain();
 
@@ -119,12 +122,12 @@ public class AbstractedPolicy {
 		block1.setValue("y", 2);
 		
 		ObjectInstance block2 = new ObjectInstance(finalDomain2.getObjectClass("random"),"random"+1);
-		block1.setValue("x", 7);
-		block1.setValue("y", 4);
+		block2.setValue("x", 7);
+		block2.setValue("y", 4);
 		
 		ObjectInstance block3 = new ObjectInstance(finalDomain2.getObjectClass("random"),"random"+2);
-		block1.setValue("x", 3);
-		block1.setValue("y", 3);
+		block3.setValue("x", 3);
+		block3.setValue("y", 3);
 
 		ss2.addObject(block1);
 		ss2.addObject(block2);
@@ -132,7 +135,7 @@ public class AbstractedPolicy {
 		ss1.addObject(block3);
 		ss1.addObject(block1);
 		ss1.addObject(block2);
-
+		
 		PolicyBlockPolicy p = new PolicyBlockPolicy((QLearning)FourRooms.Q,0);
 		((QLearning)FourRooms.Q).setLearningPolicy(p);
         EpisodeAnalysis ea = new EpisodeAnalysis();
@@ -146,7 +149,6 @@ public class AbstractedPolicy {
 		originalPolicies = new ArrayList<PolicyBlockPolicy>();
 	}
 	
-	// TODO Once abstraction is implemented, have all of the dropped objects copied as well
 	public AbstractedPolicy(AbstractedPolicy p) {
 		this();
 		this.abstractedPolicy.putAll(p.abstractedPolicy);
