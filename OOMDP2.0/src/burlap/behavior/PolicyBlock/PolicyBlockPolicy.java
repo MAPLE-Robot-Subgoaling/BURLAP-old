@@ -10,9 +10,11 @@ import java.util.Map.Entry;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.QValue;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
+import burlap.behavior.singleagent.learning.tdmethods.QLearningStateNode;
 import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.singleagent.options.SubgoalOption;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
+import burlap.behavior.singleagent.planning.StateConditionTest;
 import burlap.behavior.singleagent.planning.StateConditionTestIterable;
 import burlap.behavior.singleagent.planning.commonpolicies.EpsilonGreedy;
 import burlap.behavior.singleagent.planning.deterministic.TFGoalCondition;
@@ -36,6 +38,7 @@ import burlap.oomdp.singleagent.RewardFunction;
  */
 public class PolicyBlockPolicy extends EpsilonGreedy {
 	public Map<StateHashTuple, GroundedAction> policy;
+	public Map<StateHashTuple, List<QValue>> qpolicy;
 	
 	public PolicyBlockPolicy(double epsilon) {
 		this(null, epsilon);
@@ -43,6 +46,7 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 	public PolicyBlockPolicy(QLearning qplanner, double epsilon) {
 		super(qplanner, epsilon);
 		policy = new HashMap<StateHashTuple, GroundedAction>();
+		qpolicy = new HashMap<StateHashTuple, List<QValue>>();
 	}
 	
 	public Option createOption(String name, TerminalFunction tf) {
@@ -81,6 +85,7 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 	@Override
 	public AbstractGroundedAction getAction(State s) {
 		List<QValue> qValues = super.qplanner.getQs(s);
+		qpolicy.put(((OOMDPPlanner) qplanner).stateHash(s), qValues);
 		AbstractGroundedAction corr = getCorrectAction(s);
 		policy.put(((OOMDPPlanner) qplanner).stateHash(s), (GroundedAction) corr);
 		
@@ -139,6 +144,19 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 		}
 		
 		return mergedPolicies;
+	}
+	
+	public static PolicyBlockPolicy ground(PQLearning qlearner, double epsilon, AbstractedPolicy absPolicy) {
+		PolicyBlockPolicy pbp = new PolicyBlockPolicy(epsilon);
+		pbp.setPlanner(qlearner);
+		
+		for (Entry<StateHashTuple, List<QValue>> e : absPolicy.absPol.entrySet()) {
+			QLearningStateNode n = new QLearningStateNode(e.getKey());
+			n.qEntry.addAll(e.getValue());
+			qlearner.getQRepresentation().put(e.getKey(), n);
+		}
+		
+		return pbp;
 	}
 	
 	/*
@@ -220,6 +238,13 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 		}
 	}
 	
+	public StateConditionTest endTest = new StateConditionTest() {
+		@Override
+		public boolean satisfies(State s) {
+			return policy.get(((OOMDPPlanner)qplanner).stateHash(s)) == null;
+		}
+	};
+	
 	public class StartPolicyTest implements StateConditionTestIterable {
 		/*
 		 * (non-Javadoc)
@@ -228,13 +253,15 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 		 */
 		@Override
 		public boolean satisfies(State s) {
-			for (Entry<StateHashTuple, GroundedAction> e: policy.entrySet()) {
+			/*for (Entry<StateHashTuple, GroundedAction> e: policy.entrySet()) {
 				if (e.getKey().equals(s)) {
 					return true;
 				}
-			}
+			}*/
 			
-			return false;
+			//return false;
+			
+			return policy.get(((OOMDPPlanner)qplanner).stateHash(s)) != null;
 		}
 
 		@Override

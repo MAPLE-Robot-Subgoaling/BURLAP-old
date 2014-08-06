@@ -12,9 +12,11 @@ import domain.AbstractDomain.AbstractDomain;
 import domain.fourroomsdomain.FourRooms;
 import domain.taxiworld.TaxiWorldDomain;
 import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.QValue;
 import burlap.behavior.singleagent.learning.LearningAgent;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
+import burlap.behavior.singleagent.options.PolicyDefinedSubgoalOption;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectClass;
@@ -23,14 +25,15 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
 public class AbstractedPolicy {
-	private Map<StateHashTuple, GroundedAction> abstractedPolicy;
+	public Map<StateHashTuple, GroundedAction> abstractedPolicy;
 	private List<PolicyBlockPolicy> originalPolicies;
+	public Map<StateHashTuple, List<QValue>> absPol;
 	public State newState;
 	public List<ObjectInstance> droppedAttr;
 	public List<ObjectInstance> droppedObj;
 	
 	public static void main(String args[]){
-		/*TaxiWorldDomain.MAXPASS = 1;
+		TaxiWorldDomain.MAXPASS = 1;
 		
 		TaxiWorldDomain td1 = new TaxiWorldDomain();
 		td1.generateDomain();
@@ -51,7 +54,7 @@ public class AbstractedPolicy {
             TaxiWorldDomain.analyzer = new EpisodeAnalysis();
             //System.out.print("Episode " + i + ": ");
             TaxiWorldDomain.analyzer = TaxiWorldDomain.Q.runLearningEpisodeFrom(s1);
-            if (i % 1000 == 0) {
+            if (i % 100 == 0) {
             	System.out.println("1: " + i);
             }
             //System.out.println("\tSteps: " + TaxiWorldDomain.analyzer.numTimeSteps());
@@ -76,7 +79,7 @@ public class AbstractedPolicy {
             TaxiWorldDomain.analyzer = new EpisodeAnalysis();
             //System.out.print("Episode " + i + ": ");
             TaxiWorldDomain.analyzer = TaxiWorldDomain.Q.runLearningEpisodeFrom(s2);
-            if (i % 1000 == 0) {
+            if (i % 100 == 0) {
             	System.out.println("2: " + i);
             }
             //System.out.println("\tSteps: " + TaxiWorldDomain.analyzer.numTimeSteps());
@@ -85,11 +88,79 @@ public class AbstractedPolicy {
         ArrayList<PolicyBlockPolicy> pis = new ArrayList<PolicyBlockPolicy>();
         pis.add(newPolicy1);
         pis.add(newPolicy2);
-		for (AbstractedPolicy ap: unionMerge(pis, pis.size())) {
+        List<AbstractedPolicy> absPolicies = unionMerge(pis, pis.size());
+		/*for (AbstractedPolicy ap: absPolicies) {
 			System.out.println(ap.abstractedPolicy.size());
 			System.out.println("*************\n");
-		}     
-*/
+		}*/
+		
+		TaxiWorldDomain td3 = new TaxiWorldDomain();
+		td3.generateDomain();
+		
+		QLearning Q = (QLearning)TaxiWorldDomain.Q;
+		//PQLearning oQ = new PQLearning(TaxiWorldDomain.DOMAIN, Q.getRF(), Q.getTF(), TaxiWorldDomain.DISCOUNTFACTOR, Q.getHashingFactory(), 0.2, TaxiWorldDomain.LEARNINGRATE, Integer.MAX_VALUE);
+		//PolicyBlockPolicy newP = PolicyBlockPolicy.ground(oQ, 0.9, absPolicies.get(2));
+		
+		//PolicyDefinedSubgoalOption op = new PolicyDefinedSubgoalOption("merged", newP, newP.endTest);
+		PolicyBlockOption pop = new PolicyBlockOption(Q.getHashingFactory(), TaxiWorldDomain.DOMAIN.getActions(), absPolicies.get(2).abstractedPolicy);
+		
+		State s3 = TaxiWorldDomain.getCleanState();
+        int[][] passPos3 = {
+                {1, 4}
+        };
+		PolicyBlockPolicy newPolicy3 = new PolicyBlockPolicy((QLearning) TaxiWorldDomain.Q, 0.9);
+        ((QLearning) TaxiWorldDomain.Q).setLearningPolicy(newPolicy3);
+        ((QLearning) TaxiWorldDomain.Q).addNonDomainReferencedAction(pop);
+        for (int i = 0; i < 200; i++) {
+            TaxiWorldDomain.setAgent(s3, 4, 5);
+            TaxiWorldDomain.setGoal(s3, 4, 5);
+            
+            for (int j = 1; j <= TaxiWorldDomain.MAXPASS; j++) {
+            	TaxiWorldDomain.setPassenger(s3, j, passPos3[j - 1][0], passPos3[j - 1][1]);
+            }
+
+            TaxiWorldDomain.analyzer = new EpisodeAnalysis();
+            //System.out.print("Episode " + i + ": ");
+            TaxiWorldDomain.analyzer = TaxiWorldDomain.Q.runLearningEpisodeFrom(s3);
+            /*if (i % 10 == 0) {
+            	System.out.println("3: " + i);
+            }*/
+            //System.out.println("\tSteps: " + TaxiWorldDomain.analyzer.numTimeSteps());
+        }
+        
+        for (GroundedAction ga : TaxiWorldDomain.analyzer.actionSequence) {
+        	System.out.println(ga.actionName());
+        }
+        
+        TaxiWorldDomain td4 = new TaxiWorldDomain();
+		td4.generateDomain();
+        State s4 = TaxiWorldDomain.getCleanState();
+        int[][] passPos4 = {
+                {1, 4}
+        };
+		PolicyBlockPolicy newPolicy4 = new PolicyBlockPolicy((QLearning) TaxiWorldDomain.Q, 0.9);
+        ((QLearning) TaxiWorldDomain.Q).setLearningPolicy(newPolicy4);
+        for (int i = 0; i < 5000; i++) {
+            TaxiWorldDomain.setAgent(s4, 4, 5);
+            TaxiWorldDomain.setGoal(s4, 4, 5);
+            
+            for (int j = 1; j <= TaxiWorldDomain.MAXPASS; j++) {
+            	TaxiWorldDomain.setPassenger(s4, j, passPos4[j - 1][0], passPos4[j - 1][1]);
+            }
+
+            TaxiWorldDomain.analyzer = new EpisodeAnalysis();
+            //System.out.print("Episode " + i + ": ");
+            TaxiWorldDomain.analyzer = TaxiWorldDomain.Q.runLearningEpisodeFrom(s4);
+            /*if (i % 10 == 0) {
+            	System.out.println("4: " + i);
+            }*/
+            //System.out.println("\tSteps: " + TaxiWorldDomain.analyzer.numTimeSteps());
+        }
+        
+        System.out.println("\n***********************************\n");
+        for (GroundedAction ga : TaxiWorldDomain.analyzer.actionSequence) {
+        	System.out.println(ga.actionName());
+        }
 		FourRooms fr = new FourRooms();
 		Domain d = fr.generateDomain();
 
@@ -147,12 +218,14 @@ public class AbstractedPolicy {
 	public AbstractedPolicy() {
 		abstractedPolicy = new HashMap<StateHashTuple, GroundedAction>();
 		originalPolicies = new ArrayList<PolicyBlockPolicy>();
+		absPol = new HashMap<StateHashTuple, List<QValue>>();
 	}
 	
 	public AbstractedPolicy(AbstractedPolicy p) {
 		this();
 		this.abstractedPolicy.putAll(p.abstractedPolicy);
 		this.originalPolicies.addAll(p.originalPolicies);
+		this.absPol.putAll(p.absPol);
 	}
 
 	public static PolicyBlockPolicy abstractPolicy(List<GroundedAction> actionSequence,LearningAgent la,State s1,State s2) {
@@ -373,7 +446,7 @@ public class AbstractedPolicy {
 		
 		for(ObjectInstance o : s.getAllObjects()) {
 			if (domainCount.containsKey(o.getObjectClass().name)) {
-				domainCount.replace(o.getObjectClass().name, domainCount.get(o.getObjectClass().name)+1);
+				domainCount.put(o.getObjectClass().name, domainCount.get(o.getObjectClass().name)+1);
 			} else {
 				domainCount.put(o.getObjectClass().name,1);
 			}	
@@ -397,7 +470,7 @@ public class AbstractedPolicy {
 		for (Map.Entry<String,Integer> entry : domain1Count.entrySet()) {
 			if (domain2Count.containsKey(entry.getKey())) {
 				if (entry.getValue() < domain2Count.get(entry.getKey())) {
-					domain2Count.replace(entry.getKey(),domain2Count.get(entry.getKey()));
+					domain2Count.put(entry.getKey(),domain2Count.get(entry.getKey()));
 					//System.out.println(domain2Count.get(entry.getKey()) + " " + entry.getKey());
 				} 
 			} else {
@@ -557,8 +630,22 @@ public class AbstractedPolicy {
 			// Comparison is simply whether the given state corresponds to the
 			// same action
 			GroundedAction a = otherPolicy.abstractedPolicy.get(e.getKey());
+			List<QValue> qs = otherPolicy.absPol.get(e.getKey());
 			if (a != null && a.equals(e.getValue())) {
 				merged.abstractedPolicy.put(e.getKey(), e.getValue());
+				
+				List<QValue> qs2 = absPol.get(e.getKey());
+				List<QValue> maxQs = new ArrayList<QValue>();
+				for (QValue q : qs) {
+					for (QValue q2 : qs2) {
+						if (q.a.actionName().equals(q2.a.actionName())) {
+							QValue newQ = new QValue(q.s, q.a, Math.max(q.q, q2.q));
+							maxQs.add(newQ);
+						}
+					}
+				}
+				
+				merged.absPol.put(e.getKey(), maxQs);
 			}
 		}
 		
@@ -684,6 +771,7 @@ public class AbstractedPolicy {
 			AbstractedPolicy newP = new AbstractedPolicy();
 			newP.originalPolicies.addAll(policies);
 			newP.abstractedPolicy.putAll(p.policy);
+			newP.absPol.putAll(p.qpolicy);
 			abstractedPolicies.add(newP);
 		}
 		
