@@ -23,7 +23,6 @@ import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.options.Option;
-import burlap.behavior.singleagent.planning.OOMDPPlanner;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectClass;
@@ -33,93 +32,41 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 
 public class AbstractedPolicy {
-	public Map<StateHashTuple, GroundedAction> abstractedPolicy;
 	private List<PolicyBlockPolicy> originalPolicies;
+	public Map<StateHashTuple, GroundedAction> abstractedPolicy;
 	public Map<StateHashTuple, List<QValue>> absPol;
 	public State newState;
 	public List<ObjectInstance> droppedAttr;
 	public List<ObjectInstance> droppedObj;
 	
-	public static EpisodeAnalysis runTaxiLearning(PolicyBlockPolicy policy, int[][] passPos, int episodes, String filepath) throws IOException {
-		TaxiWorldDomain.MAXPASS = passPos.length;
-		TaxiWorldDomain td = new TaxiWorldDomain();
-		td.generateDomain();
-		State s = TaxiWorldDomain.getCleanState();
-        ((QLearning) TaxiWorldDomain.Q).setLearningPolicy(policy);
-        policy.setPlanner((OOMDPPlanner) TaxiWorldDomain.Q);
-        
-        File f = new File(filepath);
-        BufferedWriter b = new BufferedWriter(new FileWriter(f));
-        b.write("Episode,Steps\n");
-        int cumul = 0;
-        
-        for (int i = 0; i < episodes; i++) {
-            TaxiWorldDomain.setAgent(s, 4, 5);
-            TaxiWorldDomain.setGoal(s, 3, 5);
-            
-            for (int j = 1; j <= TaxiWorldDomain.MAXPASS; j++) {
-            	TaxiWorldDomain.setPassenger(s, j, passPos[j - 1][0], passPos[j - 1][1]);
-            }
-
-            TaxiWorldDomain.analyzer = new EpisodeAnalysis();
-            TaxiWorldDomain.analyzer = TaxiWorldDomain.Q.runLearningEpisodeFrom(s);
-            cumul += TaxiWorldDomain.analyzer.numTimeSteps();
-            b.write((i+1) + "," + cumul + "\n");
-        }
-        b.close();
-        
-        return TaxiWorldDomain.analyzer;
+	public static long[] runTaxiLearning(PolicyBlockPolicy policy, StateHashFactory hf, int[][] passPos, int episodes, String filepath) throws IOException {
+		return runTaxiLearning(policy, hf,  new ArrayList<Option>(), passPos, episodes, filepath);
 	}
 	
-	public static EpisodeAnalysis runTaxiLearning(PolicyBlockPolicy policy, int[][] passPos, int episodes, Option o, String filepath) throws IOException {
-		TaxiWorldDomain.MAXPASS = passPos.length;
-		TaxiWorldDomain td = new TaxiWorldDomain();
-		td.generateDomain();
-		State s = TaxiWorldDomain.getCleanState();
-        ((QLearning) TaxiWorldDomain.Q).setLearningPolicy(policy);
-        // TaxiWorldDomain.DOMAIN.addAction(o);
-        ((QLearning) TaxiWorldDomain.Q).addNonDomainReferencedAction(o);
-        policy.setPlanner((OOMDPPlanner) TaxiWorldDomain.Q);
-        
-        File f = new File(filepath);
-        BufferedWriter b = new BufferedWriter(new FileWriter(f));
-        b.write("Episode,Steps\n");
-        int cumul = 0;
-        
-        for (int i = 0; i < episodes; i++) {
-            TaxiWorldDomain.setAgent(s, 4, 5);
-            TaxiWorldDomain.setGoal(s, 3, 5);
-            
-            for (int j = 1; j <= TaxiWorldDomain.MAXPASS; j++) {
-            	TaxiWorldDomain.setPassenger(s, j, passPos[j - 1][0], passPos[j - 1][1]);
-            }
-
-            TaxiWorldDomain.analyzer = new EpisodeAnalysis();
-            TaxiWorldDomain.analyzer = TaxiWorldDomain.Q.runLearningEpisodeFrom(s);
-            cumul += TaxiWorldDomain.analyzer.numTimeSteps();
-            b.write((i+1) + "," + cumul + "\n");
-        }
-        b.close();
-        
-        return TaxiWorldDomain.analyzer;
+	public static long[] runTaxiLearning(PolicyBlockPolicy policy, StateHashFactory hf, Option o, int[][] passPos, int episodes, String filepath) throws IOException {
+		List<Option> os = new ArrayList<Option>();
+		os.add(o);
+		return runTaxiLearning(policy, hf, os, passPos, episodes, filepath);
 	}
 	
-	public static EpisodeAnalysis runTaxiLearning(PolicyBlockPolicy policy, int[][] passPos, int episodes, List<Option> os, String filepath) throws IOException {
+	public static long[] runTaxiLearning(PolicyBlockPolicy policy, StateHashFactory hf, List<Option> os, int[][] passPos, int episodes, String filepath) throws IOException {
 		TaxiWorldDomain.MAXPASS = passPos.length;
-		TaxiWorldDomain td = new TaxiWorldDomain();
-		td.generateDomain();
+		QLearning Q = new QLearning(TaxiWorldDomain.DOMAIN, TaxiWorldDomain.rf, TaxiWorldDomain.tf, TaxiWorldDomain.DISCOUNTFACTOR, hf, TaxiWorldDomain.GAMMA, TaxiWorldDomain.LEARNINGRATE, Integer.MAX_VALUE);
+		//TaxiWorldDomain td = new TaxiWorldDomain();
+		//td.generateDomain();
 		State s = TaxiWorldDomain.getCleanState();
-        ((QLearning) TaxiWorldDomain.Q).setLearningPolicy(policy);
+        Q.setLearningPolicy(policy);
+        policy.setPlanner(Q);
+        
         for (Option o: os) {
-        	//TaxiWorldDomain.DOMAIN.addAction(o);
-        	((QLearning) TaxiWorldDomain.Q).addNonDomainReferencedAction(o);
-        }
-        policy.setPlanner((OOMDPPlanner) TaxiWorldDomain.Q);
+			Q.addNonDomainReferencedAction(o);
+		}
         
         File f = new File(filepath);
         BufferedWriter b = new BufferedWriter(new FileWriter(f));
         b.write("Episode,Steps\n");
-        int cumul = 0;
+        long[] cumulArr = new long[episodes];
+        long cumul = 0;
         
         for (int i = 0; i < episodes; i++) {
             TaxiWorldDomain.setAgent(s, 4, 5);
@@ -128,15 +75,16 @@ public class AbstractedPolicy {
             for (int j = 1; j <= TaxiWorldDomain.MAXPASS; j++) {
             	TaxiWorldDomain.setPassenger(s, j, passPos[j - 1][0], passPos[j - 1][1]);
             }
-            
-            TaxiWorldDomain.analyzer = new EpisodeAnalysis();
-            TaxiWorldDomain.analyzer = TaxiWorldDomain.Q.runLearningEpisodeFrom(s);
-            cumul += TaxiWorldDomain.analyzer.numTimeSteps();
+
+            EpisodeAnalysis analyzer = new EpisodeAnalysis();
+            analyzer = Q.runLearningEpisodeFrom(s);
+            cumul += analyzer.numTimeSteps();
             b.write((i+1) + "," + cumul + "\n");
+            cumulArr[i] = cumul;
         }
         b.close();
         
-        return TaxiWorldDomain.analyzer;
+        return cumulArr;
 	}
 	
 	public static PolicyBlockOption generateRandomOption(StateHashFactory hf, List<Action> actionSpace, Set<StateHashTuple> stateSpace) {
@@ -159,6 +107,14 @@ public class AbstractedPolicy {
 		return new PolicyBlockOption(hf, actionSpace, policy);
 	}
 	
+	/**
+	 * This method generates an option to have the agent take a cyclic path in the TaxiWorldDomain.
+	 * Acts as a sanity check to make sure that options wont cycle forever
+	 * @param hf
+	 * @param actionSpace
+	 * @param stateSpace
+	 * @return an option representing a cyclic path
+	 */
 	public static PolicyBlockOption generateCyclicOption(StateHashFactory hf, List<Action> actionSpace, Set<StateHashTuple> stateSpace) {
 		Map<StateHashTuple, GroundedAction> policy = new HashMap<StateHashTuple, GroundedAction>();
 		Action n = null;
@@ -177,7 +133,10 @@ public class AbstractedPolicy {
 			}
 		}
 		
-		// 1,5,e; 2, 5,n; 2,6,w; 1,6,s
+		if (n == null || s == null || e == null || w == null) {
+			throw new NullPointerException("Action space doesn't define the correct actions for this domain.");
+		}
+		// (1, 5) -> e; (2, 5) -> n; (2, 6) -> w; (1,6) -> s
 		for (StateHashTuple st: stateSpace) {
 			int x = st.s.getFirstObjectOfClass(TaxiWorldDomain.CLASSAGENT).getDiscValForAttribute(TaxiWorldDomain.ATTX);
 			int y = st.s.getFirstObjectOfClass(TaxiWorldDomain.CLASSAGENT).getDiscValForAttribute(TaxiWorldDomain.ATTY);
@@ -197,38 +156,50 @@ public class AbstractedPolicy {
 	
 	public static void main(String args[]) throws IOException {
 		String path = "C:/Users/Allison/Desktop/";
-		TaxiWorldDomain.MAXPASS = 2;
+		TaxiWorldDomain.MAXPASS = 3;
 		
 		new TaxiWorldDomain().generateDomain();
         DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
-        hf.setAttributesForClass(TaxiWorldDomain.CLASSAGENT, TaxiWorldDomain.DOMAIN.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
+        hf.setAttributesForClass(TaxiWorldDomain.CLASSAGENT,
+        		TaxiWorldDomain.DOMAIN.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
+		double epsilon = 0.3;
+		long startTime = System.currentTimeMillis();
 		
-		double epsilon = 0.2;
-		int[][] first = {{1, 2}, {3, 2}};
-		int[][] second = {{1, 4}, {5, 4}};
-		// int[][] merged = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-		int[][] merged = {{13, 7}, {7, 7}};
-		System.out.println("("+merged[0][0]+", "+merged[0][1]+")"+", ("+merged[1][0] + ", "+merged[1][1]+")");
-		/*List<Integer[]> open = TaxiWorldDomain.getOpenSpots();
-		for (Integer[] o: open) {
-			System.out.println(o[0] + ": " + o[1]);
-		}*/
+		// int[][] first = {{1, 2}, {3, 2}};
+		// int[][] second = {{1, 4}, {5, 4}};
+		// int[][] merged = {{13, 7}, {7, 7}};
+		// List<Integer[]> open = TaxiWorldDomain.getOpenSpots();
+		// for (Integer[] o: open) {
+		// 	 System.out.println(o[0] + ": " + o[1]);
+		// }
+		int[][] first = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
+		int[][] second = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
+		int[][] merged = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
+		System.out.print("First: { ");
+		for (int i = 0; i < first.length; i++) {
+			System.out.print("("+first[i][0]+", "+first[i][1]+") ");
+		}
+		System.out.println("}");
+		System.out.print("Second: { ");
+		for (int i = 0; i < second.length; i++) {
+			System.out.print("("+second[i][0]+", "+second[i][1]+") ");
+		}
+		System.out.println("}");
+		System.out.print("Merged: { ");
+		for (int i = 0; i < merged.length; i++) {
+			System.out.print("("+merged[i][0]+", "+merged[i][1]+") ");
+		}
+		System.out.println("}");
 		
-		PolicyBlockPolicy newPolicy1 = new PolicyBlockPolicy(epsilon);
 		System.out.println("Starting first source.");
-		runTaxiLearning(newPolicy1, first, 1000, path + "one.csv");
-		System.out.println("Done with first source.");
+		PolicyBlockPolicy newPolicy1 = new PolicyBlockPolicy(epsilon);
+		System.out.println(runTaxiLearning(newPolicy1, hf, first, 1000, path + "one.csv")[999]);
+		System.out.println("Done with first source.\n");
 		
-		/*PolicyBlockPolicy newPolicyC = new PolicyBlockPolicy(epsilon);
-		System.out.println("Starting cyclic option");
-		PolicyBlockOption cycle = generateCyclicOption(hf, TaxiWorldDomain.DOMAIN.getActions(), newPolicy1.policy.keySet());
-		runTaxiLearning(newPolicyC, merged, 500, path + "cycle.csv");
-		System.out.println("Done with cyclic option");*/
-		
-		PolicyBlockPolicy newPolicy2 = new PolicyBlockPolicy(epsilon);
 		System.out.println("Starting second source.");
-		runTaxiLearning(newPolicy2, second, 1000, path + "two.csv");
-		System.out.println("Done with second source.");
+		PolicyBlockPolicy newPolicy2 = new PolicyBlockPolicy(epsilon);
+		System.out.println(runTaxiLearning(newPolicy2, hf, second, 1000, path + "two.csv")[999]);
+		System.out.println("Done with second source.\n");
         
         ArrayList<PolicyBlockPolicy> pis = new ArrayList<PolicyBlockPolicy>();
         pis.add(newPolicy1);
@@ -238,34 +209,34 @@ public class AbstractedPolicy {
 			System.out.println(ap.abstractedPolicy.size());
 		}
 		
+		System.out.println("Starting merged.");
 		PolicyBlockOption pbp = new PolicyBlockOption(hf, TaxiWorldDomain.DOMAIN.getActions(), absPolicies.get(2).abstractedPolicy);
 		PolicyBlockPolicy newPolicy3 = new PolicyBlockPolicy(epsilon);
-		System.out.println("Starting merged.");
-		runTaxiLearning(newPolicy3, merged, 1000, pbp, path + "Merged-Source Options.csv");
-		System.out.println("Done with merged.");
+		System.out.println(runTaxiLearning(newPolicy3, hf, pbp, merged, 1000, path + "Merged-Source Options.csv")[999]);
+		System.out.println("Done with merged.\n");
 		
-		PolicyBlockPolicy newPolicy4 = new PolicyBlockPolicy(epsilon);
 		System.out.println("Starting Q-learning.");
-		runTaxiLearning(newPolicy4, merged, 1000, path + "Q-Learning.csv");
-		System.out.println("Done with Q-learning.");
+		PolicyBlockPolicy newPolicy4 = new PolicyBlockPolicy(epsilon);
+		System.out.println(runTaxiLearning(newPolicy4, hf, merged, 1000, path + "Q-Learning.csv")[999]);
+		System.out.println("Done with Q-learning.\n");
 		
+		System.out.println("Starting Single-source options.");
 		PolicyBlockOption pop1 = new PolicyBlockOption(hf, TaxiWorldDomain.DOMAIN.getActions(), absPolicies.get(0).abstractedPolicy);
 		PolicyBlockOption pop2 = new PolicyBlockOption(hf, TaxiWorldDomain.DOMAIN.getActions(), absPolicies.get(1).abstractedPolicy);
 		List<Option> ps = new ArrayList<Option>();
 		ps.add(pop1);
 		ps.add(pop2);
 		PolicyBlockPolicy newPolicy5 = new PolicyBlockPolicy(epsilon);
-		System.out.println("Starting Single-source options.");
-		runTaxiLearning(newPolicy5, merged, 1000, ps, path + "Single-Source Options.csv");
-		System.out.println("Done with Single-source options.");
+		System.out.println(runTaxiLearning(newPolicy5, hf, ps, merged, 1000, path + "Single-Source Options.csv")[999]);
+		System.out.println("Done with Single-source options.\n");
 		
+		System.out.println("Starting random.");
 		PolicyBlockOption rando = generateRandomOption(hf, TaxiWorldDomain.DOMAIN.getActions(), newPolicy1.policy.keySet());
         PolicyBlockPolicy newPolicy6 = new PolicyBlockPolicy(epsilon);
-		System.out.println("Starting random.");
-        runTaxiLearning(newPolicy6, merged, 1000, rando, path + "Random Option.csv");
-        System.out.println("Done with random.");
+        System.out.println(runTaxiLearning(newPolicy6, hf, rando, merged, 1000, path + "Random Option.csv")[999]);
+        System.out.println("Done with random.\n");
         
-        
+        System.out.println("Experiment finished. Took a total of " + ((System.currentTimeMillis() - startTime) / 60000.0) + " minutes.");
 		/*
 		FourRooms fr = new FourRooms();
 		Domain d = fr.generateDomain();

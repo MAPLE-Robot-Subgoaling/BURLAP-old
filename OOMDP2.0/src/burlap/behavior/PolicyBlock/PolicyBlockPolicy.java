@@ -241,7 +241,7 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 	public StateConditionTest endTest = new StateConditionTest() {
 		@Override
 		public boolean satisfies(State s) {
-			return policy.get(((OOMDPPlanner)qplanner).stateHash(s)) == null;
+			return policy.get(((OOMDPPlanner) qplanner).stateHash(s)) == null;
 		}
 	};
 	
@@ -253,15 +253,7 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 		 */
 		@Override
 		public boolean satisfies(State s) {
-			/*for (Entry<StateHashTuple, GroundedAction> e: policy.entrySet()) {
-				if (e.getKey().equals(s)) {
-					return true;
-				}
-			}*/
-			
-			//return false;
-			
-			return policy.get(((OOMDPPlanner)qplanner).stateHash(s)) != null;
+			return policy.get(((OOMDPPlanner) qplanner).stateHash(s)) != null;
 		}
 
 		@Override

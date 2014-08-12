@@ -72,7 +72,7 @@ public class PolicyBlockOption extends Option {
 
 	@Override
 	public List<ActionProb> getActionDistributionForState(State s, String[] params) {
-		/*GroundedAction ga = policy.get(hashFactory.hashState(s));
+		GroundedAction ga = policy.get(hashFactory.hashState(s));
 		List<ActionProb> aprobs = new ArrayList<ActionProb>();
 		for (Action a : actions) {
 			if (ga.action.equals(a)) {
@@ -85,8 +85,7 @@ public class PolicyBlockOption extends Option {
 			}
 		}
 		
-		return aprobs;*/
-		return new ArrayList<ActionProb>();
+		return aprobs;
 	}
 
 	@Override

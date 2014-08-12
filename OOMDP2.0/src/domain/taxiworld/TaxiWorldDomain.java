@@ -4,14 +4,9 @@ import java.util.*;
 
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
-import burlap.behavior.singleagent.learning.LearningAgent;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
-import burlap.behavior.singleagent.learning.tdmethods.SarsaLam;
 import burlap.behavior.singleagent.options.PrimitiveOption;
-import burlap.behavior.singleagent.planning.OOMDPPlanner;
-import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
-import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
@@ -68,12 +63,7 @@ public class TaxiWorldDomain implements DomainGenerator {
     public static final double LEARNINGRATE = 0.99;
     public static final double DISCOUNTFACTOR = 0.95;
     public static final double LAMBDA = 1.0;
-    public static Map<StateHashTuple, List<QAction>> qVals =
-            new HashMap<StateHashTuple, List<QAction>>();
-    public static LearningAgent Q, S;
-    public static OOMDPPlanner planner;
-    public static EpisodeAnalysis analyzer;
-    public static TaxiWorldStateParser parser;
+    public static final double GAMMA = 0.2;
     public static RewardFunction rf;
     public static TerminalFunction tf;
 
@@ -88,7 +78,10 @@ public class TaxiWorldDomain implements DomainGenerator {
         TaxiWorldDomain txd = new TaxiWorldDomain();
         Domain d = txd.generateDomain();
         State s = getCleanState();
-        parser = new TaxiWorldStateParser();
+        TaxiWorldStateParser parser = new TaxiWorldStateParser();
+        DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
+        hashFactory.setAttributesForClass(CLASSAGENT, DOMAIN.getObjectClass(CLASSAGENT).attributeList);
+        QLearning Q = new QLearning(DOMAIN, rf, tf, DISCOUNTFACTOR, hashFactory, GAMMA, LEARNINGRATE, Integer.MAX_VALUE);
 
         // int[][] passPos = getRandomSpots(MAXPASS);
         int[][] passPos = {
@@ -102,7 +95,7 @@ public class TaxiWorldDomain implements DomainGenerator {
                 setPassenger(s, j, passPos[j - 1][0], passPos[j - 1][1]);
             }
 
-            analyzer = new EpisodeAnalysis();
+            EpisodeAnalysis analyzer = new EpisodeAnalysis();
             System.out.print("Episode " + i + ": ");
             analyzer = Q.runLearningEpisodeFrom(s);
             System.out.println("\tSteps: " + analyzer.numTimeSteps());
@@ -263,11 +256,11 @@ public class TaxiWorldDomain implements DomainGenerator {
         rf = new SingleGoalPFRF(DOMAIN.getPropFunction(PFATFINISH));
         tf = new SinglePFTF(DOMAIN.getPropFunction(PFATFINISH));
 
-        DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
+        /*DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
         hashFactory.setAttributesForClass(CLASSAGENT, DOMAIN.getObjectClass(CLASSAGENT).attributeList);
         Q = new QLearning(DOMAIN, rf, tf, DISCOUNTFACTOR, hashFactory, 0.2, LEARNINGRATE, Integer.MAX_VALUE);
         S = new SarsaLam(DOMAIN, rf, tf, DISCOUNTFACTOR, hashFactory, 0.2, LEARNINGRATE, LAMBDA);
-        planner = new ValueIteration(DOMAIN, rf, tf, DISCOUNTFACTOR, hashFactory, 0.001, 100);
+        planner = new ValueIteration(DOMAIN, rf, tf, DISCOUNTFACTOR, hashFactory, 0.001, 100);*/
 
         return DOMAIN;
     }
