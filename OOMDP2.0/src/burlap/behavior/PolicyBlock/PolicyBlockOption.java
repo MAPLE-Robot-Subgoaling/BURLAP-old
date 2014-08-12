@@ -1,9 +1,10 @@
 package burlap.behavior.PolicyBlock;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 
 import burlap.behavior.singleagent.Policy.ActionProb;
 import burlap.behavior.singleagent.options.Option;
@@ -17,6 +18,7 @@ public class PolicyBlockOption extends Option {
 	public Map<StateHashTuple, GroundedAction> policy;
 	private StateHashFactory hashFactory;
 	private List<Action> actions;
+	private Set<StateHashTuple> visited;
 	
 	public PolicyBlockOption(StateHashFactory shf, List<Action> actions, Map<StateHashTuple, GroundedAction> policy) {
 		this.policy = policy;
@@ -25,6 +27,7 @@ public class PolicyBlockOption extends Option {
 		super.name = "PolicyBlockOption";
 		this.parameterClasses = new String[0];
 		this.parameterOrderGroup = new String[0];
+		visited = new HashSet<StateHashTuple>();
 	}
 	
 	@Override
@@ -44,8 +47,10 @@ public class PolicyBlockOption extends Option {
 
 	@Override
 	public double probabilityOfTermination(State s, String[] params) {
-		if (policy.get(hashFactory.hashState(s)) == null)
+		if (policy.get(hashFactory.hashState(s)) == null || visited.contains(hashFactory.hashState(s))) {
+			visited.clear();
 			return 1.;
+		}
 		
 		return 0.;
 	}
@@ -53,23 +58,21 @@ public class PolicyBlockOption extends Option {
 	@Override
 	public void initiateInStateHelper(State s, String[] params) { }
 	
-	//private boolean flag = true;
 	
 	@Override
 	public GroundedAction oneStepActionSelection(State s, String[] params) {
-		/*if (flag) {
-			flag = false;
-			for (GroundedAction ga : policy.values()) {
-				return ga;
-			}
-		}*/
+		if (visited.contains(hashFactory.hashState(s))) {
+			visited.clear();
+			return null;
+		}
+		
+		visited.add(hashFactory.hashState(s));
 		return policy.get(hashFactory.hashState(s));
 	}
 
 	@Override
-	public List<ActionProb> getActionDistributionForState(State s,
-			String[] params) {
-		GroundedAction ga = policy.get(hashFactory.hashState(s));
+	public List<ActionProb> getActionDistributionForState(State s, String[] params) {
+		/*GroundedAction ga = policy.get(hashFactory.hashState(s));
 		List<ActionProb> aprobs = new ArrayList<ActionProb>();
 		for (Action a : actions) {
 			if (ga.action.equals(a)) {
@@ -82,12 +85,16 @@ public class PolicyBlockOption extends Option {
 			}
 		}
 		
-		return aprobs;
-		//return new ArrayList<ActionProb>();
+		return aprobs;*/
+		return new ArrayList<ActionProb>();
 	}
 
 	@Override
 	public boolean applicableInState(State s, String [] params) {
+		if (visited.contains(hashFactory.hashState(s))) {
+			visited.clear();
+			return false;
+		}
 		return policy.get(hashFactory.hashState(s)) != null;
 	}
 }
