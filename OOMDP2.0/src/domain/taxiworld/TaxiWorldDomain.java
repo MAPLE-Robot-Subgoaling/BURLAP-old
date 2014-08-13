@@ -73,7 +73,7 @@ public class TaxiWorldDomain implements DomainGenerator {
      */
     public static void main(String[] args) {
         // Set the total number of passengers to be used in the domain
-        MAXPASS = 1;
+        MAXPASS = 4;
 
         TaxiWorldDomain txd = new TaxiWorldDomain();
         Domain d = txd.generateDomain();
@@ -83,10 +83,10 @@ public class TaxiWorldDomain implements DomainGenerator {
         hashFactory.setAttributesForClass(CLASSAGENT, DOMAIN.getObjectClass(CLASSAGENT).attributeList);
         QLearning Q = new QLearning(DOMAIN, rf, tf, DISCOUNTFACTOR, hashFactory, GAMMA, LEARNINGRATE, Integer.MAX_VALUE);
 
-        // int[][] passPos = getRandomSpots(MAXPASS);
-        int[][] passPos = {
-            {1, 1}
-        };
+        int[][] passPos = getRandomSpots(MAXPASS);
+        // int[][] passPos = {
+        //     {1, 1}
+        // };
         for (int i = 1; i <= 1000; i++) {
             setAgent(s, 4, 5);
             setGoal(s, 4, 5);

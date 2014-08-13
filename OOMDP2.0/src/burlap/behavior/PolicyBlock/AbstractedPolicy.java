@@ -170,6 +170,7 @@ public class AbstractedPolicy {
         hf.setAttributesForClass(TaxiWorldDomain.CLASSAGENT,
         		TaxiWorldDomain.DOMAIN.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
 		double epsilon = 0.3;
+		int episodes = 5000;
 		long startTime = System.currentTimeMillis();
 		
 		// int[][] first = {{1, 2}, {3, 2}};
@@ -200,12 +201,12 @@ public class AbstractedPolicy {
 		
 		System.out.println("Starting first source.");
 		PolicyBlockPolicy newPolicy1 = new PolicyBlockPolicy(epsilon);
-		System.out.println(runTaxiLearning(newPolicy1, hf, first, 1000, path + "one.csv")[999]);
+		System.out.println(runTaxiLearning(newPolicy1, hf, first, episodes, path + "one.csv")[episodes - 1]);
 		System.out.println("Done with first source.\n");
 		
 		System.out.println("Starting second source.");
 		PolicyBlockPolicy newPolicy2 = new PolicyBlockPolicy(epsilon);
-		System.out.println(runTaxiLearning(newPolicy2, hf, second, 1000, path + "two.csv")[999]);
+		System.out.println(runTaxiLearning(newPolicy2, hf, second, episodes, path + "two.csv")[episodes - 1]);
 		System.out.println("Done with second source.\n");
         
         ArrayList<PolicyBlockPolicy> pis = new ArrayList<PolicyBlockPolicy>();
@@ -219,12 +220,12 @@ public class AbstractedPolicy {
 		System.out.println("Starting merged.");
 		PolicyBlockOption pbp = new PolicyBlockOption(hf, TaxiWorldDomain.DOMAIN.getActions(), absPolicies.get(2).abstractedPolicy);
 		PolicyBlockPolicy newPolicy3 = new PolicyBlockPolicy(epsilon);
-		System.out.println(runTaxiLearning(newPolicy3, hf, pbp, merged, 1000, path + "Merged-Source Options.csv")[999]);
+		System.out.println(runTaxiLearning(newPolicy3, hf, pbp, merged, episodes, path + "Merged Option.csv")[episodes - 1]);
 		System.out.println("Done with merged.\n");
 		
 		System.out.println("Starting Q-learning.");
 		PolicyBlockPolicy newPolicy4 = new PolicyBlockPolicy(epsilon);
-		System.out.println(runTaxiLearning(newPolicy4, hf, merged, 1000, path + "Q-Learning.csv")[999]);
+		System.out.println(runTaxiLearning(newPolicy4, hf, merged, episodes, path + "Q-Learning.csv")[episodes - 1]);
 		System.out.println("Done with Q-learning.\n");
 		
 		System.out.println("Starting Single-source options.");
@@ -234,17 +235,18 @@ public class AbstractedPolicy {
 		ps.add(pop1);
 		ps.add(pop2);
 		PolicyBlockPolicy newPolicy5 = new PolicyBlockPolicy(epsilon);
-		System.out.println(runTaxiLearning(newPolicy5, hf, ps, merged, 1000, path + "Single-Source Options.csv")[999]);
+		System.out.println(runTaxiLearning(newPolicy5, hf, ps, merged, episodes, path + "Flat Policy Option.csv")[episodes - 1]);
 		System.out.println("Done with Single-source options.\n");
 		
 		System.out.println("Starting random.");
 		PolicyBlockOption rando = generateRandomOption(hf, TaxiWorldDomain.DOMAIN.getActions(), newPolicy1.policy.keySet());
         PolicyBlockPolicy newPolicy6 = new PolicyBlockPolicy(epsilon);
-        System.out.println(runTaxiLearning(newPolicy6, hf, rando, merged, 1000, path + "Random Option.csv")[999]);
+        System.out.println(runTaxiLearning(newPolicy6, hf, rando, merged, episodes, path + "Random Option.csv")[episodes - 1]);
         System.out.println("Done with random.\n");
         
         System.out.println("Experiment finished. Took a total of " + ((System.currentTimeMillis() - startTime) / 60000.0) + " minutes.");
 		*/
+        
 		FourRooms fr = new FourRooms();
 		Domain d = fr.generateDomain();
 
@@ -323,13 +325,6 @@ public class AbstractedPolicy {
 		System.out.println(ap.abstractedPolicy.size());
 	}
 
-
-
-
-
-
-
-	
 	public AbstractedPolicy() {
 		abstractedPolicy = new HashMap<StateHashTuple, GroundedAction>();
 		originalPolicies = new ArrayList<PolicyBlockPolicy>();
@@ -417,15 +412,6 @@ public class AbstractedPolicy {
 		
 		return policyList.get(i);
 	}
-	
-
-	
-	
-	
-	
-	
-
-	
 
 	/**
 	 * Finds the correct action that corresponds to the given state.
