@@ -26,7 +26,7 @@ import burlap.oomdp.core.State;
  */
 public class EpsilonGreedy extends Policy implements PlannerDerivedPolicy{
 
-	protected QComputablePlanner		qplanner;
+	public QComputablePlanner		qplanner;
 	protected double					epsilon;
 	protected Random 					rand;
 	

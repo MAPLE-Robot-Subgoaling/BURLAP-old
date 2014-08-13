@@ -389,7 +389,7 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner, Learn
 	 * @param s the hashed state for which to get the {@link QLearningStateNode} object
 	 * @return the {@link QLearningStateNode} object stored for the given hashed state. If no {@link QLearningStateNode} object.
 	 */
-	protected QLearningStateNode getStateNode(StateHashTuple s){
+	public QLearningStateNode getStateNode(StateHashTuple s){
 		
 		QLearningStateNode node = qIndex.get(s);
 		

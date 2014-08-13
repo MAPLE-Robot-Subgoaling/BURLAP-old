@@ -14,6 +14,10 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
+import burlap.behavior.statehashing.StateHashFactory;
+import burlap.behavior.statehashing.StateHashTuple;
+import domain.AbstractDomain.AbstractDomain;
+import domain.fourroomsdomain.FourRooms;
 import domain.taxiworld.TaxiWorldDomain;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.QValue;
@@ -22,6 +26,8 @@ import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
+import burlap.behavior.singleagent.learning.tdmethods.QLearningStateNode;
+import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.behavior.singleagent.options.Option;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
@@ -155,6 +161,7 @@ public class AbstractedPolicy {
 	}
 	
 	public static void main(String args[]) throws IOException {
+		/*
 		String path = "C:/Users/Allison/Desktop/";
 		TaxiWorldDomain.MAXPASS = 3;
 		
@@ -237,7 +244,7 @@ public class AbstractedPolicy {
         System.out.println("Done with random.\n");
         
         System.out.println("Experiment finished. Took a total of " + ((System.currentTimeMillis() - startTime) / 60000.0) + " minutes.");
-		/*
+		*/
 		FourRooms fr = new FourRooms();
 		Domain d = fr.generateDomain();
 
@@ -283,14 +290,45 @@ public class AbstractedPolicy {
 		ss1.addObject(block3);
 		ss1.addObject(block1);
 		ss1.addObject(block2);
-		
+
 		PolicyBlockPolicy p = new PolicyBlockPolicy((QLearning)FourRooms.Q,0);
 		((QLearning)FourRooms.Q).setLearningPolicy(p);
         EpisodeAnalysis ea = new EpisodeAnalysis();
-		ea = FourRooms.Q.runLearningEpisodeFrom(ss2);
 		
-		abstractPolicy(ea.actionSequence,FourRooms.Q,ss1,ss2);*/
+        for (int i=0;i<2000;i++) {
+        	ea = FourRooms.Q.runLearningEpisodeFrom(ss2);
+        }
+        
+		PolicyBlockPolicy p1 = new PolicyBlockPolicy((QLearning)FourRooms.Q,0);
+		((QLearning)FourRooms.Q).setLearningPolicy(p1);
+        EpisodeAnalysis ea1 = new EpisodeAnalysis();
+		
+        for (int i=0;i<100;i++) {
+        	ea1 = FourRooms.Q.runLearningEpisodeFrom(ss2);
+        }
+        
+		PolicyBlockPolicy p2 = new PolicyBlockPolicy((QLearning)FourRooms.Q,0);
+		((QLearning)FourRooms.Q).setLearningPolicy(p2);
+        EpisodeAnalysis ea2 = new EpisodeAnalysis();
+		
+        for (int i=0;i<2;i++) {
+        	ea2 = FourRooms.Q.runLearningEpisodeFrom(ss2);
+        }
+        
+        List<PolicyBlockPolicy> pp = new ArrayList<PolicyBlockPolicy>();
+        pp.add(p1);
+        pp.add(p2);
+        
+		AbstractedPolicy ap = new AbstractedPolicy(((QLearning)FourRooms.Q).getHashingFactory(),p,pp);
+		System.out.println(ap.abstractedPolicy.size());
 	}
+
+
+
+
+
+
+
 	
 	public AbstractedPolicy() {
 		abstractedPolicy = new HashMap<StateHashTuple, GroundedAction>();
@@ -305,16 +343,24 @@ public class AbstractedPolicy {
 		this.absPol.putAll(p.absPol);
 	}
 
-	public static PolicyBlockPolicy abstractPolicy(List<GroundedAction> actionSequence,LearningAgent la,State s1,State s2) {
-		Map<String,Integer> lciMap = leastCommonIntersectionState(s1,s2);
-		 
-		State s = findLimitingState(generateLCIMappingState(s1),generateLCIMappingState(s2),s1,s2);
-		 
-		ArrayList<ArrayList<ObjectInstance>> listFromMapping =  getListFromMapping(lciMap,s);
 
-		ArrayList<ArrayList<ObjectInstance>> listOfCombinations = findCombinations(listFromMapping,0,new ArrayList<ObjectInstance>(), new ArrayList<ArrayList<ObjectInstance>>());
+	/**
+	 * Accepts a single initial policy and a set of other initial policies,
+	 * abstracts a single abstract policy (the abstraction of the first initial policy relative to the others)
+	 * @param sh - StateHashFactory is used to go from State - > StateHashTuple after abstraction
+	 * @param initialPolicy
+	 * @param policyList
+	 */
+	public AbstractedPolicy(StateHashFactory sh,PolicyBlockPolicy initialPolicy,List<PolicyBlockPolicy> policyList) {	
+		State s = findLimitingStateOverall(initialPolicy,policyList);
 		
-		return score(actionSequence,la,listOfCombinations);
+		Map<String,Integer> lciMap = leastCommonIntersectionState(s,getInitialState(initialPolicy));
+
+		ArrayList<ArrayList<ObjectInstance>> listFromMapping =  getListFromMapping(lciMap,s);		
+		
+		ArrayList<ArrayList<ObjectInstance>> listOfCombinations = generateCombinations(listFromMapping);
+		
+		abstractedPolicy = score(sh,getInitialState(initialPolicy),initialPolicy,listOfCombinations);
 	}
 	
 	/**
@@ -324,41 +370,214 @@ public class AbstractedPolicy {
 	 * @param objList
 	 * @return
 	 */
-	public static PolicyBlockPolicy score(List<GroundedAction> original,LearningAgent la,ArrayList<ArrayList<ObjectInstance>> objList) {
-		PolicyBlockPolicy newPolicy = null;
-		PolicyBlockPolicy toReturn = newPolicy;
-		double error = 0;
-		double oldError = 0;
+	public static Map<StateHashTuple,GroundedAction> score(StateHashFactory sh,State reducedState,PolicyBlockPolicy p,ArrayList<ArrayList<ObjectInstance>> objList) {		
+		List<Map<StateHashTuple,GroundedAction>> policyList = makeNewPolicies(sh,objList,reducedState,p);
+		ArrayList<GroundedAction> actionSequence = new ArrayList<GroundedAction>();
+		ArrayList<ArrayList<GroundedAction>> actionList = new ArrayList<ArrayList<GroundedAction>>();
+		Map<Integer,Double> mapOfDiff = new HashMap<Integer,Double>();
+		ArrayList<GroundedAction> originalActions = new ArrayList<GroundedAction>();
+		
+		int i = 0;
+		double lowest = 0;
+		
 		Boolean flag = true;
 		
-		for (ArrayList<ObjectInstance> ol : objList) {
-			State st = new State();
+		//creates action sequences of all abstractions
+		for (Map<StateHashTuple,GroundedAction> map : policyList) {
+			actionSequence = new ArrayList<GroundedAction>();
+			for (Map.Entry<StateHashTuple,GroundedAction> entry : map.entrySet()) {
+				actionSequence.add(entry.getValue());
+			}	
+			actionList.add(actionSequence);
+		}
 
-			for (ObjectInstance o : ol) {
-				st.addObject(o);
-			}
-			
-			newPolicy = new PolicyBlockPolicy((QLearning)la,0);
-			((QLearning)la).setLearningPolicy(newPolicy);
-	        EpisodeAnalysis ea = new EpisodeAnalysis();
-			ea = la.runLearningEpisodeFrom(st);
-			
-			error = findDifference(original,ea.actionSequence);
-
-			if (error < oldError) {
-				toReturn = newPolicy;
-				oldError = error;
-				flag = false;
-			}
-
+		//generate original action sequence
+		for (Map.Entry<StateHashTuple,GroundedAction> entry : p.policy.entrySet()) {
+			originalActions.add(entry.getValue());
 		}
 		
-		if (flag) {
-			toReturn = newPolicy;
+		//find difference between original action sequence and abstractions
+		for (List<GroundedAction> gaList : actionList) {
+			mapOfDiff.put(i,findDifference(originalActions,gaList));
+			i += 1;
 		}
 		
-		return toReturn;
+		//finds abstraction with lowest error
+		for (Map.Entry<Integer,Double> entry : mapOfDiff.entrySet()) {
+			if (flag) {
+				lowest = entry.getValue();
+				i = entry.getKey();
+			} else {
+				if (entry.getValue() < lowest) {
+					lowest = entry.getValue();
+					i = entry.getKey();
+				}
+			}
+		}
+		
+		return policyList.get(i);
 	}
+	
+
+	
+	
+	
+	
+	
+
+	
+
+	/**
+	 * Finds the correct action that corresponds to the given state.
+	 * If multiple states are identical, Q values are averaged.
+	 * Otherwise the Q values remain the same.
+	 * @param toCheck - state to find action for
+	 * @param stateList - all lowered states from original policy
+	 * @param oldPolicy - original policy
+	 * @return action with the highest Q value
+	 */
+	public static AbstractGroundedAction findCorrectAction(State toCheck,List<State> stateList,PolicyBlockPolicy oldPolicy) {
+		List<State> stateMatches = new ArrayList<State>();
+		ArrayList<ArrayList<QValue>> qList = new ArrayList<ArrayList<QValue>>();
+		
+		//checks for matching among states
+		//**there will always be 1+ match, because
+		//baseState is in stateList
+		for (State s : stateList) {
+			if (toCheck.getCompleteStateDescription().equals(s.getCompleteStateDescription())) {
+				stateMatches.add(s);
+			}
+		}		
+		
+		//makes list of all Q values that correspond to stateMatches
+		for (State s : stateMatches) {
+			QLearningStateNode oi = ((QLearning)oldPolicy.qplanner).getStateNode(((QLearning)oldPolicy.qplanner).stateHash(s));
+			qList.add((ArrayList<QValue>)oi.qEntry);
+		}
+		
+		List<QValue> av = findAverages(stateMatches.get(0),qList);
+		
+		return findHighestQValue(av);	
+	}
+	
+	public static AbstractGroundedAction findHighestQValue(List<QValue> qList) {
+		QValue highest = qList.get(0);
+		
+		for (QValue q : qList) {
+			if (q.q > highest.q) {
+				highest = q;
+			}
+		}
+
+		return highest.a;
+	}
+	
+	/**
+	 * Finds averages of Q values in a given list. 
+	 * @param s
+	 * @param toAverage
+	 * @return
+	 */
+	public static List<QValue> findAverages(State s,ArrayList<ArrayList<QValue>> toAverage) {
+		List<QValue> averageQ = new ArrayList<QValue>();
+		int i = 0;
+		int j = 0;
+		double sum = 0;
+		double average = 0;
+
+		while (i < toAverage.get(0).size()) {
+			sum = 0;
+			for (ArrayList<QValue> qList : toAverage) {
+				sum += qList.get(i).q;
+				j += 1;
+			}
+			average = sum / j;
+			j = 0;
+			QValue newQ = new QValue(s,toAverage.get(0).get(i).a,average);
+			
+			averageQ.add(newQ);
+			i += 1;	
+		}
+		
+		return averageQ;
+	}
+	
+	/**
+	 * Uses makeNewPolicy()
+	 * @param sh
+	 * @param listOfCombinations - combinations of possible abstractions (objects to be turned into states)
+	 * @param reducedState
+	 * @param oldPolicy
+	 * @return
+	 */
+	public static List<Map<StateHashTuple,GroundedAction>> makeNewPolicies(StateHashFactory sh,ArrayList<ArrayList<ObjectInstance>> listOfCombinations,State reducedState,PolicyBlockPolicy oldPolicy) {
+		List<Map<StateHashTuple,GroundedAction>> newMap = new ArrayList<Map<StateHashTuple,GroundedAction>>();
+		State s = null;
+		
+		for (ArrayList<ObjectInstance> o : listOfCombinations) {
+			s = new State();
+			
+			for (ObjectInstance oo : o) {
+				s.addObject(oo);
+			}
+			
+			newMap.add(makeNewPolicy(sh,s,oldPolicy));
+		}
+		
+		return newMap;
+	}
+	
+	/**
+	 * Returns the a state stored in the policy's hashmap.
+	 * @param initialPolicy
+	 * @return
+	 */
+	public static State getInitialState(PolicyBlockPolicy initialPolicy) {
+		State initialState = null;
+		for (Map.Entry<StateHashTuple, GroundedAction> entry : initialPolicy.policy.entrySet()) {
+			initialState = entry.getKey().s;
+		}	
+		
+		return initialState;
+	}
+	
+	/**
+	 * Finds the state that corresponds to the Least Common Intersection of a list of policies
+	 * @param initialPolicy
+	 * @param policyList
+	 * @return
+	 */
+	public static State findLimitingStateOverall(PolicyBlockPolicy initialPolicy,List<PolicyBlockPolicy> policyList) {
+		Boolean flag = true;
+		State s = null;
+		State s1 = null;
+		State s2 = null;
+		State initialState = null;
+		
+		for (PolicyBlockPolicy pol : policyList) {
+			for (Map.Entry<StateHashTuple, GroundedAction> entry : pol.policy.entrySet()) {
+				s1 = entry.getKey().s;
+
+				if (flag) {
+					s = s1;
+					flag = false;
+				}
+			}
+			s2 = s;
+
+			s = findLimitingState(generateLCIMappingState(s1),generateLCIMappingState(s2),s1,s2);
+		}
+		
+		for (Map.Entry<StateHashTuple, GroundedAction> entry : initialPolicy.policy.entrySet()) {
+			initialState = entry.getKey().s;
+		}
+		
+		s = findLimitingState(generateLCIMappingState(initialState),generateLCIMappingState(s),initialState,s);
+		
+		return s;
+	}
+	
+	
 	
 	/**
 	 * Finds quantitative difference between two ArrayLists
@@ -410,6 +629,7 @@ public class AbstractedPolicy {
 	 * @return
 	 */
 	public static ArrayList<ObjectInstance> orderOI (ArrayList<ObjectInstance> unordered) {
+		Boolean flag = true;
 		ArrayList<ObjectInstance> ordered = new ArrayList<ObjectInstance>(unordered.size());
 		List<String> nameList = new ArrayList<String>();
 		
@@ -421,47 +641,72 @@ public class AbstractedPolicy {
 		
 		for (String s : nameList) {
 			for (ObjectInstance obj : unordered) {
-				if (s.equals(obj.getName())) {
+				if (s.equals(obj.getName()) && flag) {
 					ordered.add(obj);
+					flag = false;
 				}
 			}
+			flag = true;
 		}
 		
 		return ordered;
 	}
 	
 	/**
-	 * Finds all combinations of multidimensional ArrayList
-	 * Used for generating all possibilities of objects to drop
-	 * @param objList
-	 * @param index
-	 * @param output
-	 * @param finalOutput
+	 * Generates all combinations given a multidimensional arraylist of objects.
+	 * **Does not generate combinations with duplicate objects (assumes all objects have distinct names)
+	 * If 2 objects need to be added, they will exist twice within sets.
+	 * @param sets
 	 * @return
 	 */
-	public static ArrayList<ArrayList<ObjectInstance>> findCombinations(ArrayList<ArrayList<ObjectInstance>> objList, int index, ArrayList<ObjectInstance> output,ArrayList<ArrayList<ObjectInstance>> finalOutput){
-		if(index == objList.size()){		
-			ArrayList<ObjectInstance> orderedOutput = new ArrayList<ObjectInstance>(orderOI(output));
-			
-			if (!finalOutput.contains(orderedOutput) && orderedOutput.size() == objList.size()) {
-				finalOutput.add(orderedOutput);
-			}
-
-		}
-	    else{
-	        for(int i=0 ; i<objList.get(index).size(); i++){
-	        	if (!output.contains(objList.get(index).get(i))) {
-	        		output.add(objList.get(index).get(i));
-	        	}
-	        	
-	            findCombinations(objList,index+1,output,finalOutput);
-	            //output.remove(output.size() - 1);  
+	public static ArrayList<ArrayList<ObjectInstance>> generateCombinations(ArrayList<ArrayList<ObjectInstance>> sets) {
+	    ArrayList<ArrayList<ObjectInstance>> output = new ArrayList<ArrayList<ObjectInstance>>();
+	    ArrayList<ObjectInstance> toOrder;
+		int solutions = 1;
+	    int j = 0;
+	    
+		for(int i = 0; i < sets.size(); i++) {
+	    	solutions *= sets.get(i).size();
+	    }
+	    
+		for(int i = 0; i < solutions; i++) {
+	        j = 1;  
+	        toOrder = new ArrayList<ObjectInstance>();
+	        
+	        for(ArrayList<ObjectInstance> set : sets) {
+	        	toOrder.add(set.get((i/j)%set.size()));
+	            j *= set.size();
+	        }
+	       
+	        if (!output.contains(orderOI(toOrder)) && !hasDuplicates(toOrder)) {
+	        	output.add(orderOI(toOrder));
 	        }
 	    }
-		
-		return finalOutput;
+	    return output;
 	}
 	
+	/**
+	 * Checks if there are duplicate objects within the list
+	 * @param toCheck
+	 * @return true, if there are duplicates. otherwise, false
+	 */
+	public static Boolean hasDuplicates(ArrayList<ObjectInstance> toCheck) {
+		int count = 0;
+		
+		for (ObjectInstance o : toCheck) {
+			for (ObjectInstance oo : toCheck) {
+				if(oo.equals(o)) {
+					count += 1;
+				}
+			}
+			if (count > 1) {
+				return true;
+			}
+			count = 0;
+		}
+		return false;
+	}
+
 	/**
 	 * Finds list that corresponds to the mapping provided. If there are more than one of a type of object,
 	 * duplicates that list as many times as there are that object.
@@ -566,6 +811,50 @@ public class AbstractedPolicy {
 		}
 		
 		return domain2Count;
+	}
+
+	/**
+	 * Lowers policy to baseState level.
+	 * Also finds correct action of each state.
+	 * @param sh
+	 * @param baseState - Least Common Intersection
+	 * @param oldPolicy - policy that is being abstracted
+	 * @return
+	 */
+	public static HashMap<StateHashTuple,GroundedAction> makeNewPolicy(StateHashFactory sh,State baseState,PolicyBlockPolicy oldPolicy) {
+		HashMap<StateHashTuple,GroundedAction> newPolicy = new HashMap<StateHashTuple,GroundedAction>();
+		State s = null;
+		State hashedState = null;
+		List<State> stateList = new ArrayList<State>();
+		
+		//generates states that match the baseState's objects, with the policy's states' attributes
+		for (Map.Entry<StateHashTuple,GroundedAction> entry : oldPolicy.policy.entrySet()) {
+			s = new State();
+			
+			hashedState = entry.getKey().s;
+			
+			for (ObjectInstance o : baseState.getAllObjects()) {
+				s.addObject(o);
+			}
+
+			for (ObjectInstance hashO : hashedState.getAllObjects()) {
+				for (ObjectInstance o : s.getAllObjects()) {
+					if (hashO.getName().equals(o.getName())) {
+						for (Attribute a : hashO.getObjectClass().attributeList) {
+							s.getObject(o.getName()).setValue(a.name, hashO.getDiscValForAttribute(a.name));
+						}
+					}
+				}
+			}
+			
+			stateList.add(s.copy());
+		}
+		
+		for (State st : stateList) {
+			newPolicy.put(sh.hashState(st), (GroundedAction)findCorrectAction(st,stateList,oldPolicy));
+		}
+		
+		return newPolicy;
 	}
 
 	/**
