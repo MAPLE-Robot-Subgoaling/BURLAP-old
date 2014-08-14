@@ -73,7 +73,7 @@ public class TaxiWorldDomain implements DomainGenerator {
      */
     public static void main(String[] args) {
         // Set the total number of passengers to be used in the domain
-        MAXPASS = 4;
+        MAXPASS = 2;
 
         TaxiWorldDomain txd = new TaxiWorldDomain();
         Domain d = txd.generateDomain();

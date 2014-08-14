@@ -146,7 +146,7 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 		return mergedPolicies;
 	}
 	
-	public static PolicyBlockPolicy ground(PQLearning qlearner, double epsilon, AbstractedPolicy absPolicy) {
+	/*public static PolicyBlockPolicy ground(PQLearning qlearner, double epsilon, AbstractedPolicy absPolicy) {
 		PolicyBlockPolicy pbp = new PolicyBlockPolicy(epsilon);
 		pbp.setPlanner(qlearner);
 		
@@ -157,7 +157,7 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 		}
 		
 		return pbp;
-	}
+	}*/
 	
 	/*
 	 * Badly named

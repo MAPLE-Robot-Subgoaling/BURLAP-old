@@ -5,9 +5,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -21,29 +21,21 @@ import domain.fourroomsdomain.FourRooms;
 import domain.taxiworld.TaxiWorldDomain;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.QValue;
-import burlap.behavior.singleagent.learning.LearningAgent;
-import burlap.behavior.statehashing.DiscreteStateHashFactory;
-import burlap.behavior.statehashing.StateHashFactory;
-import burlap.behavior.statehashing.StateHashTuple;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.learning.tdmethods.QLearningStateNode;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.behavior.singleagent.options.Option;
+import burlap.behavior.singleagent.planning.OOMDPPlanner;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 
 public class AbstractedPolicy {
-	private List<PolicyBlockPolicy> originalPolicies;
+	public Set<PolicyBlockPolicy> originalPolicies;
 	public Map<StateHashTuple, GroundedAction> abstractedPolicy;
-	public Map<StateHashTuple, List<QValue>> absPol;
-	public State newState;
-	public List<ObjectInstance> droppedAttr;
-	public List<ObjectInstance> droppedObj;
 	
 	public static long[] runTaxiLearning(PolicyBlockPolicy policy, StateHashFactory hf, int[][] passPos, int episodes, String filepath) throws IOException {
 		return runTaxiLearning(policy, hf,  new ArrayList<Option>(), passPos, episodes, filepath);
@@ -163,16 +155,16 @@ public class AbstractedPolicy {
 	public static void main(String args[]) throws IOException {
 		/*
 		String path = "C:/Users/Allison/Desktop/";
-		TaxiWorldDomain.MAXPASS = 3;
+		TaxiWorldDomain.MAXPASS = 2;
 		
 		new TaxiWorldDomain().generateDomain();
         DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
         hf.setAttributesForClass(TaxiWorldDomain.CLASSAGENT,
         		TaxiWorldDomain.DOMAIN.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
-		double epsilon = 0.3;
-		int episodes = 5000;
+		double epsilon = 0.8;
+		int episodes = 1000;
 		long startTime = System.currentTimeMillis();
-		
+		*/
 		// int[][] first = {{1, 2}, {3, 2}};
 		// int[][] second = {{1, 4}, {5, 4}};
 		// int[][] merged = {{13, 7}, {7, 7}};
@@ -180,6 +172,7 @@ public class AbstractedPolicy {
 		// for (Integer[] o: open) {
 		// 	 System.out.println(o[0] + ": " + o[1]);
 		// }
+		/*
 		int[][] first = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
 		int[][] second = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
 		int[][] merged = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
@@ -212,7 +205,7 @@ public class AbstractedPolicy {
         ArrayList<PolicyBlockPolicy> pis = new ArrayList<PolicyBlockPolicy>();
         pis.add(newPolicy1);
         pis.add(newPolicy2);
-        List<AbstractedPolicy> absPolicies = unionMerge(pis, pis.size());
+        List<AbstractedPolicy> absPolicies = unionMerge(pis, hf, pis.size());
 		for (AbstractedPolicy ap: absPolicies) {
 			System.out.println(ap.abstractedPolicy.size());
 		}
@@ -247,6 +240,7 @@ public class AbstractedPolicy {
         System.out.println("Experiment finished. Took a total of " + ((System.currentTimeMillis() - startTime) / 60000.0) + " minutes.");
 		*/
         
+		// Need to have a method to balloon each policy using reachability to assure it's defined
 		FourRooms fr = new FourRooms();
 		Domain d = fr.generateDomain();
 
@@ -295,47 +289,51 @@ public class AbstractedPolicy {
 
 		PolicyBlockPolicy p = new PolicyBlockPolicy((QLearning)FourRooms.Q,0);
 		((QLearning)FourRooms.Q).setLearningPolicy(p);
-        EpisodeAnalysis ea = new EpisodeAnalysis();
 		
         for (int i=0;i<2000;i++) {
-        	ea = FourRooms.Q.runLearningEpisodeFrom(ss2);
+        	FourRooms.Q.runLearningEpisodeFrom(ss1);
         }
         
 		PolicyBlockPolicy p1 = new PolicyBlockPolicy((QLearning)FourRooms.Q,0);
 		((QLearning)FourRooms.Q).setLearningPolicy(p1);
-        EpisodeAnalysis ea1 = new EpisodeAnalysis();
 		
         for (int i=0;i<100;i++) {
-        	ea1 = FourRooms.Q.runLearningEpisodeFrom(ss2);
+        	FourRooms.Q.runLearningEpisodeFrom(ss1);
         }
         
 		PolicyBlockPolicy p2 = new PolicyBlockPolicy((QLearning)FourRooms.Q,0);
 		((QLearning)FourRooms.Q).setLearningPolicy(p2);
-        EpisodeAnalysis ea2 = new EpisodeAnalysis();
 		
         for (int i=0;i<2;i++) {
-        	ea2 = FourRooms.Q.runLearningEpisodeFrom(ss2);
+        	FourRooms.Q.runLearningEpisodeFrom(ss1);
         }
         
-        List<PolicyBlockPolicy> pp = new ArrayList<PolicyBlockPolicy>();
-        pp.add(p1);
-        pp.add(p2);
+        ArrayList<PolicyBlockPolicy> pl1 = new ArrayList<PolicyBlockPolicy>();
+        pl1.add(p1);
+        pl1.add(p2);
+        pl1.add(p);
+        StateHashFactory hf = ((OOMDPPlanner) FourRooms.Q).getHashingFactory();
+        List<AbstractedPolicy> as = unionMerge(hf, pl1, pl1.size());
+        for (AbstractedPolicy a: as) {
+        	System.out.println(a.originalPolicies.size());
+        	System.out.println(a.abstractedPolicy.size());
+        }
+        System.out.println();
         
-		AbstractedPolicy ap = new AbstractedPolicy(((QLearning)FourRooms.Q).getHashingFactory(),p,pp);
-		System.out.println(ap.abstractedPolicy.size());
+        AbstractedPolicy best = scoreUnionMerge(hf, as);
+        System.out.println();
+        System.out.println(best.size());
 	}
 
 	public AbstractedPolicy() {
 		abstractedPolicy = new HashMap<StateHashTuple, GroundedAction>();
-		originalPolicies = new ArrayList<PolicyBlockPolicy>();
-		absPol = new HashMap<StateHashTuple, List<QValue>>();
+		originalPolicies = new HashSet<PolicyBlockPolicy>();
 	}
 	
 	public AbstractedPolicy(AbstractedPolicy p) {
 		this();
 		this.abstractedPolicy.putAll(p.abstractedPolicy);
 		this.originalPolicies.addAll(p.originalPolicies);
-		this.absPol.putAll(p.absPol);
 	}
 
 
@@ -346,16 +344,19 @@ public class AbstractedPolicy {
 	 * @param initialPolicy
 	 * @param policyList
 	 */
-	public AbstractedPolicy(StateHashFactory sh,PolicyBlockPolicy initialPolicy,List<PolicyBlockPolicy> policyList) {	
-		State s = findLimitingStateOverall(initialPolicy,policyList);
+	public AbstractedPolicy(StateHashFactory sh, PolicyBlockPolicy p, List<PolicyBlockPolicy> ps) {
+		State s = findLimitingStateOverall(p, ps);
 		
-		Map<String,Integer> lciMap = leastCommonIntersectionState(s,getInitialState(initialPolicy));
+		Map<String,Integer> lciMap = leastCommonIntersectionState(s,getInitialState(p));
 
 		ArrayList<ArrayList<ObjectInstance>> listFromMapping =  getListFromMapping(lciMap,s);		
 		
 		ArrayList<ArrayList<ObjectInstance>> listOfCombinations = generateCombinations(listFromMapping);
 		
-		abstractedPolicy = score(sh,getInitialState(initialPolicy),initialPolicy,listOfCombinations);
+		abstractedPolicy = scoreAbstraction(sh,getInitialState(p), p, listOfCombinations);
+		ps.add(p);
+		originalPolicies = new HashSet<PolicyBlockPolicy>();
+		originalPolicies.addAll(ps);
 	}
 	
 	/**
@@ -365,7 +366,7 @@ public class AbstractedPolicy {
 	 * @param objList
 	 * @return
 	 */
-	public static Map<StateHashTuple,GroundedAction> score(StateHashFactory sh,State reducedState,PolicyBlockPolicy p,ArrayList<ArrayList<ObjectInstance>> objList) {		
+	public static Map<StateHashTuple,GroundedAction> scoreAbstraction(StateHashFactory sh,State reducedState,PolicyBlockPolicy p,ArrayList<ArrayList<ObjectInstance>> objList) {		
 		List<Map<StateHashTuple,GroundedAction>> policyList = makeNewPolicies(sh,objList,reducedState,p);
 		ArrayList<GroundedAction> actionSequence = new ArrayList<GroundedAction>();
 		ArrayList<ArrayList<GroundedAction>> actionList = new ArrayList<ArrayList<GroundedAction>>();
@@ -376,7 +377,8 @@ public class AbstractedPolicy {
 		double lowest = 0;
 		
 		Boolean flag = true;
-		
+		// TODO
+		// this method is assuming that entrySet() preserves sorting, which it doesn't
 		//creates action sequences of all abstractions
 		for (Map<StateHashTuple,GroundedAction> map : policyList) {
 			actionSequence = new ArrayList<GroundedAction>();
@@ -391,6 +393,9 @@ public class AbstractedPolicy {
 			originalActions.add(entry.getValue());
 		}
 		
+		/*
+		 * Convert to array list
+		 */
 		//find difference between original action sequence and abstractions
 		for (List<GroundedAction> gaList : actionList) {
 			mapOfDiff.put(i,findDifference(originalActions,gaList));
@@ -530,17 +535,17 @@ public class AbstractedPolicy {
 	/**
 	 * Finds the state that corresponds to the Least Common Intersection of a list of policies
 	 * @param initialPolicy
-	 * @param policyList
+	 * @param ps
 	 * @return
 	 */
-	public static State findLimitingStateOverall(PolicyBlockPolicy initialPolicy,List<PolicyBlockPolicy> policyList) {
+	public static State findLimitingStateOverall(PolicyBlockPolicy initialPolicy, List<PolicyBlockPolicy> ps) {
 		Boolean flag = true;
 		State s = null;
 		State s1 = null;
 		State s2 = null;
 		State initialState = null;
 		
-		for (PolicyBlockPolicy pol : policyList) {
+		for (PolicyBlockPolicy pol : ps) {
 			for (Map.Entry<StateHashTuple, GroundedAction> entry : pol.policy.entrySet()) {
 				s1 = entry.getKey().s;
 
@@ -861,113 +866,9 @@ public class AbstractedPolicy {
 		return s1;
 	}
 	
-	/**
-	 * Abstracts away any attributes/objects that don't affect the original policy.
-	 * **Assumes x and y attributes are named "x" and "y", respectively.
-	 * @param d
-	 * @param s
-	 * @param p
-	 * @param la
-	 * @param map Used to verify that coordinates that would be in a wall aren't checked
-	 */
-	public AbstractedPolicy(Domain d,State s,PolicyBlockPolicy p,LearningAgent la,int [][] map) {		
-		EpisodeAnalysis ea = new EpisodeAnalysis();
-		
-		List<ObjectInstance> allObj = s.getAllObjects();
-		droppedAttr  = new ArrayList<ObjectInstance>();
-		droppedObj = new ArrayList<ObjectInstance>();
-		
-		int numObjLeft = s.getAllObjects().size();
-		int numAttrDropped = 0;
-		int numMatch = 0;
-		int originalActions = la.getLastLearningEpisode().actionSequence.size();
-		int original = 0;
-		int x = 0;
-		int y = 0;
-		
-		newState = new State();
-		
-		Boolean flag = false;
-		
-		while (numObjLeft > 0) {
-			ObjectInstance o = s.getAllObjects().get(numObjLeft - 1);
-			numObjLeft -= 1;
-			
-			for (Attribute a : o.getObjectClass().attributeList) {
-				original = o.getDiscValForAttribute(a.name);
-				
-				//loops through every possibility of the attribute, checking for changes in policy length
-				//must check for x and y that possibilities are not in walls
-				for (String str : a.discValues) {
-					o.setValue(a.name,str);
-					if (a.name == "x") {
-						y = o.getDiscValForAttribute("y");
-						if (map[Integer.parseInt(str)][y] != 1) {
-							for(int i=0;i < 1000;i++) {
-								ea = la.runLearningEpisodeFrom(s);
-							}
-						}
-					} else if (a.name == "y") {
-						x = o.getDiscValForAttribute("x");
-						if (map[x][Integer.parseInt(str)] != 1) {
-							for(int i=0;i < 1000;i++) {
-								ea = la.runLearningEpisodeFrom(s);	
-							}
-						}
-					} else {
-						for(int i=0;i < 2000;i++) {
-							ea = la.runLearningEpisodeFrom(s);	
-						}	
-						//System.out.println(o.getName() + " " + ea.actionSequence);
-					}
-					
-					//if size of policy changes, no need to continue checking possibilities
-					if (originalActions != ea.actionSequence.size()) {
-						numMatch = 0;
-						break;
-					} else {
-						numMatch += 1;
-					}
-
-				}
-				
-				//if the policy doesn't change for every value of the attribute, the attribute is dropped
-				if (numMatch == a.discValues.size()) {
-					//System.out.println("Dropping attribute " + a.name + " from object " + o.getName());
-					droppedAttr.add(removeAttribute(d,a,o));
-					numAttrDropped += 1;
-				}
-				numMatch = 0;
-				o.setValue(a.name,original);
-			}
-		
-			//if all attributes in an object are dropped, the object is dropped
-			if (numAttrDropped == o.getObjectClass().numAttributes()) {
-				allObj.remove(o);
-				droppedObj.add(o);
-			}
-			numAttrDropped = 0;
-		}
-		
-		//recreates state without dropped attributes/objects
-		for (ObjectInstance finalObj : allObj) {
-			for (ObjectInstance dropped : droppedAttr) {
-				if (finalObj.getName().equals(dropped.getName())) {
-					newState.addObject(dropped);
-					flag = true;
-				}
-			}
-			
-			if (!flag) {
-				newState.addObject(finalObj);
-			}
-			
-			flag = false;
-		}
-				
-	}
-	
 	public boolean isSameAbstraction(AbstractedPolicy other) {
+		System.out.println(this.originalPolicies);
+		System.out.println(other.originalPolicies);
 		return this.originalPolicies.equals(other.originalPolicies);
 	}
 	
@@ -982,22 +883,8 @@ public class AbstractedPolicy {
 			// Comparison is simply whether the given state corresponds to the
 			// same action
 			GroundedAction a = otherPolicy.abstractedPolicy.get(e.getKey());
-			List<QValue> qs = otherPolicy.absPol.get(e.getKey());
 			if (a != null && a.equals(e.getValue())) {
 				merged.abstractedPolicy.put(e.getKey(), e.getValue());
-				
-				List<QValue> qs2 = absPol.get(e.getKey());
-				List<QValue> maxQs = new ArrayList<QValue>();
-				for (QValue q : qs) {
-					for (QValue q2 : qs2) {
-						if (q.a.actionName().equals(q2.a.actionName())) {
-							QValue newQ = new QValue(q.s, q.a, Math.max(q.q, q2.q));
-							maxQs.add(newQ);
-						}
-					}
-				}
-				
-				merged.absPol.put(e.getKey(), maxQs);
 			}
 		}
 		
@@ -1023,42 +910,92 @@ public class AbstractedPolicy {
 		
 		return merged;
 	}
-
-	/**
-	 * Generates the powerset to a certain depth, excluding the empty set
-	 * @param list
-	 * @param depth
-	 * @return
-	 */
-	private static <T> List<List<T>> powerset(Collection<T> list, int depth) {
-		if (depth < 1 || depth > list.size()) {
-			throw new IllegalArgumentException("Need a depth >= 2 and <= " + list.size());
+	
+	public static <T> List<List<T>> getSubsets(List<T> set, int minDepth, int maxDepth) {
+		if (minDepth < 1 || minDepth > maxDepth || minDepth > set.size()) {
+			throw new IllegalArgumentException("Invalid minimum depth size: " + minDepth + ".");
+		} else if (maxDepth > set.size() || maxDepth < 1) {
+			throw new IllegalArgumentException("Invalid maximum depth size: " + maxDepth + ".");
 		}
-		List<List<T>> ps = new ArrayList<List<T>>();
-		ps.add(new ArrayList<T>());   // add the empty set
+		// Error check here
+		List<List<T>> ret = new ArrayList<List<T>>();
+		int size = set.size();
+		int[] range = new int[size];
+		for (int i = 0; i < size; i++) {
+			range[i] = i;
+		}
 		
-		// for every item in the original list
-		for (T item : list) {
-			List<List<T>> newPs = new ArrayList<List<T>>();
-			
-			for (List<T> subset : ps) {
-				// copy all of the current powerset's subsets
-				newPs.add(subset);
-				
-				// plus the subsets appended with the current item
-				List<T> newSubset = new ArrayList<T>(subset);
-				newSubset.add(item);
-				if (newSubset.size() <= depth) {
-					newPs.add(newSubset);
+		for (int i = minDepth; i <= maxDepth; i++) {
+			int[][] combs = nexksb(i, range);
+			for (int[] cs: combs) {
+				List<T> temp = new ArrayList<T>();
+				for (int c: cs) {
+					temp.add(set.get(c));
 				}
+				ret.add(temp);
 			}
- 
-			// powerset is now powerset of list.subList(0, list.indexOf(item)+1)
-			ps = newPs;
 		}
-	  
-		ps.remove(0);
-		return ps;
+		
+		return ret;
+	}
+	
+	/**
+	 * Implements the NEXKSB algorithm
+	 * @param k - size of subset tuples
+	 * @param set - the set to be generated from
+	 * @return all subsets of size k
+	 */
+	public static int[][] nexksb(int k, int[] set) {
+	    // binomial(N, K)
+	    int c = (int) binomial(set.length, k);
+	    int[][] res = new int[c][Math.max(0, k)];
+	    int[] ind = k < 0 ? null : new int[k];
+	    // initialize red squares
+	    for (int i = 0; i < k; ++i) {
+	    	ind[i] = i;
+	    }
+	    // for every combination
+	    for (int i = 0; i < c; ++i) {
+	        // get its elements (red square indexes)
+	        for (int j = 0; j < k; ++j) {
+	            res[i][j] = set[ind[j]];
+	        }
+	        // update red squares, starting by the last
+	        int x = ind.length - 1;
+	        boolean loop;
+	        do {
+	            loop = false;
+	            // move to next
+	            ind[x] = ind[x] + 1;
+	            // if crossing boundaries, move previous
+	            if (ind[x] > set.length - (k - x)) {
+	                --x;
+	                loop = x >= 0;
+	            } else {
+	                // update every following square
+	                for (int x1 = x + 1; x1 < ind.length; ++x1) {
+	                    ind[x1] = ind[x1 - 1] + 1;
+	                }
+	            }
+	        } while (loop);
+	    }
+	    
+	    return res;
+	}
+	private static long binomial(int n, int k) {
+	    if (k < 0 || k > n) {
+	    	return 0;
+	    }
+	    if (k > n - k) {
+	        k = n - k;
+	    }
+	    long c = 1;
+	    for (int i = 1; i < k+1; ++i) {
+	        c = c * (n - (k - i));
+	        c = c / i;
+	    }
+	    
+	    return c;
 	}
 
 	/**
@@ -1067,67 +1004,81 @@ public class AbstractedPolicy {
 	 * @param depth
 	 * @return
 	 */
-	public static List<AbstractedPolicy> unionMerge(List<PolicyBlockPolicy> policies, int depth) {
+	public static List<AbstractedPolicy> unionMerge(StateHashFactory hf, List<PolicyBlockPolicy> policies, int depth) {
 		ArrayList<AbstractedPolicy> mergedPolicies = new ArrayList<AbstractedPolicy>();
-		
-		for (List<PolicyBlockPolicy> ps: powerset(policies, depth)) {
-			mergedPolicies.add(merge(abstractAll(ps)));
+		for (List<PolicyBlockPolicy> ps: getSubsets(policies, 2, depth)) {
+			mergedPolicies.add(merge(abstractAll(hf, ps)));
 		}
 		
 		return mergedPolicies;
 	}
 	
-	/**
-	 * Removes attribute from an ObjectInstance
-	 * @param d
-	 * @param toRemove
-	 * @param o
-	 * @return New ObjectInstance with same properties, minus the specified attribute.
-	 */
-	public static ObjectInstance removeAttribute(Domain d,Attribute toRemove,ObjectInstance o) {
-		if (o.getObjectClass().hasAttribute(toRemove)) {
-	
-			ObjectClass newObjectClass = new ObjectClass(d,o.getObjectClass().name);
+	public static AbstractedPolicy scoreUnionMerge(StateHashFactory hf, List<AbstractedPolicy> merged) {
+		AbstractedPolicy ret = null;
+		double max = 0.;
+		for (AbstractedPolicy abs: merged) {
+			double totalMatch = 0.;
 			
-			for (Attribute aa: o.getObjectClass().attributeList) {
-				if (!toRemove.equals(aa)) {
-					newObjectClass.addAttribute(aa);
+			for (PolicyBlockPolicy orig: abs.originalPolicies) {
+				ArrayList<PolicyBlockPolicy> temp = new ArrayList<PolicyBlockPolicy>();
+				PolicyBlockPolicy tempP = new PolicyBlockPolicy(orig.getEpsilon());
+				tempP.policy = abs.abstractedPolicy;
+				temp.add(tempP);
+				//System.out.println(tempP.policy.keySet().iterator().next().s);
+				
+				AbstractedPolicy origAb = new AbstractedPolicy(hf, orig, temp);
+				double stateSize = origAb.abstractedPolicy.size();
+				double stateMatch = 0.;
+			
+				// TODO
+				// Is the check just for where the states exists in both, or for when the states exist and have the same action in both?
+				// working with same action for now
+				// What to do in the event of a tie?
+				for (Entry<StateHashTuple, GroundedAction> e: abs.abstractedPolicy.entrySet()) {
+					if (origAb.abstractedPolicy.containsKey(e.getKey()) &&
+						origAb.abstractedPolicy.get(e.getKey()).equals(e.getValue())) {
+						// Check for state match and then action match
+						stateMatch += 1;
+					}
 				}
+				// System.out.println(stateMatch + " / " + stateSize);
+				totalMatch += stateMatch / stateSize;
 			}
-
-			ObjectInstance newOI = new ObjectInstance(newObjectClass,o.getName());
-			
-			for (Attribute a : o.getObjectClass().attributeList) {
-				if (!toRemove.equals(a)) {
-					newOI.setValue(a.name,o.getStringValForAttribute(a.name));
-				}
+			System.out.println(totalMatch);
+			System.out.println(abs.originalPolicies.size());
+			if (totalMatch > max) {
+				ret = abs;
+				max = totalMatch;
 			}
-			
-			return newOI;
-		} else {	
-			return null;
 		}
+		
+		return ret;
 	}
 	
-	// TODO Implement an abstracting method that takes grounded policies and abstracts
-	// them to the most abstract level with respect to all grounded policies.
 	/**
 	 * Right now, this method assumes that all of the policies are in the same domain and makes a simple copy of the policy
 	 * @param policies
 	 * @return
 	 */
-	public static ArrayList<AbstractedPolicy> abstractAll(List<PolicyBlockPolicy> policies) {
+	public static ArrayList<AbstractedPolicy> abstractAll(StateHashFactory hf, List<PolicyBlockPolicy> policies) {
+		if (policies.size() < 2) {
+			throw new IllegalArgumentException("Need at least 2 policies.");
+		}
 		ArrayList<AbstractedPolicy> abstractedPolicies = new ArrayList<AbstractedPolicy>();
-		
-		for (PolicyBlockPolicy p: policies) {
-			AbstractedPolicy newP = new AbstractedPolicy();
-			newP.originalPolicies.addAll(policies);
-			newP.abstractedPolicy.putAll(p.policy);
-			newP.absPol.putAll(p.qpolicy);
-			abstractedPolicies.add(newP);
+		for (int i = 0; i < policies.size(); i++) {
+			List<PolicyBlockPolicy> newPolicies = new ArrayList<PolicyBlockPolicy>();
+			newPolicies.addAll(policies);
+			
+			PolicyBlockPolicy temp = newPolicies.remove(i);
+			abstractedPolicies.add(new AbstractedPolicy(hf, temp, newPolicies));
+			newPolicies.add(temp);
 		}
 		
 		return abstractedPolicies;
+	}
+	
+	public int size() {
+		return abstractedPolicy.size();
 	}
 	
 	@Override
