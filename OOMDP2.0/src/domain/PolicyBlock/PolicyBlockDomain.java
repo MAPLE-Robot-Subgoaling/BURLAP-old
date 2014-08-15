@@ -245,7 +245,7 @@ public class PolicyBlockDomain implements TrajectoryInterface{
 	//shows the policies from the output - Must contain a PolicyBlockPolicy to run
 	//Note: modify name for mutiple merged Policies.
 	public void writePolicy(PolicyBlockPolicy p, String output){
-		p.justDoIt().writeToFile(output, sp);
+		// p.justDoIt().writeToFile(output, sp);
 	}
 	
 	/**

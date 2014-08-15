@@ -19,17 +19,18 @@ public class PolicyBlockOption extends Option {
 	private StateHashFactory hashFactory;
 	private List<Action> actions;
 	private Set<StateHashTuple> visited;
-	
-	public PolicyBlockOption(StateHashFactory shf, List<Action> actions, Map<StateHashTuple, GroundedAction> policy) {
+
+	public PolicyBlockOption(StateHashFactory hf,
+			Map<StateHashTuple, GroundedAction> policy, List<Action> actions) {
 		this.policy = policy;
-		hashFactory = shf;
+		hashFactory = hf;
 		this.actions = actions;
 		super.name = "PolicyBlockOption";
 		this.parameterClasses = new String[0];
 		this.parameterOrderGroup = new String[0];
 		visited = new HashSet<StateHashTuple>();
 	}
-	
+
 	@Override
 	public boolean isMarkov() {
 		return true;
@@ -47,53 +48,57 @@ public class PolicyBlockOption extends Option {
 
 	@Override
 	public double probabilityOfTermination(State s, String[] params) {
-		if (policy.get(hashFactory.hashState(s)) == null || visited.contains(hashFactory.hashState(s))) {
+		if (policy.get(hashFactory.hashState(s)) == null
+				|| visited.contains(hashFactory.hashState(s))) {
 			visited.clear();
 			return 1.;
 		}
-		
+
 		return 0.;
 	}
 
 	@Override
-	public void initiateInStateHelper(State s, String[] params) { }
-	
-	
+	public void initiateInStateHelper(State s, String[] params) {
+	}
+
 	@Override
 	public GroundedAction oneStepActionSelection(State s, String[] params) {
 		if (visited.contains(hashFactory.hashState(s))) {
 			visited.clear();
 			return null;
 		}
-		
+
 		visited.add(hashFactory.hashState(s));
 		return policy.get(hashFactory.hashState(s));
 	}
 
 	@Override
-	public List<ActionProb> getActionDistributionForState(State s, String[] params) {
+	public List<ActionProb> getActionDistributionForState(State s,
+			String[] params) {
 		GroundedAction ga = policy.get(hashFactory.hashState(s));
 		List<ActionProb> aprobs = new ArrayList<ActionProb>();
 		for (Action a : actions) {
 			if (ga.action.equals(a)) {
-				ActionProb p = new ActionProb(new GroundedAction(a, a.getName()), 1.);
+				ActionProb p = new ActionProb(
+						new GroundedAction(a, a.getName()), 1.);
 				aprobs.add(p);
-			}
-			else {
-				ActionProb p = new ActionProb(new GroundedAction(a, a.getName()), 0.);
+			} else {
+				ActionProb p = new ActionProb(
+						new GroundedAction(a, a.getName()), 0.);
 				aprobs.add(p);
 			}
 		}
-		
+
 		return aprobs;
 	}
 
 	@Override
-	public boolean applicableInState(State s, String [] params) {
+	public boolean applicableInState(State s, String[] params) {
 		if (visited.contains(hashFactory.hashState(s))) {
 			visited.clear();
 			return false;
 		}
+
 		return policy.get(hashFactory.hashState(s)) != null;
 	}
 }
