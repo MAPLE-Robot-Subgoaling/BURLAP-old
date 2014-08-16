@@ -280,15 +280,16 @@ public class AbstractedPolicy {
 	ObjectInstance agent2 = ss2.getObjectsOfTrueClass("agent").get(0);
 	ObjectInstance goal1 = ss1.getObjectsOfTrueClass("goal").get(0);
 	ObjectInstance goal2 = ss2.getObjectsOfTrueClass("goal").get(0);
-	agent1.setValue("x", 1);
-	agent1.setValue("y", 1);
+	agent1.setValue("x", 8);
+	agent1.setValue("y", 8);
 	agent2.setValue("x", 1);
 	agent2.setValue("y", 1);
 	goal1.setValue("x", 11);
 	goal1.setValue("y", 11);
 	// TODO issue when I change the value of the goal
+	// the goal causes all of the states to have different hashes
 	goal2.setValue("x", 11);
-	goal2.setValue("y", 11);
+	goal2.setValue("y", 10);
 	ObjectInstance block1 = new ObjectInstance(
 		finalDomain2.getObjectClass("random"), "random" + 0);
 	block1.setValue("x", 5);
@@ -322,7 +323,7 @@ public class AbstractedPolicy {
 	PolicyBlockPolicy p3 = new PolicyBlockPolicy((QLearning) FourRooms.Q,
 		0.8);
 	((QLearning) FourRooms.Q).setLearningPolicy(p3);
-	for (int i = 0; i < 1000; i++) {
+	for (int i = 0; i < 1; i++) {
 	    FourRooms.Q.runLearningEpisodeFrom(ss2);
 	}
 
@@ -336,10 +337,16 @@ public class AbstractedPolicy {
 	pl1.add(p3);
 	StateHashFactory hf = ((OOMDPPlanner) FourRooms.Q).getHashingFactory();
 	List<AbstractedPolicy> as = unionMerge(hf, pl1, pl1.size());
+	List<AbstractedPolicy> toRemove = new ArrayList<AbstractedPolicy>();
 	for (AbstractedPolicy a : as) {
 	    System.out.println(a.getOriginalPolicies().size());
 	    System.out.println(a.size());
+	    // Temporary measure to prevent scoreUnionMerge from breaking
+	    if (a.size() == 0) {
+		toRemove.add(a);
+	    }
 	}
+	as.removeAll(toRemove);
 	System.out.println();
 
 	AbstractedPolicy best = scoreUnionMerge(hf, as);
@@ -597,6 +604,10 @@ public class AbstractedPolicy {
      */
     public static State findLimitingStateOverall(
 	    PolicyBlockPolicy initialPolicy, List<PolicyBlockPolicy> ps) {
+	if (initialPolicy.size() == 0) {
+	    // TODO
+	    throw new IllegalArgumentException("Initial policy is empty.");
+	}
 	Boolean flag = true;
 	State s = null;
 	State s1 = null;
@@ -604,6 +615,10 @@ public class AbstractedPolicy {
 	State initialState = null;
 
 	for (PolicyBlockPolicy pol : ps) {
+	    if (pol.size() == 0) {
+		// TODO
+		throw new IllegalArgumentException("Policy is empty: " + pol);
+	    }
 	    for (Map.Entry<StateHashTuple, GroundedAction> entry : pol.policy
 		    .entrySet()) {
 		s1 = entry.getKey().s;
@@ -1001,7 +1016,7 @@ public class AbstractedPolicy {
 	AbstractedPolicy merged = new AbstractedPolicy();
 	merged.originalPolicies.addAll(this.originalPolicies);
 
-	for (Entry<StateHashTuple, GroundedAction> e : abstractedPolicy
+	for (Entry<StateHashTuple, GroundedAction> e : this.abstractedPolicy
 		.entrySet()) {
 	    // Comparison is simply whether the given state corresponds to the
 	    // same action
@@ -1086,14 +1101,12 @@ public class AbstractedPolicy {
 		tempP.policy = abs.abstractedPolicy;
 		temp.add(tempP);
 
+		// Will throw a null pointer exception if the policy is of size 0
 		AbstractedPolicy origAb = new AbstractedPolicy(hf, orig, temp);
 		double stateSize = origAb.abstractedPolicy.size();
 		double stateMatch = 0.;
 
 		// TODO
-		// Is the check just for where the states exists in both, or for
-		// when the states exist and have the same action in both?
-		// working with same action for now
 		// What to do in the event of a tie?
 		for (Entry<StateHashTuple, GroundedAction> e : abs.abstractedPolicy
 			.entrySet()) {
@@ -1256,7 +1269,7 @@ public class AbstractedPolicy {
 		.entrySet()) {
 	    builder.append(e.getKey().hashCode() + ": " + e.getValue() + "\n");
 	}
-
+	
 	return builder.toString();
     }
 }
