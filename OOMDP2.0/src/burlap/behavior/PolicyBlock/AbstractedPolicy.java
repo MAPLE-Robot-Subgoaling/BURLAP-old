@@ -42,7 +42,7 @@ public class AbstractedPolicy {
     }
 
     public static long[] runTaxiLearning(PolicyBlockPolicy policy,
-	    StateHashFactory hf, Option o, int[][] passPos, int episodes,
+	    StateHashFactory hf, int[][] passPos, Option o, int episodes,
 	    String filepath) throws IOException {
 	List<Option> os = new ArrayList<Option>();
 	os.add(o);
@@ -98,9 +98,9 @@ public class AbstractedPolicy {
      * @param hf
      * @param actionSpace
      * @param stateSpace
-     * @return a PolicyBlockOption randomly initialized
+     * @return a AbstractedOption randomly initialized
      */
-    public static PolicyBlockOption generateRandomOption(StateHashFactory hf,
+    public static AbstractedOption generateRandomOption(StateHashFactory hf,
 	    List<Action> actionSpace, Set<StateHashTuple> stateSpace) {
 	Map<StateHashTuple, GroundedAction> policy = new HashMap<StateHashTuple, GroundedAction>();
 	Random rand = new Random();
@@ -121,7 +121,7 @@ public class AbstractedPolicy {
 
 	System.out.println(count);
 	System.out.println(stateSpace.size());
-	return new PolicyBlockOption(hf, policy, actionSpace);
+	return new AbstractedOption(hf, policy, actionSpace);
     }
 
     /**
@@ -134,7 +134,7 @@ public class AbstractedPolicy {
      * @param stateSpace
      * @return an option representing a cyclic path
      */
-    public static PolicyBlockOption generateCyclicOption(StateHashFactory hf,
+    public static AbstractedOption generateCyclicOption(StateHashFactory hf,
 	    List<Action> actionSpace, Set<StateHashTuple> stateSpace) {
 	Map<StateHashTuple, GroundedAction> policy = new HashMap<StateHashTuple, GroundedAction>();
 	Action n = null;
@@ -174,10 +174,11 @@ public class AbstractedPolicy {
 	    }
 	}
 
-	return new PolicyBlockOption(hf, policy, actionSpace);
+	return new AbstractedOption(hf, policy, actionSpace);
     }
 
     public static void main(String args[]) throws IOException {
+
 	String path = "C:/Users/Allison/Desktop/";
 	TaxiWorldDomain.MAXPASS = 1;
 	new TaxiWorldDomain().generateDomain();
@@ -186,8 +187,8 @@ public class AbstractedPolicy {
 		TaxiWorldDomain.CLASSAGENT,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
-	double epsilon = 0.4;
-	int episodes = 100;
+	double epsilon = 0.1;
+	int episodes = 10;
 	long startTime = System.currentTimeMillis();
 	Random rand = new Random();
 	int c = 1;
@@ -240,16 +241,17 @@ public class AbstractedPolicy {
 	System.out.println(runTaxiLearning(policy5, hf, ps5, episodes, path
 		+ "five.csv")[episodes - 1]);
 	System.out.println("Finished policy: " + c);
+	c++;
 
 	ArrayList<PolicyBlockPolicy> toMerge = new ArrayList<PolicyBlockPolicy>();
 	toMerge.add(policy1);
 	toMerge.add(policy2);
 	toMerge.add(policy3);
-	toMerge.add(policy4);
-	toMerge.add(policy5);
+	// toMerge.add(policy4);
+	// toMerge.add(policy5);
 
 	long uTime = System.currentTimeMillis();
-	int depth = toMerge.size();
+	int depth = 3;
 	System.out.println("Starting union merge with depth " + depth + ".");
 	List<AbstractedPolicy> merged = unionMerge(hf, toMerge, depth);
 	System.out
@@ -277,44 +279,25 @@ public class AbstractedPolicy {
 	System.out.println("Final policy of size: " + best.size());
 	System.out.println(best.abstractedPolicy.entrySet().iterator().next()
 		.getKey().s);
+	System.out.println(best.abstractedPolicy.keySet().iterator().next().s);
 
-	@SuppressWarnings("unused")
-	PolicyBlockOption pbo = new PolicyBlockOption(hf,
-		best.abstractedPolicy, TaxiWorldDomain.DOMAIN.getActions());
+	// @SuppressWarnings("unused")
+	AbstractedOption pbo = new AbstractedOption(hf, best.abstractedPolicy,
+		TaxiWorldDomain.DOMAIN.getActions());
 
 	System.out.println("Experiment finished. Took a total of "
 		+ ((System.currentTimeMillis() - startTime) / 60000.0)
 		+ " minutes.");
 
-	// Need to have a method to balloon each policy using reachability to
-	// assure it's defined
-	// TODO maybe put the considerations for null mappings into the merging,
-	// to prevent extra computation
-	/*
-	 * FourRooms fr = new FourRooms(); Domain d = fr.generateDomain();
-	 * 
-	 * AbstractDomain ad1 = new AbstractDomain(); Domain finalDomain2 =
-	 * ad1.generateDomain(d); State ss1 = FourRooms.getCleanState(); State
-	 * ss2 = FourRooms.getCleanState(); ObjectInstance agent1 =
-	 * ss1.getObjectsOfTrueClass("agent").get(0); ObjectInstance agent2 =
-	 * ss2.getObjectsOfTrueClass("agent").get(0); ObjectInstance goal1 =
-	 * ss1.getObjectsOfTrueClass("goal").get(0); ObjectInstance goal2 =
-	 * ss2.getObjectsOfTrueClass("goal").get(0); agent1.setValue("x", 8);
-	 * agent1.setValue("y", 8); agent2.setValue("x", 1);
-	 * agent2.setValue("y", 1); goal1.setValue("x", 11); goal1.setValue("y",
-	 * 11); // TODO issue when I change the value of the goal // the goal
-	 * causes all of the states to have different hashes goal2.setValue("x",
-	 * 11); goal2.setValue("y", 11); ObjectInstance block1 = new
-	 * ObjectInstance( finalDomain2.getObjectClass("random"), "random" + 0);
-	 * block1.setValue("x", 5); block1.setValue("y", 2); ObjectInstance
-	 * block2 = new ObjectInstance( finalDomain2.getObjectClass("random"),
-	 * "random" + 1); block2.setValue("x", 7); block2.setValue("y", 4);
-	 * ObjectInstance block3 = new ObjectInstance(
-	 * finalDomain2.getObjectClass("random"), "random" + 2);
-	 * block3.setValue("x", 3); block3.setValue("y", 3);
-	 * ss2.addObject(block1); ss2.addObject(block2); ss1.addObject(block3);
-	 * ss1.addObject(block1); ss1.addObject(block2);
-	 */
+	TaxiWorldDomain.MAXPASS = 1;
+	int[][] ps6 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
+	PolicyBlockPolicy policy6 = new PolicyBlockPolicy(epsilon);
+	System.out.println("Starting policy " + c + ": MAXPASS="
+		+ TaxiWorldDomain.MAXPASS);
+	System.out.println(runTaxiLearning(policy6, hf, ps6, pbo, episodes,
+		path + "six.csv")[episodes - 1]);
+	System.out.println("Finished policy: " + c);
+
     }
 
     public AbstractedPolicy() {
@@ -387,21 +370,19 @@ public class AbstractedPolicy {
 	// creates action sequences of all abstractions
 	for (Map<StateHashTuple, GroundedAction> map : policyList) {
 	    actionSequence = new ArrayList<GroundedAction>();
-	    for (Map.Entry<StateHashTuple, GroundedAction> entry : map
-		    .entrySet()) {
+	    for (Entry<StateHashTuple, GroundedAction> entry : map.entrySet()) {
 		actionSequence.add(entry.getValue());
 	    }
 	    actionList.add(actionSequence);
 	}
 
 	// generate original action sequence
-	for (Map.Entry<StateHashTuple, GroundedAction> entry : p.policy
-		.entrySet()) {
+	for (Entry<StateHashTuple, GroundedAction> entry : p.policy.entrySet()) {
 	    originalActions.add(entry.getValue());
 	}
 
 	/*
-	 * Convert to array list
+	 * TODO Convert to array list
 	 */
 	// find difference between original action sequence and abstractions
 	for (List<GroundedAction> gaList : actionList) {
@@ -450,12 +431,6 @@ public class AbstractedPolicy {
 	    if (toCheck.equals(s)) {
 		stateMatches.add(s);
 	    }
-	    // TODO this would throw an exception if the state descriptors were
-	    // different (e.g. [passenger 1, passenger 2] versus [passenger 1])
-	    /*
-	     * if (toCheck.getCompleteStateDescription().equals(
-	     * s.getCompleteStateDescription())) { stateMatches.add(s); }
-	     */
 	}
 
 	// makes list of all Q values that correspond to stateMatches
@@ -1082,9 +1057,7 @@ public class AbstractedPolicy {
 		}
 		totalMatch += stateMatch / stateSize;
 	    }
-	    System.out.println(abs.getOriginalPolicies());
-	    System.out.println(totalMatch + " / "
-		    + abs.getOriginalPolicies().size());
+
 	    if (totalMatch > max) {
 		ret = abs;
 		max = totalMatch;
@@ -1095,8 +1068,8 @@ public class AbstractedPolicy {
     }
 
     /**
-     * Generates all k-subsets from alpha to beta Runs O(Sum from k=alpha to
-     * beta of (n!)/(k! * (n-k)!))
+     * Generates all k-subsets from alpha to beta. Runs O(Sum from k=alpha to
+     * beta of n! / (k! * (n - k)!))
      * 
      * @param set
      *            - the set to be permuted
@@ -1187,7 +1160,7 @@ public class AbstractedPolicy {
      * 
      * @param n
      * @param k
-     * @return (n!)/(k! * (n - k)!)
+     * @return n! / (k! * (n - k)!)
      */
     private static long binomial(int n, int k) {
 	if (k < 0 || k > n) {
