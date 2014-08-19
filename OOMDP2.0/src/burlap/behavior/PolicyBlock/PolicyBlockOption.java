@@ -101,4 +101,8 @@ public class PolicyBlockOption extends Option {
 
 	return policy.get(hashFactory.hashState(s)) != null;
     }
+
+    public int size() {
+	return policy.size();
+    }
 }

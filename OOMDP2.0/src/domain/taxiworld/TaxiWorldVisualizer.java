@@ -19,10 +19,7 @@ public class TaxiWorldVisualizer {
 
         v.addStaticPainter(new RoomsMapPainter(d));
 
-        for (int i = 1; i <= TaxiWorldDomain.MAXPASS; i++) {
-            v.addObjectClassPainter(TaxiWorldDomain.CLASSPASS + i, new CellPainter(d, Color.red));
-        }
-        v.addObjectClassPainter(TaxiWorldDomain.CLASSGOAL, new CellPainter(d, Color.green));
+        v.addObjectClassPainter(TaxiWorldDomain.CLASSPASS, new CellPainter(d, Color.red));
         v.addObjectClassPainter(TaxiWorldDomain.CLASSAGENT, new CellPainter(d, Color.yellow));
 
         return v;
@@ -78,7 +75,6 @@ public class TaxiWorldVisualizer {
             //determine then normalized width
             float width = (1.0f / domainXScale) * cWidth;
             float height = (1.0f / domainYScale) * cHeight;
-
             float rx = ob.getDiscValForAttribute(TaxiWorldDomain.ATTX) * width;
             float ry = cHeight - height - ob.getDiscValForAttribute(TaxiWorldDomain.ATTY) * height;
 

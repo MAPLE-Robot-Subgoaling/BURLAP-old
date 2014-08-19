@@ -88,7 +88,7 @@ public class PolicyBlockPolicy extends EpsilonGreedy {
 
 	return corr;
     }
-    
+
     public int size() {
 	return policy.size();
     }
