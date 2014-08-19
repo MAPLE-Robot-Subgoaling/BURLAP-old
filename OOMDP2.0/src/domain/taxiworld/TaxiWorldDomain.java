@@ -23,9 +23,9 @@ import burlap.oomdp.singleagent.common.SinglePFTF;
 import burlap.oomdp.visualizer.Visualizer;
 
 /**
- * @author Nicholas Haltmeyer Class definition for the taxi world domain Allows
- *         for generation of a taxi world domain with any number of passengers
- *         Based off of the four rooms domain
+ * @author Nicholas Haltmeyer Class definition for the taxi world domain. Allows
+ *         for generation of a taxi world domain with any number of passengers.
+ *         Based on the four rooms domain
  */
 public class TaxiWorldDomain implements DomainGenerator {
     public static final String ATTX = "x";
@@ -217,24 +217,12 @@ public class TaxiWorldDomain implements DomainGenerator {
 	agentClass.addAttribute(yatt);
 	agentClass.addAttribute(cyatt);
 
-	
-	    ObjectClass passClass = new ObjectClass(DOMAIN, CLASSPASS);
-	    passClass.addAttribute(xatt);
-	    passClass.addAttribute(yatt);
-	    passClass.addAttribute(cdatt);
-	    passClass.addAttribute(datt);
-	    DOMAIN.addObjectClass(passClass);
-	
-	/*String[] classPassArr = new String[MAXPASS];
-	for (int i = 1; i <= MAXPASS; i++) {
-	    ObjectClass passClass = new ObjectClass(DOMAIN, CLASSPASS);
-	    passClass.addAttribute(xatt);
-	    passClass.addAttribute(yatt);
-	    passClass.addAttribute(cdatt);
-	    passClass.addAttribute(datt);
-	    DOMAIN.addObjectClass(passClass);
-	    classPassArr[i - 1] = CLASSPASS + i;
-	}*/
+	ObjectClass passClass = new ObjectClass(DOMAIN, CLASSPASS);
+	passClass.addAttribute(xatt);
+	passClass.addAttribute(yatt);
+	passClass.addAttribute(cdatt);
+	passClass.addAttribute(datt);
+	DOMAIN.addObjectClass(passClass);
 
 	DOMAIN.addObjectClass(agentClass);
 
@@ -259,11 +247,11 @@ public class TaxiWorldDomain implements DomainGenerator {
 	DOMAIN.addAction(dropOff);
 
 	PropositionalFunction atGoal = new AtGoalPF(PFATGOAL, DOMAIN,
-		new String[] { CLASSAGENT, CLASSPASS});
+		new String[] { CLASSAGENT, CLASSPASS });
 	PropositionalFunction atPassenger = new AtPassPF(PFATPASS, DOMAIN,
-		new String[] { CLASSAGENT, CLASSPASS});
+		new String[] { CLASSAGENT, CLASSPASS });
 	PropositionalFunction atFinish = new AtFinishPF(PFATFINISH, DOMAIN,
-		new String[] { CLASSAGENT, CLASSPASS});
+		new String[] { CLASSAGENT, CLASSPASS });
 
 	DOMAIN.addPropositionalFunction(atGoal);
 	DOMAIN.addPropositionalFunction(atPassenger);
@@ -271,18 +259,6 @@ public class TaxiWorldDomain implements DomainGenerator {
 
 	rf = new SingleGoalPFRF(DOMAIN.getPropFunction(PFATFINISH));
 	tf = new SinglePFTF(DOMAIN.getPropFunction(PFATFINISH));
-
-	/*
-	 * DiscreteStateHashFactory hashFactory = new
-	 * DiscreteStateHashFactory();
-	 * hashFactory.setAttributesForClass(CLASSAGENT,
-	 * DOMAIN.getObjectClass(CLASSAGENT).attributeList); Q = new
-	 * QLearning(DOMAIN, rf, tf, DISCOUNTFACTOR, hashFactory, 0.2,
-	 * LEARNINGRATE, Integer.MAX_VALUE); S = new SarsaLam(DOMAIN, rf, tf,
-	 * DISCOUNTFACTOR, hashFactory, 0.2, LEARNINGRATE, LAMBDA); planner =
-	 * new ValueIteration(DOMAIN, rf, tf, DISCOUNTFACTOR, hashFactory,
-	 * 0.001, 100);
-	 */
 
 	return DOMAIN;
     }
@@ -299,8 +275,8 @@ public class TaxiWorldDomain implements DomainGenerator {
 		CLASSAGENT));
 
 	for (int i = 1; i <= MAXPASS; i++) {
-	    s.addObject(new ObjectInstance(
-		    DOMAIN.getObjectClass(CLASSPASS), CLASSPASS + i));
+	    s.addObject(new ObjectInstance(DOMAIN.getObjectClass(CLASSPASS),
+		    CLASSPASS + i));
 	}
 
 	return s;
@@ -458,8 +434,8 @@ public class TaxiWorldDomain implements DomainGenerator {
 	int passNum = agent.getDiscValForAttribute(ATTCARRY);
 
 	if (passNum != 0) {
-	    ObjectInstance pass = s.getObjectsOfTrueClass(CLASSPASS)
-		    .get(passNum - 1);
+	    ObjectInstance pass = s.getObjectsOfTrueClass(CLASSPASS).get(
+		    passNum - 1);
 	    pass.setValue(ATTX, nx);
 	    pass.setValue(ATTY, ny);
 	}
@@ -506,7 +482,8 @@ public class TaxiWorldDomain implements DomainGenerator {
 	int ay = agent.getDiscValForAttribute(ATTY);
 
 	int gx = GOALX;
-	int gy = GOALY;;
+	int gy = GOALY;
+	;
 	int passNum = agent.getDiscValForAttribute(ATTCARRY);
 
 	if (passNum == 0) {
@@ -737,8 +714,7 @@ public class TaxiWorldDomain implements DomainGenerator {
 	    int gx = GOALY;
 	    int gy = GOALY;
 
-	    if (ax == gx && ay == gy
-		    && GOALLEFT == 0) {
+	    if (ax == gx && ay == gy && GOALLEFT == 0) {
 		return true;
 	    }
 	    return false;
@@ -770,7 +746,8 @@ public class TaxiWorldDomain implements DomainGenerator {
 	    int ay = agent.getDiscValForAttribute(ATTY);
 
 	    for (int i = 1; i <= MAXPASS; i++) {
-		ObjectInstance pass = st.getObjectsOfTrueClass(CLASSPASS).get(i - 1);
+		ObjectInstance pass = st.getObjectsOfTrueClass(CLASSPASS).get(
+			i - 1);
 		int px = pass.getDiscValForAttribute(ATTX);
 		int py = pass.getDiscValForAttribute(ATTY);
 

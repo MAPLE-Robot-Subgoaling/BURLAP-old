@@ -57,8 +57,7 @@ public class AbstractedPolicy {
 		TaxiWorldDomain.tf, TaxiWorldDomain.DISCOUNTFACTOR, hf,
 		TaxiWorldDomain.GAMMA, TaxiWorldDomain.LEARNINGRATE,
 		Integer.MAX_VALUE);
-	// TaxiWorldDomain td = new TaxiWorldDomain();
-	// td.generateDomain();
+
 	State s = TaxiWorldDomain.getCleanState();
 	Q.setLearningPolicy(policy);
 	policy.setPlanner(Q);
@@ -93,6 +92,14 @@ public class AbstractedPolicy {
 	return cumulArr;
     }
 
+    /**
+     * Generates a random options defined over a random chunk of the state space
+     * 
+     * @param hf
+     * @param actionSpace
+     * @param stateSpace
+     * @return a PolicyBlockOption randomly initialized
+     */
     public static PolicyBlockOption generateRandomOption(StateHashFactory hf,
 	    List<Action> actionSpace, Set<StateHashTuple> stateSpace) {
 	Map<StateHashTuple, GroundedAction> policy = new HashMap<StateHashTuple, GroundedAction>();
@@ -187,7 +194,6 @@ public class AbstractedPolicy {
 
 	TaxiWorldDomain.MAXPASS = rand.nextInt(3) + 1;
 	int[][] ps1 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	new TaxiWorldDomain().generateDomain();
 	PolicyBlockPolicy policy1 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
@@ -198,7 +204,6 @@ public class AbstractedPolicy {
 
 	TaxiWorldDomain.MAXPASS = rand.nextInt(3) + 1;
 	int[][] ps2 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	new TaxiWorldDomain().generateDomain();
 	PolicyBlockPolicy policy2 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
@@ -209,7 +214,6 @@ public class AbstractedPolicy {
 
 	TaxiWorldDomain.MAXPASS = rand.nextInt(3) + 1;
 	int[][] ps3 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	new TaxiWorldDomain().generateDomain();
 	PolicyBlockPolicy policy3 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
@@ -220,7 +224,6 @@ public class AbstractedPolicy {
 
 	TaxiWorldDomain.MAXPASS = rand.nextInt(3) + 1;
 	int[][] ps4 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	new TaxiWorldDomain().generateDomain();
 	PolicyBlockPolicy policy4 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
@@ -231,7 +234,6 @@ public class AbstractedPolicy {
 
 	TaxiWorldDomain.MAXPASS = rand.nextInt(3) + 1;
 	int[][] ps5 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	new TaxiWorldDomain().generateDomain();
 	PolicyBlockPolicy policy5 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
@@ -245,10 +247,11 @@ public class AbstractedPolicy {
 	toMerge.add(policy3);
 	toMerge.add(policy4);
 	toMerge.add(policy5);
-	
+
 	long uTime = System.currentTimeMillis();
-	System.out.println("Starting union merge.");
-	List<AbstractedPolicy> merged = unionMerge(hf, toMerge, 3);
+	int depth = toMerge.size();
+	System.out.println("Starting union merge with depth " + depth + ".");
+	List<AbstractedPolicy> merged = unionMerge(hf, toMerge, depth);
 	System.out
 		.println("Finished union merge; took "
 			+ ((System.currentTimeMillis() - uTime) / 60000.0)
@@ -263,7 +266,7 @@ public class AbstractedPolicy {
 	    }
 	}
 	merged.removeAll(toRemove);
-	
+
 	long mTime = System.currentTimeMillis();
 	System.out.println("Starting scoring merges.");
 	AbstractedPolicy best = scoreUnionMerge(hf, merged);
@@ -272,6 +275,12 @@ public class AbstractedPolicy {
 			+ ((System.currentTimeMillis() - mTime) / 60000.0)
 			+ " minutes");
 	System.out.println("Final policy of size: " + best.size());
+	System.out.println(best.abstractedPolicy.entrySet().iterator().next()
+		.getKey().s);
+
+	@SuppressWarnings("unused")
+	PolicyBlockOption pbo = new PolicyBlockOption(hf,
+		best.abstractedPolicy, TaxiWorldDomain.DOMAIN.getActions());
 
 	System.out.println("Experiment finished. Took a total of "
 		+ ((System.currentTimeMillis() - startTime) / 60000.0)
