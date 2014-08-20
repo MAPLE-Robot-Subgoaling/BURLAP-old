@@ -279,7 +279,8 @@ public class AbstractedPolicy {
 
 	long mTime = System.currentTimeMillis();
 	System.out.println("Starting scoring merges.");
-	List<Entry<Double, AbstractedPolicy>> scored = scoreUnionMerge(hf, merged);
+	List<Entry<Double, AbstractedPolicy>> scored = scoreUnionMerge(hf,
+		merged);
 	AbstractedPolicy best1 = scored.get(0).getValue();
 	AbstractedPolicy best2 = scored.get(1).getValue();
 	System.out.println(scored.size() + " options generated.");
@@ -294,11 +295,9 @@ public class AbstractedPolicy {
 	System.out.println(best1.abstractedPolicy.keySet().iterator().next().s);
 	System.out.println(best2.abstractedPolicy.keySet().iterator().next().s);
 
-	AbstractedOption pbo1 = new AbstractedOption(hf, best1.abstractedPolicy);
-	AbstractedOption pbo2 = new AbstractedOption(hf, best2.abstractedPolicy);
 	List<AbstractedOption> ops = new ArrayList<AbstractedOption>();
-	ops.add(pbo1);
-	ops.add(pbo2);
+	ops.add(new AbstractedOption(hf, best1.abstractedPolicy));
+	// ops.add(new AbstractedOption(hf, best2.abstractedPolicy));
 
 	TaxiWorldDomain.MAXPASS = 1;
 	new TaxiWorldDomain().generateDomain();
@@ -310,7 +309,7 @@ public class AbstractedPolicy {
 		path + "six.csv")[episodes - 1]);
 	System.out.println("Finished policy: " + c);
 	c++;
-	//TODO
+	// TODO
 
 	PolicyBlockPolicy policy7 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
@@ -318,7 +317,7 @@ public class AbstractedPolicy {
 	System.out.println(runTaxiLearning(policy7, hf, ps6, episodes, path
 		+ "seven.csv")[episodes - 1]);
 	System.out.println("Finished policy: " + c);
-	
+
 	System.out.println("Experiment finished. Took a total of "
 		+ ((System.currentTimeMillis() - startTime) / 60000.0)
 		+ " minutes.");
@@ -1042,8 +1041,8 @@ public class AbstractedPolicy {
     /**
      * Grounds each abstracted policy to its set of original policies to score
      * the error in abstraction Error is measured as number of states with the
-     * same action / total number of states.
-     * The first element has the greatest score.
+     * same action / total number of states. The first element has the greatest
+     * score.
      * 
      * @param hf
      *            - the hashing factory
@@ -1051,10 +1050,10 @@ public class AbstractedPolicy {
      *            - the list of merged abstracted policies
      * @return the list of all abstracted policies with relative scores
      */
-    public static List<Entry<Double, AbstractedPolicy>> scoreUnionMerge(StateHashFactory hf,
-	    List<AbstractedPolicy> merged) {
+    public static List<Entry<Double, AbstractedPolicy>> scoreUnionMerge(
+	    StateHashFactory hf, List<AbstractedPolicy> merged) {
 	List<Entry<Double, AbstractedPolicy>> ret = new ArrayList<Entry<Double, AbstractedPolicy>>();
-	
+
 	for (AbstractedPolicy abs : merged) {
 	    double totalMatch = 0.;
 
@@ -1083,24 +1082,26 @@ public class AbstractedPolicy {
 		totalMatch += stateMatch / stateSize;
 	    }
 
-	    ret.add(new AbstractMap.SimpleEntry<Double, AbstractedPolicy>(totalMatch, abs));
+	    ret.add(new AbstractMap.SimpleEntry<Double, AbstractedPolicy>(
+		    totalMatch, abs));
 	}
 
-	Collections.sort(ret, new Comparator<Entry<Double, AbstractedPolicy>> () {
-	    @Override
-	    public int compare(Entry<Double, AbstractedPolicy> arg0,
-		    Entry<Double, AbstractedPolicy> arg1) {
-		if (arg0.getKey() > arg1.getKey()) {
-		    return -1;
-		} else if (arg0.getKey() < arg1.getKey()) {
-		    return 1;
-		}
-		
-		return 0;
-	    }
-	    
-	});
-	
+	Collections.sort(ret,
+		new Comparator<Entry<Double, AbstractedPolicy>>() {
+		    @Override
+		    public int compare(Entry<Double, AbstractedPolicy> arg0,
+			    Entry<Double, AbstractedPolicy> arg1) {
+			if (arg0.getKey() > arg1.getKey()) {
+			    return -1;
+			} else if (arg0.getKey() < arg1.getKey()) {
+			    return 1;
+			}
+
+			return 0;
+		    }
+
+		});
+
 	return ret;
     }
 
