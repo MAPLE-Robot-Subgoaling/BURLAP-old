@@ -198,7 +198,7 @@ public class TaxiWorldDomain implements DomainGenerator {
 	yatt.setDiscValuesForRange(0, MAXY, 1);
 	Attribute cyatt = new Attribute(DOMAIN, ATTCARRY,
 		Attribute.AttributeType.DISC);
-	cyatt.setDiscValuesForRange(0, 1, MAXPASS);
+	cyatt.setDiscValuesForRange(0, MAXPASS, 1);
 	Attribute cdatt = new Attribute(DOMAIN, ATTCARRIED,
 		Attribute.AttributeType.DISC);
 	cdatt.setDiscValuesForRange(0, 1, 1);
@@ -483,7 +483,7 @@ public class TaxiWorldDomain implements DomainGenerator {
 
 	int gx = GOALX;
 	int gy = GOALY;
-	;
+	
 	int passNum = agent.getDiscValForAttribute(ATTCARRY);
 
 	if (passNum == 0) {

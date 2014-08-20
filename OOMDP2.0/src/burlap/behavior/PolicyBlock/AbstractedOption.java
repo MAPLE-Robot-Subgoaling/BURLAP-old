@@ -1,9 +1,13 @@
 package burlap.behavior.PolicyBlock;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 
 import burlap.behavior.singleagent.Policy.ActionProb;
@@ -11,24 +15,29 @@ import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.State;
-import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 
 public class AbstractedOption extends Option {
     public Map<StateHashTuple, GroundedAction> policy;
+    public Map<StateHashTuple, Entry<Integer, List<GroundedAction>>> abstractedPolicy;
     private StateHashFactory hashFactory;
-    private List<Action> actions;
+    private Set<GroundedAction> actions;
     private Set<StateHashTuple> visited;
+    private State withRespectTo;
+    private Random rand;
+    private boolean abstractionGenerated = false;
 
     public AbstractedOption(StateHashFactory hf,
-	    Map<StateHashTuple, GroundedAction> policy, List<Action> actions) {
+	    Map<StateHashTuple, GroundedAction> policy) {
 	this.policy = policy;
-	hashFactory = hf;
-	this.actions = actions;
-	super.name = "PolicyBlockOption";
+	this.hashFactory = hf;
+	this.actions = new HashSet<GroundedAction>();
+	super.name = "AbstractedOption";
 	this.parameterClasses = new String[0];
 	this.parameterOrderGroup = new String[0];
-	visited = new HashSet<StateHashTuple>();
+	this.visited = new HashSet<StateHashTuple>();
+	this.rand = new Random();
+	this.abstractedPolicy = new HashMap<StateHashTuple, Entry<Integer, List<GroundedAction>>>();
     }
 
     @Override
@@ -47,9 +56,14 @@ public class AbstractedOption extends Option {
     }
 
     @Override
-    public double probabilityOfTermination(State s, String[] params) {
-	if (policy.get(hashFactory.hashState(s)) == null
-		|| visited.contains(hashFactory.hashState(s))) {
+    public double probabilityOfTermination(State incoming, String[] params) {
+	State abs = AbstractedPolicy.findLimitingState(
+		AbstractedPolicy.generateLCIMappingState(incoming),
+		AbstractedPolicy.generateLCIMappingState(withRespectTo),
+		incoming, withRespectTo);
+	Entry<Integer, List<GroundedAction>> tempE = abstractedPolicy
+		.get(hashFactory.hashState(abs));
+	if (tempE == null || visited.contains(hashFactory.hashState(abs))) {
 	    visited.clear();
 	    return 1.;
 	}
@@ -59,32 +73,54 @@ public class AbstractedOption extends Option {
 
     @Override
     public void initiateInStateHelper(State s, String[] params) {
+	// Nothing to do here
     }
 
     @Override
-    public GroundedAction oneStepActionSelection(State s, String[] params) {
-	if (visited.contains(hashFactory.hashState(s))) {
+    public GroundedAction oneStepActionSelection(State incoming, String[] params) {
+	State abs = AbstractedPolicy.findLimitingState(
+		AbstractedPolicy.generateLCIMappingState(incoming),
+		AbstractedPolicy.generateLCIMappingState(withRespectTo),
+		incoming, withRespectTo);
+	if (visited.contains(hashFactory.hashState(abs))) {
 	    visited.clear();
 	    return null;
 	}
 
-	visited.add(hashFactory.hashState(s));
-	return policy.get(hashFactory.hashState(s));
+	visited.add(hashFactory.hashState(abs));
+	Entry<Integer, List<GroundedAction>> tempE = abstractedPolicy
+		.get(hashFactory.hashState(abs));
+
+	// not == because of object equality
+	// If the action selection has not been initialized, make a random
+	// selection from the list of actions defined for that state.
+	// This leads to weighted probability of choosing actions coming from
+	// the grounding.
+	if (tempE.getKey().equals(-1)) {
+	    int index = rand.nextInt(tempE.getValue().size());
+	    AbstractMap.SimpleEntry<Integer, List<GroundedAction>> newE = new AbstractMap.SimpleEntry<Integer, List<GroundedAction>>(
+		    index, tempE.getValue());
+	    abstractedPolicy.put(hashFactory.hashState(abs), newE);
+	    tempE = abstractedPolicy.get(hashFactory.hashState(abs));
+	}
+
+	return tempE.getValue().get(tempE.getKey());
     }
 
     @Override
     public List<ActionProb> getActionDistributionForState(State s,
 	    String[] params) {
-	GroundedAction ga = policy.get(hashFactory.hashState(s));
+	GroundedAction ga = oneStepActionSelection(s, params);
 	List<ActionProb> aprobs = new ArrayList<ActionProb>();
-	for (Action a : actions) {
+	for (GroundedAction a : actions) {
 	    if (ga.action.equals(a)) {
-		ActionProb p = new ActionProb(
-			new GroundedAction(a, a.getName()), 1.);
+		// If the action selection is in the set of actions stored,
+		// return 1.
+		ActionProb p = new ActionProb(a, 1.);
 		aprobs.add(p);
 	    } else {
-		ActionProb p = new ActionProb(
-			new GroundedAction(a, a.getName()), 0.);
+		// Otherwise, return 0.
+		ActionProb p = new ActionProb(a, 0.);
 		aprobs.add(p);
 	    }
 	}
@@ -96,23 +132,61 @@ public class AbstractedOption extends Option {
     /**
      * Abstracts the incoming state with respect to an arbitrary state in the option, and then checks for existence in the option.
      */
-    public boolean applicableInState(State s, String[] params) {
-	State base = policy.keySet().iterator().next().s;
-	State absState = AbstractedPolicy.findLimitingState(
-		AbstractedPolicy.generateLCIMappingState(s),
-		AbstractedPolicy.generateLCIMappingState(base), s, base);
-	// TODO Abstract the incoming state relative to the policy stored and
-	// then check for mapping
-	// Need to consider if the option is stored in a higher state space than the incoming state.
-	if (visited.contains(hashFactory.hashState(absState))) {
+    public boolean applicableInState(State incoming, String[] params) {
+	if (withRespectTo == null) {
+	    State base = policy.keySet().iterator().next().s;
+	    withRespectTo = base;
+	}
+	State absIncoming = AbstractedPolicy.findLimitingState(
+		AbstractedPolicy.generateLCIMappingState(incoming),
+		AbstractedPolicy.generateLCIMappingState(withRespectTo),
+		incoming, withRespectTo);
+
+	if (!abstractionGenerated) {
+	    for (Entry<StateHashTuple, GroundedAction> e : policy.entrySet()) {
+		State curState = AbstractedPolicy.findLimitingState(
+			AbstractedPolicy.generateLCIMappingState(e.getKey().s),
+			AbstractedPolicy.generateLCIMappingState(incoming),
+			e.getKey().s, incoming);
+		GroundedAction curGA = e.getValue();
+
+		if (!actions.contains(curGA)) {
+		    actions.add(curGA);
+		}
+
+		if (abstractedPolicy.get(hashFactory.hashState(curState)) == null) {
+		    List<GroundedAction> tempArr = new ArrayList<GroundedAction>();
+		    tempArr.add(curGA);
+		    // -1 initialization means the selection hasn't been made
+		    AbstractMap.SimpleEntry<Integer, List<GroundedAction>> tempE = new AbstractMap.SimpleEntry<Integer, List<GroundedAction>>(
+			    -1, tempArr);
+		    abstractedPolicy
+			    .put(hashFactory.hashState(curState), tempE);
+		} else {
+		    Entry<Integer, List<GroundedAction>> tempE = abstractedPolicy
+			    .get(hashFactory.hashState(curState));
+		    List<GroundedAction> tempArr = tempE.getValue();
+		    tempArr.add(curGA);
+		    tempE.setValue(tempArr);
+		    abstractedPolicy
+			    .put(hashFactory.hashState(curState), tempE);
+		}
+	    }
+
+	    abstractionGenerated = true;
+	}
+
+	if (visited.contains(hashFactory.hashState(absIncoming))) {
 	    visited.clear();
 	    return false;
 	}
 
-	if (policy.get(hashFactory.hashState(absState)) != null) {
-	    System.out.println("WOOOOO!");
-	}
-	return policy.get(hashFactory.hashState(absState)) != null;
+	return abstractedPolicy.get(hashFactory.hashState(absIncoming)) != null;
+    }
+
+    public void resetOption() {
+	abstractionGenerated = false;
+	abstractedPolicy = new HashMap<StateHashTuple, Entry<Integer, List<GroundedAction>>>();
     }
 
     public int size() {

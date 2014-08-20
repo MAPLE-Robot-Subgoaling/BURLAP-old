@@ -4,8 +4,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +39,7 @@ public class AbstractedPolicy {
     public static long[] runTaxiLearning(PolicyBlockPolicy policy,
 	    StateHashFactory hf, int[][] passPos, int episodes, String filepath)
 	    throws IOException {
-	return runTaxiLearning(policy, hf, new ArrayList<Option>(), passPos,
+	return runTaxiLearning(policy, hf, passPos, new ArrayList<Option>(),
 		episodes, filepath);
     }
 
@@ -46,11 +48,11 @@ public class AbstractedPolicy {
 	    String filepath) throws IOException {
 	List<Option> os = new ArrayList<Option>();
 	os.add(o);
-	return runTaxiLearning(policy, hf, os, passPos, episodes, filepath);
+	return runTaxiLearning(policy, hf, passPos, os, episodes, filepath);
     }
 
     public static long[] runTaxiLearning(PolicyBlockPolicy policy,
-	    StateHashFactory hf, List<Option> os, int[][] passPos,
+	    StateHashFactory hf, int[][] passPos, List<? extends Option> os,
 	    int episodes, String filepath) throws IOException {
 	TaxiWorldDomain.MAXPASS = passPos.length;
 	QLearning Q = new QLearning(TaxiWorldDomain.DOMAIN, TaxiWorldDomain.rf,
@@ -121,7 +123,7 @@ public class AbstractedPolicy {
 
 	System.out.println(count);
 	System.out.println(stateSpace.size());
-	return new AbstractedOption(hf, policy, actionSpace);
+	return new AbstractedOption(hf, policy);
     }
 
     /**
@@ -174,26 +176,32 @@ public class AbstractedPolicy {
 	    }
 	}
 
-	return new AbstractedOption(hf, policy, actionSpace);
+	return new AbstractedOption(hf, policy);
     }
 
     public static void main(String args[]) throws IOException {
-
 	String path = "C:/Users/Allison/Desktop/";
-	TaxiWorldDomain.MAXPASS = 1;
+	TaxiWorldDomain.MAXPASS = 3;
 	new TaxiWorldDomain().generateDomain();
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
 	hf.setAttributesForClass(
 		TaxiWorldDomain.CLASSAGENT,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
-	double epsilon = 0.1;
-	int episodes = 10;
+	double epsilon = 0.8;
+	int episodes = 1000;
 	long startTime = System.currentTimeMillis();
 	Random rand = new Random();
 	int c = 1;
+	int max = TaxiWorldDomain.MAXPASS;
+	// Offset must always be one, or there will be value errors with
+	// ATTCARRY
+	// MAXPASS must never be set higher than max, ATTCARRY will have issues
+	// as well
+	// If MAXPASS must be set higher, the domain must be regenerated
+	int offset = 1;
 
-	TaxiWorldDomain.MAXPASS = rand.nextInt(3) + 1;
+	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
 	int[][] ps1 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
 	PolicyBlockPolicy policy1 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
@@ -203,7 +211,7 @@ public class AbstractedPolicy {
 	System.out.println("Finished policy: " + c);
 	c++;
 
-	TaxiWorldDomain.MAXPASS = rand.nextInt(3) + 1;
+	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
 	int[][] ps2 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
 	PolicyBlockPolicy policy2 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
@@ -213,7 +221,7 @@ public class AbstractedPolicy {
 	System.out.println("Finished policy: " + c);
 	c++;
 
-	TaxiWorldDomain.MAXPASS = rand.nextInt(3) + 1;
+	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
 	int[][] ps3 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
 	PolicyBlockPolicy policy3 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
@@ -223,7 +231,7 @@ public class AbstractedPolicy {
 	System.out.println("Finished policy: " + c);
 	c++;
 
-	TaxiWorldDomain.MAXPASS = rand.nextInt(3) + 1;
+	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
 	int[][] ps4 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
 	PolicyBlockPolicy policy4 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
@@ -233,7 +241,7 @@ public class AbstractedPolicy {
 	System.out.println("Finished policy: " + c);
 	c++;
 
-	TaxiWorldDomain.MAXPASS = rand.nextInt(3) + 1;
+	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
 	int[][] ps5 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
 	PolicyBlockPolicy policy5 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
@@ -247,8 +255,8 @@ public class AbstractedPolicy {
 	toMerge.add(policy1);
 	toMerge.add(policy2);
 	toMerge.add(policy3);
-	// toMerge.add(policy4);
-	// toMerge.add(policy5);
+	toMerge.add(policy4);
+	toMerge.add(policy5);
 
 	long uTime = System.currentTimeMillis();
 	int depth = 3;
@@ -271,33 +279,49 @@ public class AbstractedPolicy {
 
 	long mTime = System.currentTimeMillis();
 	System.out.println("Starting scoring merges.");
-	AbstractedPolicy best = scoreUnionMerge(hf, merged);
+	List<Entry<Double, AbstractedPolicy>> scored = scoreUnionMerge(hf, merged);
+	AbstractedPolicy best1 = scored.get(0).getValue();
+	AbstractedPolicy best2 = scored.get(1).getValue();
+	System.out.println(scored.size() + " options generated.");
 	System.out
 		.println("Finished scoring merges; took "
 			+ ((System.currentTimeMillis() - mTime) / 60000.0)
 			+ " minutes");
-	System.out.println("Final policy of size: " + best.size());
-	System.out.println(best.abstractedPolicy.entrySet().iterator().next()
-		.getKey().s);
-	System.out.println(best.abstractedPolicy.keySet().iterator().next().s);
+	System.out.println("Final policy of size: " + best1.size());
+	System.out.println(scored.get(0).getKey());
+	System.out.println("Final policy of size: " + best2.size());
+	System.out.println(scored.get(1).getKey());
+	System.out.println(best1.abstractedPolicy.keySet().iterator().next().s);
+	System.out.println(best2.abstractedPolicy.keySet().iterator().next().s);
 
-	// @SuppressWarnings("unused")
-	AbstractedOption pbo = new AbstractedOption(hf, best.abstractedPolicy,
-		TaxiWorldDomain.DOMAIN.getActions());
-
-	System.out.println("Experiment finished. Took a total of "
-		+ ((System.currentTimeMillis() - startTime) / 60000.0)
-		+ " minutes.");
+	AbstractedOption pbo1 = new AbstractedOption(hf, best1.abstractedPolicy);
+	AbstractedOption pbo2 = new AbstractedOption(hf, best2.abstractedPolicy);
+	List<AbstractedOption> ops = new ArrayList<AbstractedOption>();
+	ops.add(pbo1);
+	ops.add(pbo2);
 
 	TaxiWorldDomain.MAXPASS = 1;
+	new TaxiWorldDomain().generateDomain();
 	int[][] ps6 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
 	PolicyBlockPolicy policy6 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy6, hf, ps6, pbo, episodes,
+	System.out.println(runTaxiLearning(policy6, hf, ps6, ops, episodes,
 		path + "six.csv")[episodes - 1]);
 	System.out.println("Finished policy: " + c);
+	c++;
+	//TODO
 
+	PolicyBlockPolicy policy7 = new PolicyBlockPolicy(epsilon);
+	System.out.println("Starting policy " + c + ": MAXPASS="
+		+ TaxiWorldDomain.MAXPASS);
+	System.out.println(runTaxiLearning(policy7, hf, ps6, episodes, path
+		+ "seven.csv")[episodes - 1]);
+	System.out.println("Finished policy: " + c);
+	
+	System.out.println("Experiment finished. Took a total of "
+		+ ((System.currentTimeMillis() - startTime) / 60000.0)
+		+ " minutes.");
     }
 
     public AbstractedPolicy() {
@@ -574,7 +598,7 @@ public class AbstractedPolicy {
 		    generateLCIMappingState(s2), s1, s2);
 	}
 
-	for (Map.Entry<StateHashTuple, GroundedAction> entry : initialPolicy.policy
+	for (Entry<StateHashTuple, GroundedAction> entry : initialPolicy.policy
 		.entrySet()) {
 	    initialState = entry.getKey().s;
 	}
@@ -906,7 +930,7 @@ public class AbstractedPolicy {
      */
     public static State findLimitingState(Map<String, Integer> d1,
 	    Map<String, Integer> d2, State s1, State s2) {
-	for (Map.Entry<String, Integer> entry1 : d1.entrySet()) {
+	for (Entry<String, Integer> entry1 : d1.entrySet()) {
 	    if (!d2.containsKey(entry1.getKey())
 		    || d2.containsKey(entry1.getKey())
 		    && d2.get(entry1.getKey()) < entry1.getValue()) {
@@ -1018,18 +1042,19 @@ public class AbstractedPolicy {
     /**
      * Grounds each abstracted policy to its set of original policies to score
      * the error in abstraction Error is measured as number of states with the
-     * same action / total number of states
+     * same action / total number of states.
+     * The first element has the greatest score.
      * 
      * @param hf
      *            - the hashing factory
      * @param merged
      *            - the list of merged abstracted policies
-     * @return the best scoring abstracted policy
+     * @return the list of all abstracted policies with relative scores
      */
-    public static AbstractedPolicy scoreUnionMerge(StateHashFactory hf,
+    public static List<Entry<Double, AbstractedPolicy>> scoreUnionMerge(StateHashFactory hf,
 	    List<AbstractedPolicy> merged) {
-	AbstractedPolicy ret = null;
-	double max = 0.;
+	List<Entry<Double, AbstractedPolicy>> ret = new ArrayList<Entry<Double, AbstractedPolicy>>();
+	
 	for (AbstractedPolicy abs : merged) {
 	    double totalMatch = 0.;
 
@@ -1058,12 +1083,24 @@ public class AbstractedPolicy {
 		totalMatch += stateMatch / stateSize;
 	    }
 
-	    if (totalMatch > max) {
-		ret = abs;
-		max = totalMatch;
-	    }
+	    ret.add(new AbstractMap.SimpleEntry<Double, AbstractedPolicy>(totalMatch, abs));
 	}
 
+	Collections.sort(ret, new Comparator<Entry<Double, AbstractedPolicy>> () {
+	    @Override
+	    public int compare(Entry<Double, AbstractedPolicy> arg0,
+		    Entry<Double, AbstractedPolicy> arg1) {
+		if (arg0.getKey() > arg1.getKey()) {
+		    return -1;
+		} else if (arg0.getKey() < arg1.getKey()) {
+		    return 1;
+		}
+		
+		return 0;
+	    }
+	    
+	});
+	
 	return ret;
     }
 
