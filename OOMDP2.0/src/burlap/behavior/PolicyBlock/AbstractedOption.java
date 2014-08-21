@@ -28,11 +28,11 @@ public class AbstractedOption extends Option {
     private boolean abstractionGenerated = false;
 
     public AbstractedOption(StateHashFactory hf,
-	    Map<StateHashTuple, GroundedAction> policy) {
+	    Map<StateHashTuple, GroundedAction> policy, String name) {
 	this.policy = policy;
 	this.hashFactory = hf;
 	this.actions = new HashSet<GroundedAction>();
-	super.name = "AbstractedOption";
+	super.name = "AO-" + name;
 	this.parameterClasses = new String[0];
 	this.parameterOrderGroup = new String[0];
 	this.visited = new HashSet<StateHashTuple>();
@@ -217,6 +217,7 @@ public class AbstractedOption extends Option {
     public void resetOption() {
 	abstractionGenerated = false;
 	abstractedPolicy = new HashMap<StateHashTuple, Entry<Integer, List<GroundedAction>>>();
+	visited.clear();
     }
 
     public int size() {

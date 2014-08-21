@@ -1,9 +1,5 @@
 package burlap.behavior.PolicyBlock;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,315 +9,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 
-import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
-import domain.taxiworld.TaxiWorldDomain;
-import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.QValue;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.learning.tdmethods.QLearningStateNode;
 import burlap.oomdp.core.AbstractGroundedAction;
-import burlap.behavior.singleagent.options.Option;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
-import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 
 public class AbstractedPolicy {
     private Set<PolicyBlockPolicy> originalPolicies;
     public Map<StateHashTuple, GroundedAction> abstractedPolicy;
-
-    public static long[] runTaxiLearning(PolicyBlockPolicy policy,
-	    StateHashFactory hf, int[][] passPos, int episodes, String filepath)
-	    throws IOException {
-	return runTaxiLearning(policy, hf, passPos, new ArrayList<Option>(),
-		episodes, filepath);
-    }
-
-    public static long[] runTaxiLearning(PolicyBlockPolicy policy,
-	    StateHashFactory hf, int[][] passPos, Option o, int episodes,
-	    String filepath) throws IOException {
-	List<Option> os = new ArrayList<Option>();
-	os.add(o);
-	return runTaxiLearning(policy, hf, passPos, os, episodes, filepath);
-    }
-
-    public static long[] runTaxiLearning(PolicyBlockPolicy policy,
-	    StateHashFactory hf, int[][] passPos, List<? extends Option> os,
-	    int episodes, String filepath) throws IOException {
-	TaxiWorldDomain.MAXPASS = passPos.length;
-	QLearning Q = new QLearning(TaxiWorldDomain.DOMAIN, TaxiWorldDomain.rf,
-		TaxiWorldDomain.tf, TaxiWorldDomain.DISCOUNTFACTOR, hf,
-		TaxiWorldDomain.GAMMA, TaxiWorldDomain.LEARNINGRATE,
-		Integer.MAX_VALUE);
-
-	State s = TaxiWorldDomain.getCleanState();
-	Q.setLearningPolicy(policy);
-	policy.setPlanner(Q);
-
-	for (Option o : os) {
-	    Q.addNonDomainReferencedAction(o);
-	}
-
-	File f = new File(filepath);
-	BufferedWriter b = new BufferedWriter(new FileWriter(f));
-	b.write("Episode,Steps\n");
-	long[] cumulArr = new long[episodes];
-	long cumul = 0;
-
-	for (int i = 0; i < episodes; i++) {
-	    TaxiWorldDomain.setAgent(s, 4, 5);
-	    TaxiWorldDomain.setGoal(3, 5);
-
-	    for (int j = 1; j <= TaxiWorldDomain.MAXPASS; j++) {
-		TaxiWorldDomain.setPassenger(s, j, passPos[j - 1][0],
-			passPos[j - 1][1]);
-	    }
-
-	    EpisodeAnalysis analyzer = new EpisodeAnalysis();
-	    analyzer = Q.runLearningEpisodeFrom(s);
-	    cumul += analyzer.numTimeSteps();
-	    b.write((i + 1) + "," + cumul + "\n");
-	    cumulArr[i] = cumul;
-	}
-	b.close();
-
-	return cumulArr;
-    }
-
-    /**
-     * Generates a random options defined over a random chunk of the state space
-     * 
-     * @param hf
-     * @param actionSpace
-     * @param stateSpace
-     * @return a AbstractedOption randomly initialized
-     */
-    public static AbstractedOption generateRandomOption(StateHashFactory hf,
-	    List<Action> actionSpace, Set<StateHashTuple> stateSpace) {
-	Map<StateHashTuple, GroundedAction> policy = new HashMap<StateHashTuple, GroundedAction>();
-	Random rand = new Random();
-	int count = 0;
-	int max = rand.nextInt((stateSpace.size()));
-
-	// Samples from the state space
-	for (StateHashTuple s : stateSpace) {
-	    if (count >= max) {
-		break;
-	    }
-	    policy.put(
-		    s,
-		    new GroundedAction(actionSpace.get(rand.nextInt(actionSpace
-			    .size())), ""));
-	    count++;
-	}
-
-	System.out.println(count);
-	System.out.println(stateSpace.size());
-	return new AbstractedOption(hf, policy);
-    }
-
-    /**
-     * This method generates an option to have the agent take a cyclic path in
-     * the TaxiWorldDomain. Acts as a sanity check to make sure that options
-     * wont cycle forever
-     * 
-     * @param hf
-     * @param actionSpace
-     * @param stateSpace
-     * @return an option representing a cyclic path
-     */
-    public static AbstractedOption generateCyclicOption(StateHashFactory hf,
-	    List<Action> actionSpace, Set<StateHashTuple> stateSpace) {
-	Map<StateHashTuple, GroundedAction> policy = new HashMap<StateHashTuple, GroundedAction>();
-	Action n = null;
-	Action s = null;
-	Action e = null;
-	Action w = null;
-	for (Action a : actionSpace) {
-	    if (a.getName().equals(TaxiWorldDomain.ACTIONNORTH)) {
-		n = a;
-	    } else if (a.getName().equals(TaxiWorldDomain.ACTIONSOUTH)) {
-		s = a;
-	    } else if (a.getName().equals(TaxiWorldDomain.ACTIONEAST)) {
-		e = a;
-	    } else if (a.getName().equals(TaxiWorldDomain.ACTIONWEST)) {
-		w = a;
-	    }
-	}
-
-	if (n == null || s == null || e == null || w == null) {
-	    throw new NullPointerException(
-		    "Action space doesn't define the correct actions for this domain.");
-	}
-	// (1, 5) -> e; (2, 5) -> n; (2, 6) -> w; (1,6) -> s
-	for (StateHashTuple st : stateSpace) {
-	    int x = st.s.getFirstObjectOfClass(TaxiWorldDomain.CLASSAGENT)
-		    .getDiscValForAttribute(TaxiWorldDomain.ATTX);
-	    int y = st.s.getFirstObjectOfClass(TaxiWorldDomain.CLASSAGENT)
-		    .getDiscValForAttribute(TaxiWorldDomain.ATTY);
-	    if (x == 1 && y == 5) {
-		policy.put(st, new GroundedAction(e, ""));
-	    } else if (x == 2 && y == 5) {
-		policy.put(st, new GroundedAction(n, ""));
-	    } else if (x == 2 && y == 6) {
-		policy.put(st, new GroundedAction(w, ""));
-	    } else if (x == 1 && y == 6) {
-		policy.put(st, new GroundedAction(s, ""));
-	    }
-	}
-
-	return new AbstractedOption(hf, policy);
-    }
-
-    public static void main(String args[]) throws IOException {
-	String path = "C:/Users/Allison/Desktop/";
-	TaxiWorldDomain.MAXPASS = 1;
-	new TaxiWorldDomain().generateDomain();
-	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
-	hf.setAttributesForClass(
-		TaxiWorldDomain.CLASSAGENT,
-		TaxiWorldDomain.DOMAIN
-			.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
-	double epsilon = 0.3;
-	int episodes = 100;
-	long startTime = System.currentTimeMillis();
-	Random rand = new Random();
-	int c = 1;
-	int max = TaxiWorldDomain.MAXPASS;
-	// Offset must always be one, or there will be value errors with
-	// ATTCARRY
-	// MAXPASS must never be set higher than max, ATTCARRY will have issues
-	// as well
-	// If MAXPASS must be set higher, the domain must be regenerated
-	int offset = 1;
-
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps1 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlockPolicy policy1 = new PolicyBlockPolicy(epsilon);
-	System.out.println("Starting policy " + c + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy1, hf, ps1, episodes, path
-		+ "one.csv")[episodes - 1]);
-	System.out.println("Finished policy: " + c);
-	c++;
-
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps2 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlockPolicy policy2 = new PolicyBlockPolicy(epsilon);
-	System.out.println("Starting policy " + c + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy2, hf, ps2, episodes, path
-		+ "two.csv")[episodes - 1]);
-	System.out.println("Finished policy: " + c);
-	c++;
-
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps3 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlockPolicy policy3 = new PolicyBlockPolicy(epsilon);
-	System.out.println("Starting policy " + c + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy3, hf, ps3, episodes, path
-		+ "three.csv")[episodes - 1]);
-	System.out.println("Finished policy: " + c);
-	c++;
-
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps4 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlockPolicy policy4 = new PolicyBlockPolicy(epsilon);
-	System.out.println("Starting policy " + c + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy4, hf, ps4, episodes, path
-		+ "four.csv")[episodes - 1]);
-	System.out.println("Finished policy: " + c);
-	c++;
-
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps5 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlockPolicy policy5 = new PolicyBlockPolicy(epsilon);
-	System.out.println("Starting policy " + c + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy5, hf, ps5, episodes, path
-		+ "five.csv")[episodes - 1]);
-	System.out.println("Finished policy: " + c);
-	c++;
-
-	ArrayList<PolicyBlockPolicy> toMerge = new ArrayList<PolicyBlockPolicy>();
-	toMerge.add(policy1);
-	toMerge.add(policy2);
-	toMerge.add(policy3);
-	// toMerge.add(policy4);
-	// toMerge.add(policy5);
-
-	long uTime = System.currentTimeMillis();
-	int depth = 3;
-	System.out.println("Starting union merge with depth " + depth + ".");
-	List<AbstractedPolicy> merged = unionMerge(hf, toMerge, depth);
-	System.out
-		.println("Finished union merge; took "
-			+ ((System.currentTimeMillis() - uTime) / 60000.0)
-			+ " minutes");
-	List<AbstractedPolicy> toRemove = new ArrayList<AbstractedPolicy>();
-	for (AbstractedPolicy a : merged) {
-	    // Temporary measure to prevent scoreUnionMerge from breaking if
-	    // there the abstracted policy is empty (happens if the goal objects
-	    // are different)
-	    if (a.size() == 0) {
-		toRemove.add(a);
-	    }
-	}
-	merged.removeAll(toRemove);
-
-	long mTime = System.currentTimeMillis();
-	System.out.println("Starting scoring merges.");
-	List<Entry<Double, AbstractedPolicy>> scored = scoreUnionMerge(hf,
-		merged);
-	AbstractedPolicy best1 = scored.get(0).getValue();
-	AbstractedPolicy best2 = scored.get(1).getValue();
-	System.out.println(scored.size() + " options generated.");
-	System.out
-		.println("Finished scoring merges; took "
-			+ ((System.currentTimeMillis() - mTime) / 60000.0)
-			+ " minutes");
-	System.out.println("Final policy of size: " + best1.size());
-	System.out.println(scored.get(0).getKey());
-	System.out.println("Final policy of size: " + best2.size());
-	System.out.println(scored.get(1).getKey());
-	System.out.println(best1.abstractedPolicy.keySet().iterator().next().s);
-	System.out.println(best2.abstractedPolicy.keySet().iterator().next().s);
-
-	List<AbstractedOption> ops = new ArrayList<AbstractedOption>();
-	ops.add(new AbstractedOption(hf, best1.abstractedPolicy));
-	ops.add(new AbstractedOption(hf, best2.abstractedPolicy));
-
-	TaxiWorldDomain.MAXPASS = 1;
-	new TaxiWorldDomain().generateDomain();
-	int[][] ps6 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlockPolicy policy6 = new PolicyBlockPolicy(epsilon);
-	System.out.println("Starting policy " + c + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy6, hf, ps6, ops, episodes,
-		path + "six.csv")[episodes - 1]);
-	System.out.println("Finished policy: " + c);
-	c++;
-	// TODO
-
-	PolicyBlockPolicy policy7 = new PolicyBlockPolicy(epsilon);
-	System.out.println("Starting policy " + c + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy7, hf, ps6, episodes, path
-		+ "seven.csv")[episodes - 1]);
-	System.out.println("Finished policy: " + c);
-
-	System.out.println("Experiment finished. Took a total of "
-		+ ((System.currentTimeMillis() - startTime) / 60000.0)
-		+ " minutes.");
-    }
 
     public AbstractedPolicy() {
 	abstractedPolicy = new HashMap<StateHashTuple, GroundedAction>();
@@ -331,6 +34,7 @@ public class AbstractedPolicy {
     public AbstractedPolicy(AbstractedPolicy p) {
 	this();
 	this.abstractedPolicy.putAll(p.abstractedPolicy);
+	;
 	this.originalPolicies.addAll(p.originalPolicies);
     }
 
@@ -359,6 +63,7 @@ public class AbstractedPolicy {
 
 	abstractedPolicy = scoreAbstraction(sh, getInitialState(p), p,
 		listOfCombinations);
+
 	ps.add(p);
 	originalPolicies = new HashSet<PolicyBlockPolicy>();
 	originalPolicies.addAll(ps);
@@ -550,13 +255,7 @@ public class AbstractedPolicy {
      * @return
      */
     public static State getInitialState(PolicyBlockPolicy initialPolicy) {
-	State initialState = null;
-	for (Map.Entry<StateHashTuple, GroundedAction> entry : initialPolicy.policy
-		.entrySet()) {
-	    initialState = entry.getKey().s;
-	}
-
-	return initialState;
+	return initialPolicy.policy.keySet().iterator().next().s;
     }
 
     /**
@@ -597,10 +296,7 @@ public class AbstractedPolicy {
 		    generateLCIMappingState(s2), s1, s2);
 	}
 
-	for (Entry<StateHashTuple, GroundedAction> entry : initialPolicy.policy
-		.entrySet()) {
-	    initialState = entry.getKey().s;
-	}
+	initialState = getInitialState(initialPolicy);
 
 	s = findLimitingState(generateLCIMappingState(initialState),
 		generateLCIMappingState(s), initialState, s);
@@ -832,7 +528,6 @@ public class AbstractedPolicy {
      */
     public static Map<String, Integer> leastCommonIntersectionState(State a,
 	    State b) {
-
 	Map<String, Integer> domain1Count = generateLCIMappingState(a);
 	Map<String, Integer> domain2Count = generateLCIMappingState(b);
 	ArrayList<String> toRemove = new ArrayList<String>();
@@ -1028,81 +723,60 @@ public class AbstractedPolicy {
      * @return performs the merge operation on all k-subsets of the list of
      *         policies
      */
-    public static List<AbstractedPolicy> unionMerge(StateHashFactory hf,
-	    List<PolicyBlockPolicy> policies, int depth) {
-	List<AbstractedPolicy> mergedPolicies = new ArrayList<AbstractedPolicy>();
+    public static List<Entry<AbstractedPolicy, Double>> unionMerge(
+	    StateHashFactory hf, List<PolicyBlockPolicy> policies, int depth) {
+	List<Entry<AbstractedPolicy, Double>> mergedPolicies = new ArrayList<Entry<AbstractedPolicy, Double>>();
 	for (List<PolicyBlockPolicy> ps : getSubsets(policies, 2, depth)) {
-	    mergedPolicies.add(merge(abstractAll(hf, ps)));
-	}
-
-	return mergedPolicies;
-    }
-
-    /**
-     * Grounds each abstracted policy to its set of original policies to score
-     * the error in abstraction Error is measured as number of states with the
-     * same action / total number of states. The first element has the greatest
-     * score.
-     * 
-     * @param hf
-     *            - the hashing factory
-     * @param merged
-     *            - the list of merged abstracted policies
-     * @return the list of all abstracted policies with relative scores
-     */
-    public static List<Entry<Double, AbstractedPolicy>> scoreUnionMerge(
-	    StateHashFactory hf, List<AbstractedPolicy> merged) {
-	List<Entry<Double, AbstractedPolicy>> ret = new ArrayList<Entry<Double, AbstractedPolicy>>();
-
-	for (AbstractedPolicy abs : merged) {
-	    double totalMatch = 0.;
-
-	    for (PolicyBlockPolicy orig : abs.getOriginalPolicies()) {
-		List<PolicyBlockPolicy> temp = new ArrayList<PolicyBlockPolicy>();
-		PolicyBlockPolicy tempP = new PolicyBlockPolicy(
-			orig.getEpsilon());
-		tempP.policy = abs.abstractedPolicy;
-		temp.add(tempP);
-
-		// Will throw a null pointer exception if the policy is of size
-		// 0
-		AbstractedPolicy origAb = new AbstractedPolicy(hf, orig, temp);
-		double stateSize = origAb.abstractedPolicy.size();
-		double stateMatch = 0.;
-
-		for (Entry<StateHashTuple, GroundedAction> e : abs.abstractedPolicy
-			.entrySet()) {
-		    if (origAb.abstractedPolicy.containsKey(e.getKey())
-			    && origAb.abstractedPolicy.get(e.getKey()).equals(
-				    e.getValue())) {
-			// Check for state match and then action match
-			stateMatch += 1;
-		    }
-		}
-		totalMatch += stateMatch / stateSize;
+	    AbstractedPolicy abs = merge(abstractAll(hf, ps));
+	    if (abs.size() == 0) {
+		continue;
 	    }
-
-	    ret.add(new AbstractMap.SimpleEntry<Double, AbstractedPolicy>(
-		    totalMatch, abs));
+	    double score = scoreMerge(hf, abs);
+	    mergedPolicies
+		    .add(new AbstractMap.SimpleEntry<AbstractedPolicy, Double>(
+			    abs, score));
 	}
-
-	Collections.sort(ret,
-		new Comparator<Entry<Double, AbstractedPolicy>>() {
+	Collections.sort(mergedPolicies,
+		new Comparator<Entry<AbstractedPolicy, Double>>() {
 		    @Override
-		    public int compare(Entry<Double, AbstractedPolicy> arg0,
-			    Entry<Double, AbstractedPolicy> arg1) {
-			if (arg0.getKey() > arg1.getKey()) {
-			    return -1;
-			} else if (arg0.getKey() < arg1.getKey()) {
-			    return 1;
-			}
-
-			return 0;
+		    public int compare(Entry<AbstractedPolicy, Double> arg0,
+			    Entry<AbstractedPolicy, Double> arg1) {
+			return -arg0.getValue().compareTo(arg1.getValue());
 		    }
 
 		});
 
-	return ret;
+	return mergedPolicies;
+    }
+
+    public static double scoreMerge(StateHashFactory hf, AbstractedPolicy abs) {
+	double totalMatch = 0.;
+
+	for (PolicyBlockPolicy orig : abs.getOriginalPolicies()) {
+	    List<PolicyBlockPolicy> temp = new ArrayList<PolicyBlockPolicy>();
+	    PolicyBlockPolicy tempP = new PolicyBlockPolicy(orig.getEpsilon());
+	    tempP.policy = abs.abstractedPolicy;
+	    temp.add(tempP);
+
+	    // Will throw a null pointer exception if the policy is of size
+	    // 0
+	    AbstractedPolicy origAb = new AbstractedPolicy(hf, orig, temp);
+	    double stateSize = origAb.abstractedPolicy.size();
+	    double stateMatch = 0.;
+
+	    for (Entry<StateHashTuple, GroundedAction> e : abs.abstractedPolicy
+		    .entrySet()) {
+		if (origAb.abstractedPolicy.containsKey(e.getKey())
+			&& origAb.abstractedPolicy.get(e.getKey()).equals(
+				e.getValue())) {
+		    // Check for state match and then action match
+		    stateMatch += 1;
+		}
+	    }
+	    totalMatch += stateMatch / stateSize;
+	}
+
+	return totalMatch;
     }
 
     /**
