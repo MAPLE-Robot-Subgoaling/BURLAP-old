@@ -56,10 +56,10 @@ public class AbstractedPolicy {
 	Map<String, Integer> lciMap = leastCommonIntersectionState(s,
 		getInitialState(p));
 
-	ArrayList<ArrayList<ObjectInstance>> listFromMapping = getListFromMapping(
-		lciMap, s);
+	List<List<ObjectInstance>> listFromMapping = getListFromMapping(lciMap,
+		s);
 
-	ArrayList<ArrayList<ObjectInstance>> listOfCombinations = generateCombinations(listFromMapping);
+	List<List<ObjectInstance>> listOfCombinations = generateCombinations(listFromMapping);
 
 	abstractedPolicy = scoreAbstraction(sh, getInitialState(p), p,
 		listOfCombinations);
@@ -80,53 +80,43 @@ public class AbstractedPolicy {
      */
     public static Map<StateHashTuple, GroundedAction> scoreAbstraction(
 	    StateHashFactory sh, State reducedState, PolicyBlockPolicy p,
-	    ArrayList<ArrayList<ObjectInstance>> objList) {
+	    List<List<ObjectInstance>> objList) {
 	List<Map<StateHashTuple, GroundedAction>> policyList = makeNewPolicies(
 		sh, objList, reducedState, p);
-	ArrayList<GroundedAction> actionSequence = new ArrayList<GroundedAction>();
-	ArrayList<ArrayList<GroundedAction>> actionList = new ArrayList<ArrayList<GroundedAction>>();
-	Map<Integer, Double> mapOfDiff = new HashMap<Integer, Double>();
-	ArrayList<GroundedAction> originalActions = new ArrayList<GroundedAction>();
 
+	/*
+	 * Map<String, List<Attribute>> hashingMap = new HashMap<String,
+	 * List<Attribute>>(); System.out.println(objList.size()); for
+	 * (ArrayList<ObjectInstance> ois : objList) { for (ObjectInstance oi :
+	 * ois) { if (hashingMap.get(oi.getObjectClass().name) != null) {
+	 * continue; } hashingMap.put(oi.getObjectClass().name,
+	 * oi.getObjectClass().attributeList);
+	 * System.out.println(oi.getObjectClass().name + " : " +
+	 * oi.getObjectClass().attributeList); } } DiscreteMaskHashingFactory dh
+	 * = new DiscreteMaskHashingFactory( hashingMap);
+	 */
+
+	// TODO
 	int i = 0;
 	double lowest = 0;
 
 	Boolean flag = true;
-	// TODO
-	// this method is assuming that entrySet() preserves sorting, which it
-	// doesn't
-	// creates action sequences of all abstractions
-	for (Map<StateHashTuple, GroundedAction> map : policyList) {
-	    actionSequence = new ArrayList<GroundedAction>();
-	    for (Entry<StateHashTuple, GroundedAction> entry : map.entrySet()) {
-		actionSequence.add(entry.getValue());
-	    }
-	    actionList.add(actionSequence);
-	}
-
-	// generate original action sequence
-	for (Entry<StateHashTuple, GroundedAction> entry : p.policy.entrySet()) {
-	    originalActions.add(entry.getValue());
-	}
-
-	/*
-	 * TODO Convert to array list
-	 */
+	List<Double> diff = new ArrayList<Double>();
 	// find difference between original action sequence and abstractions
-	for (List<GroundedAction> gaList : actionList) {
-	    mapOfDiff.put(i, findDifference(originalActions, gaList));
+	for (Map<StateHashTuple, GroundedAction> newPolicy : policyList) {
+	    diff.add(i, findDifference(sh, p, newPolicy));
 	    i += 1;
 	}
 
 	// finds abstraction with lowest error
-	for (Map.Entry<Integer, Double> entry : mapOfDiff.entrySet()) {
+	for (int j = 0; j < diff.size(); j++) {
 	    if (flag) {
-		lowest = entry.getValue();
-		i = entry.getKey();
+		lowest = diff.get(j);
+		i = j;
 	    } else {
-		if (entry.getValue() < lowest) {
-		    lowest = entry.getValue();
-		    i = entry.getKey();
+		if (diff.get(j) < lowest) {
+		    lowest = diff.get(j);
+		    i = j;
 		}
 	    }
 	}
@@ -229,13 +219,12 @@ public class AbstractedPolicy {
      * @return
      */
     public static List<Map<StateHashTuple, GroundedAction>> makeNewPolicies(
-	    StateHashFactory sh,
-	    ArrayList<ArrayList<ObjectInstance>> listOfCombinations,
+	    StateHashFactory sh, List<List<ObjectInstance>> listOfCombinations,
 	    State reducedState, PolicyBlockPolicy oldPolicy) {
 	List<Map<StateHashTuple, GroundedAction>> newMap = new ArrayList<Map<StateHashTuple, GroundedAction>>();
 	State s = null;
 
-	for (ArrayList<ObjectInstance> o : listOfCombinations) {
+	for (List<ObjectInstance> o : listOfCombinations) {
 	    s = new State();
 
 	    for (ObjectInstance oo : o) {
@@ -312,25 +301,41 @@ public class AbstractedPolicy {
      * @param actionSequence2
      * @return
      */
-    public static double findDifference(List<GroundedAction> actionSequence,
-	    List<GroundedAction> actionSequence2) {
-	double error = 0;
-	int i = 0;
+    public static double findDifference(StateHashFactory sh,
+	    PolicyBlockPolicy p, Map<StateHashTuple, GroundedAction> newPolicy) {
+	double accuracy = 0;
+	State withRespectTo = newPolicy.keySet().iterator().next().s;
+	Map<StateHashTuple, List<Boolean>> correct = new HashMap<StateHashTuple, List<Boolean>>();
 
-	while (i < actionSequence.size() && i < actionSequence2.size()) {
-	    if (!actionSequence.get(i).equals(actionSequence2.get(i))) {
-		error++;
+	for (Entry<StateHashTuple, GroundedAction> e : p.policy.entrySet()) {
+	    State newS = findLimitingState(
+		    generateLCIMappingState(e.getKey().s),
+		    generateLCIMappingState(withRespectTo), e.getKey().s,
+		    withRespectTo);
+	    if (newPolicy.get(sh.hashState(newS)) != null
+		    && newPolicy.get(sh.hashState(newS)).equals(e.getValue())) {
+		if (correct.get(sh.hashState(newS)) == null) {
+		    List<Boolean> temp = new ArrayList<Boolean>();
+		    temp.add(true);
+		    correct.put(sh.hashState(newS), temp);
+		} else {
+		    correct.get(sh.hashState(newS)).add(true);
+		}
 	    }
-	    i++;
 	}
 
-	if ((i >= actionSequence.size() && i < actionSequence2.size())) {
-	    error += actionSequence2.size() - i;
-	} else if (i >= actionSequence2.size() && i < actionSequence.size()) {
-	    error += actionSequence.size() - i;
+	for (List<Boolean> bs : correct.values()) {
+	    double c = 0;
+	    for (Boolean b : bs) {
+		if (b) {
+		    c++;
+		}
+	    }
+
+	    accuracy += (c / bs.size());
 	}
 
-	return error / actionSequence.size();
+	return 1 - (accuracy / newPolicy.size());
     }
 
     /**
@@ -358,45 +363,44 @@ public class AbstractedPolicy {
      * @param unordered
      * @return
      */
-    public static ArrayList<ObjectInstance> orderOI(
-	    ArrayList<ObjectInstance> unordered) {
-	Boolean flag = true;
-	ArrayList<ObjectInstance> ordered = new ArrayList<ObjectInstance>(
-		unordered.size());
-	List<String> nameList = new ArrayList<String>();
-
-	for (ObjectInstance o : unordered) {
-	    nameList.add(o.getName());
-	}
-
-	Collections.sort(nameList);
-
-	for (String s : nameList) {
-	    for (ObjectInstance obj : unordered) {
-		if (s.equals(obj.getName()) && flag) {
-		    ordered.add(obj);
-		    flag = false;
-		}
+    public static List<ObjectInstance> orderOI(List<ObjectInstance> l) {
+	Collections.sort(l, new Comparator<ObjectInstance>() {
+	    @Override
+	    public int compare(ObjectInstance o1, ObjectInstance o2) {
+		return o1.getName().compareTo(o2.getName());
 	    }
-	    flag = true;
-	}
-
-	return ordered;
+	});
+	return l;/*
+		  * Boolean flag = true; ArrayList<ObjectInstance> ordered = new
+		  * ArrayList<ObjectInstance>( unordered.size()); List<String>
+		  * nameList = new ArrayList<String>();
+		  * 
+		  * for (ObjectInstance o : unordered) {
+		  * nameList.add(o.getName()); }
+		  * 
+		  * Collections.sort(nameList);
+		  * 
+		  * for (String s : nameList) { for (ObjectInstance obj :
+		  * unordered) { if (s.equals(obj.getName()) && flag) {
+		  * ordered.add(obj); flag = false; } } flag = true; }
+		  * 
+		  * return ordered;
+		  */
     }
 
     /**
-     * Generates all combinations given a multidimensional ArrayList of objects.
-     * **Does not generate combinations with duplicate objects (assumes all
-     * objects have distinct names) If 2 objects need to be added, they will
-     * exist twice within sets.
+     * Generates all combinations given a 2d ArrayList of objects. **Does not
+     * generate combinations with duplicate objects (assumes all objects have
+     * distinct names) If 2 objects need to be added, they will exist twice
+     * within sets.
      * 
      * @param sets
      * @return
      */
-    public static ArrayList<ArrayList<ObjectInstance>> generateCombinations(
-	    ArrayList<ArrayList<ObjectInstance>> sets) {
-	ArrayList<ArrayList<ObjectInstance>> output = new ArrayList<ArrayList<ObjectInstance>>();
-	ArrayList<ObjectInstance> toOrder;
+    public static List<List<ObjectInstance>> generateCombinations(
+	    List<List<ObjectInstance>> sets) {
+	List<List<ObjectInstance>> output = new ArrayList<List<ObjectInstance>>();
+	List<ObjectInstance> toOrder;
 	int solutions = 1;
 	int j = 0;
 
@@ -408,7 +412,7 @@ public class AbstractedPolicy {
 	    j = 1;
 	    toOrder = new ArrayList<ObjectInstance>();
 
-	    for (ArrayList<ObjectInstance> set : sets) {
+	    for (List<ObjectInstance> set : sets) {
 		toOrder.add(set.get((i / j) % set.size()));
 		j *= set.size();
 	    }
@@ -417,6 +421,7 @@ public class AbstractedPolicy {
 		output.add(orderOI(toOrder));
 	    }
 	}
+
 	return output;
     }
 
@@ -426,7 +431,7 @@ public class AbstractedPolicy {
      * @param toCheck
      * @return true, if there are duplicates. otherwise, false
      */
-    public static Boolean hasDuplicates(ArrayList<ObjectInstance> toCheck) {
+    public static Boolean hasDuplicates(List<ObjectInstance> toCheck) {
 	int count = 0;
 
 	for (ObjectInstance o : toCheck) {
@@ -440,6 +445,7 @@ public class AbstractedPolicy {
 	    }
 	    count = 0;
 	}
+	
 	return false;
     }
 
@@ -452,17 +458,17 @@ public class AbstractedPolicy {
      * @param s
      * @return
      */
-    public static ArrayList<ArrayList<ObjectInstance>> getListFromMapping(
+    public static List<List<ObjectInstance>> getListFromMapping(
 	    Map<String, Integer> map, State s) {
-	ArrayList<ArrayList<ObjectInstance>> objList = new ArrayList<ArrayList<ObjectInstance>>();
-	ArrayList<ArrayList<ObjectInstance>> toAdd = new ArrayList<ArrayList<ObjectInstance>>();
+	List<List<ObjectInstance>> objList = new ArrayList<List<ObjectInstance>>();
+	List<List<ObjectInstance>> toAdd = new ArrayList<List<ObjectInstance>>();
 	int i = 1;
 
 	for (Map.Entry<String, Integer> entry : map.entrySet()) {
 	    objList.add(getListOfObject(s, entry.getKey()));
 	}
 
-	for (ArrayList<ObjectInstance> o : objList) {
+	for (List<ObjectInstance> o : objList) {
 	    while (o.size() > i) {
 		toAdd.add(o);
 		i += 1;
@@ -470,7 +476,7 @@ public class AbstractedPolicy {
 	    i = 1;
 	}
 
-	for (ArrayList<ObjectInstance> o : toAdd) {
+	for (List<ObjectInstance> o : toAdd) {
 	    objList.add(o);
 	}
 

@@ -179,8 +179,8 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.CLASSAGENT,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
-	double epsilon = 0.5;
-	int episodes = 100;
+	double epsilon = 0.1;
+	int episodes = 10;
 	long startTime = System.currentTimeMillis();
 	Random rand = new Random();
 	int c = 1;
@@ -192,8 +192,8 @@ public class TaxiWorldExperiment {
 	// If MAXPASS must be set higher, the domain must be regenerated
 	int offset = 1;
 
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps1 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
+	TaxiWorldDomain.MAXPASS = 2;//rand.nextInt(max) + offset;
+	int[][] ps1 = new int[][] {{11, 10}, {15, 10}};//TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
 	PolicyBlockPolicy policy1 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
@@ -202,8 +202,8 @@ public class TaxiWorldExperiment {
 	System.out.println("Finished policy: " + c);
 	c++;
 
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps2 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
+	TaxiWorldDomain.MAXPASS = 1;//rand.nextInt(max) + offset;
+	int[][] ps2 = new int[][] {{5, 9}};//TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
 	PolicyBlockPolicy policy2 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
@@ -212,8 +212,8 @@ public class TaxiWorldExperiment {
 	System.out.println("Finished policy: " + c);
 	c++;
 
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps3 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
+	TaxiWorldDomain.MAXPASS = 3;//rand.nextInt(max) + offset;
+	int[][] ps3 = new int[][] {{15, 4}, {7, 10}, {3, 8}};//TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
 	PolicyBlockPolicy policy3 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
@@ -222,8 +222,8 @@ public class TaxiWorldExperiment {
 	System.out.println("Finished policy: " + c);
 	c++;
 
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps4 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
+	TaxiWorldDomain.MAXPASS = 1;//rand.nextInt(max) + offset;
+	int[][] ps4 = new int[][] {{9, 1}};//TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
 	PolicyBlockPolicy policy4 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
@@ -232,8 +232,8 @@ public class TaxiWorldExperiment {
 	System.out.println("Finished policy: " + c);
 	c++;
 
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps5 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
+	TaxiWorldDomain.MAXPASS = 3;//rand.nextInt(max) + offset;
+	int[][] ps5 = new int[][] {{4, 6}, {1, 1}, {4, 3}};// TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
 	PolicyBlockPolicy policy5 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
@@ -241,7 +241,6 @@ public class TaxiWorldExperiment {
 		+ "five.csv")[episodes - 1]);
 	System.out.println("Finished policy: " + c);
 	c++;
-
 	ArrayList<PolicyBlockPolicy> toMerge = new ArrayList<PolicyBlockPolicy>();
 	toMerge.add(policy1);
 	toMerge.add(policy2);
@@ -261,7 +260,8 @@ public class TaxiWorldExperiment {
 
 	System.out.println(merged.size() + " options generated.");
 	List<AbstractedOption> ops = new ArrayList<AbstractedOption>();
-	int numOptions = 3;
+	int numOptions = 1;
+	// TODO maybe add a heuristic for only letting in options that score above a threshold (e.g. >= 0.3)
 	for (int i = 0; i < numOptions; i++) {
 	    System.out.println("Option number " + (i + 1) + " of size "
 		    + merged.get(i).getKey().size() + " and score "
@@ -272,7 +272,7 @@ public class TaxiWorldExperiment {
 
 	TaxiWorldDomain.MAXPASS = 1;
 	new TaxiWorldDomain().generateDomain();
-	int[][] ps6 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
+	int[][] ps6 = new int[][] {{8, 3}};//TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
 	PolicyBlockPolicy policy6 = new PolicyBlockPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
