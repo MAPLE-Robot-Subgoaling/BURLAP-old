@@ -181,15 +181,15 @@ public class AbstractedPolicy {
 
     public static void main(String args[]) throws IOException {
 	String path = "C:/Users/Allison/Desktop/";
-	TaxiWorldDomain.MAXPASS = 3;
+	TaxiWorldDomain.MAXPASS = 1;
 	new TaxiWorldDomain().generateDomain();
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
 	hf.setAttributesForClass(
 		TaxiWorldDomain.CLASSAGENT,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
-	double epsilon = 0.8;
-	int episodes = 1000;
+	double epsilon = 0.3;
+	int episodes = 100;
 	long startTime = System.currentTimeMillis();
 	Random rand = new Random();
 	int c = 1;
@@ -255,8 +255,8 @@ public class AbstractedPolicy {
 	toMerge.add(policy1);
 	toMerge.add(policy2);
 	toMerge.add(policy3);
-	toMerge.add(policy4);
-	toMerge.add(policy5);
+	// toMerge.add(policy4);
+	// toMerge.add(policy5);
 
 	long uTime = System.currentTimeMillis();
 	int depth = 3;
@@ -297,7 +297,7 @@ public class AbstractedPolicy {
 
 	List<AbstractedOption> ops = new ArrayList<AbstractedOption>();
 	ops.add(new AbstractedOption(hf, best1.abstractedPolicy));
-	// ops.add(new AbstractedOption(hf, best2.abstractedPolicy));
+	ops.add(new AbstractedOption(hf, best2.abstractedPolicy));
 
 	TaxiWorldDomain.MAXPASS = 1;
 	new TaxiWorldDomain().generateDomain();

@@ -99,17 +99,34 @@ public class AbstractedOption extends Option {
 		.get(hashFactory.hashState(abs));
 
 	// not == because of object equality
-	// If the action selection has not been initialized, make a random
+	// If the action selection has not been initialized, make a
 	// selection from the list of actions defined for that state.
-	// This leads to weighted probability of choosing actions coming from
-	// the grounding.
-	// TODO This could be modified to simply take the mode, if desired
 	if (tempE.getKey().equals(-1)) {
+	    // Weighted dice roll
 	    int index = rand.nextInt(tempE.getValue().size());
 	    AbstractMap.SimpleEntry<Integer, List<GroundedAction>> newE = new AbstractMap.SimpleEntry<Integer, List<GroundedAction>>(
 		    index, tempE.getValue());
 	    abstractedPolicy.put(hashFactory.hashState(abs), newE);
-	    tempE = abstractedPolicy.get(hashFactory.hashState(abs));
+	    tempE = newE;
+
+	    // Most common action
+	    /*
+	     * List<GroundedAction> gas = abstractedPolicy.get(
+	     * hashFactory.hashState(abs)).getValue(); Map<GroundedAction,
+	     * Integer> weights = new HashMap<GroundedAction, Integer>();
+	     * 
+	     * for (GroundedAction ga : gas) { // Updates the weight map by
+	     * incrementing the counter weights.put(ga, weights.get(ga) == null
+	     * ? 1 : weights.get(ga) + 1); } Entry<GroundedAction, Integer>
+	     * mostCommon = null; for (Entry<GroundedAction, Integer> weight :
+	     * weights.entrySet()) { // Finds the most common grounded action if
+	     * (mostCommon == null || weight.getValue() > mostCommon.getValue())
+	     * { mostCommon = weight; } } AbstractMap.SimpleEntry<Integer,
+	     * List<GroundedAction>> newE = new AbstractMap.SimpleEntry<Integer,
+	     * List<GroundedAction>>( gas.indexOf(mostCommon.getKey()), gas);
+	     * abstractedPolicy.put(hashFactory.hashState(abs), newE); tempE =
+	     * newE;
+	     */
 	}
 
 	return tempE.getValue().get(tempE.getKey());
@@ -118,6 +135,7 @@ public class AbstractedOption extends Option {
     @Override
     public List<ActionProb> getActionDistributionForState(State incoming,
 	    String[] params) {
+	// TODO add stochastic termination
 	if (!abstractionGenerated) {
 	    generateAbstraction(incoming);
 	}
