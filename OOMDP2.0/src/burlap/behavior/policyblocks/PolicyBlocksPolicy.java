@@ -1,4 +1,4 @@
-package burlap.behavior.PolicyBlock;
+package burlap.behavior.policyblocks;
 
 import java.util.ArrayList;
 import java.util.HashMap;

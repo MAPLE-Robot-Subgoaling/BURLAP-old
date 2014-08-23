@@ -1,10 +1,10 @@
+._*
 *.prefs
-.metadata/
-EarlyTerminationTest/
 *.class
 *.episode
 *.project
 *.classpath
 bin/
 output/
+.metadata/
 .settings/

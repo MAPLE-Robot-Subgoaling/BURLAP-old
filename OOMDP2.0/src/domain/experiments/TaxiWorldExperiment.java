@@ -13,9 +13,9 @@ import java.util.Random;
 import java.util.Set;
 
 import domain.taxiworld.TaxiWorldDomain;
-import burlap.behavior.PolicyBlock.AbstractedOption;
-import burlap.behavior.PolicyBlock.AbstractedPolicy;
-import burlap.behavior.PolicyBlock.PolicyBlocksPolicy;
+import burlap.behavior.policyblocks.AbstractedOption;
+import burlap.behavior.policyblocks.AbstractedPolicy;
+import burlap.behavior.policyblocks.PolicyBlocksPolicy;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.options.Option;
