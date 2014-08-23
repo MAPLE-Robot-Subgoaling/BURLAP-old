@@ -15,7 +15,7 @@ import java.util.Set;
 import domain.taxiworld.TaxiWorldDomain;
 import burlap.behavior.PolicyBlock.AbstractedOption;
 import burlap.behavior.PolicyBlock.AbstractedPolicy;
-import burlap.behavior.PolicyBlock.PolicyBlockPolicy;
+import burlap.behavior.PolicyBlock.PolicyBlocksPolicy;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.options.Option;
@@ -27,14 +27,14 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 
 public class TaxiWorldExperiment {
-    public static long[] runTaxiLearning(PolicyBlockPolicy policy,
+    public static long[] runTaxiLearning(PolicyBlocksPolicy policy,
 	    StateHashFactory hf, int[][] passPos, int episodes, String filepath)
 	    throws IOException {
 	return runTaxiLearning(policy, hf, passPos, new ArrayList<Option>(),
 		episodes, filepath);
     }
 
-    public static long[] runTaxiLearning(PolicyBlockPolicy policy,
+    public static long[] runTaxiLearning(PolicyBlocksPolicy policy,
 	    StateHashFactory hf, int[][] passPos, Option o, int episodes,
 	    String filepath) throws IOException {
 	List<Option> os = new ArrayList<Option>();
@@ -42,7 +42,7 @@ public class TaxiWorldExperiment {
 	return runTaxiLearning(policy, hf, passPos, os, episodes, filepath);
     }
 
-    public static long[] runTaxiLearning(PolicyBlockPolicy policy,
+    public static long[] runTaxiLearning(PolicyBlocksPolicy policy,
 	    StateHashFactory hf, int[][] passPos, List<? extends Option> os,
 	    int episodes, String filepath) throws IOException {
 	TaxiWorldDomain.MAXPASS = passPos.length;
@@ -179,8 +179,8 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.CLASSAGENT,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
-	double epsilon = 0.8;
-	int episodes = 1000;
+	double epsilon = 0.1;
+	int episodes = 100;
 	long startTime = System.currentTimeMillis();
 	Random rand = new Random();
 	int c = 1;
@@ -194,7 +194,7 @@ public class TaxiWorldExperiment {
 
 	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
 	int[][] ps1 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlockPolicy policy1 = new PolicyBlockPolicy(epsilon);
+	PolicyBlocksPolicy policy1 = new PolicyBlocksPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
 	System.out.println(runTaxiLearning(policy1, hf, ps1, episodes, path
@@ -204,7 +204,7 @@ public class TaxiWorldExperiment {
 
 	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
 	int[][] ps2 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlockPolicy policy2 = new PolicyBlockPolicy(epsilon);
+	PolicyBlocksPolicy policy2 = new PolicyBlocksPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
 	System.out.println(runTaxiLearning(policy2, hf, ps2, episodes, path
@@ -214,7 +214,7 @@ public class TaxiWorldExperiment {
 
 	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
 	int[][] ps3 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlockPolicy policy3 = new PolicyBlockPolicy(epsilon);
+	PolicyBlocksPolicy policy3 = new PolicyBlocksPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
 	System.out.println(runTaxiLearning(policy3, hf, ps3, episodes, path
@@ -224,7 +224,7 @@ public class TaxiWorldExperiment {
 
 	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
 	int[][] ps4 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlockPolicy policy4 = new PolicyBlockPolicy(epsilon);
+	PolicyBlocksPolicy policy4 = new PolicyBlocksPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
 	System.out.println(runTaxiLearning(policy4, hf, ps4, episodes, path
@@ -234,14 +234,14 @@ public class TaxiWorldExperiment {
 
 	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
 	int[][] ps5 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlockPolicy policy5 = new PolicyBlockPolicy(epsilon);
+	PolicyBlocksPolicy policy5 = new PolicyBlocksPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
 	System.out.println(runTaxiLearning(policy5, hf, ps5, episodes, path
 		+ "five.csv")[episodes - 1]);
 	System.out.println("Finished policy: " + c);
 	c++;
-	ArrayList<PolicyBlockPolicy> toMerge = new ArrayList<PolicyBlockPolicy>();
+	ArrayList<PolicyBlocksPolicy> toMerge = new ArrayList<PolicyBlocksPolicy>();
 	toMerge.add(policy1);
 	toMerge.add(policy2);
 	toMerge.add(policy3);
@@ -271,10 +271,10 @@ public class TaxiWorldExperiment {
 		    merged.get(i).getKey().getPolicy(), "" + i));
 	}
 
-	TaxiWorldDomain.MAXPASS = 2;
+	TaxiWorldDomain.MAXPASS = 1;
 	new TaxiWorldDomain().generateDomain();
-	int[][] ps6 = new int[][] { { 8, 3 } };// TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlockPolicy policy6 = new PolicyBlockPolicy(epsilon);
+	int[][] ps6 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
+	PolicyBlocksPolicy policy6 = new PolicyBlocksPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
 	System.out.println(runTaxiLearning(policy6, hf, ps6, ops, episodes,
@@ -285,7 +285,7 @@ public class TaxiWorldExperiment {
 	// Find what number of source policies is optimal; SARSA(\); Random
 	// Option; Hand Crafted Option; Flat Policy Option
 
-	PolicyBlockPolicy policy7 = new PolicyBlockPolicy(epsilon);
+	PolicyBlocksPolicy policy7 = new PolicyBlocksPolicy(epsilon);
 	System.out.println("Starting policy " + c + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
 	System.out.println(runTaxiLearning(policy7, hf, ps6, episodes, path

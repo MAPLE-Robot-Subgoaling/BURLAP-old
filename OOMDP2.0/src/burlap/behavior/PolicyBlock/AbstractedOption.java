@@ -17,8 +17,8 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
 public class AbstractedOption extends Option {
-    public Map<StateHashTuple, GroundedAction> policy;
-    public Map<StateHashTuple, List<GroundedAction>> abstractedPolicy;
+    private Map<StateHashTuple, GroundedAction> policy;
+    private Map<StateHashTuple, List<GroundedAction>> abstractedPolicy;
     private List<List<String>> ocombs;
     private Map<String, Integer> gci;
     private StateHashFactory hf;

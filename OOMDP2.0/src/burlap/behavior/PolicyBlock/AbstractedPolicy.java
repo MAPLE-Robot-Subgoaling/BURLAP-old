@@ -24,12 +24,12 @@ import burlap.oomdp.singleagent.GroundedAction;
 
 public class AbstractedPolicy {
     private Map<StateHashTuple, GroundedAction> abstractedPolicy;
-    private Set<PolicyBlockPolicy> originalPolicies;
+    private Set<PolicyBlocksPolicy> originalPolicies;
     private StateHashFactory hashFactory;
 
     private AbstractedPolicy() {
 	this.abstractedPolicy = new HashMap<StateHashTuple, GroundedAction>();
-	this.originalPolicies = new HashSet<PolicyBlockPolicy>();
+	this.originalPolicies = new HashSet<PolicyBlocksPolicy>();
     }
 
     public AbstractedPolicy(AbstractedPolicy p) {
@@ -50,8 +50,8 @@ public class AbstractedPolicy {
      * @param initialPolicy
      * @param policyList
      */
-    public AbstractedPolicy(StateHashFactory hf, PolicyBlockPolicy ip,
-	    List<PolicyBlockPolicy> ps) {
+    public AbstractedPolicy(StateHashFactory hf, PolicyBlocksPolicy ip,
+	    List<PolicyBlocksPolicy> ps) {
 	this();
 	this.hashFactory = hf;
 	// Generate the GCI of the state
@@ -59,7 +59,7 @@ public class AbstractedPolicy {
 	// Score each generated combination of GCI mappings
 	State ipS = ip.policy.keySet().iterator().next().s;
 	List<State> psS = new ArrayList<State>();
-	for (PolicyBlockPolicy p : ps) {
+	for (PolicyBlocksPolicy p : ps) {
 	    psS.add(p.policy.keySet().iterator().next().s);
 	}
 	psS.add(ipS);
@@ -85,17 +85,17 @@ public class AbstractedPolicy {
      * @return the list of abstracted policies
      */
     public static List<AbstractedPolicy> abstractAll(StateHashFactory hf,
-	    List<PolicyBlockPolicy> policies) {
+	    List<PolicyBlocksPolicy> policies) {
 	if (policies.size() < 2) {
 	    throw new IllegalArgumentException("Need at least 2 policies.");
 	}
 
 	List<AbstractedPolicy> abstractedPolicies = new ArrayList<AbstractedPolicy>();
 	for (int i = 0; i < policies.size(); i++) {
-	    List<PolicyBlockPolicy> newPolicies = new ArrayList<PolicyBlockPolicy>();
+	    List<PolicyBlocksPolicy> newPolicies = new ArrayList<PolicyBlocksPolicy>();
 	    newPolicies.addAll(policies);
 
-	    PolicyBlockPolicy temp = newPolicies.remove(i);
+	    PolicyBlocksPolicy temp = newPolicies.remove(i);
 	    abstractedPolicies.add(new AbstractedPolicy(hf, temp, newPolicies));
 	    newPolicies.add(temp);
 	}
@@ -228,7 +228,7 @@ public class AbstractedPolicy {
      * @return the highest scoring candidate
      */
     public static Map<StateHashTuple, GroundedAction> getBestCandidate(
-	    StateHashFactory hf, PolicyBlockPolicy ip,
+	    StateHashFactory hf, PolicyBlocksPolicy ip,
 	    List<Map<StateHashTuple, GroundedAction>> policyCandidates) {
 	Map<StateHashTuple, GroundedAction> absPolicy = new HashMap<StateHashTuple, GroundedAction>();
 	double bestScore = 0.;
@@ -254,7 +254,7 @@ public class AbstractedPolicy {
      *         size of new policy)
      */
     private static double scoreAbstraction(StateHashFactory hf,
-	    PolicyBlockPolicy ip, Map<StateHashTuple, GroundedAction> np) {
+	    PolicyBlocksPolicy ip, Map<StateHashTuple, GroundedAction> np) {
 	double accuracy = 0;
 	State withRespectTo = np.keySet().iterator().next().s;
 	Map<StateHashTuple, List<Boolean>> correct = new HashMap<StateHashTuple, List<Boolean>>();
@@ -316,7 +316,7 @@ public class AbstractedPolicy {
      * @return all policy candidates
      */
     private static List<Map<StateHashTuple, GroundedAction>> generatePolicyCandidates(
-	    StateHashFactory hf, PolicyBlockPolicy ip,
+	    StateHashFactory hf, PolicyBlocksPolicy ip,
 	    List<List<String>> combinations) {
 	List<Map<StateHashTuple, GroundedAction>> policyCandidates = new ArrayList<Map<StateHashTuple, GroundedAction>>();
 
@@ -356,7 +356,7 @@ public class AbstractedPolicy {
      * @param origStates
      * @return correct action weighted by q-values
      */
-    private static GroundedAction getAction(PolicyBlockPolicy ip, State st,
+    private static GroundedAction getAction(PolicyBlocksPolicy ip, State st,
 	    List<StateHashTuple> origStates) {
 	List<List<QValue>> qs = new ArrayList<List<QValue>>();
 
@@ -440,9 +440,9 @@ public class AbstractedPolicy {
      *         policies
      */
     public static List<Entry<AbstractedPolicy, Double>> unionMerge(
-	    StateHashFactory hf, List<PolicyBlockPolicy> policies, int depth) {
+	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth) {
 	List<Entry<AbstractedPolicy, Double>> mergedPolicies = new ArrayList<Entry<AbstractedPolicy, Double>>();
-	for (List<PolicyBlockPolicy> ps : getSubsets(policies, 2, depth)) {
+	for (List<PolicyBlocksPolicy> ps : getSubsets(policies, 2, depth)) {
 	    AbstractedPolicy abs = merge(abstractAll(hf, ps));
 	    if (abs.size() == 0) {
 		continue;
@@ -501,9 +501,9 @@ public class AbstractedPolicy {
     public static double scoreMerge(StateHashFactory hf, AbstractedPolicy abs) {
 	double totalMatch = 0.;
 
-	for (PolicyBlockPolicy orig : abs.getOriginalPolicies()) {
-	    List<PolicyBlockPolicy> temp = new ArrayList<PolicyBlockPolicy>();
-	    PolicyBlockPolicy tempP = new PolicyBlockPolicy(orig.getEpsilon());
+	for (PolicyBlocksPolicy orig : abs.getOriginalPolicies()) {
+	    List<PolicyBlocksPolicy> temp = new ArrayList<PolicyBlocksPolicy>();
+	    PolicyBlocksPolicy tempP = new PolicyBlocksPolicy(orig.getEpsilon());
 	    tempP.policy = abs.abstractedPolicy;
 	    temp.add(tempP);
 
@@ -713,7 +713,7 @@ public class AbstractedPolicy {
      * 
      * @return set of original policies
      */
-    public Set<PolicyBlockPolicy> getOriginalPolicies() {
+    public Set<PolicyBlocksPolicy> getOriginalPolicies() {
 	return originalPolicies;
     }
 
