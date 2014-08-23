@@ -114,7 +114,8 @@ public class TaxiWorldExperiment {
 
 	System.out.println(count);
 	System.out.println(stateSpace.size());
-	return new AbstractedOption(hf, policy, "random");
+	return new AbstractedOption(hf, policy,
+		TaxiWorldDomain.DOMAIN.getActions(), "random");
     }
 
     /**
@@ -167,7 +168,8 @@ public class TaxiWorldExperiment {
 	    }
 	}
 
-	return new AbstractedOption(hf, policy, "cyclic");
+	return new AbstractedOption(hf, policy,
+		TaxiWorldDomain.DOMAIN.getActions(), "cyclic");
     }
 
     public static void main(String args[]) throws IOException {
@@ -260,15 +262,20 @@ public class TaxiWorldExperiment {
 
 	System.out.println(merged.size() + " options generated.");
 	List<AbstractedOption> ops = new ArrayList<AbstractedOption>();
-	int numOptions = 3;
+	int numOptions = merged.size();
 	// TODO maybe add a heuristic for only letting in options that score
 	// above a threshold (e.g. >= 0.3)
+	double first = merged.get(0).getValue();
 	for (int i = 0; i < numOptions; i++) {
+	    if (merged.get(i).getValue() < (first / 1.25)) {
+		System.out.println("Stopping at " + (i + 1) + " [" + first
+			+ "; " + merged.get(i).getValue() + "]");
+		break;
+	    }
 	    System.out.println("Option number " + (i + 1) + " of size "
 		    + merged.get(i).getKey().size() + " and score "
 		    + merged.get(i).getValue() + " added.");
-	    ops.add(new AbstractedOption(hf,
-		    merged.get(i).getKey().getPolicy(), "" + i));
+	    ops.add(new AbstractedOption(hf, merged.get(i).getKey().getPolicy(), TaxiWorldDomain.DOMAIN.getActions(), "" + i));
 	}
 
 	TaxiWorldDomain.MAXPASS = 1;

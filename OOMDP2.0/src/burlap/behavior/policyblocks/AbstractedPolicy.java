@@ -123,6 +123,7 @@ public class AbstractedPolicy {
 		if (!mappings.get(i).containsKey(className)) {
 		    mappings.get(i).put(className, 1);
 		    List<Attribute> atts = oi.getObjectClass().attributeList;
+
 		    if (!attributes.containsKey(className)) {
 			// Attributes of this class haven't been set yet
 			attributes.put(className, atts);
@@ -157,6 +158,7 @@ public class AbstractedPolicy {
 		    if (gci.get(e.getKey()) > e.getValue()) {
 			gci.put(e.getKey(), e.getValue());
 		    }
+
 		    toRemove.remove(e.getKey());
 		}
 	    }

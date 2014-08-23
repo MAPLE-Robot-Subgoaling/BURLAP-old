@@ -14,6 +14,7 @@ import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.State;
+import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 
 public class AbstractedOption extends Option {
@@ -22,14 +23,15 @@ public class AbstractedOption extends Option {
     private List<List<String>> ocombs;
     private Map<String, Integer> gci;
     private StateHashFactory hf;
-    private Set<GroundedAction> actions;
+    private List<Action> actions;
     private Set<List<StateHashTuple>> visited;
     private Random rand;
     private boolean abstractionGenerated = false;
     private boolean ocombsGenerated = false;
 
     public AbstractedOption(StateHashFactory hf,
-	    Map<StateHashTuple, GroundedAction> policy, String name) {
+	    Map<StateHashTuple, GroundedAction> policy, List<Action> actions,
+	    String name) {
 	this.policy = policy;
 	this.hf = hf;
 	super.name = "AO-" + name;
@@ -37,7 +39,7 @@ public class AbstractedOption extends Option {
 	this.parameterOrderGroup = new String[0];
 	this.visited = new HashSet<List<StateHashTuple>>();
 	this.rand = new Random();
-	this.actions = new HashSet<GroundedAction>();
+	this.actions = actions;
 	this.abstractedPolicy = new HashMap<StateHashTuple, List<GroundedAction>>();
 	this.gci = new HashMap<String, Integer>();
 	this.ocombs = new ArrayList<List<String>>();
@@ -107,15 +109,15 @@ public class AbstractedOption extends Option {
 
 	List<ActionProb> aprobs = new ArrayList<ActionProb>();
 	GroundedAction ga = oneStepActionSelection(incoming, params);
-	for (GroundedAction a : actions) {
-	    if (a.equals(ga)) {
+	for (Action a : actions) {
+	    if (a.equals(ga.action)) {
 		// If the action selection is in the set of actions stored,
 		// return 1.
-		ActionProb p = new ActionProb(a, 1.);
+		ActionProb p = new ActionProb(ga, 1.);
 		aprobs.add(p);
 	    } else {
 		// Otherwise, return 0.
-		ActionProb p = new ActionProb(a, 0.);
+		ActionProb p = new ActionProb(ga, 0.);
 		aprobs.add(p);
 	    }
 	}
@@ -212,8 +214,10 @@ public class AbstractedOption extends Option {
 		    .generateAllCombinations(withRespectTo, gci);
 
 	    for (Entry<StateHashTuple, GroundedAction> e : policy.entrySet()) {
-		if (!actions.contains(e.getValue())) {
-		    actions.add(e.getValue());
+		if (!actions.contains(e.getValue().action)) {
+		    // If the incoming action is not in the target domain's
+		    // actions space, omit it.
+		    continue;
 		}
 		for (List<String> ocomb : ocombs) {
 		    State newS = AbstractedPolicy
