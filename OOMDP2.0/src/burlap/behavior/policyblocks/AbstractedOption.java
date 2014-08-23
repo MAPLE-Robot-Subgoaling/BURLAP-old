@@ -174,10 +174,8 @@ public class AbstractedOption extends Option {
 	     * (Entry<GroundedAction, Integer> e: weights.entrySet()) { if
 	     * (e.getValue() > max) { ga = e.getKey(); max = e.getValue() } }
 	     */
-	}
-
-	// After the selection is made, it is cached for the future
-	if (ga != null) {
+	    
+	    // After the selection is made, it is cached for the future
 	    for (StateHashTuple state : definedFor) {
 		List<GroundedAction> aList = new ArrayList<GroundedAction>();
 		aList.add(ga);

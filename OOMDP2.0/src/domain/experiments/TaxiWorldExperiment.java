@@ -181,8 +181,8 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.CLASSAGENT,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
-	double epsilon = 0.1;
-	int episodes = 100;
+	double epsilon = 0.4;
+	int episodes = 1000;
 	long startTime = System.currentTimeMillis();
 	Random rand = new Random();
 	int c = 1;
