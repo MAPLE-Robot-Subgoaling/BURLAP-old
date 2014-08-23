@@ -219,17 +219,22 @@ public class AbstractedOption extends Option {
 		    // actions space, omit it.
 		    continue;
 		}
+
+		// Map the action to the target domain
+		GroundedAction curGA = new GroundedAction(actions.get(actions
+			.indexOf(e.getValue().action)), e.getValue().params);
+
 		for (List<String> ocomb : ocombs) {
 		    State newS = AbstractedPolicy
 			    .formState(e.getKey().s, ocomb);
 		    List<GroundedAction> aList;
 		    if (!abstractedPolicy.containsKey(hf.hashState(newS))) {
 			aList = new ArrayList<GroundedAction>();
-			aList.add(e.getValue());
+			aList.add(curGA);
 			abstractedPolicy.put(hf.hashState(newS), aList);
 		    } else {
 			aList = abstractedPolicy.get(hf.hashState(newS));
-			aList.add(e.getValue());
+			aList.add(curGA);
 			abstractedPolicy.put(hf.hashState(newS), aList);
 		    }
 		}
@@ -244,7 +249,12 @@ public class AbstractedOption extends Option {
 	ocombsGenerated = false;
 	abstractedPolicy = new HashMap<StateHashTuple, List<GroundedAction>>();
 	ocombs = new ArrayList<List<String>>();
+	actions = new ArrayList<Action>();
 	visited.clear();
+    }
+
+    public void setActions(List<Action> actions) {
+	this.actions = actions;
     }
 
     public int size() {
