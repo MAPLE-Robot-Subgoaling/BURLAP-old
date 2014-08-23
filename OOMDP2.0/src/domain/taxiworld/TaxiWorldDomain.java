@@ -23,9 +23,8 @@ import burlap.oomdp.singleagent.common.SinglePFTF;
 import burlap.oomdp.visualizer.Visualizer;
 
 /**
- * @author Nicholas Haltmeyer Class definition for the taxi world domain. Allows
- *         for generation of a taxi world domain with any number of passengers.
- *         Based on the four rooms domain
+ * Class definition for the taxi world domain. Allows for generation of a taxi
+ * world domain with any number of passengers. Based on the four rooms domain
  */
 public class TaxiWorldDomain implements DomainGenerator {
     public static final String ATTX = "x";
@@ -483,7 +482,7 @@ public class TaxiWorldDomain implements DomainGenerator {
 
 	int gx = GOALX;
 	int gy = GOALY;
-	
+
 	int passNum = agent.getDiscValForAttribute(ATTCARRY);
 
 	if (passNum == 0) {

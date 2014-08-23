@@ -1,6 +1,5 @@
 package burlap.behavior.PolicyBlock;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,26 +18,29 @@ import burlap.oomdp.singleagent.GroundedAction;
 
 public class AbstractedOption extends Option {
     public Map<StateHashTuple, GroundedAction> policy;
-    public Map<StateHashTuple, Entry<Integer, List<GroundedAction>>> abstractedPolicy;
-    private StateHashFactory hashFactory;
+    public Map<StateHashTuple, List<GroundedAction>> abstractedPolicy;
+    private List<List<String>> ocombs;
+    private Map<String, Integer> gci;
+    private StateHashFactory hf;
     private Set<GroundedAction> actions;
-    private Set<StateHashTuple> visited;
-    private State withRespectTo;
+    private Set<List<StateHashTuple>> visited;
     private Random rand;
     private boolean abstractionGenerated = false;
+    private boolean ocombsGenerated = false;
 
     public AbstractedOption(StateHashFactory hf,
 	    Map<StateHashTuple, GroundedAction> policy, String name) {
 	this.policy = policy;
-	this.hashFactory = hf;
-	this.actions = new HashSet<GroundedAction>();
+	this.hf = hf;
 	super.name = "AO-" + name;
 	this.parameterClasses = new String[0];
 	this.parameterOrderGroup = new String[0];
-	this.visited = new HashSet<StateHashTuple>();
+	this.visited = new HashSet<List<StateHashTuple>>();
 	this.rand = new Random();
-	this.abstractedPolicy = new HashMap<StateHashTuple, Entry<Integer, List<GroundedAction>>>();
-	this.withRespectTo = policy.keySet().iterator().next().s;
+	this.actions = new HashSet<GroundedAction>();
+	this.abstractedPolicy = new HashMap<StateHashTuple, List<GroundedAction>>();
+	this.gci = new HashMap<String, Integer>();
+	this.ocombs = new ArrayList<List<String>>();
     }
 
     @Override
@@ -61,14 +63,12 @@ public class AbstractedOption extends Option {
 	if (!abstractionGenerated) {
 	    generateAbstraction(incoming);
 	}
-	State abs = AbstractedPolicy.findLimitingState(
-		AbstractedPolicy.generateLCIMappingState(incoming),
-		AbstractedPolicy.generateLCIMappingState(withRespectTo),
-		incoming, withRespectTo);
-	Entry<Integer, List<GroundedAction>> tempE = abstractedPolicy
-		.get(hashFactory.hashState(abs));
-	if (tempE == null || visited.contains(hashFactory.hashState(abs))) {
+
+	List<StateHashTuple> states = getAbstractedStates(incoming);
+	GroundedAction ga = getActionFromAbstractions(states);
+	if (ga == null || visited.contains(states)) {
 	    visited.clear();
+	    // TODO return rand.nextDouble();
 	    return 1.;
 	}
 
@@ -85,64 +85,30 @@ public class AbstractedOption extends Option {
 	if (!abstractionGenerated) {
 	    generateAbstraction(incoming);
 	}
-	State abs = AbstractedPolicy.findLimitingState(
-		AbstractedPolicy.generateLCIMappingState(incoming),
-		AbstractedPolicy.generateLCIMappingState(withRespectTo),
-		incoming, withRespectTo);
-	if (visited.contains(hashFactory.hashState(abs))) {
+
+	List<StateHashTuple> states = getAbstractedStates(incoming);
+	if (visited.contains(states)) {
 	    visited.clear();
 	    return null;
 	}
 
-	visited.add(hashFactory.hashState(abs));
-	Entry<Integer, List<GroundedAction>> tempE = abstractedPolicy
-		.get(hashFactory.hashState(abs));
-
-	// not == because of object equality
-	// If the action selection has not been initialized, make a
-	// selection from the list of actions defined for that state.
-	if (tempE.getKey().equals(-1)) {
-	    // Weighted dice roll
-	    int index = rand.nextInt(tempE.getValue().size());
-	    AbstractMap.SimpleEntry<Integer, List<GroundedAction>> newE = new AbstractMap.SimpleEntry<Integer, List<GroundedAction>>(
-		    index, tempE.getValue());
-	    abstractedPolicy.put(hashFactory.hashState(abs), newE);
-	    tempE = newE;
-
-	    // Most common action
-	    /*
-	     * List<GroundedAction> gas = abstractedPolicy.get(
-	     * hashFactory.hashState(abs)).getValue(); Map<GroundedAction,
-	     * Integer> weights = new HashMap<GroundedAction, Integer>();
-	     * 
-	     * for (GroundedAction ga : gas) { // Updates the weight map by
-	     * incrementing the counter weights.put(ga, weights.get(ga) == null
-	     * ? 1 : weights.get(ga) + 1); } Entry<GroundedAction, Integer>
-	     * mostCommon = null; for (Entry<GroundedAction, Integer> weight :
-	     * weights.entrySet()) { // Finds the most common grounded action if
-	     * (mostCommon == null || weight.getValue() > mostCommon.getValue())
-	     * { mostCommon = weight; } } AbstractMap.SimpleEntry<Integer,
-	     * List<GroundedAction>> newE = new AbstractMap.SimpleEntry<Integer,
-	     * List<GroundedAction>>( gas.indexOf(mostCommon.getKey()), gas);
-	     * abstractedPolicy.put(hashFactory.hashState(abs), newE); tempE =
-	     * newE;
-	     */
-	}
-
-	return tempE.getValue().get(tempE.getKey());
+	visited.add(states);
+	// System.out.println(getActionFromAbstractions(states) +
+	// " selected for state: " + incoming);
+	return getActionFromAbstractions(states);
     }
 
     @Override
     public List<ActionProb> getActionDistributionForState(State incoming,
 	    String[] params) {
-	// TODO add stochastic termination
 	if (!abstractionGenerated) {
 	    generateAbstraction(incoming);
 	}
+
 	List<ActionProb> aprobs = new ArrayList<ActionProb>();
 	GroundedAction ga = oneStepActionSelection(incoming, params);
 	for (GroundedAction a : actions) {
-	    if (ga != null && ga.action.equals(a)) {
+	    if (a.equals(ga)) {
 		// If the action selection is in the set of actions stored,
 		// return 1.
 		ActionProb p = new ActionProb(a, 1.);
@@ -158,55 +124,110 @@ public class AbstractedOption extends Option {
     }
 
     @Override
-    /**
-     * Abstracts the incoming state with respect to an arbitrary state in the option, and then checks for existence in the option.
-     */
     public boolean applicableInState(State incoming, String[] params) {
 	if (!abstractionGenerated) {
 	    generateAbstraction(incoming);
 	}
-	State absIncoming = AbstractedPolicy.findLimitingState(
-		AbstractedPolicy.generateLCIMappingState(incoming),
-		AbstractedPolicy.generateLCIMappingState(withRespectTo),
-		incoming, withRespectTo);
 
-	if (visited.contains(hashFactory.hashState(absIncoming))) {
+	List<StateHashTuple> states = getAbstractedStates(incoming);
+
+	if (visited.contains(states)) {
 	    visited.clear();
 	    return false;
 	}
 
-	return abstractedPolicy.get(hashFactory.hashState(absIncoming)) != null;
+	return getActionFromAbstractions(states) != null;
+    }
+
+    /**
+     * Gets the best action from the abstracted policy using the provided states
+     * 
+     * @param states
+     * @return the action best associated with these states
+     */
+    private GroundedAction getActionFromAbstractions(List<StateHashTuple> states) {
+	List<GroundedAction> gas = new ArrayList<GroundedAction>();
+	List<StateHashTuple> definedFor = new ArrayList<StateHashTuple>();
+	for (StateHashTuple state : states) {
+	    if (!abstractedPolicy.containsKey(state)) {
+		continue;
+	    }
+	    List<GroundedAction> curGAs = abstractedPolicy.get(state);
+	    gas.addAll(curGAs);
+	    definedFor.add(state);
+	}
+
+	GroundedAction ga = null;
+
+	if (gas.size() > 0) {
+	    // Weighted dice roll for selection
+	    ga = gas.get(rand.nextInt(gas.size()));
+
+	    // Most common for selection
+	    /*
+	     * Map<GroundedAction, Integer> weights = new
+	     * HashMap<GroundedAction, Integer>(); for (GroundedAction ga: gas)
+	     * { weights.put(ga, weights.containsKey(ga) ? weights.get(ga) + 1 :
+	     * 1); } GroundedAction ga = null; int max = 0; for
+	     * (Entry<GroundedAction, Integer> e: weights.entrySet()) { if
+	     * (e.getValue() > max) { ga = e.getKey(); max = e.getValue() } }
+	     */
+	}
+
+	// After the selection is made, it is cached for the future
+	if (ga != null) {
+	    for (StateHashTuple state : definedFor) {
+		List<GroundedAction> aList = new ArrayList<GroundedAction>();
+		aList.add(ga);
+		abstractedPolicy.put(state, aList);
+	    }
+	}
+
+	return ga;
+    }
+
+    private List<StateHashTuple> getAbstractedStates(State incoming) {
+	if (!ocombsGenerated) {
+	    this.ocombs = AbstractedPolicy.generateAllCombinations(incoming,
+		    gci);
+	}
+
+	List<StateHashTuple> states = new ArrayList<StateHashTuple>();
+
+	for (List<String> ocomb : ocombs) {
+	    states.add(hf.hashState(AbstractedPolicy.formState(incoming, ocomb)));
+	}
+
+	return states;
     }
 
     private void generateAbstraction(State incoming) {
 	if (!abstractionGenerated) {
+	    State withRespectTo = policy.keySet().iterator().next().s;
+	    List<State> ss = new ArrayList<State>();
+	    ss.add(incoming);
+	    ss.add(withRespectTo);
+	    this.gci = AbstractedPolicy.greatestCommonIntersection(ss);
+	    List<List<String>> ocombs = AbstractedPolicy
+		    .generateAllCombinations(withRespectTo, gci);
+
 	    for (Entry<StateHashTuple, GroundedAction> e : policy.entrySet()) {
-		State curState = AbstractedPolicy.findLimitingState(
-			AbstractedPolicy.generateLCIMappingState(e.getKey().s),
-			AbstractedPolicy.generateLCIMappingState(incoming),
-			e.getKey().s, incoming);
-		GroundedAction curGA = e.getValue();
-
-		if (!actions.contains(curGA)) {
-		    actions.add(curGA);
+		if (!actions.contains(e.getValue())) {
+		    actions.add(e.getValue());
 		}
-
-		if (abstractedPolicy.get(hashFactory.hashState(curState)) == null) {
-		    List<GroundedAction> tempArr = new ArrayList<GroundedAction>();
-		    tempArr.add(curGA);
-		    // -1 initialization means the selection hasn't been made
-		    AbstractMap.SimpleEntry<Integer, List<GroundedAction>> tempE = new AbstractMap.SimpleEntry<Integer, List<GroundedAction>>(
-			    -1, tempArr);
-		    abstractedPolicy
-			    .put(hashFactory.hashState(curState), tempE);
-		} else {
-		    Entry<Integer, List<GroundedAction>> tempE = abstractedPolicy
-			    .get(hashFactory.hashState(curState));
-		    List<GroundedAction> tempArr = tempE.getValue();
-		    tempArr.add(curGA);
-		    tempE.setValue(tempArr);
-		    abstractedPolicy
-			    .put(hashFactory.hashState(curState), tempE);
+		for (List<String> ocomb : ocombs) {
+		    State newS = AbstractedPolicy
+			    .formState(e.getKey().s, ocomb);
+		    List<GroundedAction> aList;
+		    if (!abstractedPolicy.containsKey(hf.hashState(newS))) {
+			aList = new ArrayList<GroundedAction>();
+			aList.add(e.getValue());
+			abstractedPolicy.put(hf.hashState(newS), aList);
+		    } else {
+			aList = abstractedPolicy.get(hf.hashState(newS));
+			aList.add(e.getValue());
+			abstractedPolicy.put(hf.hashState(newS), aList);
+		    }
 		}
 	    }
 
@@ -216,7 +237,9 @@ public class AbstractedOption extends Option {
 
     public void resetOption() {
 	abstractionGenerated = false;
-	abstractedPolicy = new HashMap<StateHashTuple, Entry<Integer, List<GroundedAction>>>();
+	ocombsGenerated = false;
+	abstractedPolicy = new HashMap<StateHashTuple, List<GroundedAction>>();
+	ocombs = new ArrayList<List<String>>();
 	visited.clear();
     }
 
