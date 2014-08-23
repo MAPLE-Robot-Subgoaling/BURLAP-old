@@ -91,6 +91,7 @@ public class AbstractedPolicy {
 	}
 
 	List<AbstractedPolicy> abstractedPolicies = new ArrayList<AbstractedPolicy>();
+
 	for (int i = 0; i < policies.size(); i++) {
 	    List<PolicyBlocksPolicy> newPolicies = new ArrayList<PolicyBlocksPolicy>();
 	    newPolicies.addAll(policies);
@@ -204,16 +205,19 @@ public class AbstractedPolicy {
 		firstPass = false;
 		continue;
 	    }
+
 	    int originalSize = names.size();
 	    int c = 0;
 	    int f = objClass.size();
 	    names = multiplyList(names, f);
+
 	    for (List<String> objComb : objClass) {
 		for (int i = c * originalSize; i < (c + 1) * originalSize; i++) {
 		    List<String> temp = names.get(i);
 		    temp.addAll(objComb);
 		    names.set(i, temp);
 		}
+
 		c++;
 	    }
 	}
@@ -257,15 +261,15 @@ public class AbstractedPolicy {
      */
     private static double scoreAbstraction(StateHashFactory hf,
 	    PolicyBlocksPolicy ip, Map<StateHashTuple, GroundedAction> np) {
-	double accuracy = 0;
+	double accuracy = 0.;
 	State withRespectTo = np.keySet().iterator().next().s;
 	Map<StateHashTuple, List<Boolean>> correct = new HashMap<StateHashTuple, List<Boolean>>();
+	List<String> onames = new ArrayList<String>();
+	for (ObjectInstance oi : withRespectTo.getAllObjects()) {
+	    onames.add(oi.getName());
+	}
 
 	for (Entry<StateHashTuple, GroundedAction> e : ip.policy.entrySet()) {
-	    List<String> onames = new ArrayList<String>();
-	    for (ObjectInstance oi : withRespectTo.getAllObjects()) {
-		onames.add(oi.getName());
-	    }
 	    State newS = formState(e.getKey().s, onames);
 
 	    if (e.getValue().equals(np.get(hf.hashState(newS)))) {
@@ -333,9 +337,7 @@ public class AbstractedPolicy {
 		    temp.add(e.getKey());
 		    stateOccurence.put(hf.hashState(curState), temp);
 		} else {
-		    temp = stateOccurence.get(hf.hashState(curState));
-		    temp.add(e.getKey());
-		    stateOccurence.put(hf.hashState(curState), temp);
+		    stateOccurence.get(hf.hashState(curState)).add(e.getKey());
 		}
 	    }
 	    for (Entry<StateHashTuple, List<StateHashTuple>> e : stateOccurence

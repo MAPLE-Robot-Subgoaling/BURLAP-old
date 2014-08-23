@@ -233,9 +233,7 @@ public class AbstractedOption extends Option {
 			aList.add(curGA);
 			abstractedPolicy.put(hf.hashState(newS), aList);
 		    } else {
-			aList = abstractedPolicy.get(hf.hashState(newS));
-			aList.add(curGA);
-			abstractedPolicy.put(hf.hashState(newS), aList);
+			abstractedPolicy.get(hf.hashState(newS)).add(curGA);
 		    }
 		}
 	    }
