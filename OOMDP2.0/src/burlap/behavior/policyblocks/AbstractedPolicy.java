@@ -39,6 +39,10 @@ public class AbstractedPolicy {
 	this.hashFactory = p.hashFactory;
     }
 
+    public AbstractedPolicy(StateHashFactory hf, PolicyBlocksPolicy ip, PolicyBlocksPolicy p) {
+	this(hf, ip, singletonList(p));
+    }
+    
     /**
      * Accepts a single initial policy and a set of other initial policies,
      * abstracts a single abstract policy (the abstraction of the first initial
@@ -506,26 +510,22 @@ public class AbstractedPolicy {
 	double totalMatch = 0.;
 
 	for (PolicyBlocksPolicy orig : abs.getOriginalPolicies()) {
-	    List<PolicyBlocksPolicy> temp = new ArrayList<PolicyBlocksPolicy>();
 	    PolicyBlocksPolicy tempP = new PolicyBlocksPolicy(orig.getEpsilon());
 	    tempP.policy = abs.abstractedPolicy;
-	    temp.add(tempP);
 
-	    // Will throw a null pointer exception if the policy is of size
-	    // 0
-	    AbstractedPolicy origAb = new AbstractedPolicy(hf, orig, temp);
+	    // Abstracts the original policy with respect to the abstracted policy
+	    AbstractedPolicy origAb = new AbstractedPolicy(hf, orig, tempP);
 	    double stateSize = origAb.abstractedPolicy.size();
 	    double stateMatch = 0.;
 
 	    for (Entry<StateHashTuple, GroundedAction> e : abs.abstractedPolicy
 		    .entrySet()) {
-		if (origAb.abstractedPolicy.containsKey(e.getKey())
-			&& origAb.abstractedPolicy.get(e.getKey()).equals(
-				e.getValue())) {
-		    // Check for state match and then action match
+		if (e.getValue().equals(origAb.abstractedPolicy.get(e.getKey()))) {
+		    // Check for a state->action match
 		    stateMatch += 1;
 		}
 	    }
+	    
 	    totalMatch += stateMatch / stateSize;
 	}
 
@@ -547,6 +547,18 @@ public class AbstractedPolicy {
 	return range;
     }
 
+    /**
+     * Constructs and returns a list of one element
+     * @param element
+     * @return a list containing that element
+     */
+    public static <T> List<T> singletonList(T element) {
+	List<T> singleton = new ArrayList<T>(1);
+	singleton.add(element);
+	
+	return singleton;
+    }
+    
     /**
      * Creates a list of size * factory through item repetition
      * 

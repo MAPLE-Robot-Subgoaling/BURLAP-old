@@ -172,86 +172,63 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.DOMAIN.getActions(), "cyclic");
     }
 
+    public static List<PolicyBlocksPolicy> driveBaseLearning(
+	    StateHashFactory hf, int[][][] positions, int episodes,
+	    double epsilon, String basepath) throws IOException {
+	List<PolicyBlocksPolicy> toMerge = new ArrayList<PolicyBlocksPolicy>();
+	int c = 0;
+	
+	for (int[][] passengers : positions) {
+	    c++;
+	    long time = System.currentTimeMillis();
+	    TaxiWorldDomain.MAXPASS = passengers.length;
+	    new TaxiWorldDomain().generateDomain();
+	    PolicyBlocksPolicy policy = new PolicyBlocksPolicy(epsilon);
+	    System.out.println("Starting policy " + c + ": MAXPASS="
+		    + TaxiWorldDomain.MAXPASS);
+	    System.out.println(runTaxiLearning(policy, hf, passengers,
+		    episodes, basepath + c + ".csv")[episodes - 1]);
+	    System.out.println("Finished policy: " + c + " in "
+		    + (System.currentTimeMillis() - time) / 1000.0
+		    + " seconds.");
+	    toMerge.add(policy);
+	}
+
+	return toMerge;
+    }
+
     public static void main(String args[]) throws IOException {
 	String path = "C:/Users/Allison/Desktop/";
-	TaxiWorldDomain.MAXPASS = 3;
+	TaxiWorldDomain.MAXPASS = 4;
 	new TaxiWorldDomain().generateDomain();
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
 	hf.setAttributesForClass(
 		TaxiWorldDomain.CLASSAGENT,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
-	double epsilon = 0.4;
-	int episodes = 1000;
+	double epsilon = 0.1;
+	int episodes = 1;
 	long startTime = System.currentTimeMillis();
-	Random rand = new Random();
-	int c = 1;
-	int max = TaxiWorldDomain.MAXPASS;
 	// Offset must always be one, or there will be value errors with
 	// ATTCARRY
 	// MAXPASS must never be set higher than max, ATTCARRY will have issues
 	// as well
 	// If MAXPASS must be set higher, the domain must be regenerated
-	int offset = 1;
 
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps1 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlocksPolicy policy1 = new PolicyBlocksPolicy(epsilon);
-	System.out.println("Starting policy " + c + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy1, hf, ps1, episodes, path
-		+ "one.csv")[episodes - 1]);
-	System.out.println("Finished policy: " + c);
-	c++;
+	int[][][] passengers = new int[20][][];
+	for (int i = 0; i < 20; i++) {
+	    int j = new Random().nextInt(TaxiWorldDomain.MAXPASS) + 1;
+	    TaxiWorldDomain.MAXPASS = j;
+	    new TaxiWorldDomain().generateDomain();
+	    int[][] pass = TaxiWorldDomain
+		    .getRandomSpots(TaxiWorldDomain.MAXPASS);
+	    passengers[i] = pass;
+	}
 
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps2 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlocksPolicy policy2 = new PolicyBlocksPolicy(epsilon);
-	System.out.println("Starting policy " + c + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy2, hf, ps2, episodes, path
-		+ "two.csv")[episodes - 1]);
-	System.out.println("Finished policy: " + c);
-	c++;
-
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps3 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlocksPolicy policy3 = new PolicyBlocksPolicy(epsilon);
-	System.out.println("Starting policy " + c + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy3, hf, ps3, episodes, path
-		+ "three.csv")[episodes - 1]);
-	System.out.println("Finished policy: " + c);
-	c++;
-
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps4 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlocksPolicy policy4 = new PolicyBlocksPolicy(epsilon);
-	System.out.println("Starting policy " + c + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy4, hf, ps4, episodes, path
-		+ "four.csv")[episodes - 1]);
-	System.out.println("Finished policy: " + c);
-	c++;
-
-	TaxiWorldDomain.MAXPASS = rand.nextInt(max) + offset;
-	int[][] ps5 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlocksPolicy policy5 = new PolicyBlocksPolicy(epsilon);
-	System.out.println("Starting policy " + c + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy5, hf, ps5, episodes, path
-		+ "five.csv")[episodes - 1]);
-	System.out.println("Finished policy: " + c);
-	c++;
-	ArrayList<PolicyBlocksPolicy> toMerge = new ArrayList<PolicyBlocksPolicy>();
-	toMerge.add(policy1);
-	toMerge.add(policy2);
-	toMerge.add(policy3);
-	toMerge.add(policy4);
-	toMerge.add(policy5);
-
+	List<PolicyBlocksPolicy> toMerge = driveBaseLearning(hf, passengers,
+		episodes, epsilon, path);
 	long uTime = System.currentTimeMillis();
-	int depth = toMerge.size();
+	int depth = 5;
 	System.out.println("Starting union merge with depth " + depth + ".");
 	List<Entry<AbstractedPolicy, Double>> merged = AbstractedPolicy
 		.unionMerge(hf, toMerge, depth);
@@ -262,42 +239,43 @@ public class TaxiWorldExperiment {
 
 	System.out.println(merged.size() + " options generated.");
 	List<AbstractedOption> ops = new ArrayList<AbstractedOption>();
-	int numOptions = merged.size();
+	int numOptions = 3;
 	// TODO maybe add a heuristic for only letting in options that score
 	// above a threshold (e.g. >= 0.3)
-	double first = merged.get(0).getValue();
 	for (int i = 0; i < numOptions; i++) {
-	    if (merged.get(i).getValue() < (first / 1.25)) {
-		System.out.println("Stopping at " + (i + 1) + " [" + first
-			+ "; " + merged.get(i).getValue() + "]");
-		break;
-	    }
 	    System.out.println("Option number " + (i + 1) + " of size "
 		    + merged.get(i).getKey().size() + " and score "
 		    + merged.get(i).getValue() + " added.");
-	    ops.add(new AbstractedOption(hf, merged.get(i).getKey().getPolicy(), TaxiWorldDomain.DOMAIN.getActions(), "" + i));
+	    ops.add(new AbstractedOption(hf,
+		    merged.get(i).getKey().getPolicy(), TaxiWorldDomain.DOMAIN
+			    .getActions(), "" + i));
 	}
 
+	long lTime = System.currentTimeMillis();
 	TaxiWorldDomain.MAXPASS = 1;
 	new TaxiWorldDomain().generateDomain();
-	int[][] ps6 = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	PolicyBlocksPolicy policy6 = new PolicyBlocksPolicy(epsilon);
-	System.out.println("Starting policy " + c + ": MAXPASS="
+	int[][] targetPass = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
+	
+	PolicyBlocksPolicy pmodalP = new PolicyBlocksPolicy(epsilon);
+	String name = "P-MODAL";
+	System.out.println("Starting policy " + name + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy6, hf, ps6, ops, episodes,
-		path + "pmodal.csv")[episodes - 1]);
-	System.out.println("Finished policy: " + c);
-	c++;
+	System.out.println(runTaxiLearning(pmodalP, hf, targetPass, ops, episodes,
+		path + name + ".csv")[episodes - 1]);
+	System.out.println("Finished policy: " + name + " in " + (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
+	lTime = System.currentTimeMillis();
 	// TODO Experiments: Q-learning; Find what number of options is optimal;
 	// Find what number of source policies is optimal; SARSA(\); Random
 	// Option; Hand Crafted Option; Flat Policy Option
 
-	PolicyBlocksPolicy policy7 = new PolicyBlocksPolicy(epsilon);
-	System.out.println("Starting policy " + c + ": MAXPASS="
+	PolicyBlocksPolicy qlearnP = new PolicyBlocksPolicy(epsilon);
+	name = "Q-Learning";
+	System.out.println("Starting policy " + name + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(policy7, hf, ps6, episodes, path
-		+ "qlearn.csv")[episodes - 1]);
-	System.out.println("Finished policy: " + c);
+	System.out.println(runTaxiLearning(qlearnP, hf, targetPass, episodes,
+		path + name + ".csv")[episodes - 1]);
+	System.out.println("Finished policy: " + name + " in " + (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
+	lTime = System.currentTimeMillis();
 
 	System.out.println("Experiment finished. Took a total of "
 		+ ((System.currentTimeMillis() - startTime) / 60000.0)
