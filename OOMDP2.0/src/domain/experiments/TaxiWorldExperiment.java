@@ -177,7 +177,7 @@ public class TaxiWorldExperiment {
 	    double epsilon, String basepath) throws IOException {
 	List<PolicyBlocksPolicy> toMerge = new ArrayList<PolicyBlocksPolicy>();
 	int c = 0;
-	
+
 	for (int[][] passengers : positions) {
 	    c++;
 	    long time = System.currentTimeMillis();
@@ -199,15 +199,16 @@ public class TaxiWorldExperiment {
 
     public static void main(String args[]) throws IOException {
 	String path = "C:/Users/Allison/Desktop/";
-	TaxiWorldDomain.MAXPASS = 4;
+	TaxiWorldDomain.MAXPASS = 3;
+	int max = TaxiWorldDomain.MAXPASS;
 	new TaxiWorldDomain().generateDomain();
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
 	hf.setAttributesForClass(
 		TaxiWorldDomain.CLASSAGENT,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
-	double epsilon = 0.1;
-	int episodes = 1;
+	double epsilon = 0.7;
+	int episodes = 1000;
 	long startTime = System.currentTimeMillis();
 	// Offset must always be one, or there will be value errors with
 	// ATTCARRY
@@ -217,7 +218,7 @@ public class TaxiWorldExperiment {
 
 	int[][][] passengers = new int[20][][];
 	for (int i = 0; i < 20; i++) {
-	    int j = new Random().nextInt(TaxiWorldDomain.MAXPASS) + 1;
+	    int j = new Random().nextInt(max) + 1;
 	    TaxiWorldDomain.MAXPASS = j;
 	    new TaxiWorldDomain().generateDomain();
 	    int[][] pass = TaxiWorldDomain
@@ -228,7 +229,7 @@ public class TaxiWorldExperiment {
 	List<PolicyBlocksPolicy> toMerge = driveBaseLearning(hf, passengers,
 		episodes, epsilon, path);
 	long uTime = System.currentTimeMillis();
-	int depth = 5;
+	int depth = 3;
 	System.out.println("Starting union merge with depth " + depth + ".");
 	List<Entry<AbstractedPolicy, Double>> merged = AbstractedPolicy
 		.unionMerge(hf, toMerge, depth);
@@ -252,17 +253,19 @@ public class TaxiWorldExperiment {
 	}
 
 	long lTime = System.currentTimeMillis();
-	TaxiWorldDomain.MAXPASS = 1;
+	TaxiWorldDomain.MAXPASS = 2;
 	new TaxiWorldDomain().generateDomain();
-	int[][] targetPass = TaxiWorldDomain.getRandomSpots(TaxiWorldDomain.MAXPASS);
-	
+	int[][] targetPass = TaxiWorldDomain
+		.getRandomSpots(TaxiWorldDomain.MAXPASS);
+
 	PolicyBlocksPolicy pmodalP = new PolicyBlocksPolicy(epsilon);
 	String name = "P-MODAL";
 	System.out.println("Starting policy " + name + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(pmodalP, hf, targetPass, ops, episodes,
-		path + name + ".csv")[episodes - 1]);
-	System.out.println("Finished policy: " + name + " in " + (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
+	System.out.println(runTaxiLearning(pmodalP, hf, targetPass, ops,
+		episodes, path + name + ".csv")[episodes - 1]);
+	System.out.println("Finished policy: " + name + " in "
+		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
 	lTime = System.currentTimeMillis();
 	// TODO Experiments: Q-learning; Find what number of options is optimal;
 	// Find what number of source policies is optimal; SARSA(\); Random
@@ -274,7 +277,23 @@ public class TaxiWorldExperiment {
 		+ TaxiWorldDomain.MAXPASS);
 	System.out.println(runTaxiLearning(qlearnP, hf, targetPass, episodes,
 		path + name + ".csv")[episodes - 1]);
-	System.out.println("Finished policy: " + name + " in " + (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
+	System.out.println("Finished policy: " + name + " in "
+		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
+	lTime = System.currentTimeMillis();
+
+	PolicyBlocksPolicy randomP = new PolicyBlocksPolicy(epsilon);
+	name = "Random Option";
+	System.out.println("Starting policy " + name + ": MAXPASS="
+		+ TaxiWorldDomain.MAXPASS);
+	System.out.println(runTaxiLearning(
+		randomP,	
+		hf,
+		targetPass,
+		generateRandomOption(hf, TaxiWorldDomain.DOMAIN.getActions(),
+			qlearnP.policy.keySet()), episodes, path + name
+			+ ".csv")[episodes - 1]);
+	System.out.println("Finished policy: " + name + " in "
+		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
 	lTime = System.currentTimeMillis();
 
 	System.out.println("Experiment finished. Took a total of "
