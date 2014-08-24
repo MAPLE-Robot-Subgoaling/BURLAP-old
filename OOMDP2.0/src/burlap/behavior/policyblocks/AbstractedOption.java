@@ -73,8 +73,8 @@ public class AbstractedOption extends Option {
 	    return 1.;
 	}
 
-	// TODO Consider adding some decay factor for the probability as the number of steps increases
-	return rand.nextDouble();
+	// return rand.nextDouble();
+	return 0.2;
     }
 
     @Override
