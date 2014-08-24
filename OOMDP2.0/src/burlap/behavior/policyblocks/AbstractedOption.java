@@ -52,7 +52,7 @@ public class AbstractedOption extends Option {
 
     @Override
     public boolean usesDeterministicTermination() {
-	return true;
+	return false;
     }
 
     @Override
@@ -70,11 +70,11 @@ public class AbstractedOption extends Option {
 	GroundedAction ga = getActionFromAbstractions(states);
 	if (ga == null || visited.contains(states)) {
 	    visited.clear();
-	    // TODO return rand.nextDouble();
 	    return 1.;
 	}
 
-	return 0.;
+	// TODO Consider adding some decay factor for the probability as the number of steps increases
+	return rand.nextDouble();
     }
 
     @Override
