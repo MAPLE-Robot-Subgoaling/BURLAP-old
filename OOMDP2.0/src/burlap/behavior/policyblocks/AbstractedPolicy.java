@@ -273,8 +273,8 @@ public class AbstractedPolicy {
      * @param hf
      * @param ip
      * @param np
-     * @return 1 - (occurrence in the source policy (normalized by redundancy) /
-     *         size of new policy)
+     * @return occurrence in the source policy (normalized by redundancy) / size
+     *         of new policy
      */
     private static double scoreAbstraction(StateHashFactory hf,
 	    PolicyBlocksPolicy ip, Map<StateHashTuple, GroundedAction> np) {
@@ -301,7 +301,7 @@ public class AbstractedPolicy {
 	}
 
 	for (List<Boolean> bs : correct.values()) {
-	    double c = 0;
+	    double c = 0.;
 	    for (Boolean b : bs) {
 		if (b) {
 		    c++;
@@ -311,7 +311,7 @@ public class AbstractedPolicy {
 	    accuracy += (c / bs.size());
 	}
 
-	return 1 - (accuracy / np.size());
+	return accuracy / np.size();
     }
 
     /**
