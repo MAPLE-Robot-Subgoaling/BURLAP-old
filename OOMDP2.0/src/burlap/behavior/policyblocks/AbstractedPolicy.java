@@ -39,14 +39,15 @@ public class AbstractedPolicy {
 	this.hashFactory = p.hashFactory;
     }
 
-    public AbstractedPolicy(StateHashFactory hf, PolicyBlocksPolicy ip, PolicyBlocksPolicy p) {
+    public AbstractedPolicy(StateHashFactory hf, PolicyBlocksPolicy ip,
+	    PolicyBlocksPolicy p) {
 	this(hf, ip, singletonList(p));
     }
-    
+
     /**
      * Accepts a single initial policy and a set of other initial policies,
      * abstracts a single abstract policy (the abstraction of the first initial
-     * policy relative to the others)
+     * policy relative to the others).
      * 
      * @param sh
      *            - StateHashFactory is used to go from State - > StateHashTuple
@@ -67,6 +68,9 @@ public class AbstractedPolicy {
 	    psS.add(p.policy.keySet().iterator().next().s);
 	}
 	psS.add(ipS);
+	// If there exists no GCI between the states provided, the final
+	// abstracted policy will be empty (this doesn't cause a problem in
+	// merging)
 	Map<String, Integer> gci = greatestCommonIntersection(psS);
 	psS.remove(ipS);
 
@@ -76,6 +80,7 @@ public class AbstractedPolicy {
 		hf, ip, oiCombs);
 
 	this.abstractedPolicy = getBestCandidate(hf, ip, policyCandidates);
+
 	ps.add(ip);
 	this.originalPolicies.addAll(ps);
     }
@@ -148,11 +153,11 @@ public class AbstractedPolicy {
 	    i++;
 	}
 
-	List<String> toRemove = new ArrayList<String>();
+	Map<String, Integer> classCount = new HashMap<String, Integer>();
 	// Initialize the GCI
 	for (Entry<String, Integer> e : mappings.get(0).entrySet()) {
 	    gci.put(e.getKey(), e.getValue());
-	    toRemove.add(e.getKey());
+	    classCount.put(e.getKey(), 1);
 	}
 	mappings.remove(0);
 
@@ -164,12 +169,20 @@ public class AbstractedPolicy {
 			gci.put(e.getKey(), e.getValue());
 		    }
 
-		    toRemove.remove(e.getKey());
+		    if (!classCount.containsKey(e.getKey())) {
+			classCount.put(e.getKey(), 1);
+		    } else {
+			classCount.put(e.getKey(),
+				classCount.get(e.getKey()) + 1);
+		    }
 		}
 	    }
 	}
-	for (String remove : toRemove) {
-	    gci.remove(remove);
+	for (Entry<String, Integer> e : classCount.entrySet()) {
+	    if (gci.containsKey(e.getKey()) && e.getValue() < ss.size()) {
+		// If the object class does not exist for all states
+		gci.remove(e.getKey());
+	    }
 	}
 
 	return gci;
@@ -513,19 +526,21 @@ public class AbstractedPolicy {
 	    PolicyBlocksPolicy tempP = new PolicyBlocksPolicy(orig.getEpsilon());
 	    tempP.policy = abs.abstractedPolicy;
 
-	    // Abstracts the original policy with respect to the abstracted policy
+	    // Abstracts the original policy with respect to the abstracted
+	    // policy
 	    AbstractedPolicy origAb = new AbstractedPolicy(hf, orig, tempP);
 	    double stateSize = origAb.abstractedPolicy.size();
 	    double stateMatch = 0.;
 
 	    for (Entry<StateHashTuple, GroundedAction> e : abs.abstractedPolicy
 		    .entrySet()) {
-		if (e.getValue().equals(origAb.abstractedPolicy.get(e.getKey()))) {
+		if (e.getValue()
+			.equals(origAb.abstractedPolicy.get(e.getKey()))) {
 		    // Check for a state->action match
 		    stateMatch += 1;
 		}
 	    }
-	    
+
 	    totalMatch += stateMatch / stateSize;
 	}
 
@@ -549,16 +564,17 @@ public class AbstractedPolicy {
 
     /**
      * Constructs and returns a list of one element
+     * 
      * @param element
      * @return a list containing that element
      */
     public static <T> List<T> singletonList(T element) {
 	List<T> singleton = new ArrayList<T>(1);
 	singleton.add(element);
-	
+
 	return singleton;
     }
-    
+
     /**
      * Creates a list of size * factory through item repetition
      * 
