@@ -25,6 +25,7 @@ import burlap.oomdp.singleagent.GroundedAction;
 public class AbstractedPolicy {
     private Map<StateHashTuple, GroundedAction> abstractedPolicy;
     private Set<PolicyBlocksPolicy> originalPolicies;
+    private List<String> ocomb;
     private StateHashFactory hashFactory;
 
     private AbstractedPolicy() {
@@ -76,10 +77,39 @@ public class AbstractedPolicy {
 
 	List<List<String>> oiCombs = generateAllCombinations(ipS, gcg);
 
-	List<Map<StateHashTuple, GroundedAction>> policyCandidates = generatePolicyCandidates(
+	List<Entry<Map<StateHashTuple, GroundedAction>, List<String>>> policyCandidates = generatePolicyCandidates(
 		hf, ip, oiCombs);
 
-	this.abstractedPolicy = getBestCandidate(hf, ip, policyCandidates);
+	Entry<Map<StateHashTuple, GroundedAction>, List<String>> bestCandidate = getBestCandidate(
+		hf, ip, policyCandidates);
+	this.abstractedPolicy = bestCandidate.getKey();
+	this.ocomb = bestCandidate.getValue();
+
+	ps.add(ip);
+	this.originalPolicies.addAll(ps);
+    }
+
+    /**
+     * Used to preserve the object combinations from the first abstraction in
+     * abstractAll, to prevent one policy from coincidentally have different
+     * objects of the same type.
+     * 
+     * @param hf
+     * @param ip
+     * @param ps
+     * @param ocomb
+     */
+    private AbstractedPolicy(StateHashFactory hf, PolicyBlocksPolicy ip,
+	    List<PolicyBlocksPolicy> ps, List<String> ocomb) {
+	this();
+	this.hashFactory = hf;
+
+	List<List<String>> oiCombs = singletonList(ocomb);
+	List<Entry<Map<StateHashTuple, GroundedAction>, List<String>>> policyCandidates = generatePolicyCandidates(
+		hf, ip, oiCombs);
+
+	this.abstractedPolicy = policyCandidates.get(0).getKey();
+	this.ocomb = policyCandidates.get(0).getValue();
 
 	ps.add(ip);
 	this.originalPolicies.addAll(ps);
@@ -100,17 +130,58 @@ public class AbstractedPolicy {
 	}
 
 	List<AbstractedPolicy> abstractedPolicies = new ArrayList<AbstractedPolicy>();
+	List<List<String>> ocombs = new ArrayList<List<String>>();
 
+	// Run this initial step to determine the most popular abstraction among
+	// all of the candidates
 	for (int i = 0; i < policies.size(); i++) {
 	    List<PolicyBlocksPolicy> newPolicies = new ArrayList<PolicyBlocksPolicy>();
 	    newPolicies.addAll(policies);
 
 	    PolicyBlocksPolicy temp = newPolicies.remove(i);
-	    abstractedPolicies.add(new AbstractedPolicy(hf, temp, newPolicies));
+	    AbstractedPolicy absPolicy = new AbstractedPolicy(hf, temp,
+		    newPolicies);
+	    abstractedPolicies.add(absPolicy);
+	    ocombs.add(absPolicy.getComb());
+
 	    newPolicies.add(temp);
 	}
 
-	return abstractedPolicies;
+	for (int i = 0; i < policies.size(); i++) {
+	    State s = policies.get(i).policy.keySet().iterator().next().s;
+
+	    for (int j = 0; j < ocombs.size(); j++) {
+		if (!isProperAbstraction(s, ocombs.get(j))) {
+		    ocombs.remove(j);
+		    j--;
+		}
+	    }
+	}
+
+	if (ocombs.size() == 0) {
+	    // TODO It's possible that none of them are possible with respect to
+	    // the other. In that case, return the original abstractions.
+	    System.out.println("BOOOOOOOOOOO");
+	    return abstractedPolicies;
+	}
+	List<AbstractedPolicy> finalPolicies = new ArrayList<AbstractedPolicy>();
+	List<String> ocomb = mostCommonElement(ocombs);
+
+	// Run this step to generate the abstractions with the proper
+	// abstraction among them
+	for (int i = 0; i < policies.size(); i++) {
+	    List<PolicyBlocksPolicy> newPolicies = new ArrayList<PolicyBlocksPolicy>();
+	    newPolicies.addAll(policies);
+
+	    PolicyBlocksPolicy temp = newPolicies.remove(i);
+	    AbstractedPolicy absPolicy = new AbstractedPolicy(hf, temp,
+		    newPolicies, ocomb);
+	    finalPolicies.add(absPolicy);
+
+	    newPolicies.add(temp);
+	}
+
+	return finalPolicies;
     }
 
     /**
@@ -253,21 +324,25 @@ public class AbstractedPolicy {
      * @param policyCandidates
      * @return the highest scoring candidate
      */
-    public static Map<StateHashTuple, GroundedAction> getBestCandidate(
-	    StateHashFactory hf, PolicyBlocksPolicy ip,
-	    List<Map<StateHashTuple, GroundedAction>> policyCandidates) {
+    public static Entry<Map<StateHashTuple, GroundedAction>, List<String>> getBestCandidate(
+	    StateHashFactory hf,
+	    PolicyBlocksPolicy ip,
+	    List<Entry<Map<StateHashTuple, GroundedAction>, List<String>>> policyCandidates) {
 	Map<StateHashTuple, GroundedAction> absPolicy = new HashMap<StateHashTuple, GroundedAction>();
+	List<String> absComb = new ArrayList<String>();
 	double bestScore = 0.;
 
-	for (Map<StateHashTuple, GroundedAction> policyCandidate : policyCandidates) {
-	    double curScore = scoreAbstraction(hf, ip, policyCandidate);
+	for (Entry<Map<StateHashTuple, GroundedAction>, List<String>> policyCandidate : policyCandidates) {
+	    double curScore = scoreAbstraction(hf, ip, policyCandidate.getKey());
 	    if (curScore > bestScore) {
-		absPolicy = policyCandidate;
+		absPolicy = policyCandidate.getKey();
+		absComb = policyCandidate.getValue();
 		bestScore = curScore;
 	    }
 	}
 
-	return absPolicy;
+	return new AbstractMap.SimpleEntry<Map<StateHashTuple, GroundedAction>, List<String>>(
+		absPolicy, absComb);
     }
 
     /**
@@ -341,10 +416,10 @@ public class AbstractedPolicy {
      * @param combinations
      * @return all policy candidates
      */
-    private static List<Map<StateHashTuple, GroundedAction>> generatePolicyCandidates(
+    private static List<Entry<Map<StateHashTuple, GroundedAction>, List<String>>> generatePolicyCandidates(
 	    StateHashFactory hf, PolicyBlocksPolicy ip,
 	    List<List<String>> combinations) {
-	List<Map<StateHashTuple, GroundedAction>> policyCandidates = new ArrayList<Map<StateHashTuple, GroundedAction>>();
+	List<Entry<Map<StateHashTuple, GroundedAction>, List<String>>> policyCandidates = new ArrayList<Entry<Map<StateHashTuple, GroundedAction>, List<String>>>();
 
 	for (List<String> combination : combinations) {
 	    Map<StateHashTuple, List<StateHashTuple>> stateOccurence = new HashMap<StateHashTuple, List<StateHashTuple>>();
@@ -366,7 +441,9 @@ public class AbstractedPolicy {
 			getAction(ip, e.getKey().s, e.getValue()));
 	    }
 
-	    policyCandidates.add(newPolicy);
+	    policyCandidates
+		    .add(new AbstractMap.SimpleEntry<Map<StateHashTuple, GroundedAction>, List<String>>(
+			    newPolicy, combination));
 	}
 
 	return policyCandidates;
@@ -579,6 +656,32 @@ public class AbstractedPolicy {
     }
 
     /**
+     * Gets the most common element from a list
+     * 
+     * @param l
+     * @return most common element
+     */
+    public static <T> T mostCommonElement(List<T> l) {
+	Map<T, Integer> weights = new HashMap<T, Integer>();
+
+	for (T elem : l) {
+	    weights.put(elem, weights.containsKey(elem) ? weights.get(elem) + 1
+		    : 1);
+	}
+
+	T ret = null;
+	int max = 0;
+	for (Entry<T, Integer> e : weights.entrySet()) {
+	    if (e.getValue() > max) {
+		ret = e.getKey();
+		max = e.getValue();
+	    }
+	}
+
+	return ret;
+    }
+
+    /**
      * Creates a list of size * factory through item repetition
      * 
      * @param l
@@ -715,6 +818,7 @@ public class AbstractedPolicy {
 		.entrySet()) {
 	    // Comparison is simply whether the given state corresponds to the
 	    // same action
+	    // TODO check to see if object names matter
 	    GroundedAction a = otherPolicy.abstractedPolicy.get(e.getKey());
 	    if (e.getValue().equals(a)) {
 		merged.abstractedPolicy.put(e.getKey(), e.getValue());
@@ -735,12 +839,51 @@ public class AbstractedPolicy {
     }
 
     /**
+     * Checks to see if the object combination is valid under the original
+     * policy
+     * 
+     * @param ocomb
+     * @return true/false
+     */
+    public static boolean isProperAbstraction(State s, List<String> ocomb) {
+	Map<String, Boolean> matches = new HashMap<String, Boolean>();
+	for (String o : ocomb) {
+	    matches.put(o, false);
+	}
+
+	for (ObjectInstance oi : s.getAllObjects()) {
+	    for (String o : ocomb) {
+		if (oi.getName().equals(o)) {
+		    matches.put(o, true);
+		}
+	    }
+	}
+
+	for (boolean b : matches.values()) {
+	    if (!b) {
+		return false;
+	    }
+	}
+
+	return true;
+    }
+
+    /**
      * Gets the abstracted policy
      * 
      * @return abstractedPolicy
      */
     public Map<StateHashTuple, GroundedAction> getPolicy() {
 	return abstractedPolicy;
+    }
+
+    /**
+     * Gets the object combinations for this abstraction
+     * 
+     * @return ocomb
+     */
+    public List<String> getComb() {
+	return ocomb;
     }
 
     /**
