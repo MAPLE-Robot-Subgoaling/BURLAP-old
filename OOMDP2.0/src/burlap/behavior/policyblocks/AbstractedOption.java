@@ -21,13 +21,12 @@ public class AbstractedOption extends Option {
     private Map<StateHashTuple, GroundedAction> policy;
     private Map<StateHashTuple, List<GroundedAction>> abstractedPolicy;
     private List<List<String>> ocombs;
-    private Map<String, Integer> gci;
+    private Map<String, Integer> gcg;
     private StateHashFactory hf;
     private List<Action> actions;
     private Set<StateHashTuple> visited;
     private Random rand;
-    private boolean abstractionGenerated = false;
-    private boolean ocombsGenerated = false;
+    private boolean abstractionGenerated;
 
     public AbstractedOption(StateHashFactory hf,
 	    Map<StateHashTuple, GroundedAction> policy, List<Action> actions,
@@ -47,8 +46,9 @@ public class AbstractedOption extends Option {
 	this.rand = new Random();
 	this.actions = actions;
 	this.abstractedPolicy = new HashMap<StateHashTuple, List<GroundedAction>>();
-	this.gci = new HashMap<String, Integer>();
+	this.gcg = new HashMap<String, Integer>();
 	this.ocombs = new ArrayList<List<String>>();
+	this.abstractionGenerated = false;
     }
 
     @Override
@@ -58,7 +58,7 @@ public class AbstractedOption extends Option {
 
     @Override
     public boolean usesDeterministicTermination() {
-	return false;
+	return true;
     }
 
     @Override
@@ -68,18 +68,15 @@ public class AbstractedOption extends Option {
 
     @Override
     public double probabilityOfTermination(State incoming, String[] params) {
-	if (!abstractionGenerated) {
-	    generateAbstraction(incoming);
-	}
-
 	List<StateHashTuple> states = getAbstractedStates(incoming);
 	GroundedAction ga = getActionFromAbstractions(states);
+
 	if (ga == null || visited.contains(hf.hashState(incoming))) {
 	    visited.clear();
 	    return 1.;
 	}
 
-	return 1.;// rand.nextDouble();
+	return 0.;
     }
 
     @Override
@@ -89,31 +86,23 @@ public class AbstractedOption extends Option {
 
     @Override
     public GroundedAction oneStepActionSelection(State incoming, String[] params) {
-	if (!abstractionGenerated) {
-	    generateAbstraction(incoming);
-	}
-
 	List<StateHashTuple> states = getAbstractedStates(incoming);
+
 	if (visited.contains(hf.hashState(incoming))) {
 	    visited.clear();
 	    return null;
 	}
 
 	visited.add(hf.hashState(incoming));
-	// System.out.println(getActionFromAbstractions(states) +
-	// " selected for state: " + incoming);
 	return getActionFromAbstractions(states);
     }
 
     @Override
     public List<ActionProb> getActionDistributionForState(State incoming,
 	    String[] params) {
-	if (!abstractionGenerated) {
-	    generateAbstraction(incoming);
-	}
-
 	List<ActionProb> aprobs = new ArrayList<ActionProb>();
 	GroundedAction ga = oneStepActionSelection(incoming, params);
+
 	for (Action a : actions) {
 	    if (a.equals(ga.action)) {
 		// If the action selection is in the set of actions stored,
@@ -132,17 +121,12 @@ public class AbstractedOption extends Option {
 
     @Override
     public boolean applicableInState(State incoming, String[] params) {
-	if (!abstractionGenerated) {
-	    generateAbstraction(incoming);
-	}
-
-	List<StateHashTuple> states = getAbstractedStates(incoming);
-
 	if (visited.contains(hf.hashState(incoming))) {
 	    visited.clear();
 	    return false;
 	}
 
+	List<StateHashTuple> states = getAbstractedStates(incoming);
 	return getActionFromAbstractions(states) != null;
     }
 
@@ -155,10 +139,12 @@ public class AbstractedOption extends Option {
     private GroundedAction getActionFromAbstractions(List<StateHashTuple> states) {
 	List<GroundedAction> gas = new ArrayList<GroundedAction>();
 	List<StateHashTuple> definedFor = new ArrayList<StateHashTuple>();
+
 	for (StateHashTuple state : states) {
 	    if (!abstractedPolicy.containsKey(state)) {
 		continue;
 	    }
+
 	    List<GroundedAction> curGAs = abstractedPolicy.get(state);
 	    gas.addAll(curGAs);
 	    definedFor.add(state);
@@ -192,9 +178,8 @@ public class AbstractedOption extends Option {
     }
 
     private List<StateHashTuple> getAbstractedStates(State incoming) {
-	if (!ocombsGenerated) {
-	    this.ocombs = AbstractedPolicy.generateAllCombinations(incoming,
-		    gci);
+	if (!abstractionGenerated) {
+	    generateAbstraction(incoming);
 	}
 
 	List<StateHashTuple> states = new ArrayList<StateHashTuple>();
@@ -207,51 +192,57 @@ public class AbstractedOption extends Option {
     }
 
     private void generateAbstraction(State incoming) {
-	if (!abstractionGenerated) {
-	    State withRespectTo = policy.keySet().iterator().next().s;
-	    List<State> ss = new ArrayList<State>();
-	    ss.add(incoming);
-	    ss.add(withRespectTo);
-	    this.gci = AbstractedPolicy.greatestCommonIntersection(ss);
-	    List<List<String>> ocombs = AbstractedPolicy
-		    .generateAllCombinations(withRespectTo, gci);
+	State withRespectTo = policy.keySet().iterator().next().s;
+	List<State> ss = new ArrayList<State>();
+	ss.add(incoming);
+	ss.add(withRespectTo);
+	this.gcg = AbstractedPolicy.greatestCommonGeneralization(ss);
+	this.ocombs = AbstractedPolicy.generateAllCombinations(withRespectTo,
+		gcg);
 
-	    for (Entry<StateHashTuple, GroundedAction> e : policy.entrySet()) {
-		if (!actions.contains(e.getValue().action)) {
-		    // If the incoming action is not in the target domain's
-		    // actions space, omit it.
-		    continue;
-		}
-
-		// Map the action to the target domain
-		GroundedAction curGA = new GroundedAction(actions.get(actions
-			.indexOf(e.getValue().action)), e.getValue().params);
-
-		for (List<String> ocomb : ocombs) {
-		    State newS = AbstractedPolicy
-			    .formState(e.getKey().s, ocomb);
-		    List<GroundedAction> aList;
-		    if (!abstractedPolicy.containsKey(hf.hashState(newS))) {
-			aList = new ArrayList<GroundedAction>();
-			aList.add(curGA);
-			abstractedPolicy.put(hf.hashState(newS), aList);
-		    } else {
-			abstractedPolicy.get(hf.hashState(newS)).add(curGA);
-		    }
-		}
+	for (Entry<StateHashTuple, GroundedAction> e : policy.entrySet()) {
+	    if (!actions.contains(e.getValue().action)) {
+		// If the incoming action is not in the target domain's
+		// actions space, omit it.
+		continue;
 	    }
 
-	    abstractionGenerated = true;
+	    // Map the action to the target domain
+	    GroundedAction curGA = new GroundedAction(actions.get(actions
+		    .indexOf(e.getValue().action)), e.getValue().params);
+
+	    for (List<String> ocomb : ocombs) {
+		State newS = AbstractedPolicy.formState(e.getKey().s, ocomb);
+		List<GroundedAction> aList;
+		if (!abstractedPolicy.containsKey(hf.hashState(newS))) {
+		    aList = new ArrayList<GroundedAction>();
+		    aList.add(curGA);
+		    abstractedPolicy.put(hf.hashState(newS), aList);
+		} else {
+		    abstractedPolicy.get(hf.hashState(newS)).add(curGA);
+		}
+	    }
 	}
+
+	abstractionGenerated = true;
     }
 
     public void resetOption() {
-	abstractionGenerated = false;
-	ocombsGenerated = false;
-	abstractedPolicy = new HashMap<StateHashTuple, List<GroundedAction>>();
-	ocombs = new ArrayList<List<String>>();
+	resetAbstraction();
+	hf = null;
 	actions = new ArrayList<Action>();
 	visited.clear();
+    }
+
+    public void resetAbstraction() {
+	abstractionGenerated = false;
+	abstractedPolicy = new HashMap<StateHashTuple, List<GroundedAction>>();
+	gcg = new HashMap<String, Integer>();
+	ocombs = new ArrayList<List<String>>();
+    }
+
+    public void setHashFactory(StateHashFactory hf) {
+	this.hf = hf;
     }
 
     public void setActions(List<Action> actions) {
