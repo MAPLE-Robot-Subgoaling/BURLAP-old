@@ -24,7 +24,7 @@ public class AbstractedOption extends Option {
     private Map<String, Integer> gci;
     private StateHashFactory hf;
     private List<Action> actions;
-    private Set<List<StateHashTuple>> visited;
+    private Set<StateHashTuple> visited;
     private Random rand;
     private boolean abstractionGenerated = false;
     private boolean ocombsGenerated = false;
@@ -32,12 +32,18 @@ public class AbstractedOption extends Option {
     public AbstractedOption(StateHashFactory hf,
 	    Map<StateHashTuple, GroundedAction> policy, List<Action> actions,
 	    String name) {
+	if (policy.isEmpty()) {
+	    throw new RuntimeException("Empty policy provided.");
+	} else if (actions.isEmpty()) {
+	    throw new RuntimeException("No actions provided.");
+	}
+	
 	this.policy = policy;
 	this.hf = hf;
 	super.name = "AO-" + name;
 	this.parameterClasses = new String[0];
 	this.parameterOrderGroup = new String[0];
-	this.visited = new HashSet<List<StateHashTuple>>();
+	this.visited = new HashSet<StateHashTuple>();
 	this.rand = new Random();
 	this.actions = actions;
 	this.abstractedPolicy = new HashMap<StateHashTuple, List<GroundedAction>>();
@@ -68,13 +74,12 @@ public class AbstractedOption extends Option {
 
 	List<StateHashTuple> states = getAbstractedStates(incoming);
 	GroundedAction ga = getActionFromAbstractions(states);
-	if (ga == null || visited.contains(states)) {
+	if (ga == null || visited.contains(hf.hashState(incoming))) {
 	    visited.clear();
 	    return 1.;
 	}
 
-	// return rand.nextDouble();
-	return 0.2;
+	return 0.1; //rand.nextDouble();
     }
 
     @Override
@@ -89,12 +94,12 @@ public class AbstractedOption extends Option {
 	}
 
 	List<StateHashTuple> states = getAbstractedStates(incoming);
-	if (visited.contains(states)) {
+	if (visited.contains(hf.hashState(incoming))) {
 	    visited.clear();
 	    return null;
 	}
 
-	visited.add(states);
+	visited.add(hf.hashState(incoming));
 	// System.out.println(getActionFromAbstractions(states) +
 	// " selected for state: " + incoming);
 	return getActionFromAbstractions(states);
@@ -133,7 +138,7 @@ public class AbstractedOption extends Option {
 
 	List<StateHashTuple> states = getAbstractedStates(incoming);
 
-	if (visited.contains(states)) {
+	if (visited.contains(hf.hashState(incoming))) {
 	    visited.clear();
 	    return false;
 	}
