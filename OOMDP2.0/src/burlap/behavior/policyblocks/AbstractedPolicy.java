@@ -99,6 +99,7 @@ public class AbstractedPolicy {
      * @param ps
      * @param ocomb
      */
+    @SuppressWarnings("unused")
     private AbstractedPolicy(StateHashFactory hf, PolicyBlocksPolicy ip,
 	    List<PolicyBlocksPolicy> ps, List<String> ocomb) {
 	this();
@@ -132,8 +133,6 @@ public class AbstractedPolicy {
 	List<AbstractedPolicy> abstractedPolicies = new ArrayList<AbstractedPolicy>();
 	List<List<String>> ocombs = new ArrayList<List<String>>();
 
-	// Run this initial step to determine the most popular abstraction among
-	// all of the candidates
 	for (int i = 0; i < policies.size(); i++) {
 	    List<PolicyBlocksPolicy> newPolicies = new ArrayList<PolicyBlocksPolicy>();
 	    newPolicies.addAll(policies);
@@ -147,41 +146,7 @@ public class AbstractedPolicy {
 	    newPolicies.add(temp);
 	}
 
-	for (int i = 0; i < policies.size(); i++) {
-	    State s = policies.get(i).policy.keySet().iterator().next().s;
-
-	    for (int j = 0; j < ocombs.size(); j++) {
-		if (!isProperAbstraction(s, ocombs.get(j))) {
-		    ocombs.remove(j);
-		    j--;
-		}
-	    }
-	}
-
-	if (ocombs.size() == 0) {
-	    // TODO It's possible that none of them are possible with respect to
-	    // the other. In that case, return the original abstractions.
-	    System.out.println("BOOOOOOOOOOO");
-	    return abstractedPolicies;
-	}
-	List<AbstractedPolicy> finalPolicies = new ArrayList<AbstractedPolicy>();
-	List<String> ocomb = mostCommonElement(ocombs);
-
-	// Run this step to generate the abstractions with the proper
-	// abstraction among them
-	for (int i = 0; i < policies.size(); i++) {
-	    List<PolicyBlocksPolicy> newPolicies = new ArrayList<PolicyBlocksPolicy>();
-	    newPolicies.addAll(policies);
-
-	    PolicyBlocksPolicy temp = newPolicies.remove(i);
-	    AbstractedPolicy absPolicy = new AbstractedPolicy(hf, temp,
-		    newPolicies, ocomb);
-	    finalPolicies.add(absPolicy);
-
-	    newPolicies.add(temp);
-	}
-
-	return finalPolicies;
+	return abstractedPolicies;
     }
 
     /**
@@ -689,10 +654,44 @@ public class AbstractedPolicy {
      * @return the multiplied list
      */
     public static <T> List<T> multiplyList(List<T> l, int factor) {
+	if (factor == 1) {
+	    return l;
+	} else if (factor < 1) {
+	    throw new IllegalArgumentException("Invalid factor");
+	}
+
 	List<T> ret = new ArrayList<T>(l.size() * factor);
 
 	for (int i = 0; i < factor; i++) {
 	    ret.addAll(l);
+	}
+
+	return ret;
+    }
+
+    /**
+     * Gets all permutations of a list
+     * 
+     * @param l
+     * @return
+     */
+    public static <T> List<List<T>> permutations(List<T> l) {
+	if (l.size() == 0) {
+	    List<List<T>> result = new ArrayList<List<T>>();
+	    result.add(new ArrayList<T>());
+	    return result;
+	}
+
+	T first = l.remove(0);
+	List<List<T>> ret = new ArrayList<List<T>>();
+	List<List<T>> perms = permutations(l);
+
+	for (List<T> smallerPerms : perms) {
+	    for (int index = 0; index <= smallerPerms.size(); index++) {
+		List<T> temp = new ArrayList<T>(smallerPerms);
+		temp.add(index, first);
+		ret.add(temp);
+	    }
 	}
 
 	return ret;
@@ -812,16 +811,26 @@ public class AbstractedPolicy {
 	}
 
 	AbstractedPolicy merged = new AbstractedPolicy();
+	merged.hashFactory = this.hashFactory;
 	merged.originalPolicies.addAll(this.originalPolicies);
+	State withRespectTo = otherPolicy.getPolicy().keySet().iterator()
+		.next().s.copy();
 
 	for (Entry<StateHashTuple, GroundedAction> e : this.abstractedPolicy
 		.entrySet()) {
-	    // Comparison is simply whether the given state corresponds to the
-	    // same action
-	    // TODO check to see if object names matter
-	    GroundedAction a = otherPolicy.abstractedPolicy.get(e.getKey());
-	    if (e.getValue().equals(a)) {
-		merged.abstractedPolicy.put(e.getKey(), e.getValue());
+	    List<State> possibleStates = generatePossibleStates(e.getKey().s,
+		    withRespectTo);
+	    // This is done in the event that while two abstractions will share
+	    // the GCG, they may have different object names (e.g. [p1, p2]
+	    // versus [p3, p2])
+	    // DiscreteStateHashFactory doesn't care about names, but this is in
+	    // here just as a safety measure for other hashing methods.
+	    for (State possibleState : possibleStates) {
+		GroundedAction ga = otherPolicy.abstractedPolicy
+			.get(this.hashFactory.hashState(possibleState));
+		if (e.getValue().equals(ga)) {
+		    merged.abstractedPolicy.put(e.getKey(), e.getValue());
+		}
 	    }
 	}
 
@@ -866,6 +875,68 @@ public class AbstractedPolicy {
 	}
 
 	return true;
+    }
+
+    /**
+     * Generates every possible arrangement of object classes in s1 with respect
+     * to those in s2. Used in checking for equality in the merge function.
+     * 
+     * @param s1
+     * @param s2
+     * @return
+     */
+    public static List<State> generatePossibleStates(State s1, State s2) {
+	List<State> combs = new ArrayList<State>();
+	boolean firstPass = true;
+
+	for (String obClass : s1.getObjectClassesPresent()) {
+	    List<ObjectInstance> oisOfClass = new ArrayList<ObjectInstance>();
+	    oisOfClass.addAll(s2.getObjectsOfTrueClass(obClass));
+	    List<List<ObjectInstance>> oisPerms = permutations(oisOfClass);
+	    combs = multiplyList(combs, oisPerms.size());
+
+	    if (s1.getObjectsOfTrueClass(obClass).size() != s2
+		    .getObjectsOfTrueClass(obClass).size()) {
+		throw new IllegalArgumentException(
+			"States are not on the same level of abstraction.");
+	    }
+
+	    int i = 0;
+	    for (List<ObjectInstance> oisPerm : oisPerms) {
+		if (firstPass) {
+		    // Initialize all of the values in the list of states
+		    State newS = s1.copy();
+
+		    int k = 0;
+		    for (ObjectInstance oi : newS
+			    .getObjectsOfTrueClass(obClass)) {
+			oi.setName(oisPerm.get(k).getName());
+			k++;
+		    }
+
+		    combs.add(newS);
+		} else {
+		    for (int j = 0; j < combs.size(); j++) {
+			State newS = combs.get((i * oisPerms.size()) + j); // s1.copy();
+
+			int k = 0;
+			for (ObjectInstance oi : newS
+				.getObjectsOfTrueClass(obClass)) {
+			    oi.setName(oisPerm.get(k).getName());
+			    k++;
+			}
+		    }
+		}
+
+		i++;
+	    }
+
+	    if (firstPass) {
+		firstPass = false;
+	    }
+	}
+
+	return combs;
     }
 
     /**
