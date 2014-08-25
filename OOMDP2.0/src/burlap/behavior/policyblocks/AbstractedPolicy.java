@@ -59,22 +59,22 @@ public class AbstractedPolicy {
 	    List<PolicyBlocksPolicy> ps) {
 	this();
 	this.hashFactory = hf;
-	// Generate the GCI of the state
-	// Generate every combination of GCI mappings for the original policy
-	// Score each generated combination of GCI mappings
+	// Generate the GCG of the state
+	// Generate every combination of GCG mappings for the original policy
+	// Score each generated combination of GCG mappings
 	State ipS = ip.policy.keySet().iterator().next().s;
 	List<State> psS = new ArrayList<State>();
 	for (PolicyBlocksPolicy p : ps) {
 	    psS.add(p.policy.keySet().iterator().next().s);
 	}
 	psS.add(ipS);
-	// If there exists no GCI between the states provided, the final
+	// If there exists no GCG between the states provided, the final
 	// abstracted policy will be empty (this doesn't cause a problem in
 	// merging)
-	Map<String, Integer> gci = greatestCommonIntersection(psS);
+	Map<String, Integer> gcg = greatestCommonGeneralization(psS);
 	psS.remove(ipS);
 
-	List<List<String>> oiCombs = generateAllCombinations(ipS, gci);
+	List<List<String>> oiCombs = generateAllCombinations(ipS, gcg);
 
 	List<Map<StateHashTuple, GroundedAction>> policyCandidates = generatePolicyCandidates(
 		hf, ip, oiCombs);
@@ -114,22 +114,25 @@ public class AbstractedPolicy {
     }
 
     /**
-     * Finds the greatest common intersection between all states
+     * Finds the greatest common generalization between all states
      * 
      * @param ss
      * @return a mapping from object class to occurrence
      */
-    public static Map<String, Integer> greatestCommonIntersection(List<State> ss) {
+    public static Map<String, Integer> greatestCommonGeneralization(
+	    List<State> ss) {
 	List<Map<String, Integer>> mappings = new ArrayList<Map<String, Integer>>(
 		ss.size());
 	Map<String, List<Attribute>> attributes = new HashMap<String, List<Attribute>>();
-	Map<String, Integer> gci = new HashMap<String, Integer>();
+	Map<String, Integer> gcg = new HashMap<String, Integer>();
 	int i = 0;
 
 	for (State s : ss) {
 	    mappings.add(new HashMap<String, Integer>());
+
 	    for (ObjectInstance oi : s.getAllObjects()) {
 		String className = oi.getTrueClassName();
+
 		if (!mappings.get(i).containsKey(className)) {
 		    mappings.get(i).put(className, 1);
 		    List<Attribute> atts = oi.getObjectClass().attributeList;
@@ -154,19 +157,19 @@ public class AbstractedPolicy {
 	}
 
 	Map<String, Integer> classCount = new HashMap<String, Integer>();
-	// Initialize the GCI
+	// Initialize the GCG
 	for (Entry<String, Integer> e : mappings.get(0).entrySet()) {
-	    gci.put(e.getKey(), e.getValue());
+	    gcg.put(e.getKey(), e.getValue());
 	    classCount.put(e.getKey(), 1);
 	}
 	mappings.remove(0);
 
-	// Fill up the GCI with the greatest intersection between all states
+	// Fill up the GCG with the greatest intersection between all states
 	for (Map<String, Integer> mapping : mappings) {
 	    for (Entry<String, Integer> e : mapping.entrySet()) {
-		if (gci.containsKey(e.getKey())) {
-		    if (gci.get(e.getKey()) > e.getValue()) {
-			gci.put(e.getKey(), e.getValue());
+		if (gcg.containsKey(e.getKey())) {
+		    if (gcg.get(e.getKey()) > e.getValue()) {
+			gcg.put(e.getKey(), e.getValue());
 		    }
 
 		    if (!classCount.containsKey(e.getKey())) {
@@ -179,30 +182,30 @@ public class AbstractedPolicy {
 	    }
 	}
 	for (Entry<String, Integer> e : classCount.entrySet()) {
-	    if (gci.containsKey(e.getKey()) && e.getValue() < ss.size()) {
+	    if (gcg.containsKey(e.getKey()) && e.getValue() < ss.size()) {
 		// If the object class does not exist for all states
-		gci.remove(e.getKey());
+		gcg.remove(e.getKey());
 	    }
 	}
 
-	return gci;
+	return gcg;
     }
 
     /**
      * Finds all combinations of object names in the provided state
      * 
      * @param s
-     * @param gci
+     * @param gcg
      * @return a list of all possible combinations of object names
      */
     public static List<List<String>> generateAllCombinations(State s,
-	    Map<String, Integer> gci) {
+	    Map<String, Integer> gcg) {
 	Map<String, List<List<String>>> combs = new HashMap<String, List<List<String>>>();
 
-	for (Entry<String, Integer> e : gci.entrySet()) {
+	for (Entry<String, Integer> e : gcg.entrySet()) {
 	    if (s.getFirstObjectOfClass(e.getKey()) == null) {
 		throw new IllegalArgumentException(
-			"State provided does not match the GCI.");
+			"State provided does not match the GCG.");
 	    }
 	    List<String> objNames = new ArrayList<String>();
 	    for (ObjectInstance oi : s.getObjectsOfTrueClass(e.getKey())) {
