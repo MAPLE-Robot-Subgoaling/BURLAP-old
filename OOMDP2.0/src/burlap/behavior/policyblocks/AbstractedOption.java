@@ -37,7 +37,7 @@ public class AbstractedOption extends Option {
 	} else if (actions.isEmpty()) {
 	    throw new RuntimeException("No actions provided.");
 	}
-	
+
 	this.policy = policy;
 	this.hf = hf;
 	super.name = "AO-" + name;
@@ -79,7 +79,7 @@ public class AbstractedOption extends Option {
 	    return 1.;
 	}
 
-	return 0.1; //rand.nextDouble();
+	return 1.;// rand.nextDouble();
     }
 
     @Override
@@ -255,6 +255,10 @@ public class AbstractedOption extends Option {
     }
 
     public void setActions(List<Action> actions) {
+	if (actions.isEmpty()) {
+	    throw new RuntimeException("No actions provided.");
+	}
+
 	this.actions = actions;
     }
 
