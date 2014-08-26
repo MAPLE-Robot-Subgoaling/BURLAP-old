@@ -208,7 +208,7 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
 	double epsilon = 0.1;
-	int episodes = 1000;
+	int episodes = 100;
 	long startTime = System.currentTimeMillis();
 	// Offset must always be one, or there will be value errors with
 	// ATTCARRY
@@ -216,8 +216,8 @@ public class TaxiWorldExperiment {
 	// as well
 	// If MAXPASS must be set higher, the domain must be regenerated
 
-	int[][][] passengers = new int[10][][];
-	for (int i = 0; i < 10; i++) {
+	int[][][] passengers = new int[20][][];
+	for (int i = 0; i < 20; i++) {
 	    int j = new Random().nextInt(max) + 1;
 	    TaxiWorldDomain.MAXPASS = j;
 	    new TaxiWorldDomain().generateDomain();
@@ -253,7 +253,7 @@ public class TaxiWorldExperiment {
 	}
 
 	long lTime = System.currentTimeMillis();
-	TaxiWorldDomain.MAXPASS = 4;
+	TaxiWorldDomain.MAXPASS = 1;
 	new TaxiWorldDomain().generateDomain();
 	int[][] targetPass = TaxiWorldDomain
 		.getRandomSpots(TaxiWorldDomain.MAXPASS);
