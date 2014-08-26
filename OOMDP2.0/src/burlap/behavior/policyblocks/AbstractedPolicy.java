@@ -90,7 +90,7 @@ public class AbstractedPolicy {
     }
 
     /**
-     * Used to preserve the object combinations from one abstration to another.
+     * Used to preserve the object combinations from one abstraction to another.
      * 
      * @param hf
      * @param ip
@@ -503,7 +503,7 @@ public class AbstractedPolicy {
      * @return performs the merge operation on all k-subsets of the list of
      *         policies
      */
-    public static List<Entry<AbstractedPolicy, Double>> unionMerge(
+    public static List<Entry<AbstractedPolicy, Double>> powerMerge(
 	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth) {
 	List<Entry<AbstractedPolicy, Double>> mergedPolicies = new ArrayList<Entry<AbstractedPolicy, Double>>();
 	for (List<PolicyBlocksPolicy> ps : getSubsets(policies, 2, depth)) {

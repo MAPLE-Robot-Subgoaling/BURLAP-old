@@ -198,7 +198,7 @@ public class TaxiWorldExperiment {
     }
 
     public static void main(String args[]) throws IOException {
-	String path = "C:/Users/Allison/Desktop/";
+	String path = "/home/nick/burlap-stuff";
 	TaxiWorldDomain.MAXPASS = 3;
 	int max = TaxiWorldDomain.MAXPASS;
 	new TaxiWorldDomain().generateDomain();
@@ -207,8 +207,8 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.CLASSAGENT,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
-	double epsilon = 0.1;
-	int episodes = 100;
+	double epsilon = 0.9;
+	int episodes = 1000;
 	long startTime = System.currentTimeMillis();
 	// Offset must always be one, or there will be value errors with
 	// ATTCARRY
@@ -232,7 +232,7 @@ public class TaxiWorldExperiment {
 	int depth = 3;
 	System.out.println("Starting union merge with depth " + depth + ".");
 	List<Entry<AbstractedPolicy, Double>> merged = AbstractedPolicy
-		.unionMerge(hf, toMerge, depth);
+		.powerMerge(hf, toMerge, depth);
 	System.out
 		.println("Finished union merge; took "
 			+ ((System.currentTimeMillis() - uTime) / 60000.0)
