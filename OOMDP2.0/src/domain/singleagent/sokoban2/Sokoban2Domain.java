@@ -119,21 +119,20 @@ public class Sokoban2Domain implements DomainGenerator {
 		parser = new Sokoban2Parser(domain);
 		analyzer = new EpisodeAnalysis();
 		
-		for(int i = 1; i <= 1; i++){
+		for(int i = 1; i <= 100; i++){
+			setAgent(s, 6, 6);
+			setBlock(s, 0, 2, 2, "basket", "red");
 			analyzer = new EpisodeAnalysis();
 
 			System.out.print("Episode " + i + ": ");
 			analyzer = Q.runLearningEpisodeFrom(s);
 			System.out.println("\tSteps: " + analyzer.numTimeSteps());
 			analyzer.writeToFile(String.format("output/e%03d", i), parser);
-
-			setAgent(s, 6, 6);
-			setBlock(s, 0, 2, 2, "basket", "red");
 		}
 		
 		
-		Visualizer v = Sokoban2Visualizer.getVisualizer("robotImages");
-		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, domain, parser, "output");
+		Visualizer v = Sokoban2Visualizer.getVisualizer("img");
+		new EpisodeSequenceVisualizer(v, domain, parser, "output");
 		
 		
 		/*exp.addKeyAction("w", ACTIONNORTH);

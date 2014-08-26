@@ -893,6 +893,7 @@ public class AbstractedPolicy {
 	    List<ObjectInstance> oisOfClass = new ArrayList<ObjectInstance>();
 	    oisOfClass.addAll(s2.getObjectsOfTrueClass(obClass));
 	    List<List<ObjectInstance>> oisPerms = permutations(oisOfClass);
+	    int origSize = combs.size();
 	    combs = multiplyList(combs, oisPerms.size());
 
 	    if (s1.getObjectsOfTrueClass(obClass).size() != s2
@@ -901,10 +902,9 @@ public class AbstractedPolicy {
 			"States are not on the same level of abstraction.");
 	    }
 
-	    int i = 0;
+	    int c = 0;
 	    for (List<ObjectInstance> oisPerm : oisPerms) {
 		if (firstPass) {
-		    // Initialize all of the values in the list of states
 		    State newS = s1.copy();
 
 		    int k = 0;
@@ -916,8 +916,9 @@ public class AbstractedPolicy {
 
 		    combs.add(newS);
 		} else {
-		    for (int j = 0; j < combs.size(); j++) {
-			State newS = combs.get((i * oisPerms.size()) + j); // s1.copy();
+		    for (int i = 0; i < origSize; i++) {
+			int index = (c * origSize) + i;
+			State newS = combs.get(index).copy();
 
 			int k = 0;
 			for (ObjectInstance oi : newS
@@ -925,10 +926,12 @@ public class AbstractedPolicy {
 			    oi.setName(oisPerm.get(k).getName());
 			    k++;
 			}
+			
+			combs.set(index, newS);
 		    }
 		}
 
-		i++;
+		c++;
 	    }
 
 	    if (firstPass) {

@@ -207,7 +207,7 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.CLASSAGENT,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
-	double epsilon = 0.7;
+	double epsilon = 0.1;
 	int episodes = 1000;
 	long startTime = System.currentTimeMillis();
 	// Offset must always be one, or there will be value errors with
@@ -216,8 +216,8 @@ public class TaxiWorldExperiment {
 	// as well
 	// If MAXPASS must be set higher, the domain must be regenerated
 
-	int[][][] passengers = new int[20][][];
-	for (int i = 0; i < 20; i++) {
+	int[][][] passengers = new int[10][][];
+	for (int i = 0; i < 10; i++) {
 	    int j = new Random().nextInt(max) + 1;
 	    TaxiWorldDomain.MAXPASS = j;
 	    new TaxiWorldDomain().generateDomain();
@@ -240,7 +240,7 @@ public class TaxiWorldExperiment {
 
 	System.out.println(merged.size() + " options generated.");
 	List<AbstractedOption> ops = new ArrayList<AbstractedOption>();
-	int numOptions = 3;
+	int numOptions = 1;
 	// TODO maybe add a heuristic for only letting in options that score
 	// above a threshold (e.g. >= 0.3)
 	for (int i = 0; i < numOptions; i++) {
@@ -253,7 +253,7 @@ public class TaxiWorldExperiment {
 	}
 
 	long lTime = System.currentTimeMillis();
-	TaxiWorldDomain.MAXPASS = 2;
+	TaxiWorldDomain.MAXPASS = 4;
 	new TaxiWorldDomain().generateDomain();
 	int[][] targetPass = TaxiWorldDomain
 		.getRandomSpots(TaxiWorldDomain.MAXPASS);
