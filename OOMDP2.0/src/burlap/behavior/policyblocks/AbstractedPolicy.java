@@ -90,9 +90,7 @@ public class AbstractedPolicy {
     }
 
     /**
-     * Used to preserve the object combinations from the first abstraction in
-     * abstractAll, to prevent one policy from coincidentally have different
-     * objects of the same type.
+     * Used to preserve the object combinations from one abstration to another.
      * 
      * @param hf
      * @param ip
