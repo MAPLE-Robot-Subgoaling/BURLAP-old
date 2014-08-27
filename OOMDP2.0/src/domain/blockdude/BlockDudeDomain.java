@@ -61,7 +61,8 @@ public class BlockDudeDomain implements DomainGenerator {
 	this.maxy = maxy;
     }
 
-    @Override
+    @SuppressWarnings("unused")
+	@Override
     public Domain generateDomain() {
 
 	Domain domain = new SADomain();
@@ -534,13 +535,93 @@ public class BlockDudeDomain implements DomainGenerator {
 	}
 
     }
+    
+    public static final char AGENT_LEFT_TOKEN = '<';
+    public static final char AGENT_RIGHT_TOKEN = '>';
+    public static final char GOAL_TOKEN = 'g';
+    public static final char BLOCK_TOKEN = 'b';
+    public static final char PLATFORM_TOKEN = 't';
+    
+    public static class DomainData {
+    	public BlockDudeDomain c;
+    	public Domain d;
+    	public State s;
+    	
+    	public DomainData(BlockDudeDomain c, Domain d, State s) {
+    		this.c = c;
+    		this.d = d;
+    		this.s = s;
+    	}
+    }
+    
+	public static DomainData createDomain(char[][] lvl) {
+    	if (lvl == null || lvl.length == 0) return null; // For now just return without breaking
+    	int maxx = lvl[0].length;
+    	int maxy = lvl.length;
+    	List<Integer> px = new ArrayList<Integer>();
+    	List<Integer> ph = new ArrayList<Integer>();
+    	List<Integer> bx = new ArrayList<Integer>();
+    	List<Integer> by = new ArrayList<Integer>();
+    	int goalx = 0, goaly = 0;
+    	int agentx = 0, agenty = 0;
+    	int agentdir = 0;
+    	int needed = 0;
+    	
+    	for (int i = 0; i < maxy; i++) {
+    		for (int j = 0; j < maxx; j++) {
+    			switch (lvl[i][j]) {
+    			case AGENT_LEFT_TOKEN:
+    				agentx = j;
+    				agenty = maxy - i;
+    				agentdir = 0;
+    				needed++;
+    				break;
+    			case AGENT_RIGHT_TOKEN:
+    				agentx = j;
+    				agenty = maxy - i;
+    				agentdir = 1;
+    				needed++;
+    				break;
+    			case GOAL_TOKEN:
+    				goalx = j;
+    				goaly = maxy - i;
+    				needed++;
+    				break;
+    			case BLOCK_TOKEN:
+    				bx.add(j);
+    				by.add(maxy - i);
+    				break;
+    			case PLATFORM_TOKEN:
+    				px.add(j);
+    				ph.add(maxy - i);
+    				break;
+    			}
+    		}
+    	}
+    	
+    	// Needs 1 agent and 1 goal
+    	if (needed != 2) return null; // For now just return and not do anything.
+    	
+    	BlockDudeDomain c = new BlockDudeDomain(maxx, maxy);
+    	Domain d = c.generateDomain();
+    	
+    	State s = BlockDudeDomain.getCleanState(d, px, ph, bx.size());
+    	BlockDudeDomain.setAgent(s, agentx, agenty, agentdir, 0);
+    	BlockDudeDomain.setExit(s, goalx, goaly);
+    	
+    	for (int i = 0; i < bx.size(); i++) {
+    		BlockDudeDomain.setBlock(s, i, bx.get(i), by.get(i));
+    	}
+    	
+    	return new DomainData(c, d, s);
+    }
 
     /**
      * @param args
      */
     public static void main(String[] args) {
 
-	int maxx = 18;
+	/*int maxx = 18;
 	int maxy = 18;
 
 	BlockDudeDomain constructor = new BlockDudeDomain(maxx, maxy);
@@ -594,7 +675,24 @@ public class BlockDudeDomain implements DomainGenerator {
 	BlockDudeDomain.setBlock(s, 2, 14, 3);
 	BlockDudeDomain.setBlock(s, 3, 16, 4);
 	BlockDudeDomain.setBlock(s, 4, 17, 4);
-	BlockDudeDomain.setBlock(s, 5, 17, 5);
+	BlockDudeDomain.setBlock(s, 5, 17, 5);*/
+    
+    char[][] lvl = 
+    {
+    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
+    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
+    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
+    		{'t', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
+    		{'t', 'g', ' ', ' ', 't', 'b', ' ', ' ', 't', ' ', 'b', ' ', 't', ' ', 'b', ' ', '>', ' ', ' ', 't'},
+    		{'t', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't'},
+    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
+    };
+    
+    DomainData dd = BlockDudeDomain.createDomain(lvl);
+    
+    Domain d = dd.d;
+    State s = dd.s;
+    BlockDudeDomain constructor = dd.c;
 
 	int expMode = 1;
 	if (args.length > 0) {
