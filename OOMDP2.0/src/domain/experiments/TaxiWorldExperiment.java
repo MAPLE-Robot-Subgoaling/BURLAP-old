@@ -198,8 +198,8 @@ public class TaxiWorldExperiment {
     }
 
     public static void main(String args[]) throws IOException {
-	String path = "/home/nick/burlap-stuff";
-	TaxiWorldDomain.MAXPASS = 3;
+	String path = "/home/nick/burlap-stuff/";
+	TaxiWorldDomain.MAXPASS = 4;
 	int max = TaxiWorldDomain.MAXPASS;
 	new TaxiWorldDomain().generateDomain();
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
@@ -207,7 +207,7 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.CLASSAGENT,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
-	double epsilon = 0.9;
+	double epsilon = 0.003;
 	int episodes = 1000;
 	long startTime = System.currentTimeMillis();
 	// Offset must always be one, or there will be value errors with
@@ -253,10 +253,16 @@ public class TaxiWorldExperiment {
 	}
 
 	long lTime = System.currentTimeMillis();
-	TaxiWorldDomain.MAXPASS = 1;
+	TaxiWorldDomain.MAXPASS = 3;
 	new TaxiWorldDomain().generateDomain();
-	int[][] targetPass = TaxiWorldDomain
-		.getRandomSpots(TaxiWorldDomain.MAXPASS);
+	int[][] targetPasses = new int[][] { {9, 2}, {11, 10}, {6, 7}, {1, 6}, {10, 5} };
+	int[][] targetPass = new int[TaxiWorldDomain.MAXPASS][2];
+	for (int i = 0; i < TaxiWorldDomain.MAXPASS; i++) {
+	    targetPass[i][0] = targetPasses[i][0];
+	    targetPass[i][1] = targetPasses[i][1];
+	    System.out.print("(" + targetPass[i][0] + ", " + targetPass[i][1] + ") ");
+	}
+	    System.out.println();
 
 	PolicyBlocksPolicy pmodalP = new PolicyBlocksPolicy(epsilon);
 	String name = "P-MODAL";
