@@ -1,6 +1,7 @@
 package domain.blockdude;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import burlap.oomdp.auxiliary.DomainGenerator;
@@ -554,14 +555,32 @@ public class BlockDudeDomain implements DomainGenerator {
     	}
     }
     
+    public static class Coordinates implements Comparable<Coordinates> {
+    	public int x;
+    	public int y;
+    	
+    	public Coordinates(int x, int y) {
+    		this.x = x;
+    		this.y = y;
+    	}
+
+		@Override
+		public int compareTo(Coordinates o) {
+			if (x - o.x != 0)
+				return x - o.x;
+			else
+				return y - o.y;
+		}
+    }
+    
 	public static DomainData createDomain(char[][] lvl) {
     	if (lvl == null || lvl.length == 0) return null; // For now just return without breaking
     	int maxx = lvl[0].length;
     	int maxy = lvl.length;
     	List<Integer> px = new ArrayList<Integer>();
     	List<Integer> ph = new ArrayList<Integer>();
-    	List<Integer> bx = new ArrayList<Integer>();
-    	List<Integer> by = new ArrayList<Integer>();
+    	List<Coordinates> pc = new ArrayList<Coordinates>();
+    	List<Coordinates> bc = new ArrayList<Coordinates>();
     	int goalx = 0, goaly = 0;
     	int agentx = 0, agenty = 0;
     	int agentdir = 0;
@@ -588,12 +607,10 @@ public class BlockDudeDomain implements DomainGenerator {
     				needed++;
     				break;
     			case BLOCK_TOKEN:
-    				bx.add(j);
-    				by.add(maxy - i);
+    				bc.add(new Coordinates(j, maxy - i));
     				break;
     			case PLATFORM_TOKEN:
-    				px.add(j);
-    				ph.add(maxy - i);
+    				pc.add(new Coordinates(j, maxy - i));
     				break;
     			}
     		}
@@ -602,15 +619,26 @@ public class BlockDudeDomain implements DomainGenerator {
     	// Needs 1 agent and 1 goal
     	if (needed != 2) return null; // For now just return and not do anything.
     	
+    	Collections.sort(bc);
+    	Collections.sort(pc);
+    	
+    	for (int i = 0; i < pc.size(); i++) {
+    		Coordinates c = pc.get(i);
+    		px.add(c.x);
+    		ph.add(c.y);
+    	}
+    	
     	BlockDudeDomain c = new BlockDudeDomain(maxx, maxy);
     	Domain d = c.generateDomain();
     	
-    	State s = BlockDudeDomain.getCleanState(d, px, ph, bx.size());
-    	BlockDudeDomain.setAgent(s, agentx, agenty, agentdir, 0);
-    	BlockDudeDomain.setExit(s, goalx, goaly);
+    	State s = getCleanState(d, px, ph, bc.size());
+    	setAgent(s, agentx, agenty, agentdir, 0);
+    	setExit(s, goalx, goaly);
     	
-    	for (int i = 0; i < bx.size(); i++) {
-    		BlockDudeDomain.setBlock(s, i, bx.get(i), by.get(i));
+    	for (int i = 0; i < bc.size(); i++) {
+    		int x = bc.get(i).x;
+    		int y = bc.get(i).y;
+    		setBlock(s, i, x, y);
     	}
     	
     	return new DomainData(c, d, s);
@@ -677,7 +705,13 @@ public class BlockDudeDomain implements DomainGenerator {
 	BlockDudeDomain.setBlock(s, 4, 17, 4);
 	BlockDudeDomain.setBlock(s, 5, 17, 5);*/
     
-    char[][] lvl = 
+    /* WARNING: Platforms only store height!
+     * This means that platforms always extend from the bottom of the level to the given height.
+     * This makes it impossible to implement certain levels where block dude can walk under platforms.
+     * Possibly fix this in the future although we don't have to for the levels given.
+     */
+    	
+    char[][] lvl1 = 
     {
     		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
     		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
@@ -688,7 +722,46 @@ public class BlockDudeDomain implements DomainGenerator {
     		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
     };
     
-    DomainData dd = BlockDudeDomain.createDomain(lvl);
+    char[][] lvl5 = 
+    {
+    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
+    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    		{' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', 'b', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    		{' ', 'g', ' ', ' ', ' ', 't', ' ', 't', 't', 't', 't', 't', '<', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    		{' ', 't', ' ', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', 't', ' ', ' ', ' ', ' ', ' ', 'b', ' '},
+    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', 'b', 'b', ' '},
+    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', ' '},
+    		{' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', 't', 't', ' '},
+    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
+    };
+    
+    /*
+    char[][] lvl5 = 
+    {
+    		{' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', 't', 't', 't', 't', 't', 't', 't', 't', 't', ' '},
+    		{' ', 't', 't', 't', 't', ' ', ' ', ' ', 't', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
+    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
+    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
+    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
+    		{'t', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
+    		{'t', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
+    		{'t', ' ', ' ', ' ', ' ', ' ', 't', 'b', 'b', 'b', 'b', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
+    		{'t', 'g', ' ', ' ', ' ', 't', 't', 't', 't', 't', 't', 't', '<', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
+    		{'t', 't', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', 't', 't', ' ', 't', ' ', ' ', ' ', ' ', ' ', 'b', 't'},
+    		{' ', 't', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', 't', 't', ' ', ' ', ' ', 'b', 'b', 't'},
+    		{' ', 't', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', 't', 't', ' ', ' ', 'b', 'b', 'b', 't'},
+    		{' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', 't', 't', 't', 't', 't', 't', 't', 't'},
+    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
+    };
+    
+     */
+    
+    DomainData dd = BlockDudeDomain.createDomain(lvl5);
     
     Domain d = dd.d;
     State s = dd.s;
@@ -715,6 +788,7 @@ public class BlockDudeDomain implements DomainGenerator {
 	    Visualizer v = BlockDudeVisualizer.getVisualizer(constructor.minx,
 		    constructor.maxx, constructor.miny, constructor.maxy);
 	    VisualExplorer exp = new VisualExplorer(d, v, s);
+	    exp.enableEpisodeRecording("'",	"]");
 
 	    // use w-s-a-d-x
 	    exp.addKeyAction("w", ACTIONUP);
