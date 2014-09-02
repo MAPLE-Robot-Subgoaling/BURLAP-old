@@ -89,9 +89,20 @@ public class Sokoban2Domain implements DomainGenerator {
 
     public static void main(String[] args) {
 	Sokoban2Domain dgen = new Sokoban2Domain();
-	dgen.includeDirectionAttribute(false);
+	dgen.includeDirectionAttribute(true);
 	Domain domain = dgen.generateDomain();
-	State s = Sokoban2Domain.getClassicState(domain);
+	State s = getCleanState(domain, 3, 2, 2);
+
+	setRoom(s, 0, 4, 0, 0, 8, "red");
+	setRoom(s, 1, 8, 0, 4, 4, "green");
+	setRoom(s, 2, 8, 4, 4, 8, "blue");
+
+	setDoor(s, 0, 4, 6, 4, 6);
+	setDoor(s, 1, 4, 2, 4, 2);
+
+	setAgent(s, 6, 6);
+	setBlock(s, 0, 3, 2, "backpack", "green");
+	setBlock(s, 1, 2, 2, "backpack", "blue");
 
 	DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
 	hashFactory.setAttributesForClass(CLASSAGENT,
@@ -104,8 +115,7 @@ public class Sokoban2Domain implements DomainGenerator {
 	Sokoban2Parser parser = new Sokoban2Parser(domain);
 	EpisodeAnalysis analyzer;
 
-	System.out.println(s);
-	for (int i = 1; i <= 100; i++) {
+	for (int i = 1; i <= 1; i++) {
 	    setAgent(s, 6, 6);
 	    setBlock(s, 0, 2, 2, "backpack", "blue");
 	    analyzer = new EpisodeAnalysis();
@@ -607,12 +617,16 @@ public class Sokoban2Domain implements DomainGenerator {
 
     public class PFGoal extends PropositionalFunction {
 	// TODO
+	private int steps = 0;
+	
 	public PFGoal(String name, Domain domain, String[] parameterClasses) {
 	    super(name, domain, parameterClasses);
 	}
 
 	@Override
 	public boolean isTrue(State st, String[] params) {
+	    steps++;
+	    
 	    List<ObjectInstance> blocks = st.getObjectsOfTrueClass(CLASSBLOCK);
 	    List<ObjectInstance> rooms = st.getObjectsOfTrueClass(CLASSROOM);
 
@@ -634,7 +648,8 @@ public class Sokoban2Domain implements DomainGenerator {
 			    continue;
 			}
 
-			return true;
+			//steps = 0;
+			// return true;
 		    }
 		}
 	    }
@@ -655,10 +670,15 @@ public class Sokoban2Domain implements DomainGenerator {
 		}
 
 		if (!flag) {
+		    if (steps > 100000) {
+			steps = 0;
+			return true;
+		    }
 		    return false;
 		}
 	    }
 
+	    steps = 0;
 	    return true;
 	}
     }

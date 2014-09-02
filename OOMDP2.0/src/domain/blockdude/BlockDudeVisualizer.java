@@ -104,7 +104,7 @@ public class BlockDudeVisualizer {
 	public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
 		float cWidth, float cHeight) {
 
-	    g2.setColor(Color.gray);
+	    g2.setColor(Color.orange);
 
 	    float domainXScale = (maxx + 1) - minx;
 	    float domainYScale = (maxy + 1) - miny;
@@ -144,7 +144,7 @@ public class BlockDudeVisualizer {
 	public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
 		float cWidth, float cHeight) {
 
-	    g2.setColor(Color.black);
+	    g2.setColor(Color.green);
 
 	    float domainXScale = (maxx + 1) - minx;
 	    float domainYScale = (maxy + 1) - miny;
@@ -184,7 +184,7 @@ public class BlockDudeVisualizer {
 	public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
 		float cWidth, float cHeight) {
 
-	    g2.setColor(Color.green);
+	    g2.setColor(Color.black);
 
 	    float domainXScale = (maxx + 1) - minx;
 	    float domainYScale = (maxy + 1) - miny;

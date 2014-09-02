@@ -198,8 +198,8 @@ public class TaxiWorldExperiment {
     }
 
     public static void main(String args[]) throws IOException {
-	String path = "/home/nick/burlap-stuff/";
-	TaxiWorldDomain.MAXPASS = 4;
+	String path = "C:/Users/Allison/Desktop/";
+	TaxiWorldDomain.MAXPASS = 3;
 	int max = TaxiWorldDomain.MAXPASS;
 	new TaxiWorldDomain().generateDomain();
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
@@ -207,7 +207,11 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.CLASSAGENT,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSAGENT).attributeList);
-	double epsilon = 0.003;
+	hf.setAttributesForClass(
+		TaxiWorldDomain.CLASSPASS,
+		TaxiWorldDomain.DOMAIN
+			.getObjectClass(TaxiWorldDomain.CLASSPASS).attributeList);
+	double epsilon = 0.9;
 	int episodes = 1000;
 	long startTime = System.currentTimeMillis();
 	// Offset must always be one, or there will be value errors with
@@ -216,8 +220,8 @@ public class TaxiWorldExperiment {
 	// as well
 	// If MAXPASS must be set higher, the domain must be regenerated
 
-	int[][][] passengers = new int[20][][];
-	for (int i = 0; i < 20; i++) {
+	int[][][] passengers = new int[13][][];
+	for (int i = 0; i < 13; i++) {
 	    int j = new Random().nextInt(max) + 1;
 	    TaxiWorldDomain.MAXPASS = j;
 	    new TaxiWorldDomain().generateDomain();
@@ -232,7 +236,7 @@ public class TaxiWorldExperiment {
 	int depth = 3;
 	System.out.println("Starting union merge with depth " + depth + ".");
 	List<Entry<AbstractedPolicy, Double>> merged = AbstractedPolicy
-		.powerMerge(hf, toMerge, depth);
+		.powerMerge(hf, toMerge, depth, Integer.MAX_VALUE);
 	System.out
 		.println("Finished union merge; took "
 			+ ((System.currentTimeMillis() - uTime) / 60000.0)
@@ -255,14 +259,16 @@ public class TaxiWorldExperiment {
 	long lTime = System.currentTimeMillis();
 	TaxiWorldDomain.MAXPASS = 3;
 	new TaxiWorldDomain().generateDomain();
-	int[][] targetPasses = new int[][] { {9, 2}, {11, 10}, {6, 7}, {1, 6}, {10, 5} };
+	int[][] targetPasses = new int[][] { { 9, 2 }, { 11, 10 }, { 6, 7 },
+		{ 1, 6 }, { 10, 5 } };
 	int[][] targetPass = new int[TaxiWorldDomain.MAXPASS][2];
 	for (int i = 0; i < TaxiWorldDomain.MAXPASS; i++) {
 	    targetPass[i][0] = targetPasses[i][0];
 	    targetPass[i][1] = targetPasses[i][1];
-	    System.out.print("(" + targetPass[i][0] + ", " + targetPass[i][1] + ") ");
+	    System.out.print("(" + targetPass[i][0] + ", " + targetPass[i][1]
+		    + ") ");
 	}
-	    System.out.println();
+	System.out.println();
 
 	PolicyBlocksPolicy pmodalP = new PolicyBlocksPolicy(epsilon);
 	String name = "P-MODAL";
@@ -292,7 +298,7 @@ public class TaxiWorldExperiment {
 	System.out.println("Starting policy " + name + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
 	System.out.println(runTaxiLearning(
-		randomP,	
+		randomP,
 		hf,
 		targetPass,
 		generateRandomOption(hf, TaxiWorldDomain.DOMAIN.getActions(),

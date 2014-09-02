@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
+import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.behavior.singleagent.QValue;
@@ -25,7 +26,7 @@ import burlap.oomdp.singleagent.GroundedAction;
 public class AbstractedPolicy {
     private Map<StateHashTuple, GroundedAction> abstractedPolicy;
     private Set<PolicyBlocksPolicy> originalPolicies;
-    private List<String> ocomb;
+    private Map<String, Integer> gcg;
     private StateHashFactory hashFactory;
 
     private AbstractedPolicy() {
@@ -38,6 +39,7 @@ public class AbstractedPolicy {
 	this.abstractedPolicy.putAll(p.abstractedPolicy);
 	this.originalPolicies.addAll(p.originalPolicies);
 	this.hashFactory = p.hashFactory;
+	this.gcg = p.gcg;
     }
 
     public AbstractedPolicy(StateHashFactory hf, PolicyBlocksPolicy ip,
@@ -73,42 +75,16 @@ public class AbstractedPolicy {
 	// abstracted policy will be empty (this doesn't cause a problem in
 	// merging)
 	Map<String, Integer> gcg = greatestCommonGeneralization(psS);
-	psS.remove(ipS);
+	this.gcg = gcg;
 
 	List<List<String>> oiCombs = generateAllCombinations(ipS, gcg);
 
-	List<Entry<Map<StateHashTuple, GroundedAction>, List<String>>> policyCandidates = generatePolicyCandidates(
-		hf, ip, oiCombs);
+	List<Entry<Map<StateHashTuple, GroundedAction>, Double>> policyCandidates = generatePolicyCandidates(
+		hf, ip, oiCombs, 1);
 
-	Entry<Map<StateHashTuple, GroundedAction>, List<String>> bestCandidate = getBestCandidate(
-		hf, ip, policyCandidates);
-	this.abstractedPolicy = bestCandidate.getKey();
-	this.ocomb = bestCandidate.getValue();
-
-	ps.add(ip);
-	this.originalPolicies.addAll(ps);
-    }
-
-    /**
-     * Used to preserve the object combinations from one abstraction to another.
-     * 
-     * @param hf
-     * @param ip
-     * @param ps
-     * @param ocomb
-     */
-    @SuppressWarnings("unused")
-    private AbstractedPolicy(StateHashFactory hf, PolicyBlocksPolicy ip,
-	    List<PolicyBlocksPolicy> ps, List<String> ocomb) {
-	this();
-	this.hashFactory = hf;
-
-	List<List<String>> oiCombs = singletonList(ocomb);
-	List<Entry<Map<StateHashTuple, GroundedAction>, List<String>>> policyCandidates = generatePolicyCandidates(
-		hf, ip, oiCombs);
-
-	this.abstractedPolicy = policyCandidates.get(0).getKey();
-	this.ocomb = policyCandidates.get(0).getValue();
+	if (policyCandidates.size() > 0) {
+	    this.abstractedPolicy = policyCandidates.get(0).getKey();
+	}
 
 	ps.add(ip);
 	this.originalPolicies.addAll(ps);
@@ -129,7 +105,6 @@ public class AbstractedPolicy {
 	}
 
 	List<AbstractedPolicy> abstractedPolicies = new ArrayList<AbstractedPolicy>();
-	List<List<String>> ocombs = new ArrayList<List<String>>();
 
 	for (int i = 0; i < policies.size(); i++) {
 	    List<PolicyBlocksPolicy> newPolicies = new ArrayList<PolicyBlocksPolicy>();
@@ -139,7 +114,6 @@ public class AbstractedPolicy {
 	    AbstractedPolicy absPolicy = new AbstractedPolicy(hf, temp,
 		    newPolicies);
 	    abstractedPolicies.add(absPolicy);
-	    ocombs.add(absPolicy.getComb());
 
 	    newPolicies.add(temp);
 	}
@@ -280,35 +254,6 @@ public class AbstractedPolicy {
     }
 
     /**
-     * Gets the best candidate of those provided
-     * 
-     * @param hf
-     * @param ip
-     * @param policyCandidates
-     * @return the highest scoring candidate
-     */
-    public static Entry<Map<StateHashTuple, GroundedAction>, List<String>> getBestCandidate(
-	    StateHashFactory hf,
-	    PolicyBlocksPolicy ip,
-	    List<Entry<Map<StateHashTuple, GroundedAction>, List<String>>> policyCandidates) {
-	Map<StateHashTuple, GroundedAction> absPolicy = new HashMap<StateHashTuple, GroundedAction>();
-	List<String> absComb = new ArrayList<String>();
-	double bestScore = 0.;
-
-	for (Entry<Map<StateHashTuple, GroundedAction>, List<String>> policyCandidate : policyCandidates) {
-	    double curScore = scoreAbstraction(hf, ip, policyCandidate.getKey());
-	    if (curScore > bestScore) {
-		absPolicy = policyCandidate.getKey();
-		absComb = policyCandidate.getValue();
-		bestScore = curScore;
-	    }
-	}
-
-	return new AbstractMap.SimpleEntry<Map<StateHashTuple, GroundedAction>, List<String>>(
-		absPolicy, absComb);
-    }
-
-    /**
      * Scores the abstraction relative to its source policies
      * 
      * @param hf
@@ -364,8 +309,10 @@ public class AbstractedPolicy {
      */
     public static State formState(State s, List<String> onames) {
 	State newS = new State();
-	for (String oname : onames) {
-	    newS.addObject(s.getObject(oname));
+	for (ObjectInstance oi : s.getAllObjects()) {
+	    if (onames.contains(oi.getName())) {
+		newS.addObject(oi);
+	    }
 	}
 
 	return newS;
@@ -379,10 +326,10 @@ public class AbstractedPolicy {
      * @param combinations
      * @return all policy candidates
      */
-    private static List<Entry<Map<StateHashTuple, GroundedAction>, List<String>>> generatePolicyCandidates(
+    private static List<Entry<Map<StateHashTuple, GroundedAction>, Double>> generatePolicyCandidates(
 	    StateHashFactory hf, PolicyBlocksPolicy ip,
-	    List<List<String>> combinations) {
-	List<Entry<Map<StateHashTuple, GroundedAction>, List<String>>> policyCandidates = new ArrayList<Entry<Map<StateHashTuple, GroundedAction>, List<String>>>();
+	    List<List<String>> combinations, int maxCand) {
+	List<Entry<Map<StateHashTuple, GroundedAction>, Double>> policyCandidates = new ArrayList<Entry<Map<StateHashTuple, GroundedAction>, Double>>();
 
 	for (List<String> combination : combinations) {
 	    Map<StateHashTuple, List<StateHashTuple>> stateOccurence = new HashMap<StateHashTuple, List<StateHashTuple>>();
@@ -404,9 +351,44 @@ public class AbstractedPolicy {
 			getAction(ip, e.getKey().s, e.getValue()));
 	    }
 
-	    policyCandidates
-		    .add(new AbstractMap.SimpleEntry<Map<StateHashTuple, GroundedAction>, List<String>>(
-			    newPolicy, combination));
+	    if (newPolicy.size() == 0) {
+		continue;
+	    }
+
+	    double score = scoreAbstraction(hf, ip, newPolicy);
+	    boolean toSort = false;
+
+	    if (policyCandidates.size() < maxCand) {
+		policyCandidates
+			.add(new AbstractMap.SimpleEntry<Map<StateHashTuple, GroundedAction>, Double>(
+				newPolicy, score));
+
+		toSort = true;
+	    } else {
+		if (policyCandidates.get(policyCandidates.size() - 1)
+			.getValue() < score) {
+		    policyCandidates
+			    .set(policyCandidates.size() - 1,
+				    new AbstractMap.SimpleEntry<Map<StateHashTuple, GroundedAction>, Double>(
+					    newPolicy, score));
+
+		    toSort = true;
+		}
+	    }
+
+	    if (toSort) {
+		Collections
+			.sort(policyCandidates,
+				new Comparator<Entry<Map<StateHashTuple, GroundedAction>, Double>>() {
+				    @Override
+				    public int compare(
+					    Entry<Map<StateHashTuple, GroundedAction>, Double> arg0,
+					    Entry<Map<StateHashTuple, GroundedAction>, Double> arg1) {
+					return -arg0.getValue().compareTo(
+						arg1.getValue());
+				    }
+				});
+	    }
 	}
 
 	return policyCandidates;
@@ -504,27 +486,49 @@ public class AbstractedPolicy {
      *         policies
      */
     public static List<Entry<AbstractedPolicy, Double>> powerMerge(
-	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth) {
+	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
+	    int maxPol) {
 	List<Entry<AbstractedPolicy, Double>> mergedPolicies = new ArrayList<Entry<AbstractedPolicy, Double>>();
+
 	for (List<PolicyBlocksPolicy> ps : getSubsets(policies, 2, depth)) {
+	    boolean toSort = false;
+
 	    AbstractedPolicy abs = merge(abstractAll(hf, ps));
 	    if (abs.size() == 0) {
 		continue;
 	    }
-	    double score = scoreMerge(hf, abs);
-	    mergedPolicies
-		    .add(new AbstractMap.SimpleEntry<AbstractedPolicy, Double>(
-			    abs, score));
-	}
-	Collections.sort(mergedPolicies,
-		new Comparator<Entry<AbstractedPolicy, Double>>() {
-		    @Override
-		    public int compare(Entry<AbstractedPolicy, Double> arg0,
-			    Entry<AbstractedPolicy, Double> arg1) {
-			return -arg0.getValue().compareTo(arg1.getValue());
-		    }
 
-		});
+	    double score = scoreMerge(hf, abs);
+
+	    if (mergedPolicies.size() < maxPol) {
+		mergedPolicies
+			.add(new AbstractMap.SimpleEntry<AbstractedPolicy, Double>(
+				abs, score));
+
+		toSort = true;
+	    } else if (score > mergedPolicies.get(mergedPolicies.size() - 1)
+		    .getValue()) {
+		mergedPolicies.set(mergedPolicies.size() - 1,
+			new AbstractMap.SimpleEntry<AbstractedPolicy, Double>(
+				abs, score));
+
+		toSort = true;
+	    }
+
+	    if (toSort) {
+		Collections.sort(mergedPolicies,
+			new Comparator<Entry<AbstractedPolicy, Double>>() {
+			    @Override
+			    public int compare(
+				    Entry<AbstractedPolicy, Double> arg0,
+				    Entry<AbstractedPolicy, Double> arg1) {
+				return -arg0.getValue().compareTo(
+					arg1.getValue());
+			    }
+
+			});
+	    }
+	}
 
 	return mergedPolicies;
     }
@@ -816,18 +820,28 @@ public class AbstractedPolicy {
 
 	for (Entry<StateHashTuple, GroundedAction> e : this.abstractedPolicy
 		.entrySet()) {
-	    List<State> possibleStates = generatePossibleStates(e.getKey().s,
-		    withRespectTo);
-	    // This is done in the event that while two abstractions will share
-	    // the GCG, they may have different object names (e.g. [p1, p2]
-	    // versus [p3, p2])
-	    // DiscreteStateHashFactory doesn't care about names, but this is in
-	    // here just as a safety measure for other hashing methods.
-	    for (State possibleState : possibleStates) {
-		GroundedAction ga = otherPolicy.abstractedPolicy
-			.get(this.hashFactory.hashState(possibleState));
+	    GroundedAction ga;
+	    if (this.hashFactory instanceof DiscreteStateHashFactory) {
+		ga = otherPolicy.abstractedPolicy.get(e.getKey());
 		if (e.getValue().equals(ga)) {
 		    merged.abstractedPolicy.put(e.getKey(), e.getValue());
+		}
+	    } else {
+		List<State> possibleStates = generatePossibleStates(
+			e.getKey().s, withRespectTo);
+		// This is done in the event that while two abstractions will
+		// share
+		// the GCG, they may have different object names (e.g. [p1, p2]
+		// versus [p3, p2])
+		// DiscreteStateHashFactory doesn't care about names, but this
+		// is in
+		// here just as a safety measure for other hashing methods.
+		for (State possibleState : possibleStates) {
+		    ga = otherPolicy.abstractedPolicy.get(this.hashFactory
+			    .hashState(possibleState));
+		    if (e.getValue().equals(ga)) {
+			merged.abstractedPolicy.put(e.getKey(), e.getValue());
+		    }
 		}
 	    }
 	}
@@ -924,7 +938,7 @@ public class AbstractedPolicy {
 			    oi.setName(oisPerm.get(k).getName());
 			    k++;
 			}
-			
+
 			combs.set(index, newS);
 		    }
 		}
@@ -949,13 +963,8 @@ public class AbstractedPolicy {
 	return abstractedPolicy;
     }
 
-    /**
-     * Gets the object combinations for this abstraction
-     * 
-     * @return ocomb
-     */
-    public List<String> getComb() {
-	return ocomb;
+    public Map<String, Integer> getGCG() {
+	return gcg;
     }
 
     /**
