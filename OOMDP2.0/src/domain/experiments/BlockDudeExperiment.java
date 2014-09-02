@@ -113,7 +113,7 @@ public class BlockDudeExperiment {
 
 	char[][] lvlb = {
 		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', '<', 'b', ' ' },
+		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', '>', 'b', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', 't', 'b', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', ' ', 't', ' ', 'b', ' ' },
 		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', ' ' },
@@ -129,7 +129,7 @@ public class BlockDudeExperiment {
 
 	char[][] lvld = {
 		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', '<', 'b', ' ' },
+		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', '>', 'b', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 'b', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', 't', ' ', 'b', ' ' },
 		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', ' ' },
@@ -137,21 +137,62 @@ public class BlockDudeExperiment {
 
 	char[][] lvle = {
 		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', '<', ' ', ' ' },
+		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', '>', ' ', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', 't', 'b', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', 't', ' ', 'b', ' ' },
 		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', ' ' },
 		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ' } };
 
-	char[][] lvlt = {
+	char[][] lvlf = {
+		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', 't' },
+		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', '>', 'b', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', 't', 'b', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', 'b', 't', ' ', 'b', ' ' },
+		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', ' ' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ' } };
+
+	char[][] lvlg = {
 		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', '<', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', 't', 'b', ' ' },
+		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', '>', 'b', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', 't', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
+		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ' } };
+
+	char[][] lvlh = {
+		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', ' ', 't', 't', 't', ' ', ' ', 'b', ' ', '>', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', 't', 'b', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', 't', ' ', 'b', ' ' },
 		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', ' ' },
 		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ' } };
 
-	double epsilon = 0.5;
+	char[][] lvli = {
+		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', ' ', 't', 't', 't', ' ', 'b', ' ', ' ', '>', 'b', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', ' ', ' ', 't', 'b', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', 't', ' ', 'b', ' ' },
+		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', ' ' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ' } };
+
+
+	char[][] lvlj = {
+		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', '<', 'b', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', 't', 'b', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', ' ', 't', ' ', 'b', ' ' },
+		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', ' ' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ' } };
+	
+	char[][] lvlt = {
+		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', 'b', '<', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', 't', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
+		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ' } };
+
+	double epsilon = 0.3;
 	int episodes = 2000;
 	int stateCap = 200;
 	long startTime = System.currentTimeMillis();
@@ -167,15 +208,15 @@ public class BlockDudeExperiment {
 	List<PolicyBlocksPolicy> toMerge = new ArrayList<PolicyBlocksPolicy>();
 
 	toMerge.add(runBlockDudeLearning(hf, lvla, episodes, epsilon, stateCap));
-	System.gc();
 	toMerge.add(runBlockDudeLearning(hf, lvlb, episodes, epsilon, stateCap));
-	System.gc();
 	toMerge.add(runBlockDudeLearning(hf, lvlc, episodes, epsilon, stateCap));
-	System.gc();
 	toMerge.add(runBlockDudeLearning(hf, lvld, episodes, epsilon, stateCap));
-	System.gc();
 	toMerge.add(runBlockDudeLearning(hf, lvle, episodes, epsilon, stateCap));
-	System.gc();
+	toMerge.add(runBlockDudeLearning(hf, lvlf, episodes, epsilon, stateCap));
+	// toMerge.add(runBlockDudeLearning(hf, lvlg, episodes, epsilon, stateCap));
+	// toMerge.add(runBlockDudeLearning(hf, lvlh, episodes, epsilon, stateCap));
+	// toMerge.add(runBlockDudeLearning(hf, lvli, episodes, epsilon, stateCap));
+	// toMerge.add(runBlockDudeLearning(hf, lvlj, episodes, epsilon, stateCap));
 
 	for (PolicyBlocksPolicy merge : toMerge) {
 	    removePlatforms(merge);
