@@ -220,8 +220,8 @@ public class TaxiWorldExperiment {
 	// as well
 	// If MAXPASS must be set higher, the domain must be regenerated
 
-	int[][][] passengers = new int[13][][];
-	for (int i = 0; i < 13; i++) {
+	int[][][] passengers = new int[10][][];
+	for (int i = 0; i < 10; i++) {
 	    int j = new Random().nextInt(max) + 1;
 	    TaxiWorldDomain.MAXPASS = j;
 	    new TaxiWorldDomain().generateDomain();
@@ -257,7 +257,7 @@ public class TaxiWorldExperiment {
 	}
 
 	long lTime = System.currentTimeMillis();
-	TaxiWorldDomain.MAXPASS = 3;
+	TaxiWorldDomain.MAXPASS = 1;
 	new TaxiWorldDomain().generateDomain();
 	int[][] targetPasses = new int[][] { { 9, 2 }, { 11, 10 }, { 6, 7 },
 		{ 1, 6 }, { 10, 5 } };

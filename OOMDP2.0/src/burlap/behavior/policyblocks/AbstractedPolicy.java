@@ -114,8 +114,6 @@ public class AbstractedPolicy {
 	    AbstractedPolicy absPolicy = new AbstractedPolicy(hf, temp,
 		    newPolicies);
 	    abstractedPolicies.add(absPolicy);
-
-	    newPolicies.add(temp);
 	}
 
 	return abstractedPolicies;
