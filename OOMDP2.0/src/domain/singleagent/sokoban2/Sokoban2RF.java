@@ -38,7 +38,7 @@ public class Sokoban2RF extends UniformCostRF {
 			continue;
 		    }
 
-		    // return badReward;
+		    return badReward;
 		}
 	    }
 	}
