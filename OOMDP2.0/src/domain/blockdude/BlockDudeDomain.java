@@ -804,8 +804,14 @@ public class BlockDudeDomain implements DomainGenerator {
     };
     
      */
-    
-    DomainData dd = BlockDudeDomain.createDomain(lvl5);
+    char[][] lvl = {
+		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', 'b' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', ' ', 't', ' ', ' ', ' ', 'b', ' ', 't', ' ', 't', 't', 't' },
+		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ' } };
+    DomainData dd = BlockDudeDomain.createDomain(lvl);
     
     Domain d = dd.d;
     State s = dd.s;
