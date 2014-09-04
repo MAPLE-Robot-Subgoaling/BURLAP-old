@@ -1,4 +1,5 @@
 ._*
+*.csv
 *.prefs
 *.class
 *.episode
