@@ -32,7 +32,6 @@ import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.common.UniformCostRF;
 import domain.blockdude.BlockDudeDomain;
 import domain.blockdude.BlockDudeDomain.DomainData;
-import domain.blockdude.BlockDudeStateParser;
 
 public class BlockDudeExperiment {
     public static PolicyBlocksPolicy runBlockDudeBaseLearning(
@@ -183,89 +182,67 @@ public class BlockDudeExperiment {
     }
 
     public static void main(String[] args) throws IOException {
-	String path = "C:/Users/Allison/Desktop/burlap/";
-
+	String path = "/home/nick/burlap-stuff/blockdude/";
+	for (int i = 1; i <= 20; i++) {
+	    String oldPath = path;
+	    path = path + i + "/";
+	    driver(path);
+	    path = oldPath;
+	}
+    }
+    
+    public static void driver(String path) throws IOException {
 	char[][] lvla = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', 'b' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', ' ', 't', ' ', ' ', ' ', 'b', ' ', 't', ' ', 't', 't', 't' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ' } };
+		{ 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', 'b', ' ', ' ', ' ', ' ', '<', ' ' },
+		{ ' ', ' ', 'b', 'b', ' ', ' ', ' ', 't', ' ' },
+		{ ' ', ' ', 't', 't', 't', ' ', 't', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
+
 	char[][] lvlb = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', 'b' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', 't', ' ', ' ', ' ', 'b', ' ', 't', ' ', 't', 't', 't' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ' } };
+		{ 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', ' ' },
+		{ ' ', ' ', 'b', 'b', ' ', ' ', ' ', 't', ' ' },
+		{ ' ', ' ', 't', 't', 't', ' ', 't', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
+
 	char[][] lvlc = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', 'b', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', 'b' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', 't', ' ', ' ', ' ', 'b', ' ', 't', ' ', 't', 't', 't' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ' } };
+		{ 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', 'b', ' ', ' ', ' ', '<', ' ' },
+		{ ' ', ' ', ' ', 'b', 'b', ' ', ' ', 't', ' ' },
+		{ ' ', ' ', 't', 't', 't', 'b', 't', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
+
 	char[][] lvld = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', 'b' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', 'b', 't', ' ', ' ', ' ', 'b', ' ', 't', ' ', 't', 't', 't' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ' } };
+		{ 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', '<', ' ' },
+		{ ' ', ' ', ' ', 'b', ' ', 'b', 'b', 't', ' ' },
+		{ ' ', ' ', 't', 't', 't', ' ', 't', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
+
 	char[][] lvle = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', 'b', 't', ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', 'b' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', 'b', 'b', 't', ' ', ' ', ' ', 'b', ' ', 't', ' ', 't', 't', 't' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ' } };
-	char[][] lvlf = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', 'b' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', ' ', 't', ' ', ' ', ' ', 'b', ' ', 't', ' ', 't', 't', 't' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ' } };
-	char[][] lvlg = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', 'b', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', 't', ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', 'b' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', 'b', 'b', 't', ' ', ' ', ' ', 'b', ' ', 't', ' ', 't', 't', 't' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ' } };
-	char[][] lvlh = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', 'b' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', 'b', 't', ' ', ' ', ' ', 'b', ' ', 't', ' ', 't', 't', 't' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ' } };
-	char[][] lvli = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', 'b', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', 'b' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', 't', ' ', ' ', ' ', 'b', ' ', 't', ' ', 't', 't', 't' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ' } };
-	char[][] lvlj = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', 'b', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', 'b' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', ' ', 't', ' ', ' ', ' ', 'b', ' ', 't', ' ', 't', 't', 't' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ' } };
+		{ 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', ' ' },
+		{ ' ', ' ', 'b', 'b', ' ', ' ', ' ', 't', ' ' },
+		{ ' ', ' ', 't', 't', 't', ' ', 't', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
+
 	char[][] lvlt = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', 'b' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', 't', ' ', ' ', ' ', 'b', ' ', 't', ' ', 't', 't', 't' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ' } };
-	
-	double epsilon = 0.4;
-	int episodes = 5000;
-	int stateCap = 300;
+		{ 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', 'b', ' ', ' ', ' ', 'b', '<', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ' },
+		{ ' ', ' ', 't', 't', 't', ' ', 't', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
+
+	double epsilon = 0.5;
+	int episodes = 10000;
+	int stateCap = 50;
 	long startTime = System.currentTimeMillis();
 	DomainData dd = BlockDudeDomain.createDomain(lvla);
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
@@ -288,16 +265,6 @@ public class BlockDudeExperiment {
 		stateCap, "D"));
 	toMerge.add(runBlockDudeBaseLearning(hf, lvle, episodes, epsilon,
 		stateCap, "E"));
-	// toMerge.add(runBlockDudeBaseLearning(hf, lvlf, episodes, epsilon,
-	// stateCap, "F"));
-	// toMerge.add(runBlockDudeBaseLearning(hf, lvlg, episodes, epsilon,
-	// stateCap, "G"));
-	// toMerge.add(runBlockDudeBaseLearning(hf, lvlh, episodes, epsilon,
-	// stateCap, "H"));
-	// toMerge.add(runBlockDudeBaseLearning(hf, lvli, episodes, epsilon,
-	// stateCap, "I"));
-	// toMerge.add(runBlockDudeBaseLearning(hf, lvlj, episodes, epsilon,
-	// stateCap, "J"));
 
 	for (PolicyBlocksPolicy merge : toMerge) {
 	    removePlatforms(merge);
@@ -306,7 +273,7 @@ public class BlockDudeExperiment {
 	long mTime = System.currentTimeMillis();
 	System.out.println("Starting merging.");
 	List<Entry<AbstractedPolicy, Double>> merged = AbstractedPolicy
-		.powerMerge(hf, toMerge, 3, 1);
+		.powerMerge(hf, toMerge, 5, 1);
 	System.out.println(merged.size());
 	System.out.println(merged.get(0).getKey().size() + ": "
 		+ merged.get(0).getValue());
@@ -315,24 +282,24 @@ public class BlockDudeExperiment {
 	System.out.println("Merging complete. Took "
 		+ (System.currentTimeMillis() - mTime) / 1000.0 + " seconds.");
 
-	PolicyBlocksPolicy qPolicy =
-	runBlockDudeOptionLearning(hf,
+	PolicyBlocksPolicy qPolicy = runBlockDudeOptionLearning(hf,
 		new ArrayList<Option>(), lvlt, episodes, epsilon, stateCap,
 		path + "Q-Learning");
-	
+
 	runBlockDudeOptionLearning(hf, o1, lvlt, episodes, epsilon, stateCap,
 		path + "P-MODAL");
-	
+
 	AbstractedOption oR = generateRandomOption(hf, dd.d, dd.d.getActions(),
 		qPolicy.policy.keySet());
 	runBlockDudeOptionLearning(hf, oR, lvlt, episodes, epsilon, stateCap,
 		path + "Random");
-	
-	AbstractedOption oC = new AbstractedOption(hf, qPolicy.policy, dd.d.getActions(), "Crafted");
+
+	AbstractedOption oC = new AbstractedOption(hf, qPolicy.policy,
+		dd.d.getActions(), "Crafted");
 	// craftOption(episodes, 0.0, stateCap);
 	System.out.println(oC.size());
 	runBlockDudeOptionLearning(hf, oC, lvlt, episodes, epsilon, stateCap,
-		path + "Hand Crafted");
+		path + "Handcrafted");
 
 	System.out.println("Experiment finished. Took "
 		+ (System.currentTimeMillis() - startTime) / 1000.0
