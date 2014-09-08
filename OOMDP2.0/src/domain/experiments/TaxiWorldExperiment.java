@@ -28,23 +28,23 @@ import burlap.oomdp.singleagent.GroundedAction;
 
 public class TaxiWorldExperiment {
     public static long[] runTaxiLearning(PolicyBlocksPolicy policy,
-	    StateHashFactory hf, int[][] passPos, int episodes, String filepath)
-	    throws IOException {
+	    StateHashFactory hf, int[][] passPos, int episodes,
+	    String filepath, boolean log) throws IOException {
 	return runTaxiLearning(policy, hf, passPos, new ArrayList<Option>(),
-		episodes, filepath);
+		episodes, filepath, log);
     }
 
     public static long[] runTaxiLearning(PolicyBlocksPolicy policy,
 	    StateHashFactory hf, int[][] passPos, Option o, int episodes,
-	    String filepath) throws IOException {
+	    String filepath, boolean log) throws IOException {
 	List<Option> os = new ArrayList<Option>();
 	os.add(o);
-	return runTaxiLearning(policy, hf, passPos, os, episodes, filepath);
+	return runTaxiLearning(policy, hf, passPos, os, episodes, filepath, log);
     }
 
     public static long[] runTaxiLearning(PolicyBlocksPolicy policy,
 	    StateHashFactory hf, int[][] passPos, List<? extends Option> os,
-	    int episodes, String filepath) throws IOException {
+	    int episodes, String filepath, boolean log) throws IOException {
 	TaxiWorldDomain.MAXPASS = passPos.length;
 	QLearning Q = new QLearning(TaxiWorldDomain.DOMAIN, TaxiWorldDomain.rf,
 		TaxiWorldDomain.tf, TaxiWorldDomain.DISCOUNTFACTOR, hf,
@@ -59,11 +59,19 @@ public class TaxiWorldExperiment {
 	    Q.addNonDomainReferencedAction(o);
 	}
 
-	File f = new File(filepath);
-	BufferedWriter b = new BufferedWriter(new FileWriter(f));
-	b.write("Episode,Steps\n");
+	BufferedWriter bS = null;
+	BufferedWriter bR = null;
+	if (log) {
+	    File fS = new File(filepath + "-Steps.csv");
+	    File fR = new File(filepath + "-Reward.csv");
+	    bS = new BufferedWriter(new FileWriter(fS));
+	    bR = new BufferedWriter(new FileWriter(fR));
+	    bS.write("Episode,Steps\n");
+	    bR.write("Episode,Reward\n");
+	}
 	long[] cumulArr = new long[episodes];
 	long cumul = 0;
+	long cumulR = 0;
 
 	for (int i = 0; i < episodes; i++) {
 	    TaxiWorldDomain.setAgent(s, 4, 5);
@@ -77,10 +85,17 @@ public class TaxiWorldExperiment {
 	    EpisodeAnalysis analyzer = new EpisodeAnalysis();
 	    analyzer = Q.runLearningEpisodeFrom(s);
 	    cumul += analyzer.numTimeSteps();
-	    b.write((i + 1) + "," + cumul + "\n");
+	    cumulR += ExperimentUtils.sum(analyzer.rewardSequence);
+	    if (log) {
+		bS.write((i + 1) + "," + cumul + "\n");
+		bR.write((i + 1) + "," + cumulR + "\n");
+	    }
 	    cumulArr[i] = cumul;
 	}
-	b.close();
+	if (log) {
+	    bS.close();
+	    bR.close();
+	}
 
 	return cumulArr;
     }
@@ -187,7 +202,7 @@ public class TaxiWorldExperiment {
 	    System.out.println("Starting policy " + c + ": MAXPASS="
 		    + TaxiWorldDomain.MAXPASS);
 	    System.out.println(runTaxiLearning(policy, hf, passengers,
-		    episodes, basepath + c + ".csv")[episodes - 1]);
+		    episodes, basepath + c, false)[episodes - 1]);
 	    System.out.println("Finished policy: " + c + " in "
 		    + (System.currentTimeMillis() - time) / 1000.0
 		    + " seconds.");
@@ -198,7 +213,55 @@ public class TaxiWorldExperiment {
     }
 
     public static void main(String args[]) throws IOException {
-	String path = "C:/Users/Allison/Desktop/";
+	String path = "/home/nick/burlap-stuff/taxi/1pass/";
+	for (int i = 1; i <= 1; i++) {
+	    String oldPath = path;
+	    path = path + i + "/";
+	    driver(path, 1);
+	    path = oldPath;
+	}
+
+	/*
+	System.gc();
+	path = "/home/nick/burlap-stuff/taxi/2pass/";
+	for (int i = 1; i <= 20; i++) {
+	    String oldPath = path;
+	    path = path + i + "/";
+	    driver(path, 2);
+	    path = oldPath;
+	}
+
+	System.gc();
+	path = "/home/nick/burlap-stuff/taxi/3pass/";
+	for (int i = 1; i <= 20; i++) {
+	    String oldPath = path;
+	    path = path + i + "/";
+	    driver(path, 3);
+	    path = oldPath;
+	}
+	
+	System.gc();
+	path = "/home/nick/burlap-stuff/taxi/4pass/";
+	for (int i = 1; i <= 20; i++) {
+	    String oldPath = path;
+	    path = path + i + "/";
+	    driver(path, 4);
+	    path = oldPath;
+	}
+	
+	System.gc();
+	path = "/home/nick/burlap-stuff/taxi/5pass/";
+	for (int i = 1; i <= 20; i++) {
+	    String oldPath = path;
+	    path = path + i + "/";
+	    driver(path, 5);
+	    path = oldPath;
+	}
+	*/
+    }
+
+    public static void driver(String path, int targetPassNum)
+	    throws IOException {
 	TaxiWorldDomain.MAXPASS = 3;
 	int max = TaxiWorldDomain.MAXPASS;
 	new TaxiWorldDomain().generateDomain();
@@ -257,7 +320,7 @@ public class TaxiWorldExperiment {
 	}
 	
 	long lTime = System.currentTimeMillis();
-	TaxiWorldDomain.MAXPASS = 1;
+	TaxiWorldDomain.MAXPASS = targetPassNum;
 	new TaxiWorldDomain().generateDomain();
 	int[][] targetPasses = new int[][] { { 9, 2 }, { 11, 10 }, { 6, 7 },
 		{ 1, 6 }, { 10, 5 } };
@@ -275,7 +338,7 @@ public class TaxiWorldExperiment {
 	System.out.println("Starting policy " + name + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
 	System.out.println(runTaxiLearning(pmodalP, hf, targetPass, ops,
-		episodes, path + name + ".csv")[episodes - 1]);
+		episodes, path + name, true)[episodes - 1]);
 	System.out.println("Finished policy: " + name + " in "
 		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
 	lTime = System.currentTimeMillis();
@@ -288,7 +351,7 @@ public class TaxiWorldExperiment {
 	System.out.println("Starting policy " + name + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
 	System.out.println(runTaxiLearning(qlearnP, hf, targetPass, episodes,
-		path + name + ".csv")[episodes - 1]);
+		path + name, true)[episodes - 1]);
 	System.out.println("Finished policy: " + name + " in "
 		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
 	lTime = System.currentTimeMillis();
@@ -297,13 +360,26 @@ public class TaxiWorldExperiment {
 	name = "Random Option";
 	System.out.println("Starting policy " + name + ": MAXPASS="
 		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(
-		randomP,
-		hf,
-		targetPass,
-		generateRandomOption(hf, TaxiWorldDomain.DOMAIN.getActions(),
-			qlearnP.policy.keySet()), episodes, path + name
-			+ ".csv")[episodes - 1]);
+	System.out
+		.println(runTaxiLearning(
+			randomP,
+			hf,
+			targetPass,
+			generateRandomOption(hf,
+				TaxiWorldDomain.DOMAIN.getActions(),
+				qlearnP.policy.keySet()), episodes, path + name, true)[episodes - 1]);
+	System.out.println("Finished policy: " + name + " in "
+		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
+	lTime = System.currentTimeMillis();
+
+	AbstractedOption qO = new AbstractedOption(hf, qlearnP.policy,
+		TaxiWorldDomain.DOMAIN.getActions(), 0., "crafted");
+	PolicyBlocksPolicy craftP = new PolicyBlocksPolicy(epsilon);
+	name = "Handcrafted";
+	System.out.println("Starting policy " + name + ": MAXPASS="
+		+ TaxiWorldDomain.MAXPASS);
+	System.out.println(runTaxiLearning(craftP, hf, targetPass, qO,
+		episodes, path + name, true)[episodes - 1]);
 	System.out.println("Finished policy: " + name + " in "
 		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
 	lTime = System.currentTimeMillis();
@@ -321,9 +397,8 @@ public class TaxiWorldExperiment {
 	System.out.println(runTaxiLearning(
 		topP,
 		hf,
-		targetPass,
-		top, episodes, path + name
-			+ ".csv")[episodes - 1]);
+		targetPass, top, episodes, path + name
+			+ ".csv", true)[episodes - 1]);
 	System.out.println("Finished policy: " + name + " in "
 		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
 	lTime = System.currentTimeMillis();
