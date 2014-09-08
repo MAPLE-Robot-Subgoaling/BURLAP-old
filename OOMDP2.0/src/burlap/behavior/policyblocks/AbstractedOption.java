@@ -26,15 +26,19 @@ public class AbstractedOption extends Option {
     private List<Action> actions;
     private Set<StateHashTuple> visited;
     private Random rand;
+    private double termProb;
     private boolean abstractionGenerated;
 
     public AbstractedOption(StateHashFactory hf,
 	    Map<StateHashTuple, GroundedAction> policy, List<Action> actions,
-	    String name) {
+	    double termProb, String name) {
 	if (policy.isEmpty()) {
 	    throw new RuntimeException("Empty policy provided.");
 	} else if (actions.isEmpty()) {
 	    throw new RuntimeException("No actions provided.");
+	}
+	if (termProb > 1 || termProb < 0) {
+	    throw new RuntimeException("Invalid termination probability");
 	}
 
 	this.policy = policy;
@@ -48,6 +52,7 @@ public class AbstractedOption extends Option {
 	this.abstractedPolicy = new HashMap<StateHashTuple, List<GroundedAction>>();
 	this.gcg = new HashMap<String, Integer>();
 	this.ocombs = new ArrayList<List<String>>();
+	this.termProb = termProb;
 	this.abstractionGenerated = false;
     }
 
@@ -58,7 +63,7 @@ public class AbstractedOption extends Option {
 
     @Override
     public boolean usesDeterministicTermination() {
-	return true;
+	return termProb == 0.;
     }
 
     @Override
@@ -76,7 +81,7 @@ public class AbstractedOption extends Option {
 	    return 1.;
 	}
 
-	return 0.;
+	return termProb;
     }
 
     @Override

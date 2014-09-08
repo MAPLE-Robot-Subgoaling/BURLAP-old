@@ -115,7 +115,7 @@ public class TaxiWorldExperiment {
 	System.out.println(count);
 	System.out.println(stateSpace.size());
 	return new AbstractedOption(hf, policy,
-		TaxiWorldDomain.DOMAIN.getActions(), "random");
+		TaxiWorldDomain.DOMAIN.getActions(), 0., "random");
     }
 
     /**
@@ -169,7 +169,7 @@ public class TaxiWorldExperiment {
 	}
 
 	return new AbstractedOption(hf, policy,
-		TaxiWorldDomain.DOMAIN.getActions(), "cyclic");
+		TaxiWorldDomain.DOMAIN.getActions(), 0., "cyclic");
     }
 
     public static List<PolicyBlocksPolicy> driveBaseLearning(
@@ -211,8 +211,8 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.CLASSPASS,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSPASS).attributeList);
-	double epsilon = 0.9;
-	int episodes = 1000;
+	double epsilon = 0.5;
+	int episodes = 5000;
 	long startTime = System.currentTimeMillis();
 	// Offset must always be one, or there will be value errors with
 	// ATTCARRY
@@ -253,9 +253,9 @@ public class TaxiWorldExperiment {
 		    + merged.get(i).getValue() + " added.");
 	    ops.add(new AbstractedOption(hf,
 		    merged.get(i).getKey().getPolicy(), TaxiWorldDomain.DOMAIN
-			    .getActions(), "" + i));
+			    .getActions(), 0., "" + i));
 	}
-
+	
 	long lTime = System.currentTimeMillis();
 	TaxiWorldDomain.MAXPASS = 1;
 	new TaxiWorldDomain().generateDomain();
@@ -303,6 +303,26 @@ public class TaxiWorldExperiment {
 		targetPass,
 		generateRandomOption(hf, TaxiWorldDomain.DOMAIN.getActions(),
 			qlearnP.policy.keySet()), episodes, path + name
+			+ ".csv")[episodes - 1]);
+	System.out.println("Finished policy: " + name + " in "
+		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
+	lTime = System.currentTimeMillis();
+	
+	List<AbstractedOption> top = new ArrayList<AbstractedOption>();
+	int k = 1;
+	for (PolicyBlocksPolicy merge: toMerge) {
+	    top.add(new AbstractedOption(hf, merge.policy, TaxiWorldDomain.DOMAIN.getActions(), 0.1, "TOP" + k));
+	    k++;
+	}
+	PolicyBlocksPolicy topP = new PolicyBlocksPolicy(epsilon);
+	name = "TOP";
+	System.out.println("Starting policy " + name + ": MAXPASS="
+		+ TaxiWorldDomain.MAXPASS);
+	System.out.println(runTaxiLearning(
+		topP,
+		hf,
+		targetPass,
+		top, episodes, path + name
 			+ ".csv")[episodes - 1]);
 	System.out.println("Finished policy: " + name + " in "
 		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");

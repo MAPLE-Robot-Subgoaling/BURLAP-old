@@ -155,7 +155,7 @@ public class BlockDudeExperiment {
 
 	System.out.println(count);
 	System.out.println(stateSpace.size());
-	return new AbstractedOption(hf, policy, d.getActions(), "random");
+	return new AbstractedOption(hf, policy, d.getActions(), 0., "random");
     }
 
     public static AbstractedOption craftOption(int episodes, double epsilon,
@@ -179,7 +179,7 @@ public class BlockDudeExperiment {
 	PolicyBlocksPolicy p = runBlockDudeBaseLearning(hf, lvl, episodes,
 		epsilon, stateCap, "craft");
 
-	return new AbstractedOption(hf, p.policy, dd.d.getActions(), "Crafted");
+	return new AbstractedOption(hf, p.policy, dd.d.getActions(), 0., "Crafted");
     }
 
     public static void main(String[] args) throws IOException {
@@ -311,7 +311,7 @@ public class BlockDudeExperiment {
 	System.out.println(merged.get(0).getKey().size() + ": "
 		+ merged.get(0).getValue());
 	AbstractedOption o1 = new AbstractedOption(hf, merged.get(0).getKey()
-		.getPolicy(), dd.d.getActions(), "one");
+		.getPolicy(), dd.d.getActions(), 0., "one");
 	System.out.println("Merging complete. Took "
 		+ (System.currentTimeMillis() - mTime) / 1000.0 + " seconds.");
 
@@ -328,7 +328,7 @@ public class BlockDudeExperiment {
 	runBlockDudeOptionLearning(hf, oR, lvlt, episodes, epsilon, stateCap,
 		path + "Random");
 	
-	AbstractedOption oC = new AbstractedOption(hf, qPolicy.policy, dd.d.getActions(), "Crafted");
+	AbstractedOption oC = new AbstractedOption(hf, qPolicy.policy, dd.d.getActions(), 0., "Crafted");
 	// craftOption(episodes, 0.0, stateCap);
 	System.out.println(oC.size());
 	runBlockDudeOptionLearning(hf, oC, lvlt, episodes, epsilon, stateCap,
