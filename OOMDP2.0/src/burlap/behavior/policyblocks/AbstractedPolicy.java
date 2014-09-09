@@ -32,6 +32,7 @@ public class AbstractedPolicy {
     private AbstractedPolicy() {
 	this.abstractedPolicy = new HashMap<StateHashTuple, GroundedAction>();
 	this.originalPolicies = new HashSet<PolicyBlocksPolicy>();
+	this.gcg = new HashMap<String, Integer>();
     }
 
     public AbstractedPolicy(AbstractedPolicy p) {
@@ -471,6 +472,103 @@ public class AbstractedPolicy {
 	}
 
 	return averageQ;
+    }
+
+    public static AbstractedPolicy naiveAbstraction(StateHashFactory hf,
+	    PolicyBlocksPolicy p, List<PolicyBlocksPolicy> origPs) {
+	AbstractedPolicy abs = new AbstractedPolicy();
+	abs.hashFactory = hf;
+	abs.originalPolicies.add(p);
+	abs.originalPolicies.addAll(origPs);
+	abs.abstractedPolicy = p.policy;
+	abs.gcg = greatestCommonGeneralization(singletonList(p.policy.keySet()
+		.iterator().next().s));
+
+	return abs;
+    }
+
+    public static List<AbstractedPolicy> naiveAbstractAll(StateHashFactory hf,
+	    List<PolicyBlocksPolicy> policies) {
+	if (policies.size() < 2) {
+	    throw new IllegalArgumentException("Need at least 2 policies.");
+	}
+
+	List<AbstractedPolicy> abstractedPolicies = new ArrayList<AbstractedPolicy>();
+
+	for (int i = 0; i < policies.size(); i++) {
+	    List<PolicyBlocksPolicy> newPolicies = new ArrayList<PolicyBlocksPolicy>();
+	    newPolicies.addAll(policies);
+
+	    PolicyBlocksPolicy temp = newPolicies.remove(i);
+	    AbstractedPolicy absPolicy = naiveAbstraction(hf, temp, newPolicies);
+	    abstractedPolicies.add(absPolicy);
+	}
+
+	return abstractedPolicies;
+    }
+
+    public static List<Entry<AbstractedPolicy, Double>> naivePowerMerge(
+	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
+	    int maxPol) {
+	List<Entry<AbstractedPolicy, Double>> mergedPolicies = new ArrayList<Entry<AbstractedPolicy, Double>>();
+
+	for (List<PolicyBlocksPolicy> ps : getSubsets(policies, 2, depth)) {
+	    boolean toSort = false;
+
+	    AbstractedPolicy abs = merge(naiveAbstractAll(hf, ps));
+	    if (abs.size() == 0) {
+		continue;
+	    }
+
+	    double score = naiveScoreMerge(hf, abs, policies);
+
+	    if (mergedPolicies.size() < maxPol) {
+		mergedPolicies
+			.add(new AbstractMap.SimpleEntry<AbstractedPolicy, Double>(
+				abs, score));
+
+		toSort = true;
+	    } else if (score > mergedPolicies.get(mergedPolicies.size() - 1)
+		    .getValue()) {
+		mergedPolicies.set(mergedPolicies.size() - 1,
+			new AbstractMap.SimpleEntry<AbstractedPolicy, Double>(
+				abs, score));
+
+		toSort = true;
+	    }
+
+	    if (toSort) {
+		Collections.sort(mergedPolicies,
+			new Comparator<Entry<AbstractedPolicy, Double>>() {
+			    @Override
+			    public int compare(
+				    Entry<AbstractedPolicy, Double> arg0,
+				    Entry<AbstractedPolicy, Double> arg1) {
+				return -arg0.getValue().compareTo(
+					arg1.getValue());
+			    }
+
+			});
+	    }
+	}
+
+	return mergedPolicies;
+    }
+
+    public static double naiveScoreMerge(StateHashFactory hf,
+	    AbstractedPolicy p, List<PolicyBlocksPolicy> policies) {
+	int freq = 0;
+
+	for (Entry<StateHashTuple, GroundedAction> e : p.abstractedPolicy
+		.entrySet()) {
+	    for (PolicyBlocksPolicy pbp : policies) {
+		if (e.getValue().equals(pbp.policy.get(e.getKey()))) {
+		    freq++;
+		}
+	    }
+	}
+
+	return p.size() * freq;
     }
 
     /**

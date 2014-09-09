@@ -4,7 +4,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -213,51 +216,13 @@ public class TaxiWorldExperiment {
     }
 
     public static void main(String args[]) throws IOException {
-	String path = "/home/nick/burlap-stuff/taxi/1pass/";
+	String path = "C:/Users/Allison/Desktop/";
 	for (int i = 1; i <= 1; i++) {
 	    String oldPath = path;
 	    path = path + i + "/";
 	    driver(path, 1);
 	    path = oldPath;
 	}
-
-	/*
-	System.gc();
-	path = "/home/nick/burlap-stuff/taxi/2pass/";
-	for (int i = 1; i <= 20; i++) {
-	    String oldPath = path;
-	    path = path + i + "/";
-	    driver(path, 2);
-	    path = oldPath;
-	}
-
-	System.gc();
-	path = "/home/nick/burlap-stuff/taxi/3pass/";
-	for (int i = 1; i <= 20; i++) {
-	    String oldPath = path;
-	    path = path + i + "/";
-	    driver(path, 3);
-	    path = oldPath;
-	}
-	
-	System.gc();
-	path = "/home/nick/burlap-stuff/taxi/4pass/";
-	for (int i = 1; i <= 20; i++) {
-	    String oldPath = path;
-	    path = path + i + "/";
-	    driver(path, 4);
-	    path = oldPath;
-	}
-	
-	System.gc();
-	path = "/home/nick/burlap-stuff/taxi/5pass/";
-	for (int i = 1; i <= 20; i++) {
-	    String oldPath = path;
-	    path = path + i + "/";
-	    driver(path, 5);
-	    path = oldPath;
-	}
-	*/
     }
 
     public static void driver(String path, int targetPassNum)
@@ -283,8 +248,8 @@ public class TaxiWorldExperiment {
 	// as well
 	// If MAXPASS must be set higher, the domain must be regenerated
 
-	int[][][] passengers = new int[10][][];
-	for (int i = 0; i < 10; i++) {
+	int[][][] passengers = new int[5][][];
+	for (int i = 0; i < 5; i++) {
 	    int j = new Random().nextInt(max) + 1;
 	    TaxiWorldDomain.MAXPASS = j;
 	    new TaxiWorldDomain().generateDomain();
@@ -300,16 +265,12 @@ public class TaxiWorldExperiment {
 	System.out.println("Starting union merge with depth " + depth + ".");
 	List<Entry<AbstractedPolicy, Double>> merged = AbstractedPolicy
 		.powerMerge(hf, toMerge, depth, Integer.MAX_VALUE);
-	System.out
-		.println("Finished union merge; took "
-			+ ((System.currentTimeMillis() - uTime) / 60000.0)
-			+ " minutes");
+	System.out.println("Finished union merge; took "
+		+ ((System.currentTimeMillis() - uTime) / 1000.0) + " seconds");
 
 	System.out.println(merged.size() + " options generated.");
 	List<AbstractedOption> ops = new ArrayList<AbstractedOption>();
 	int numOptions = 1;
-	// TODO maybe add a heuristic for only letting in options that score
-	// above a threshold (e.g. >= 0.3)
 	for (int i = 0; i < numOptions; i++) {
 	    System.out.println("Option number " + (i + 1) + " of size "
 		    + merged.get(i).getKey().size() + " and score "
@@ -318,93 +279,151 @@ public class TaxiWorldExperiment {
 		    merged.get(i).getKey().getPolicy(), TaxiWorldDomain.DOMAIN
 			    .getActions(), 0., "" + i));
 	}
-	
-	long lTime = System.currentTimeMillis();
-	TaxiWorldDomain.MAXPASS = targetPassNum;
-	new TaxiWorldDomain().generateDomain();
-	int[][] targetPasses = new int[][] { { 9, 2 }, { 11, 10 }, { 6, 7 },
-		{ 1, 6 }, { 10, 5 } };
-	int[][] targetPass = new int[TaxiWorldDomain.MAXPASS][2];
-	for (int i = 0; i < TaxiWorldDomain.MAXPASS; i++) {
-	    targetPass[i][0] = targetPasses[i][0];
-	    targetPass[i][1] = targetPasses[i][1];
-	    System.out.print("(" + targetPass[i][0] + ", " + targetPass[i][1]
-		    + ") ");
+
+	for (int w = 1; w <= targetPassNum; w++) {
+	    String oldPath = path;
+	    path = path + w + "pass/";
+	    System.out.println(path);
+
+	    long lTime = System.currentTimeMillis();
+	    TaxiWorldDomain.MAXPASS = w;
+	    new TaxiWorldDomain().generateDomain();
+	    int[][] targetPasses = new int[][] { { 9, 2 }, { 11, 10 },
+		    { 6, 7 }, { 1, 6 }, { 10, 5 } };
+	    int[][] targetPass = new int[TaxiWorldDomain.MAXPASS][2];
+	    for (int i = 0; i < TaxiWorldDomain.MAXPASS; i++) {
+		targetPass[i][0] = targetPasses[i][0];
+		targetPass[i][1] = targetPasses[i][1];
+		System.out.print("(" + targetPass[i][0] + ", "
+			+ targetPass[i][1] + ") ");
+	    }
+	    System.out.println();
+
+	    PolicyBlocksPolicy pmodalP = new PolicyBlocksPolicy(epsilon);
+	    String name = "P-MODAL";
+	    System.out.println("Starting policy " + name + ": MAXPASS="
+		    + TaxiWorldDomain.MAXPASS);
+	    System.out.println(runTaxiLearning(pmodalP, hf, targetPass, ops,
+		    episodes, path + name, true)[episodes - 1]);
+	    System.out.println("Finished policy: " + name + " in "
+		    + (System.currentTimeMillis() - lTime) / 1000.0
+		    + " seconds.");
+	    lTime = System.currentTimeMillis();
+
+	    PolicyBlocksPolicy qlearnP = new PolicyBlocksPolicy(epsilon);
+	    name = "Q-Learning";
+	    System.out.println("Starting policy " + name + ": MAXPASS="
+		    + TaxiWorldDomain.MAXPASS);
+	    System.out.println(runTaxiLearning(qlearnP, hf, targetPass,
+		    episodes, path + name, true)[episodes - 1]);
+	    System.out.println("Finished policy: " + name + " in "
+		    + (System.currentTimeMillis() - lTime) / 1000.0
+		    + " seconds.");
+	    lTime = System.currentTimeMillis();
+
+	    PolicyBlocksPolicy randomP = new PolicyBlocksPolicy(epsilon);
+	    name = "Random Option";
+	    System.out.println("Starting policy " + name + ": MAXPASS="
+		    + TaxiWorldDomain.MAXPASS);
+	    System.out.println(runTaxiLearning(
+		    randomP,
+		    hf,
+		    targetPass,
+		    generateRandomOption(hf,
+			    TaxiWorldDomain.DOMAIN.getActions(),
+			    qlearnP.policy.keySet()), episodes, path + name,
+		    true)[episodes - 1]);
+	    System.out.println("Finished policy: " + name + " in "
+		    + (System.currentTimeMillis() - lTime) / 1000.0
+		    + " seconds.");
+	    lTime = System.currentTimeMillis();
+
+	    AbstractedOption qO = new AbstractedOption(hf, qlearnP.policy,
+		    TaxiWorldDomain.DOMAIN.getActions(), 0., "crafted");
+	    PolicyBlocksPolicy craftP = new PolicyBlocksPolicy(epsilon);
+	    name = "Perfect Policy Option";
+	    System.out.println("Starting policy " + name + ": MAXPASS="
+		    + TaxiWorldDomain.MAXPASS);
+	    System.out.println(runTaxiLearning(craftP, hf, targetPass, qO,
+		    episodes, path + name, true)[episodes - 1]);
+	    System.out.println("Finished policy: " + name + " in "
+		    + (System.currentTimeMillis() - lTime) / 1000.0
+		    + " seconds.");
+	    lTime = System.currentTimeMillis();
+
+	    List<Entry<AbstractedOption, Double>> top = new ArrayList<Entry<AbstractedOption, Double>>();
+
+	    for (PolicyBlocksPolicy merge : toMerge) {
+		AbstractedOption tempO = new AbstractedOption(hf, merge.policy,
+			TaxiWorldDomain.DOMAIN.getActions(), 0.0, name);
+		System.out.println("Learning dummy TOPs");
+		PolicyBlocksPolicy tempP = new PolicyBlocksPolicy(epsilon);
+		top.add(new AbstractMap.SimpleEntry<AbstractedOption, Double>(
+			tempO,
+			(double) runTaxiLearning(tempP, hf, targetPass, tempO,
+				episodes, path + name + ".csv", false)[episodes - 1]));
+	    }
+	    Collections.sort(top,
+		    new Comparator<Entry<AbstractedOption, Double>>() {
+			@Override
+			public int compare(Entry<AbstractedOption, Double> o1,
+				Entry<AbstractedOption, Double> o2) {
+			    return -o1.getValue().compareTo(o2.getValue());
+			}
+		    });
+
+	    int avgTOPNum = toMerge.size() / 4;
+	    System.out.println("Number of tops: " + avgTOPNum);
+
+	    // TODO
+	    for (int t = 1; t <= avgTOPNum; t++) {
+		PolicyBlocksPolicy topP = new PolicyBlocksPolicy(epsilon);
+		name = "Transfer Option-" + t;
+		System.out.println("Starting policy " + name + ": MAXPASS="
+			+ TaxiWorldDomain.MAXPASS);
+		System.out
+			.println(runTaxiLearning(topP, hf, targetPass,
+				top.get(t - 1).getKey(), episodes, path + name,
+				true)[episodes - 1]);
+		System.out.println("Finished policy: " + name + " in "
+			+ (System.currentTimeMillis() - lTime) / 1000.0
+			+ " seconds.");
+		lTime = System.currentTimeMillis();
+	    }
+
+	    // Vanilla policyblocks
+	    List<Entry<AbstractedPolicy, Double>> vanillaAbs = AbstractedPolicy
+		    .naivePowerMerge(hf, toMerge, 3, Integer.MAX_VALUE);
+
+	    List<AbstractedOption> vanillaOs = new ArrayList<AbstractedOption>();
+	    if (vanillaAbs.size() != 0) {
+		AbstractedOption vanillaO = new AbstractedOption(hf, vanillaAbs
+			.get(0).getKey().getPolicy(),
+			TaxiWorldDomain.DOMAIN.getActions(), 0.0,
+			"PolicyBlocks");
+		System.out.println("Number of vanilla PB options "
+			+ vanillaAbs.size());
+		System.out.println("Created naive option with score "
+			+ vanillaAbs.get(0).getValue() + " and size "
+			+ vanillaAbs.get(0).getKey().size());
+		vanillaOs.add(vanillaO);
+	    }
+	    name = "PolicyBlocks";
+	    PolicyBlocksPolicy pbp = new PolicyBlocksPolicy(epsilon);
+	    System.out.println("Starting policy " + name + ": MAXPASS="
+		    + TaxiWorldDomain.MAXPASS);
+	    System.out.println(runTaxiLearning(pbp, hf, targetPass, vanillaOs,
+		    episodes, path + name, true)[episodes - 1]);
+	    System.out.println("Finished policy: " + name + " in "
+		    + (System.currentTimeMillis() - lTime) / 1000.0
+		    + " seconds.");
+	    lTime = System.currentTimeMillis();
+
+	    System.out.println("Experiment finished. Took a total of "
+		    + ((System.currentTimeMillis() - startTime) / 1000.0)
+		    + " seconds.");
+
+	    path = oldPath;
 	}
-	System.out.println();
-
-	PolicyBlocksPolicy pmodalP = new PolicyBlocksPolicy(epsilon);
-	String name = "P-MODAL";
-	System.out.println("Starting policy " + name + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(pmodalP, hf, targetPass, ops,
-		episodes, path + name, true)[episodes - 1]);
-	System.out.println("Finished policy: " + name + " in "
-		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
-	lTime = System.currentTimeMillis();
-	// TODO Experiments: Q-learning; Find what number of options is optimal;
-	// Find what number of source policies is optimal; SARSA(\); Random
-	// Option; Hand Crafted Option; Flat Policy Option
-
-	PolicyBlocksPolicy qlearnP = new PolicyBlocksPolicy(epsilon);
-	name = "Q-Learning";
-	System.out.println("Starting policy " + name + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(qlearnP, hf, targetPass, episodes,
-		path + name, true)[episodes - 1]);
-	System.out.println("Finished policy: " + name + " in "
-		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
-	lTime = System.currentTimeMillis();
-
-	PolicyBlocksPolicy randomP = new PolicyBlocksPolicy(epsilon);
-	name = "Random Option";
-	System.out.println("Starting policy " + name + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out
-		.println(runTaxiLearning(
-			randomP,
-			hf,
-			targetPass,
-			generateRandomOption(hf,
-				TaxiWorldDomain.DOMAIN.getActions(),
-				qlearnP.policy.keySet()), episodes, path + name, true)[episodes - 1]);
-	System.out.println("Finished policy: " + name + " in "
-		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
-	lTime = System.currentTimeMillis();
-
-	AbstractedOption qO = new AbstractedOption(hf, qlearnP.policy,
-		TaxiWorldDomain.DOMAIN.getActions(), 0., "crafted");
-	PolicyBlocksPolicy craftP = new PolicyBlocksPolicy(epsilon);
-	name = "Handcrafted";
-	System.out.println("Starting policy " + name + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(craftP, hf, targetPass, qO,
-		episodes, path + name, true)[episodes - 1]);
-	System.out.println("Finished policy: " + name + " in "
-		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
-	lTime = System.currentTimeMillis();
-	
-	List<AbstractedOption> top = new ArrayList<AbstractedOption>();
-	int k = 1;
-	for (PolicyBlocksPolicy merge: toMerge) {
-	    top.add(new AbstractedOption(hf, merge.policy, TaxiWorldDomain.DOMAIN.getActions(), 0.1, "TOP" + k));
-	    k++;
-	}
-	PolicyBlocksPolicy topP = new PolicyBlocksPolicy(epsilon);
-	name = "TOP";
-	System.out.println("Starting policy " + name + ": MAXPASS="
-		+ TaxiWorldDomain.MAXPASS);
-	System.out.println(runTaxiLearning(
-		topP,
-		hf,
-		targetPass, top, episodes, path + name
-			+ ".csv", true)[episodes - 1]);
-	System.out.println("Finished policy: " + name + " in "
-		+ (System.currentTimeMillis() - lTime) / 1000.0 + " seconds.");
-	lTime = System.currentTimeMillis();
-
-	System.out.println("Experiment finished. Took a total of "
-		+ ((System.currentTimeMillis() - startTime) / 60000.0)
-		+ " minutes.");
     }
 }

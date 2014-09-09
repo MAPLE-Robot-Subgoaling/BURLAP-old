@@ -73,7 +73,7 @@ public class BlockDudeExperiment {
     }
 
     public static PolicyBlocksPolicy runBlockDudeOptionLearning(
-	    StateHashFactory hf, List<Option> os, char[][] level, int episodes,
+	    StateHashFactory hf, List<? extends Option> os, char[][] level, int episodes,
 	    double epsilon, int maxsteps, String path) throws IOException {
 	final DomainData dd = BlockDudeDomain.createDomain(level);
 	QLearning Q = new QLearning(dd.d, new UniformCostRF(),
@@ -182,8 +182,8 @@ public class BlockDudeExperiment {
     }
 
     public static void main(String[] args) throws IOException {
-	String path = "/home/nick/burlap-stuff/blockdude/";
-	for (int i = 1; i <= 20; i++) {
+	String path = "C:/Users/Allison/Desktop/";
+	for (int i = 1; i <= 1; i++) {
 	    String oldPath = path;
 	    path = path + i + "/";
 	    driver(path);
@@ -299,6 +299,12 @@ public class BlockDudeExperiment {
 	System.out.println(oC.size());
 	runBlockDudeOptionLearning(hf, oC, lvlt, episodes, epsilon, stateCap,
 		path + "Handcrafted");
+	
+	List<AbstractedOption> topO = new ArrayList<AbstractedOption>();
+	for (PolicyBlocksPolicy merge: toMerge) {
+	    topO.add(new AbstractedOption(hf, merge.policy, dd.d.getActions(), 0.1, "top"));
+	}
+	runBlockDudeOptionLearning(hf, topO, lvlt, episodes, epsilon, stateCap, path + "TOP");
 
 	System.out.println("Experiment finished. Took "
 		+ (System.currentTimeMillis() - startTime) / 1000.0
