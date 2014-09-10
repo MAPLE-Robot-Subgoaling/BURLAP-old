@@ -237,31 +237,44 @@ public class SokobanExperiment {
 	long time = System.currentTimeMillis();
 	int depth = 3;
 	System.out.println("Starting P-MODAL merge with depth " + depth + ".");
-	Entry<AbstractedPolicy, Double> merged = AbstractedPolicy.powerMerge(
-		hf, toMerge, 3, 1).get(0);
+	List<Entry<AbstractedPolicy, Double>> mergeds = AbstractedPolicy
+		.powerMerge(hf, toMerge, 3, 1);
 	System.out.println("Finished P-MODAL merge with depth " + depth
 		+ " in " + (System.currentTimeMillis() - time) / 1000.0
 		+ " seconds");
-	System.out.println("Generated P-MODAL option of size "
-		+ merged.getKey().size() + " and score " + merged.getValue()
-		+ ".");
-	AbstractedOption pmo = new AbstractedOption(hf, merged.getKey()
-		.getPolicy(), domain.getActions(), 0.0, "P-MODAL");
+
+	AbstractedOption pmo = null;
+	try {
+	    Entry<AbstractedPolicy, Double> merged = mergeds.get(0);
+	    System.out.println("Generated P-MODAL option of size "
+		    + merged.getKey().size() + " and score "
+		    + merged.getValue() + ".");
+	    pmo = new AbstractedOption(hf, merged.getKey().getPolicy(),
+		    domain.getActions(), 0.0, "P-MODAL");
+	} catch (Exception e) {
+	    System.out.println("P-MODAL merge was null.");
+	}
 
 	time = System.currentTimeMillis();
 	System.out.println("Starting PolicyBlocks merge with depth " + depth
 		+ ".");
-	Entry<AbstractedPolicy, Double> pbmerged = AbstractedPolicy
-		.naivePowerMerge(hf, toMerge, 3, 1).get(0);
+	List<Entry<AbstractedPolicy, Double>> pbmergeds = AbstractedPolicy
+		.naivePowerMerge(hf, toMerge, 3, 1);
 	System.out.println("Finished PolicyBlocks merge with depth " + depth
 		+ " in " + (System.currentTimeMillis() - time) / 1000.0
 		+ " seconds");
-	System.out.println("Generated PolicyBlocks option of size "
-		+ pbmerged.getKey().size() + " and score "
-		+ pbmerged.getValue() + ".");
-	AbstractedOption pbo = new AbstractedOption(hf, pbmerged.getKey()
-		.getPolicy(), domain.getActions(), 0.0, "PolicyBlocks");
 
+	AbstractedOption pbo = null;
+	try {
+	    Entry<AbstractedPolicy, Double> pbmerged = pbmergeds.get(0);
+	    System.out.println("Generated PolicyBlocks option of size "
+		    + pbmerged.getKey().size() + " and score "
+		    + pbmerged.getValue() + ".");
+	    pbo = new AbstractedOption(hf, pbmerged.getKey().getPolicy(),
+		    domain.getActions(), 0.0, "PolicyBlocks");
+	} catch (Exception e) {
+	    System.out.println("PolicyBlocks merge was null.");
+	}
 	PolicyBlocksPolicy qp = runSokobanBaseLearning(hf, target, episodes,
 		epsilon, reward, "Q-Learning");
 	AbstractedOption ro = generateRandomOption(hf, domain,
@@ -273,11 +286,15 @@ public class SokobanExperiment {
 	runSokobanOptionLearning(hf, new ArrayList<Option>(), target, episodes,
 		epsilon, reward, path + "Q-Learning");
 	// P-MODAL
-	runSokobanOptionLearning(hf, pmo, target, episodes, epsilon, reward,
-		path + "P-MODAL");
+	runSokobanOptionLearning(hf,
+		pmo == null ? new ArrayList<AbstractedOption>()
+			: AbstractedPolicy.singletonList(pmo), target,
+		episodes, epsilon, reward, path + "P-MODAL");
 	// PolicyBlocks
-	runSokobanOptionLearning(hf, pbo, target, episodes, epsilon, reward,
-		path + "PolicyBlocks");
+	runSokobanOptionLearning(hf,
+		pbo == null ? new ArrayList<AbstractedOption>()
+			: AbstractedPolicy.singletonList(pbo), target,
+		episodes, epsilon, reward, path + "PolicyBlocks");
 	// Random
 	runSokobanOptionLearning(hf, ro, target, episodes, epsilon, reward,
 		path + "Random Option");
@@ -292,10 +309,10 @@ public class SokobanExperiment {
 	for (PolicyBlocksPolicy merge : toMerge) {
 	    AbstractedOption tempO = new AbstractedOption(hf, merge.policy,
 		    domain.getActions(), 0.0, "top-" + t);
-	    t++;
 	    tops.add(new AbstractMap.SimpleEntry<AbstractedOption, Long>(tempO,
 		    runSokobanTopLearning(hf, tempO, target, episodes, epsilon,
 			    reward, "TOP-" + t)));
+	    t++;
 	}
 	Collections.sort(tops, new Comparator<Entry<AbstractedOption, Long>>() {
 	    @Override
