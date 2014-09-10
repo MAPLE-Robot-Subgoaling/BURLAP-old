@@ -32,6 +32,7 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.SADomain;
 import burlap.oomdp.singleagent.common.SinglePFTF;
+import burlap.oomdp.singleagent.common.UniformCostRF;
 import burlap.oomdp.visualizer.Visualizer;
 
 public class Sokoban2Domain implements DomainGenerator {
@@ -90,9 +91,9 @@ public class Sokoban2Domain implements DomainGenerator {
 
 	public static void main(String[] args) {
 		Sokoban2Domain dgen = new Sokoban2Domain();
-		dgen.includeDirectionAttribute(true);
+		// dgen.includeDirectionAttribute(true);
 		Domain domain = dgen.generateDomain();
-		State s = getCleanState(domain, 3, 2, 2);
+		State s = getCleanState(domain, 3, 2, 1);
 
 		setRoom(s, 0, 4, 0, 0, 8, "red");
 		setRoom(s, 1, 8, 0, 4, 4, "green");
@@ -102,30 +103,27 @@ public class Sokoban2Domain implements DomainGenerator {
 		setDoor(s, 1, 4, 2, 4, 2);
 
 		setAgent(s, 6, 6);
-		setBlock(s, 0, 3, 2, "backpack", "green");
-		setBlock(s, 1, 2, 2, "backpack", "blue");
+		setBlock(s, 0, 2, 6, "backpack", "red");
 
 		DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
 		hashFactory.setAttributesForClass(CLASSAGENT,
 				domain.getObjectClass(CLASSAGENT).attributeList);
-		RewardFunction rf = new Sokoban2RF(-100);
+		RewardFunction rf = new Sokoban2RF(1000);
+		// RewardFunction rf = new UniformCostRF();
 		TerminalFunction tf = new SinglePFTF(domain.getPropFunction(PFATGOAL));
 		LearningAgent Q = new QLearning(domain, rf, tf,
-				Sokoban2Domain.DISCOUNTFACTOR, hashFactory, 0.2,
-				Sokoban2Domain.LEARNINGRATE, Integer.MAX_VALUE);
+				Sokoban2Domain.DISCOUNTFACTOR, hashFactory, 0.0,
+				Sokoban2Domain.LEARNINGRATE, 1000);
 		Sokoban2Parser parser = new Sokoban2Parser(domain);
 		EpisodeAnalysis analyzer;
-		int i = 1;
-		//for (int i = 1; i <= 1; i++) {
-			/*setAgent(s, 6, 6);
-			setBlock(s, 0, 2, 2, "backpack", "blue");*/
+		for (int i = 1; i <= 100; i++) {
 			analyzer = new EpisodeAnalysis();
 
 			System.out.print("Episode " + i + ": ");
 			analyzer = Q.runLearningEpisodeFrom(s);
 			System.out.println("\tSteps: " + analyzer.numTimeSteps());
 			analyzer.writeToFile(String.format("output/e%03d", i), parser);
-		//}
+		}
 
 		Visualizer v = Sokoban2Visualizer.getVisualizer("img");
 		new EpisodeSequenceVisualizer(v, domain, parser, "output");
@@ -657,6 +655,11 @@ public class Sokoban2Domain implements DomainGenerator {
 				int bx = blocks.get(i).getDiscValForAttribute(ATTX);
 				int by = blocks.get(i).getDiscValForAttribute(ATTY);
 				ObjectInstance room = roomContainingPoint(st, bx, by);
+				String bc = blocks.get(i).getStringValForAttribute(ATTCOLOR);
+				String rc = room.getStringValForAttribute(ATTCOLOR);
+				if (bc.equals(rc)) {
+				    continue;
+				}
 				
 				int wallsTouched = 0;
 				if (wallCheck(st, room, bx + 1, by))
@@ -673,23 +676,27 @@ public class Sokoban2Domain implements DomainGenerator {
 				}
 			}
 
+			int blockCount = 0;
 			for (int i = 0; i < blocks.size(); i++) {
 				int bx = blocks.get(i).getDiscValForAttribute(ATTX);
 				int by = blocks.get(i).getDiscValForAttribute(ATTY);
 				String bc = blocks.get(i).getStringValForAttribute(ATTCOLOR);
 
-				
 				for (int j = 0; j < rooms.size(); j++) {
 					String rc = rooms.get(j).getStringValForAttribute(ATTCOLOR);
 					ObjectInstance door = doorContainingPoint(st, bx, by);
-					if (!(regionContainsPoint(rooms.get(j), bx, by)
-							&& rc.equals(bc) && door == null)) {
-						return false;
+					if (regionContainsPoint(rooms.get(j), bx, by)
+							&& rc.equals(bc) && door == null) {
+					    blockCount++;
 					}
 				}
 			}
 
-			return true;
+			if (blockCount == blocks.size()) {
+			    return true;
+			}
+			
+			return false;
 		}
 	}
 

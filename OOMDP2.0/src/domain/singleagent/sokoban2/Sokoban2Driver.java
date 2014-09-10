@@ -26,8 +26,19 @@ public class Sokoban2Driver {
 	public static void main(String[] args) {
 		Sokoban2Domain dgen = new Sokoban2Domain();
 		Domain domain = dgen.generateDomain();
-		
-		State s = Sokoban2Domain.getClassicState(domain);
+		State s = Sokoban2Domain.getCleanState(domain, 3, 2, 3);
+
+		Sokoban2Domain.setRoom(s, 0, 4, 0, 0, 8, "red");
+		Sokoban2Domain.setRoom(s, 1, 8, 0, 4, 4, "green");
+		Sokoban2Domain.setRoom(s, 2, 8, 4, 4, 8, "blue");
+
+		Sokoban2Domain.setDoor(s, 0, 4, 6, 4, 6);
+		Sokoban2Domain.setDoor(s, 1, 4, 2, 4, 2);
+
+		Sokoban2Domain.setAgent(s, 6, 6);
+		Sokoban2Domain.setBlock(s, 0, 6, 5, "backpack", "red");
+		Sokoban2Domain.setBlock(s, 1, 2, 2, "backpack", "blue");
+		Sokoban2Domain.setBlock(s, 2, 2, 3, "backpack", "green");
 		
 		Visualizer v = Sokoban2Visualizer.getVisualizer();
 		VisualExplorer exp = new VisualExplorer(domain, v, s);

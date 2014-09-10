@@ -88,7 +88,8 @@ public class TaxiWorldExperiment {
 	    EpisodeAnalysis analyzer = new EpisodeAnalysis();
 	    analyzer = Q.runLearningEpisodeFrom(s);
 	    cumul += analyzer.numTimeSteps();
-	    cumulR += ExperimentUtils.sum(analyzer.rewardSequence);
+	    cumulR -= analyzer.numTimeSteps();
+	    // cumulR += ExperimentUtils.sum(analyzer.rewardSequence);
 	    if (log) {
 		bS.write((i + 1) + "," + cumul + "\n");
 		bR.write((i + 1) + "," + cumulR + "\n");
@@ -216,11 +217,11 @@ public class TaxiWorldExperiment {
     }
 
     public static void main(String args[]) throws IOException {
-	String path = "C:/Users/Allison/Desktop/";
-	for (int i = 1; i <= 1; i++) {
+	String path = "/home/hanicho1/taxi/";
+	for (int i = 1; i <= 20; i++) {
 	    String oldPath = path;
 	    path = path + i + "/";
-	    driver(path, 1);
+	    driver(path, 5);
 	    path = oldPath;
 	}
     }
@@ -248,8 +249,8 @@ public class TaxiWorldExperiment {
 	// as well
 	// If MAXPASS must be set higher, the domain must be regenerated
 
-	int[][][] passengers = new int[5][][];
-	for (int i = 0; i < 5; i++) {
+	int[][][] passengers = new int[10][][];
+	for (int i = 0; i < 10; i++) {
 	    int j = new Random().nextInt(max) + 1;
 	    TaxiWorldDomain.MAXPASS = j;
 	    new TaxiWorldDomain().generateDomain();
@@ -299,6 +300,7 @@ public class TaxiWorldExperiment {
 	    }
 	    System.out.println();
 
+	    lTime = System.currentTimeMillis();
 	    PolicyBlocksPolicy pmodalP = new PolicyBlocksPolicy(epsilon);
 	    String name = "P-MODAL";
 	    System.out.println("Starting policy " + name + ": MAXPASS="
@@ -376,6 +378,7 @@ public class TaxiWorldExperiment {
 	    System.out.println("Number of tops: " + avgTOPNum);
 
 	    // TODO
+	    lTime = System.currentTimeMillis();
 	    for (int t = 1; t <= avgTOPNum; t++) {
 		PolicyBlocksPolicy topP = new PolicyBlocksPolicy(epsilon);
 		name = "Transfer Option-" + t;
@@ -392,8 +395,13 @@ public class TaxiWorldExperiment {
 	    }
 
 	    // Vanilla policyblocks
+	    System.out.println("Starting PolicyBlocks merge.");
+	    long pTime = System.currentTimeMillis();
 	    List<Entry<AbstractedPolicy, Double>> vanillaAbs = AbstractedPolicy
 		    .naivePowerMerge(hf, toMerge, 3, Integer.MAX_VALUE);
+	    System.out.println("Finished PolicyBlocks merge in "
+		    + (System.currentTimeMillis() - pTime) / 1000.0
+		    + " seconds.");
 
 	    List<AbstractedOption> vanillaOs = new ArrayList<AbstractedOption>();
 	    if (vanillaAbs.size() != 0) {
@@ -408,6 +416,8 @@ public class TaxiWorldExperiment {
 			+ vanillaAbs.get(0).getKey().size());
 		vanillaOs.add(vanillaO);
 	    }
+
+	    lTime = System.currentTimeMillis();
 	    name = "PolicyBlocks";
 	    PolicyBlocksPolicy pbp = new PolicyBlocksPolicy(epsilon);
 	    System.out.println("Starting policy " + name + ": MAXPASS="
