@@ -200,9 +200,9 @@ public class SokobanExperiment {
     }
 
     public static void driver(String path) throws IOException {
-	int episodes = 5000;
+	int episodes = 10000;
 	double epsilon = 0.5;
-	double reward = 1000;
+	double reward = 100;
 
 	Sokoban2Domain dgen = new Sokoban2Domain();
 	Domain domain = dgen.generateDomain();
@@ -304,7 +304,7 @@ public class SokobanExperiment {
 	// TOP
 	List<Entry<AbstractedOption, Long>> tops = new ArrayList<Entry<AbstractedOption, Long>>(
 		toMerge.size());
-	int numTops = toMerge.size() / 4;
+	int numTops = toMerge.size() / 3;
 	int t = 1;
 	for (PolicyBlocksPolicy merge : toMerge) {
 	    AbstractedOption tempO = new AbstractedOption(hf, merge.policy,

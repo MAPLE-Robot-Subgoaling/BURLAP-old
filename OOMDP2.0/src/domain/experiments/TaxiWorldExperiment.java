@@ -374,7 +374,7 @@ public class TaxiWorldExperiment {
 			}
 		    });
 
-	    int avgTOPNum = toMerge.size() / 4;
+	    int avgTOPNum = toMerge.size() / 3;
 	    System.out.println("Number of tops: " + avgTOPNum);
 
 	    // TODO

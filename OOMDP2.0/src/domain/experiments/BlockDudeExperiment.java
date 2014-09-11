@@ -352,7 +352,7 @@ public class BlockDudeExperiment {
 
 	System.out.println(topOs.get(0).getValue() + " "
 		+ topOs.get(1).getValue());
-	int maxTopOs = toMerge.size() / 4;
+	int maxTopOs = toMerge.size() / 3;
 	for (int t = 1; t <= maxTopOs; t++) {
 	    runBlockDudeOptionLearning(hf, topOs.get(t - 1).getKey(), lvlt,
 		    episodes, epsilon, stateCap, path + "Transfer Option-" + t);
