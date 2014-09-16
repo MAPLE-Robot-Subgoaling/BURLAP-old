@@ -11,4 +11,5 @@
 bin/
 output/
 .metadata/
+.project/
 .settings/
