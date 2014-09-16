@@ -63,7 +63,7 @@ public class SokobanExperiment {
 	TerminalFunction tf = new SinglePFTF(
 		domain.getPropFunction(Sokoban2Domain.PFATGOAL));
 	QLearning Q = new QLearning(domain, rf, tf,
-		Sokoban2Domain.DISCOUNTFACTOR, hf, epsilon,
+		Sokoban2Domain.DISCOUNTFACTOR, hf, 0.2,
 		Sokoban2Domain.LEARNINGRATE, p, (int) goodReward);
 	p.setPlanner((OOMDPPlanner) Q);
 
@@ -103,7 +103,7 @@ public class SokobanExperiment {
 	TerminalFunction tf = new SinglePFTF(
 		domain.getPropFunction(Sokoban2Domain.PFATGOAL));
 	QLearning Q = new QLearning(domain, rf, tf,
-		Sokoban2Domain.DISCOUNTFACTOR, hf, epsilon,
+		Sokoban2Domain.DISCOUNTFACTOR, hf, 0.2,
 		Sokoban2Domain.LEARNINGRATE, p, (int) goodReward);
 	p.setPlanner((OOMDPPlanner) Q);
 	Q.addNonDomainReferencedAction(o);
@@ -162,7 +162,7 @@ public class SokobanExperiment {
 	TerminalFunction tf = new SinglePFTF(
 		domain.getPropFunction(Sokoban2Domain.PFATGOAL));
 	QLearning Q = new QLearning(domain, rf, tf,
-		Sokoban2Domain.DISCOUNTFACTOR, hf, epsilon,
+		Sokoban2Domain.DISCOUNTFACTOR, hf, 0.2,
 		Sokoban2Domain.LEARNINGRATE, p, (int) goodReward);
 	p.setPlanner((OOMDPPlanner) Q);
 
