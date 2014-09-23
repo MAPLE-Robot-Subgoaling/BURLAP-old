@@ -28,6 +28,7 @@ import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.singleagent.common.UniformCostRF;
 
 public class TaxiWorldExperiment {
     public static long[] runTaxiLearning(PolicyBlocksPolicy policy,
@@ -49,9 +50,9 @@ public class TaxiWorldExperiment {
 	    StateHashFactory hf, int[][] passPos, List<? extends Option> os,
 	    int episodes, String filepath, boolean log) throws IOException {
 	TaxiWorldDomain.MAXPASS = passPos.length;
-	QLearning Q = new QLearning(TaxiWorldDomain.DOMAIN, TaxiWorldDomain.rf,
+	QLearning Q = new QLearning(TaxiWorldDomain.DOMAIN, new UniformCostRF(),
 		TaxiWorldDomain.tf, TaxiWorldDomain.DISCOUNTFACTOR, hf,
-		TaxiWorldDomain.GAMMA, TaxiWorldDomain.LEARNINGRATE,
+		1, TaxiWorldDomain.LEARNINGRATE,
 		Integer.MAX_VALUE);
 
 	State s = TaxiWorldDomain.getCleanState();
@@ -216,8 +217,8 @@ public class TaxiWorldExperiment {
     }
 
     public static void main(String args[]) throws IOException {
-	String path = "/home/hanicho1/taxi/";
-	for (int i = 1; i <= 20; i++) {
+	String path = "/home/hanicho1/taxi05/";
+	for (int i = 1; i <= 5; i++) {
 	    String oldPath = path;
 	    path = path + i + "/";
 	    driver(path, 5);
@@ -227,7 +228,7 @@ public class TaxiWorldExperiment {
 
     public static void driver(String path, int targetPassNum)
 	    throws IOException {
-	TaxiWorldDomain.MAXPASS = 3;
+	TaxiWorldDomain.MAXPASS = 2;
 	int max = TaxiWorldDomain.MAXPASS;
 	new TaxiWorldDomain().generateDomain();
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
@@ -239,7 +240,7 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.CLASSPASS,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSPASS).attributeList);
-	double epsilon = 0.5;
+	double epsilon = 0.05;
 	int episodes = 5000;
 	long startTime = System.currentTimeMillis();
 	// Offset must always be one, or there will be value errors with
@@ -248,8 +249,8 @@ public class TaxiWorldExperiment {
 	// as well
 	// If MAXPASS must be set higher, the domain must be regenerated
 
-	int[][][] passengers = new int[10][][];
-	for (int i = 0; i < 10; i++) {
+	int[][][] passengers = new int[5][][];
+	for (int i = 0; i < 5; i++) {
 	    int j = new Random().nextInt(max) + 1;
 	    TaxiWorldDomain.MAXPASS = j;
 	    new TaxiWorldDomain().generateDomain();
@@ -259,12 +260,12 @@ public class TaxiWorldExperiment {
 	}
 
 	List<PolicyBlocksPolicy> toMerge = driveBaseLearning(hf, passengers,
-		episodes, epsilon, path);
+		episodes, 0.01, path);
 	long uTime = System.currentTimeMillis();
 	int depth = 3;
 	System.out.println("Starting union merge with depth " + depth + ".");
 	List<Entry<AbstractedPolicy, Double>> merged = AbstractedPolicy
-		.powerMerge(hf, toMerge, depth, Integer.MAX_VALUE);
+		.powerMerge(hf, toMerge, depth, Integer.MAX_VALUE, true);
 	System.out.println("Finished union merge; took "
 		+ ((System.currentTimeMillis() - uTime) / 1000.0) + " seconds");
 

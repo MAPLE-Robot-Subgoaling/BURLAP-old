@@ -2,6 +2,7 @@ package domain.taxiworld;
 
 import java.util.*;
 
+import burlap.behavior.policyblocks.PolicyBlocksPolicy;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
@@ -75,7 +76,7 @@ public class TaxiWorldDomain implements DomainGenerator {
      */
     public static void main(String[] args) {
 	// Set the total number of passengers to be used in the domain
-	MAXPASS = 3;
+	MAXPASS = 2;
 
 	TaxiWorldDomain txd = new TaxiWorldDomain();
 	Domain d = txd.generateDomain();
@@ -85,13 +86,12 @@ public class TaxiWorldDomain implements DomainGenerator {
 	hashFactory.setAttributesForClass(CLASSAGENT,
 		DOMAIN.getObjectClass(CLASSAGENT).attributeList);
 	QLearning Q = new QLearning(DOMAIN, rf, tf, DISCOUNTFACTOR,
-		hashFactory, GAMMA, LEARNINGRATE, Integer.MAX_VALUE);
+		hashFactory, 0.2, LEARNINGRATE, Integer.MAX_VALUE);
+	PolicyBlocksPolicy p = new PolicyBlocksPolicy(Q, 0.05);
+	Q.setLearningPolicy(p);
 
 	int[][] passPos = getRandomSpots(MAXPASS);
-	// int[][] passPos = {
-	// {1, 1}
-	// };
-	for (int i = 1; i <= 1000; i++) {
+	for (int i = 1; i <= 10000; i++) {
 	    setAgent(s, 4, 5);
 	    setGoal(4, 5);
 
@@ -104,6 +104,7 @@ public class TaxiWorldDomain implements DomainGenerator {
 	    analyzer = Q.runLearningEpisodeFrom(s);
 	    System.out.println("\tSteps: " + analyzer.numTimeSteps());
 	    analyzer.writeToFile(String.format("output/e%03d", i), parser);
+	    System.out.println(p.getEpsilon());
 	}
 
 	Visualizer v = TaxiWorldVisualizer.getVisualizer();

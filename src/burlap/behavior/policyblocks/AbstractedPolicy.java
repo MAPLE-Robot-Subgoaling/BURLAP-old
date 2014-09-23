@@ -551,6 +551,8 @@ public class AbstractedPolicy {
 			});
 	    }
 	}
+	
+	subtractAll(mergedPolicies);
 
 	return mergedPolicies;
     }
@@ -584,6 +586,22 @@ public class AbstractedPolicy {
     public static List<Entry<AbstractedPolicy, Double>> powerMerge(
 	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
 	    int maxPol) {
+	return powerMerge(hf, policies, depth, maxPol, false);
+    }
+    
+    /**
+     * Abstraction happens on a per-group basis of policies to merge.
+     * 
+     * @param policies
+     *            - the set of policies to be merged
+     * @param depth
+     *            - the upper bound of k
+     * @return performs the merge operation on all k-subsets of the list of
+     *         policies
+     */
+    public static List<Entry<AbstractedPolicy, Double>> powerMerge(
+	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
+	    int maxPol, boolean toSubtract) {
 	List<Entry<AbstractedPolicy, Double>> mergedPolicies = new ArrayList<Entry<AbstractedPolicy, Double>>();
 
 	for (List<PolicyBlocksPolicy> ps : getSubsets(policies, 2, depth)) {
@@ -626,7 +644,29 @@ public class AbstractedPolicy {
 	    }
 	}
 
+	if (toSubtract) {
+	    subtractAll(mergedPolicies);
+	}
+	
 	return mergedPolicies;
+    }
+    
+    /**
+     * Performs the subtract operation, as defined by PolicyBlocks
+     * Removes all states in the top scoring policy from the policies with lower scores and repeats
+     * @param mergedPolicies
+     */
+    public static void subtractAll(List<Entry<AbstractedPolicy, Double>> mergedPolicies) {
+	// Subtract operation
+	for (int i = 0; i < mergedPolicies.size(); i++) {
+	    Map<StateHashTuple, GroundedAction> toSubtract = mergedPolicies.get(i).getKey().getPolicy();
+	    
+	    for (StateHashTuple sh : toSubtract.keySet()) {
+		for (int j = i + 1; j < mergedPolicies.size(); j++) {
+		    mergedPolicies.get(j).getKey().getPolicy().remove(sh);
+		}
+	    }
+	}
     }
 
     /**
