@@ -586,7 +586,7 @@ public class AbstractedPolicy {
     public static List<Entry<AbstractedPolicy, Double>> powerMerge(
 	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
 	    int maxPol) {
-	return powerMerge(hf, policies, depth, maxPol, false);
+	return powerMerge(hf, policies, depth, maxPol, true);
     }
     
     /**
