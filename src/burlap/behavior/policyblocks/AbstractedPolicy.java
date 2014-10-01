@@ -664,6 +664,10 @@ public class AbstractedPolicy {
 	    for (StateHashTuple sh : toSubtract.keySet()) {
 		for (int j = i + 1; j < mergedPolicies.size(); j++) {
 		    mergedPolicies.get(j).getKey().getPolicy().remove(sh);
+		    
+		    if (mergedPolicies.get(j).getKey().size() == 0) {
+			mergedPolicies.remove(j);
+		    }
 		}
 	    }
 	}
