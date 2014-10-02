@@ -1,8 +1,7 @@
 package burlap.behavior.policyblocks;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.Policy.ActionProb;
@@ -17,7 +16,7 @@ import burlap.oomdp.singleagent.GroundedAction;
  */
 public class CyclicPolicyOption extends Option {
     private Policy policy;
-    private Set<State> visited;
+    private List<State> visited;
     private double termProb;
 
     public CyclicPolicyOption(Policy policy, double termProb, String name) {
@@ -27,8 +26,8 @@ public class CyclicPolicyOption extends Option {
 
 	super.name = "CPO-" + name;
 	this.policy = policy;
-	// Tree set to prevent states from hashing (hashing states doesn't work without StateHashTuple)
-	this.visited = new TreeSet<State>();
+	// Using a list to avoid hashing states
+	this.visited = new ArrayList<State>();
 	this.termProb = termProb;
     }
 
@@ -64,6 +63,9 @@ public class CyclicPolicyOption extends Option {
 
     @Override
     public GroundedAction oneStepActionSelection(State incoming, String[] params) {
+	if (!visited.contains(incoming)) {
+	    visited.add(incoming);
+	}
 	return (GroundedAction) policy.getAction(incoming);
     }
 
