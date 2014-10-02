@@ -15,15 +15,17 @@ import java.util.Set;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
+import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.QValue;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.learning.tdmethods.QLearningStateNode;
+import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
-public class AbstractedPolicy {
+public class AbstractedPolicy extends Policy {
     private Map<StateHashTuple, GroundedAction> abstractedPolicy;
     private Set<PolicyBlocksPolicy> originalPolicies;
     private Map<String, Integer> gcg;
@@ -1147,5 +1149,25 @@ public class AbstractedPolicy {
 	}
 
 	return builder.toString();
+    }
+
+    @Override
+    public AbstractGroundedAction getAction(State s) {
+	return abstractedPolicy.get(hashFactory.hashState(s));
+    }
+
+    @Override
+    public List<ActionProb> getActionDistributionForState(State s) {
+	throw new UnsupportedOperationException("This policy doesn't know support action distributions.");
+    }
+
+    @Override
+    public boolean isStochastic() {
+	return false;
+    }
+
+    @Override
+    public boolean isDefinedFor(State s) {
+	return getAction(s) != null;
     }
 }
