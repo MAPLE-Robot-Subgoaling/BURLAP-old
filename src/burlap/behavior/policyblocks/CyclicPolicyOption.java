@@ -63,9 +63,9 @@ public class CyclicPolicyOption extends Option {
 
     @Override
     public GroundedAction oneStepActionSelection(State incoming, String[] params) {
-	if (!visited.contains(incoming)) {
-	    visited.add(incoming);
-	}
+    	// Doesn't need to check for redundancy because of the bookkeeping already happening
+    	// If the visited list already contains the state at this point, it's a bug.
+	visited.add(incoming);
 	return (GroundedAction) policy.getAction(incoming);
     }
 
