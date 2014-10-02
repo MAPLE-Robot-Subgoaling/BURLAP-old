@@ -44,8 +44,6 @@ public class AbstractedOption extends Option {
 	this.policy = policy;
 	this.hf = hf;
 	super.name = "AO-" + name;
-	this.parameterClasses = new String[0];
-	this.parameterOrderGroup = new String[0];
 	this.visited = new HashSet<StateHashTuple>();
 	this.rand = new Random();
 	this.actions = actions;
