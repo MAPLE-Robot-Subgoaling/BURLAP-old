@@ -1158,7 +1158,7 @@ public class AbstractedPolicy extends Policy {
 
     @Override
     public List<ActionProb> getActionDistributionForState(State s) {
-	throw new UnsupportedOperationException("This policy doesn't know support action distributions.");
+	throw new UnsupportedOperationException("This policy doesn't support action distributions.");
     }
 
     @Override
