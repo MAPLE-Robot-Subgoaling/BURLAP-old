@@ -12,7 +12,7 @@ import burlap.oomdp.singleagent.GroundedAction;
 /**
  * This class is used in P-MODAL for applying options without grounding
  * This differs from PolicyDefinedSubgoalOption in that it has stochastic termination
- * and has bookkeeping to prevent the option for having a looping trajectory
+ * and has bookkeeping to prevent the option from having a cyclic trajectory
  */
 public class CyclicPolicyOption extends Option {
     private Policy policy;
