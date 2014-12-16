@@ -723,10 +723,10 @@ public class AbstractedPolicy extends Policy {
 			
 			if (c0 == c1) {
 			    continue;
+			} else {
+				// Reverse order to allow the most counted object classes to be first
+				return c1.compareTo(c0);
 			}
-			
-			// Reverse order to allow the most counted object classes to be first
-			return c1.compareTo(c0);
 		    }
 		    
 		    return 0;
