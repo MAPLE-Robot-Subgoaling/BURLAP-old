@@ -265,7 +265,7 @@ public class TaxiWorldExperiment {
 	int depth = 3;
 	System.out.println("Starting union merge with depth " + depth + ".");
 	List<Entry<AbstractedPolicy, Double>> merged = AbstractedPolicy
-		.powerMerge(hf, toMerge, depth, Integer.MAX_VALUE, true);
+		.powerMerge(hf, toMerge, depth, Integer.MAX_VALUE);
 	System.out.println("Finished union merge; took "
 		+ ((System.currentTimeMillis() - uTime) / 1000.0) + " seconds");
 

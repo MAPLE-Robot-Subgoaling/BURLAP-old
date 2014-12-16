@@ -12,6 +12,8 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
@@ -588,7 +590,7 @@ public class AbstractedPolicy extends Policy {
     public static List<Entry<AbstractedPolicy, Double>> powerMerge(
 	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
 	    int maxPol) {
-	return powerMerge(hf, policies, depth, maxPol, true);
+	return powerMerge(hf, policies, depth, maxPol, true, false);
     }
     
     /**
@@ -603,13 +605,19 @@ public class AbstractedPolicy extends Policy {
      */
     public static List<Entry<AbstractedPolicy, Double>> powerMerge(
 	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
-	    int maxPol, boolean toSubtract) {
+	    int maxPol, boolean toSubtract, boolean greedyMerge) {
 	List<Entry<AbstractedPolicy, Double>> mergedPolicies = new ArrayList<Entry<AbstractedPolicy, Double>>();
 
 	for (List<PolicyBlocksPolicy> ps : getSubsets(policies, 2, depth)) {
 	    boolean toSort = false;
-
-	    AbstractedPolicy abs = merge(abstractAll(hf, ps));
+	    AbstractedPolicy abs;
+	    
+	    if (greedyMerge) {
+		abs = greedyMerge(hf, ps);
+	    } else {
+		abs = merge(abstractAll(hf, ps));
+	    }
+	    
 	    if (abs.size() == 0) {
 		continue;
 	    }
@@ -675,6 +683,130 @@ public class AbstractedPolicy extends Policy {
 	}
     }
 
+    /**
+     * Performs greedy step-wise merging on the provided source policies
+     * @param hf - state hashing function
+     * @param ops - source policies
+     * @return the merged policy
+     */
+    public static AbstractedPolicy greedyMerge(StateHashFactory hf,
+	    List<PolicyBlocksPolicy> ops) {
+	if (true)
+	    throw new NotImplementedException();
+	
+	List<PolicyBlocksPolicy> ps = ops;
+	List<State> ss = new ArrayList<State>();
+	for (int i = 0; i < ps.size(); i++) {
+	    // Sample a state from each source policy
+	    ss.add(ps.get(i).policy.keySet().iterator().next().s);
+	}
+	Map<String, Integer> gcg = greatestCommonGeneralization(ss);
+	List<String> temp = new ArrayList<String>(gcg.keySet());
+	// Randomly order the gcg for now
+	Collections.shuffle(temp);
+	final List<String> ordering = temp;
+	// ps <- [(3O, 2X), (2O, 3X), (3O, 3X)]
+	// gcg <- {'O': 2, 'X': 2}
+	// ordering <- ['O', 'X']
+	
+	// Sort source policies according the the gcg's ordering
+	Collections.sort(ps, new Comparator<PolicyBlocksPolicy>() {
+		@Override
+		public int compare(PolicyBlocksPolicy arg0,
+			PolicyBlocksPolicy arg1) {
+		    State s0 = arg0.policy.keySet().iterator().next().s;
+		    State s1 = arg1.policy.keySet().iterator().next().s;
+		    
+		    for (int i = 0; i < ordering.size(); i++) {
+			Integer c0 = s0.getObjectsOfTrueClass(ordering.get(i)).size();
+			Integer c1 = s1.getObjectsOfTrueClass(ordering.get(i)).size();
+			
+			if (c0 == c1) {
+			    continue;
+			}
+			
+			// Reverse order to allow the most counted object classes to be first
+			return c1.compareTo(c0);
+		    }
+		    
+		    return 0;
+		}
+	});
+	
+	// ps <- [(3O, 3X), (3O, 2X), (2O, 3X)]
+	AbstractedPolicy finalAbs = null;
+	for (int i = 0; i < ps.size()-1; i++) {
+	    // Through every policy
+	    AbstractedPolicy abs0 = null;
+	    AbstractedPolicy abs1 = null;
+	    
+	    State s0 = ps.get(i).policy.keySet().iterator().next().s;
+    	    State s1 = ps.get(i+1).policy.keySet().iterator().next().s;
+    	    List<List<ObjectInstance>> o0 = s0.getAllObjectsByTrueClass();
+    	    List<List<ObjectInstance>> o1 = s1.getAllObjectsByTrueClass();
+    	    Map<String, Integer> m0 = new HashMap<String, Integer>();
+    	    Map<String, Integer> m1 = new HashMap<String, Integer>();
+    	    for (List<ObjectInstance> l: o0) {
+    		m0.put(l.get(0).getObjectClass().name, l.size());
+    	    }
+    	    for (List<ObjectInstance> l: o1) {
+    		m1.put(l.get(0).getObjectClass().name, l.size());
+    	    }
+    	    
+	    while (true) {
+    		boolean flag = true;
+    		Set<String> objSet = new HashSet<String>();
+    		objSet.addAll(m0.keySet());
+    		objSet.addAll(m1.keySet());
+    		
+    		for (String obj : objSet) {
+    		    if (m0.get(obj) > m1.get(obj)) {
+    			PolicyBlocksPolicy tempP = new PolicyBlocksPolicy((QLearning) ps.get(i).qplanner, ps.get(i).getEpsilon());
+    			tempP.policy = new HashMap<StateHashTuple, GroundedAction>();
+    			Entry<StateHashTuple, GroundedAction> tempE = ps.get(i).policy.entrySet().iterator().next();
+    			// Hopefully this works in place (?) TODO
+    			tempE.getKey().s.removeObject(tempE.getKey().s.getFirstObjectOfClass(obj));
+    			tempP.policy.put(tempE.getKey(), tempE.getValue());
+    			
+    			abs0 = new AbstractedPolicy(hf, ps.get(i), singletonList(tempP));
+    			flag = false;
+    			break;
+    		    } else if (m1.get(obj) > m0.get(obj)) {
+    			PolicyBlocksPolicy tempP = new PolicyBlocksPolicy((QLearning) ps.get(i+1).qplanner, ps.get(i+1).getEpsilon());
+    			tempP.policy = new HashMap<StateHashTuple, GroundedAction>();
+    			Entry<StateHashTuple, GroundedAction> tempE = ps.get(i+1).policy.entrySet().iterator().next();
+    			// Hopefully this works in place (?) TODO
+    			tempE.getKey().s.removeObject(tempE.getKey().s.getFirstObjectOfClass(obj));
+    			tempP.policy.put(tempE.getKey(), tempE.getValue());
+    			
+    			abs1 = new AbstractedPolicy(hf, ps.get(i+1), singletonList(tempP));
+    			flag = false;
+    			break;
+    		    }
+    		}
+    		
+    		if (flag) {
+    		    if (abs0 == null) {
+    			abs0 = naiveAbstractAll(hf, singletonList(ps.get(i))).get(0);
+    		    }
+    		    if (abs1 == null) {
+    			abs1 = naiveAbstractAll(hf, singletonList(ps.get(i+1))).get(0);
+    		    }
+    		    if (finalAbs == null) {
+    			finalAbs = abs0;
+    		    }
+    		    
+    		    break;
+    		}
+	    }
+	    
+	    // Now merge the first two items in ps
+	    finalAbs = finalAbs.mergeWith(abs1);
+	}
+	
+	return finalAbs;
+    }
+    
     /**
      * Merges the provided policies
      * 
