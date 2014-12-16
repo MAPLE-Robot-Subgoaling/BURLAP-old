@@ -12,8 +12,6 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
@@ -319,6 +317,35 @@ public class AbstractedPolicy extends Policy {
 	}
 
 	return newS;
+    }
+    
+    /**
+     * Samples a state from the policy provided
+     * @param p
+     * @return a seemingly random state
+     */
+    public static State sampleState(PolicyBlocksPolicy p) {
+	return p.policy.keySet().iterator().next().s;
+    }
+    
+    /**
+     * Samples a state from the policy provided
+     * @param p
+     * @return a seemingly random state
+     */
+    public static State sampleState(AbstractedPolicy p) {
+	return p.getPolicy().keySet().iterator().next().s;
+    }
+    
+    public static Map<String, Integer> getObjectCounts(State s) {
+	Map<String, Integer> cs = new HashMap<String, Integer>();
+	List<List<ObjectInstance>> os = s.getAllObjectsByTrueClass();
+	
+	for (List<ObjectInstance> o: os) {
+	    cs.put(o.get(0).getObjectClass().name, o.size());
+	}
+	
+	return cs;
     }
 
     /**
@@ -691,20 +718,17 @@ public class AbstractedPolicy extends Policy {
      */
     public static AbstractedPolicy greedyMerge(StateHashFactory hf,
 	    List<PolicyBlocksPolicy> ops) {
-	if (true)
-	    throw new NotImplementedException();
-	
 	List<PolicyBlocksPolicy> ps = ops;
 	List<State> ss = new ArrayList<State>();
 	for (int i = 0; i < ps.size(); i++) {
 	    // Sample a state from each source policy
-	    ss.add(ps.get(i).policy.keySet().iterator().next().s);
+	    ss.add(sampleState(ps.get(i)));
 	}
 	Map<String, Integer> gcg = greatestCommonGeneralization(ss);
-	List<String> temp = new ArrayList<String>(gcg.keySet());
+	List<String> tempO = new ArrayList<String>(gcg.keySet());
 	// Randomly order the gcg for now
-	Collections.shuffle(temp);
-	final List<String> ordering = temp;
+	Collections.shuffle(tempO);
+	final List<String> ordering = tempO;
 	// ps <- [(3O, 2X), (2O, 3X), (3O, 3X)]
 	// gcg <- {'O': 2, 'X': 2}
 	// ordering <- ['O', 'X']
@@ -714,8 +738,8 @@ public class AbstractedPolicy extends Policy {
 		@Override
 		public int compare(PolicyBlocksPolicy arg0,
 			PolicyBlocksPolicy arg1) {
-		    State s0 = arg0.policy.keySet().iterator().next().s;
-		    State s1 = arg1.policy.keySet().iterator().next().s;
+		    State s0 = sampleState(arg0);
+		    State s1 = sampleState(arg1);
 		    
 		    for (int i = 0; i < ordering.size(); i++) {
 			Integer c0 = s0.getObjectsOfTrueClass(ordering.get(i)).size();
@@ -734,24 +758,16 @@ public class AbstractedPolicy extends Policy {
 	});
 	
 	// ps <- [(3O, 3X), (3O, 2X), (2O, 3X)]
-	AbstractedPolicy finalAbs = null;
+	AbstractedPolicy finalAbs = naiveAbstractAll(hf, singletonList(ps.get(0))).get(0);
 	for (int i = 0; i < ps.size()-1; i++) {
 	    // Through every policy
-	    AbstractedPolicy abs0 = null;
-	    AbstractedPolicy abs1 = null;
+	    AbstractedPolicy abs0 = naiveAbstractAll(hf, singletonList(ps.get(i))).get(0);
+	    AbstractedPolicy abs1 = naiveAbstractAll(hf, singletonList(ps.get(i+1))).get(0);
 	    
-	    State s0 = ps.get(i).policy.keySet().iterator().next().s;
-    	    State s1 = ps.get(i+1).policy.keySet().iterator().next().s;
-    	    List<List<ObjectInstance>> o0 = s0.getAllObjectsByTrueClass();
-    	    List<List<ObjectInstance>> o1 = s1.getAllObjectsByTrueClass();
-    	    Map<String, Integer> m0 = new HashMap<String, Integer>();
-    	    Map<String, Integer> m1 = new HashMap<String, Integer>();
-    	    for (List<ObjectInstance> l: o0) {
-    		m0.put(l.get(0).getObjectClass().name, l.size());
-    	    }
-    	    for (List<ObjectInstance> l: o1) {
-    		m1.put(l.get(0).getObjectClass().name, l.size());
-    	    }
+	    State s0 = sampleState(ps.get(i));
+    	    State s1 = sampleState(ps.get(i+1));
+    	    Map<String, Integer> m0 = getObjectCounts(s0);
+    	    Map<String, Integer> m1 = getObjectCounts(s1);
     	    
 	    while (true) {
     		boolean flag = true;
@@ -785,17 +801,7 @@ public class AbstractedPolicy extends Policy {
     		    }
     		}
     		
-    		if (flag) {
-    		    if (abs0 == null) {
-    			abs0 = naiveAbstractAll(hf, singletonList(ps.get(i))).get(0);
-    		    }
-    		    if (abs1 == null) {
-    			abs1 = naiveAbstractAll(hf, singletonList(ps.get(i+1))).get(0);
-    		    }
-    		    if (finalAbs == null) {
-    			finalAbs = abs0;
-    		    }
-    		    
+    		if (flag) {    		    
     		    break;
     		}
 	    }
