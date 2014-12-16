@@ -375,6 +375,7 @@ public class AbstractedPolicy extends Policy {
 		    stateOccurence.get(hf.hashState(curState)).add(e.getKey());
 		}
 	    }
+	    
 	    for (Entry<StateHashTuple, List<StateHashTuple>> e : stateOccurence
 		    .entrySet()) {
 		newPolicy.put(e.getKey(),
@@ -435,16 +436,19 @@ public class AbstractedPolicy extends Policy {
     private static GroundedAction getAction(PolicyBlocksPolicy ip, State st,
 	    List<StateHashTuple> origStates) {
 	List<List<QValue>> qs = new ArrayList<List<QValue>>();
-
-	for (StateHashTuple origState : origStates) {
-	    QLearning Q = (QLearning) ip.qplanner;
-	    QLearningStateNode qNode = Q.getStateNode(origState);
-	    qs.add(qNode.qEntry);
+	QLearning Q = (QLearning) ip.qplanner;
+	
+	if (Q == null) {
+	    return null;
+	} else {
+	    for (StateHashTuple origState : origStates) {
+		QLearningStateNode qNode = Q.getStateNode(origState);
+		qs.add(qNode.qEntry);
+	    }
+	    
+	    List<QValue> av = findAverages(st, qs);
+	    return getActionFromQs(av);
 	}
-
-	List<QValue> av = findAverages(st, qs);
-
-	return getActionFromQs(av);
     }
 
     /**
@@ -520,10 +524,6 @@ public class AbstractedPolicy extends Policy {
 
     public static List<AbstractedPolicy> naiveAbstractAll(StateHashFactory hf,
 	    List<PolicyBlocksPolicy> policies) {
-	if (policies.size() < 2) {
-	    throw new IllegalArgumentException("Need at least 2 policies.");
-	}
-
 	List<AbstractedPolicy> abstractedPolicies = new ArrayList<AbstractedPolicy>();
 
 	for (int i = 0; i < policies.size(); i++) {
@@ -759,13 +759,15 @@ public class AbstractedPolicy extends Policy {
 	
 	// ps <- [(3O, 3X), (3O, 2X), (2O, 3X)]
 	AbstractedPolicy finalAbs = naiveAbstractAll(hf, singletonList(ps.get(0))).get(0);
-	for (int i = 0; i < ps.size()-1; i++) {
+	Set<PolicyBlocksPolicy> originals = new HashSet<PolicyBlocksPolicy>(ops);
+	finalAbs.originalPolicies = originals;
+	for (int i = 1; i < ps.size(); i++) {
 	    // Through every policy
-	    AbstractedPolicy abs0 = naiveAbstractAll(hf, singletonList(ps.get(i))).get(0);
-	    AbstractedPolicy abs1 = naiveAbstractAll(hf, singletonList(ps.get(i+1))).get(0);
+	    AbstractedPolicy curAbs = naiveAbstractAll(hf, singletonList(ps.get(i))).get(0);
+	    curAbs.originalPolicies = originals;
 	    
-	    State s0 = sampleState(ps.get(i));
-    	    State s1 = sampleState(ps.get(i+1));
+	    State s0 = sampleState(finalAbs);
+    	    State s1 = sampleState(ps.get(i));
     	    Map<String, Integer> m0 = getObjectCounts(s0);
     	    Map<String, Integer> m1 = getObjectCounts(s1);
     	    
@@ -774,42 +776,67 @@ public class AbstractedPolicy extends Policy {
     		Set<String> objSet = new HashSet<String>();
     		objSet.addAll(m0.keySet());
     		objSet.addAll(m1.keySet());
+    		//System.out.println(objSet);
     		
     		for (String obj : objSet) {
     		    if (m0.get(obj) > m1.get(obj)) {
-    			PolicyBlocksPolicy tempP = new PolicyBlocksPolicy((QLearning) ps.get(i).qplanner, ps.get(i).getEpsilon());
-    			tempP.policy = new HashMap<StateHashTuple, GroundedAction>();
-    			Entry<StateHashTuple, GroundedAction> tempE = ps.get(i).policy.entrySet().iterator().next();
-    			// Hopefully this works in place (?) TODO
-    			tempE.getKey().s.removeObject(tempE.getKey().s.getFirstObjectOfClass(obj));
-    			tempP.policy.put(tempE.getKey(), tempE.getValue());
+    			System.err.println("m0 > m1 " + obj + " " + m0.get(obj) + " > " + m1.get(obj) + ".");
+    			Entry<StateHashTuple, GroundedAction> sample = finalAbs.getPolicy().entrySet().iterator().next();
+    			StateHashTuple sampleS = sample.getKey();
+    			sampleS.s.removeObject(sampleS.s.getFirstObjectOfClass(obj));
+    			sampleS.computeHashCode();
+    			sample = new AbstractMap.SimpleEntry<StateHashTuple, GroundedAction>(sampleS, sample.getValue());
+    			m0.put(obj, m0.get(obj)-1);
+    			// TODO Make sure this works in place
     			
-    			abs0 = new AbstractedPolicy(hf, ps.get(i), singletonList(tempP));
+    			PolicyBlocksPolicy tempP = new PolicyBlocksPolicy(0.0);
+    			tempP.policy.put(sample.getKey(), sample.getValue());
+    			
+    			PolicyBlocksPolicy finalP = new PolicyBlocksPolicy(0.0);
+    			finalP.policy = finalAbs.getPolicy();
+    			
+    			finalAbs = new AbstractedPolicy(hf, finalP, singletonList(tempP));
+    			finalAbs.originalPolicies = originals;
+    			// tempP.qpolicy.put(sample.getKey(), null);
+    			
     			flag = false;
     			break;
     		    } else if (m1.get(obj) > m0.get(obj)) {
-    			PolicyBlocksPolicy tempP = new PolicyBlocksPolicy((QLearning) ps.get(i+1).qplanner, ps.get(i+1).getEpsilon());
-    			tempP.policy = new HashMap<StateHashTuple, GroundedAction>();
-    			Entry<StateHashTuple, GroundedAction> tempE = ps.get(i+1).policy.entrySet().iterator().next();
-    			// Hopefully this works in place (?) TODO
-    			tempE.getKey().s.removeObject(tempE.getKey().s.getFirstObjectOfClass(obj));
-    			tempP.policy.put(tempE.getKey(), tempE.getValue());
+    			System.err.println("m0 < m1 " + obj + " " + m0.get(obj) + " < " + m1.get(obj) + ".");
+    			Entry<StateHashTuple, GroundedAction> sample = ps.get(i).policy.entrySet().iterator().next();
+    			sample.getKey().s.removeObject(sample.getKey().s.getFirstObjectOfClass(obj));
+    			StateHashTuple sampleS = sample.getKey();
+    			sampleS.s.removeObject(sampleS.s.getFirstObjectOfClass(obj));
+    			sampleS.computeHashCode();
+    			sample = new AbstractMap.SimpleEntry<StateHashTuple, GroundedAction>(sampleS, sample.getValue());
+    			m1.put(obj, m1.get(obj)-1);
+    			// TODO Make sure this works in place
     			
-    			abs1 = new AbstractedPolicy(hf, ps.get(i+1), singletonList(tempP));
+    			PolicyBlocksPolicy tempP = new PolicyBlocksPolicy(0.0);
+    			tempP.policy.put(sample.getKey(), sample.getValue());
+    			// tempP.qpolicy.put(sample.getKey(), null);
+    			
+    			curAbs = new AbstractedPolicy(hf, ps.get(i), singletonList(tempP));
+    			curAbs.originalPolicies = originals;
     			flag = false;
     			break;
     		    }
     		}
     		
-    		if (flag) {    		    
+    		if (flag) {
     		    break;
     		}
 	    }
 	    
+	    System.out.println("boop bop");
+	    System.out.println(curAbs.size());
 	    // Now merge the first two items in ps
-	    finalAbs = finalAbs.mergeWith(abs1);
+	    finalAbs = finalAbs.mergeWith(curAbs);
 	}
+	finalAbs.originalPolicies = new HashSet<PolicyBlocksPolicy>(ops);
 	
+	System.out.println(finalAbs.size());
+	System.err.println("wee woo");
 	return finalAbs;
     }
     
@@ -992,7 +1019,9 @@ public class AbstractedPolicy extends Policy {
      * @return a list of all k-subsets from alpha to beta
      */
     public static <T> List<List<T>> getSubsets(List<T> set, int alpha, int beta) {
-	if (alpha < 1 || alpha > beta || alpha > set.size()) {
+	if (set == null || set.size() == 0) {
+	    throw new IllegalArgumentException("Cannot create subsets of an empty set.");
+	} else if (alpha < 1 || alpha > beta || alpha > set.size()) {
 	    throw new IllegalArgumentException("Invalid minimum depth size: "
 		    + alpha + ".");
 	} else if (beta > set.size() || beta < 1) {
