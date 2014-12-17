@@ -10,41 +10,43 @@ import burlap.oomdp.stochasticgames.GroundedSingleAction;
 import burlap.oomdp.stochasticgames.JointAction;
 import burlap.oomdp.stochasticgames.SingleAction;
 
-
 /**
  * Stochastic games agent that chooses actions uniformly randomly.
+ * 
  * @author James MacGlashan
- *
+ * 
  */
 public class RandomAgent extends Agent {
 
-	@Override
-	public void gameStarting() {
-		//do nothing
+    @Override
+    public void gameStarting() {
+	// do nothing
 
-	}
+    }
 
-	@Override
-	public GroundedSingleAction getAction(State s) {
-		
-		List<GroundedSingleAction> gsas = SingleAction.getAllPossibleGroundedSingleActions(s, this.worldAgentName, this.agentType.actions);
-		
-		int r = RandomFactory.getMapped(0).nextInt(gsas.size());
-		GroundedSingleAction gsa = gsas.get(r);
-		
-		return gsa;
-	}
+    @Override
+    public GroundedSingleAction getAction(State s) {
 
-	@Override
-	public void observeOutcome(State s, JointAction jointAction,
-			Map<String, Double> jointReward, State sprime, boolean isTerminal) {
-		//do nothing
+	List<GroundedSingleAction> gsas = SingleAction
+		.getAllPossibleGroundedSingleActions(s, this.worldAgentName,
+			this.agentType.actions);
 
-	}
+	int r = RandomFactory.getMapped(0).nextInt(gsas.size());
+	GroundedSingleAction gsa = gsas.get(r);
 
-	@Override
-	public void gameTerminated() {
-		//do nothing
-	}
+	return gsa;
+    }
+
+    @Override
+    public void observeOutcome(State s, JointAction jointAction,
+	    Map<String, Double> jointReward, State sprime, boolean isTerminal) {
+	// do nothing
+
+    }
+
+    @Override
+    public void gameTerminated() {
+	// do nothing
+    }
 
 }

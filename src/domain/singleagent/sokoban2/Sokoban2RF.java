@@ -26,7 +26,8 @@ public class Sokoban2RF extends UniformCostRF {
 	    int by = blocks.get(i).getDiscValForAttribute(Sokoban2Domain.ATTY);
 	    ObjectInstance room = Sokoban2Domain.roomContainingPoint(sprime,
 		    bx, by);
-	    String bc = blocks.get(i).getStringValForAttribute(Sokoban2Domain.ATTCOLOR);
+	    String bc = blocks.get(i).getStringValForAttribute(
+		    Sokoban2Domain.ATTCOLOR);
 	    String rc = room.getStringValForAttribute(Sokoban2Domain.ATTCOLOR);
 	    if (bc.equals(rc)) {
 		continue;

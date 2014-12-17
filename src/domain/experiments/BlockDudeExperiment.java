@@ -37,7 +37,7 @@ import domain.blockdude.BlockDudeDomain;
 import domain.blockdude.BlockDudeDomain.DomainData;
 
 public class BlockDudeExperiment {
-    public static long runBlockDudeTopLearning(StateHashFactory hf, Option o, 
+    public static long runBlockDudeTopLearning(StateHashFactory hf, Option o,
 	    char[][] level, int episodes, double epsilon, int maxsteps,
 	    String name) {
 	long cumul = 0;
@@ -338,8 +338,8 @@ public class BlockDudeExperiment {
 	    AbstractedOption tempO = new AbstractedOption(hf, merge.policy,
 		    dd.d.getActions(), 0.0, "top");
 	    topOs.add(new AbstractMap.SimpleEntry<AbstractedOption, Long>(
-		    tempO, runBlockDudeTopLearning(hf, tempO, lvlt, episodes, epsilon,
-			    stateCap, "TOP")));
+		    tempO, runBlockDudeTopLearning(hf, tempO, lvlt, episodes,
+			    epsilon, stateCap, "TOP")));
 	}
 	Collections.sort(topOs,
 		new Comparator<Entry<AbstractedOption, Long>>() {

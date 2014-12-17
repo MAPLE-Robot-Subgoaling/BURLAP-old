@@ -4,16 +4,16 @@
  * This kind of information is important for episode and goal-oriented MDPs
  */
 
-
 package burlap.oomdp.core;
 
 /**
  * And interface for defining terminal states of an MDP.
+ * 
  * @author James MacGlashan
- *
+ * 
  */
 public interface TerminalFunction {
-	
-	public boolean isTerminal(State s);	
-	
+
+    public boolean isTerminal(State s);
+
 }

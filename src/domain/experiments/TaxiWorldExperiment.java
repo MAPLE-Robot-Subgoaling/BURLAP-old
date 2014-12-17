@@ -47,10 +47,10 @@ public class TaxiWorldExperiment {
 	    StateHashFactory hf, int[][] passPos, List<? extends Option> os,
 	    int episodes, String filepath, boolean log) throws IOException {
 	TaxiWorldDomain.MAXPASS = passPos.length;
-	QLearning Q = new QLearning(TaxiWorldDomain.DOMAIN, new UniformCostRF(),
-		TaxiWorldDomain.tf, TaxiWorldDomain.DISCOUNTFACTOR, hf,
-		1, TaxiWorldDomain.LEARNINGRATE,
-		Integer.MAX_VALUE);
+	QLearning Q = new QLearning(TaxiWorldDomain.DOMAIN,
+		new UniformCostRF(), TaxiWorldDomain.tf,
+		TaxiWorldDomain.DISCOUNTFACTOR, hf, 1,
+		TaxiWorldDomain.LEARNINGRATE, Integer.MAX_VALUE);
 
 	State s = TaxiWorldDomain.getCleanState();
 	Q.setLearningPolicy(policy);
@@ -86,7 +86,7 @@ public class TaxiWorldExperiment {
 	    EpisodeAnalysis analyzer = new EpisodeAnalysis();
 	    analyzer = Q.runLearningEpisodeFrom(s);
 	    cumul += analyzer.numTimeSteps();
-      	    cumulR += ExperimentUtils.sum(analyzer.rewardSequence);
+	    cumulR += ExperimentUtils.sum(analyzer.rewardSequence);
 	    if (log) {
 		bS.write((i + 1) + "," + cumul + "\n");
 		bR.write((i + 1) + "," + cumulR + "\n");
@@ -260,18 +260,23 @@ public class TaxiWorldExperiment {
 		episodes, 0.01, path);
 	long uTime = System.currentTimeMillis();
 	int depth = 2;
-	
+
 	System.out.println("Starting power merge with depth " + depth + ".");
-	Entry<AbstractedPolicy, Double> absP = AbstractedPolicy.powerMerge(hf, toMerge, depth, 1).get(0);
-	System.out.println("Finished power merge with time " + (System.currentTimeMillis()-uTime)/1000.0 + " seconds.");
+	Entry<AbstractedPolicy, Double> absP = AbstractedPolicy.powerMerge(hf,
+		toMerge, depth, 1).get(0);
+	System.out.println("Finished power merge with time "
+		+ (System.currentTimeMillis() - uTime) / 1000.0 + " seconds.");
 	System.out.println("Size: " + absP.getKey().size());
 	System.out.println("Score: " + absP.getValue());
-	
+
 	uTime = System.currentTimeMillis();
-	
-	System.out.println("Starting greedy power merge with depth " + depth + ".");
-	Entry<AbstractedPolicy, Double> absGP = AbstractedPolicy.powerMerge(hf, toMerge, depth, 1, true, true).get(0);
-	System.out.println("Finished greedy power merge with time " + (System.currentTimeMillis()-uTime)/1000.0 + " seconds.");
+
+	System.out.println("Starting greedy power merge with depth " + depth
+		+ ".");
+	Entry<AbstractedPolicy, Double> absGP = AbstractedPolicy.powerMerge(hf,
+		toMerge, depth, 1, true, true).get(0);
+	System.out.println("Finished greedy power merge with time "
+		+ (System.currentTimeMillis() - uTime) / 1000.0 + " seconds.");
 	System.out.println("Size: " + absGP.getKey().size());
 	System.out.println("Score: " + absGP.getValue());
     }

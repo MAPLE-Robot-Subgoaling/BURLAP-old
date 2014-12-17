@@ -16,14 +16,14 @@ public class BlockDudeVisualizer {
 
 	Visualizer v = new Visualizer();
 
-	v.addObjectClassPainter(BlockDudeDomain.CLASSAGENT, new AgentPainter(minx,
-		maxx, miny, maxy));
-	v.addObjectClassPainter(BlockDudeDomain.CLASSBLOCK, new BlockPainter(minx,
-		maxx, miny, maxy));
-	v.addObjectClassPainter(BlockDudeDomain.CLASSEXIT, new ExitPainter(minx,
-		maxx, miny, maxy));
-	v.addObjectClassPainter(BlockDudeDomain.CLASSPLATFORM, new PlatformPainter(
+	v.addObjectClassPainter(BlockDudeDomain.CLASSAGENT, new AgentPainter(
 		minx, maxx, miny, maxy));
+	v.addObjectClassPainter(BlockDudeDomain.CLASSBLOCK, new BlockPainter(
+		minx, maxx, miny, maxy));
+	v.addObjectClassPainter(BlockDudeDomain.CLASSEXIT, new ExitPainter(
+		minx, maxx, miny, maxy));
+	v.addObjectClassPainter(BlockDudeDomain.CLASSPLATFORM,
+		new PlatformPainter(minx, maxx, miny, maxy));
 
 	return v;
 

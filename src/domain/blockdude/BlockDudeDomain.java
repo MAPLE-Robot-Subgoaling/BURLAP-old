@@ -63,7 +63,7 @@ public class BlockDudeDomain implements DomainGenerator {
     }
 
     @SuppressWarnings("unused")
-	@Override
+    @Override
     public Domain generateDomain() {
 
 	Domain domain = new SADomain();
@@ -536,112 +536,114 @@ public class BlockDudeDomain implements DomainGenerator {
 	}
 
     }
-    
+
     public static final char AGENT_LEFT_TOKEN = '<';
     public static final char AGENT_RIGHT_TOKEN = '>';
     public static final char GOAL_TOKEN = 'g';
     public static final char BLOCK_TOKEN = 'b';
     public static final char PLATFORM_TOKEN = 't';
-    
-    public static class DomainData {
-    	public BlockDudeDomain c;
-    	public Domain d;
-    	public State s;
-    	
-    	public DomainData(BlockDudeDomain c, Domain d, State s) {
-    		this.c = c;
-    		this.d = d;
-    		this.s = s;
-    	}
-    }
-    
-    public static class Coordinates implements Comparable<Coordinates> {
-    	public int x;
-    	public int y;
-    	
-    	public Coordinates(int x, int y) {
-    		this.x = x;
-    		this.y = y;
-    	}
 
-		@Override
-		public int compareTo(Coordinates o) {
-			if (x - o.x != 0)
-				return x - o.x;
-			else
-				return y - o.y;
-		}
+    public static class DomainData {
+	public BlockDudeDomain c;
+	public Domain d;
+	public State s;
+
+	public DomainData(BlockDudeDomain c, Domain d, State s) {
+	    this.c = c;
+	    this.d = d;
+	    this.s = s;
+	}
     }
-    
-	public static DomainData createDomain(char[][] lvl) {
-    	if (lvl == null || lvl.length == 0) return null; // For now just return without breaking
-    	int maxx = lvl[0].length;
-    	int maxy = lvl.length;
-    	List<Integer> px = new ArrayList<Integer>();
-    	List<Integer> ph = new ArrayList<Integer>();
-    	List<Coordinates> pc = new ArrayList<Coordinates>();
-    	List<Coordinates> bc = new ArrayList<Coordinates>();
-    	int goalx = 0, goaly = 0;
-    	int agentx = 0, agenty = 0;
-    	int agentdir = 0;
-    	int needed = 0;
-    	
-    	for (int i = 0; i < maxy; i++) {
-    		for (int j = 0; j < maxx; j++) {
-    			switch (lvl[i][j]) {
-    			case AGENT_LEFT_TOKEN:
-    				agentx = j;
-    				agenty = maxy - i;
-    				agentdir = 0;
-    				needed++;
-    				break;
-    			case AGENT_RIGHT_TOKEN:
-    				agentx = j;
-    				agenty = maxy - i;
-    				agentdir = 1;
-    				needed++;
-    				break;
-    			case GOAL_TOKEN:
-    				goalx = j;
-    				goaly = maxy - i;
-    				needed++;
-    				break;
-    			case BLOCK_TOKEN:
-    				bc.add(new Coordinates(j, maxy - i));
-    				break;
-    			case PLATFORM_TOKEN:
-    				pc.add(new Coordinates(j, maxy - i));
-    				break;
-    			}
-    		}
-    	}
-    	
-    	// Needs 1 agent and 1 goal
-    	if (needed != 2) return null; // For now just return and not do anything.
-    	
-    	Collections.sort(bc);
-    	Collections.sort(pc);
-    	
-    	for (int i = 0; i < pc.size(); i++) {
-    		Coordinates c = pc.get(i);
-    		px.add(c.x);
-    		ph.add(c.y);
-    	}
-    	
-    	BlockDudeDomain c = new BlockDudeDomain(maxx, maxy);
-    	Domain d = c.generateDomain();
-    	
-    	State s = getCleanState(d, px, ph, bc.size());
-    	setAgent(s, agentx, agenty, agentdir, 0);
-    	setExit(s, goalx, goaly);
-    	
-    	for (int i = 0; i < bc.size(); i++) {
-    		int x = bc.get(i).x;
-    		int y = bc.get(i).y;
-    		setBlock(s, i, x, y);
-    	}
-    	
-    	return new DomainData(c, d, s);
+
+    public static class Coordinates implements Comparable<Coordinates> {
+	public int x;
+	public int y;
+
+	public Coordinates(int x, int y) {
+	    this.x = x;
+	    this.y = y;
+	}
+
+	@Override
+	public int compareTo(Coordinates o) {
+	    if (x - o.x != 0)
+		return x - o.x;
+	    else
+		return y - o.y;
+	}
+    }
+
+    public static DomainData createDomain(char[][] lvl) {
+	if (lvl == null || lvl.length == 0)
+	    return null; // For now just return without breaking
+	int maxx = lvl[0].length;
+	int maxy = lvl.length;
+	List<Integer> px = new ArrayList<Integer>();
+	List<Integer> ph = new ArrayList<Integer>();
+	List<Coordinates> pc = new ArrayList<Coordinates>();
+	List<Coordinates> bc = new ArrayList<Coordinates>();
+	int goalx = 0, goaly = 0;
+	int agentx = 0, agenty = 0;
+	int agentdir = 0;
+	int needed = 0;
+
+	for (int i = 0; i < maxy; i++) {
+	    for (int j = 0; j < maxx; j++) {
+		switch (lvl[i][j]) {
+		case AGENT_LEFT_TOKEN:
+		    agentx = j;
+		    agenty = maxy - i;
+		    agentdir = 0;
+		    needed++;
+		    break;
+		case AGENT_RIGHT_TOKEN:
+		    agentx = j;
+		    agenty = maxy - i;
+		    agentdir = 1;
+		    needed++;
+		    break;
+		case GOAL_TOKEN:
+		    goalx = j;
+		    goaly = maxy - i;
+		    needed++;
+		    break;
+		case BLOCK_TOKEN:
+		    bc.add(new Coordinates(j, maxy - i));
+		    break;
+		case PLATFORM_TOKEN:
+		    pc.add(new Coordinates(j, maxy - i));
+		    break;
+		}
+	    }
+	}
+
+	// Needs 1 agent and 1 goal
+	if (needed != 2)
+	    return null; // For now just return and not do anything.
+
+	Collections.sort(bc);
+	Collections.sort(pc);
+
+	for (int i = 0; i < pc.size(); i++) {
+	    Coordinates c = pc.get(i);
+	    px.add(c.x);
+	    ph.add(c.y);
+	}
+
+	BlockDudeDomain c = new BlockDudeDomain(maxx, maxy);
+	Domain d = c.generateDomain();
+
+	State s = getCleanState(d, px, ph, bc.size());
+	setAgent(s, agentx, agenty, agentdir, 0);
+	setExit(s, goalx, goaly);
+
+	for (int i = 0; i < bc.size(); i++) {
+	    int x = bc.get(i).x;
+	    int y = bc.get(i).y;
+	    setBlock(s, i, x, y);
+	}
+
+	return new DomainData(c, d, s);
     }
 
     /**
@@ -649,189 +651,206 @@ public class BlockDudeDomain implements DomainGenerator {
      */
     public static void main(String[] args) {
 
-	/*int maxx = 18;
-	int maxy = 18;
+	/*
+	 * int maxx = 18; int maxy = 18;
+	 * 
+	 * BlockDudeDomain constructor = new BlockDudeDomain(maxx, maxy); Domain
+	 * d = constructor.generateDomain();
+	 * 
+	 * List<Integer> px = new ArrayList<Integer>(); List<Integer> ph = new
+	 * ArrayList<Integer>();
+	 * 
+	 * px.add(0); px.add(2); px.add(3); px.add(4); px.add(5); px.add(6);
+	 * px.add(7); px.add(8); px.add(9); px.add(11); px.add(12); px.add(13);
+	 * px.add(14); px.add(15); px.add(16); px.add(17); px.add(18);
+	 * 
+	 * ph.add(15); ph.add(3); ph.add(3); ph.add(3); ph.add(0); ph.add(0);
+	 * ph.add(0); ph.add(1); ph.add(2); ph.add(0); ph.add(2); ph.add(3);
+	 * ph.add(2); ph.add(2); ph.add(3); ph.add(3); ph.add(15);
+	 * 
+	 * State s = getCleanState(d, px, ph, 6); BlockDudeDomain.setAgent(s, 9,
+	 * 3, 1, 0); BlockDudeDomain.setExit(s, 1, 0);
+	 * 
+	 * BlockDudeDomain.setBlock(s, 0, 5, 1); BlockDudeDomain.setBlock(s, 1,
+	 * 6, 1); BlockDudeDomain.setBlock(s, 2, 14, 3);
+	 * BlockDudeDomain.setBlock(s, 3, 16, 4); BlockDudeDomain.setBlock(s, 4,
+	 * 17, 4); BlockDudeDomain.setBlock(s, 5, 17, 5);
+	 */
 
-	BlockDudeDomain constructor = new BlockDudeDomain(maxx, maxy);
-	Domain d = constructor.generateDomain();
+	/*
+	 * WARNING: Platforms only store height! This means that platforms
+	 * always extend from the bottom of the level to the given height. This
+	 * makes it impossible to implement certain levels where block dude can
+	 * walk under platforms. Possibly fix this in the future although we
+	 * don't have to for the levels given.
+	 */
 
-	List<Integer> px = new ArrayList<Integer>();
-	List<Integer> ph = new ArrayList<Integer>();
+	char[][] lvl1 = {
+		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', 'g', ' ', ' ', ' ', 'b', ' ', ' ', 't', ' ', 'b', ' ',
+			' ', ' ', 'b', ' ', '>', ' ', ' ', ' ' },
+		{ ' ', 't', 't', 't', ' ', 't', 't', 't', ' ', 't', 't', 't',
+			' ', 't', 't', 't', 't', 't', 't', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' } };
 
-	px.add(0);
-	px.add(2);
-	px.add(3);
-	px.add(4);
-	px.add(5);
-	px.add(6);
-	px.add(7);
-	px.add(8);
-	px.add(9);
-	px.add(11);
-	px.add(12);
-	px.add(13);
-	px.add(14);
-	px.add(15);
-	px.add(16);
-	px.add(17);
-	px.add(18);
+	/*
+	 * char[][] lvl1 = { {'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'}, {'t', ' ', ' ',
+	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+	 * ' ', ' ', 't'}, {'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'}, {'t', ' ', ' ',
+	 * ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ',
+	 * ' ', ' ', 't'}, {'t', 'g', ' ', ' ', 't', 'b', ' ', ' ', 't', ' ',
+	 * 'b', ' ', 't', ' ', 'b', ' ', '>', ' ', ' ', 't'}, {'t', 't', 't',
+	 * 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't',
+	 * 't', 't', 't'}, {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '} };
+	 */
 
-	ph.add(15);
-	ph.add(3);
-	ph.add(3);
-	ph.add(3);
-	ph.add(0);
-	ph.add(0);
-	ph.add(0);
-	ph.add(1);
-	ph.add(2);
-	ph.add(0);
-	ph.add(2);
-	ph.add(3);
-	ph.add(2);
-	ph.add(2);
-	ph.add(3);
-	ph.add(3);
-	ph.add(15);
+	char[][] lvl2 = {
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', 'g', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', 't', ' ', ' ', 'b', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', 'b', ' ', 'b', 'b', '<', ' ', ' ', ' ' },
+		{ ' ', ' ', 't', 't', 't', 't', ' ', ' ', ' ', 't', 't', 't',
+			't', ' ', 't', 't', 't', 't', 't', 't', 't', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' } };
 
-	State s = getCleanState(d, px, ph, 6);
-	BlockDudeDomain.setAgent(s, 9, 3, 1, 0);
-	BlockDudeDomain.setExit(s, 1, 0);
+	char[][] lvl3 = {
+		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', '<', ' ', ' ',
+			' ', 't', ' ', ' ', 't', 't', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ',
+			't', ' ', 't', 't', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', ' ', 't', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', 't',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ' } };
 
-	BlockDudeDomain.setBlock(s, 0, 5, 1);
-	BlockDudeDomain.setBlock(s, 1, 6, 1);
-	BlockDudeDomain.setBlock(s, 2, 14, 3);
-	BlockDudeDomain.setBlock(s, 3, 16, 4);
-	BlockDudeDomain.setBlock(s, 4, 17, 4);
-	BlockDudeDomain.setBlock(s, 5, 17, 5);*/
-    
-    /* WARNING: Platforms only store height!
-     * This means that platforms always extend from the bottom of the level to the given height.
-     * This makes it impossible to implement certain levels where block dude can walk under platforms.
-     * Possibly fix this in the future although we don't have to for the levels given.
-     */
-    	
-    char[][] lvl1 = 
-    {
-    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    		{' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    		{' ', 'g', ' ', ' ', ' ', 'b', ' ', ' ', 't', ' ', 'b', ' ', ' ', ' ', 'b', ' ', '>', ' ', ' ', ' '},
-    		{' ', 't', 't', 't', ' ', 't', 't', 't', ' ', 't', 't', 't', ' ', 't', 't', 't', 't', 't', 't', ' '},
-    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
-    };
-    
-    /*
-    char[][] lvl1 = 
-    {
-    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-    		{'t', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-    		{'t', 'g', ' ', ' ', 't', 'b', ' ', ' ', 't', ' ', 'b', ' ', 't', ' ', 'b', ' ', '>', ' ', ' ', 't'},
-    		{'t', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't'},
-    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
-    };
-    */
-    
-    char[][] lvl2 =
-	{
-		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-		{' ', 'g', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-		{' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', 'b', ' ', ' ', ' ', ' ', ' '},
-		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', ' ', 'b', 'b', '<', ' ', ' ', ' '},
-		{' ', ' ', 't', 't', 't', 't', ' ', ' ', ' ', 't', 't', 't', 't', ' ', 't', 't', 't', 't', 't', 't', 't', ' '},
-		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-		{' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
-	};
-    
-    char[][] lvl3 =
-	{
-		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-		{' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', '<', ' ', ' ', ' ', 't', ' ', ' ', 't', 't', ' '},
-		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', 't', ' ', 't', 't', ' ', ' ', ' '},
-		{' ', ' ', ' ', ' ', ' ', 'b', 'b', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-		{' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-		{' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
-	};
-    
-    char[][] lvl5 = 
-    {
-    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    		{' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', 'b', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    		{' ', 'g', ' ', ' ', ' ', 't', ' ', 't', 't', 't', 't', 't', '<', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    		{' ', 't', ' ', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', 't', ' ', ' ', ' ', ' ', ' ', 'b', ' '},
-    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', 'b', 'b', ' '},
-    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', ' '},
-    		{' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', 't', 't', ' '},
-    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
-    };
-    
-    lvl5[0][0] = ' ';
-    
-    /*
-    char[][] lvl5 = 
-    {
-    		{' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', 't', 't', 't', 't', 't', 't', 't', 't', 't', ' '},
-    		{' ', 't', 't', 't', 't', ' ', ' ', ' ', 't', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-    		{'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-    		{'t', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-    		{'t', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-    		{'t', ' ', ' ', ' ', ' ', ' ', 't', 'b', 'b', 'b', 'b', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-    		{'t', 'g', ' ', ' ', ' ', 't', 't', 't', 't', 't', 't', 't', '<', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'},
-    		{'t', 't', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', 't', 't', ' ', 't', ' ', ' ', ' ', ' ', ' ', 'b', 't'},
-    		{' ', 't', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', 't', 't', ' ', ' ', ' ', 'b', 'b', 't'},
-    		{' ', 't', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', 't', 't', ' ', ' ', 'b', 'b', 'b', 't'},
-    		{' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', 't', 't', 't', 't', 't', 't', 't', 't'},
-    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
-    };
-    
-     */
-    char[][] lvl = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', 'b' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', ' ', 't', ' ', ' ', ' ', 'b', ' ', 't', ' ', 't', 't', 't' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b', 'b', ' ', ' ', 't', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ' } };
-    
-	char[][] lvlt = {
-		{ 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+	char[][] lvl5 = {
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', 'b', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', 'g', ' ', ' ', ' ', 't', ' ', 't', 't', 't', 't', 't',
+			'<', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', 't', ' ', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			't', ' ', 't', ' ', ' ', ' ', ' ', ' ', 'b', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', 't', ' ', ' ', ' ', 'b', 'b', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', ' ' },
+		{ ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', 't', 't', 't', 't', 't', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' } };
+
+	lvl5[0][0] = ' ';
+
+	/*
+	 * char[][] lvl5 = { {' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ',
+	 * ' ', ' ', 't', 't', 't', 't', 't', 't', 't', 't', 't', ' '}, {' ',
+	 * 't', 't', 't', 't', ' ', ' ', ' ', 't', 't', 't', 't', ' ', ' ', ' ',
+	 * ' ', ' ', ' ', ' ', ' ', ' ', 't'}, {'t', ' ', ' ', ' ', ' ', ' ',
+	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+	 * ' ', 't'}, {'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'}, {'t', ' ',
+	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+	 * ' ', ' ', ' ', ' ', ' ', 't'}, {'t', ' ', ' ', ' ', ' ', ' ', 't',
+	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+	 * 't'}, {'t', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ',
+	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'}, {'t', ' ', ' ',
+	 * ' ', ' ', ' ', 't', 'b', 'b', 'b', 'b', ' ', ' ', ' ', ' ', ' ', ' ',
+	 * ' ', ' ', ' ', ' ', 't'}, {'t', 'g', ' ', ' ', ' ', 't', 't', 't',
+	 * 't', 't', 't', 't', '<', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+	 * 't'}, {'t', 't', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', 't',
+	 * 't', ' ', 't', ' ', ' ', ' ', ' ', ' ', 'b', 't'}, {' ', 't', ' ',
+	 * 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', 't', 't', ' ',
+	 * ' ', ' ', 'b', 'b', 't'}, {' ', 't', ' ', 't', ' ', ' ', ' ', ' ',
+	 * ' ', ' ', ' ', ' ', 't', ' ', 't', 't', ' ', ' ', 'b', 'b', 'b',
+	 * 't'}, {' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+	 * 't', ' ', 't', 't', 't', 't', 't', 't', 't', 't'}, {' ', ' ', ' ',
+	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ',
+	 * ' ', ' ', ' ', ' ', ' '} };
+	 */
+	char[][] lvl = {
+		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', 't', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', 't', ' ', ' ',
+			' ', ' ', ' ', ' ', 'b', '<', 'b' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', ' ', 't', ' ', ' ', ' ',
+			'b', ' ', 't', ' ', 't', 't', 't' },
+		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b',
+			'b', ' ', ' ', 't', ' ', ' ', ' ' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't',
+			't', ' ', ' ', ' ', ' ', ' ', ' ' } };
+
+	char[][] lvlt = { { 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
 		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', ' ' },
 		{ ' ', ' ', 'b', ' ', ' ', 'b', 'b', 't', ' ' },
 		{ ' ', ' ', 't', 't', 't', 'b', 't', ' ', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
 
-	char[][] lvlc = {
-		{ 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+	char[][] lvlc = { { 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
 		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
 		{ ' ', ' ', ' ', 'b', ' ', ' ', ' ', '<', ' ' },
 		{ ' ', ' ', ' ', 'b', 'b', ' ', ' ', 't', ' ' },
 		{ ' ', ' ', 't', 't', 't', 'b', 't', ' ', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
-    DomainData dd = BlockDudeDomain.createDomain(lvlc);
-    
-    Domain d = dd.d;
-    State s = dd.s;
-    BlockDudeDomain constructor = dd.c;
+	DomainData dd = BlockDudeDomain.createDomain(lvlc);
+
+	Domain d = dd.d;
+	State s = dd.s;
+	BlockDudeDomain constructor = dd.c;
 
 	int expMode = 1;
 	if (args.length > 0) {
@@ -854,7 +873,7 @@ public class BlockDudeDomain implements DomainGenerator {
 	    Visualizer v = BlockDudeVisualizer.getVisualizer(constructor.minx,
 		    constructor.maxx, constructor.miny, constructor.maxy);
 	    VisualExplorer exp = new VisualExplorer(d, v, s);
-	    exp.enableEpisodeRecording("'",	"]");
+	    exp.enableEpisodeRecording("'", "]");
 
 	    // use w-s-a-d-x
 	    exp.addKeyAction("w", ACTIONUP);

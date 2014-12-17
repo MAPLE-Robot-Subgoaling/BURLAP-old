@@ -10,8 +10,8 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
 /**
- * This class is used in P-MODAL for applying options without grounding
- * This differs from PolicyDefinedSubgoalOption in that it has stochastic termination
+ * This class is used in P-MODAL for applying options without grounding This
+ * differs from PolicyDefinedSubgoalOption in that it has stochastic termination
  * and has bookkeeping to prevent the option from having a cyclic trajectory
  */
 public class CyclicPolicyOption extends Option {
@@ -63,8 +63,10 @@ public class CyclicPolicyOption extends Option {
 
     @Override
     public GroundedAction oneStepActionSelection(State incoming, String[] params) {
-    	// Doesn't need to check for redundancy because of the bookkeeping already happening
-    	// If the visited list already contains the state at this point, it's a bug.
+	// Doesn't need to check for redundancy because of the bookkeeping
+	// already happening
+	// If the visited list already contains the state at this point, it's a
+	// bug.
 	visited.add(incoming);
 	return (GroundedAction) policy.getAction(incoming);
     }

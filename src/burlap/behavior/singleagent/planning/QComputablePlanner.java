@@ -8,12 +8,14 @@ import burlap.oomdp.core.State;
 
 /**
  * An interface for planning classes that compute Q-values.
+ * 
  * @author James MacGlashan
- *
+ * 
  */
 public interface QComputablePlanner {
 
-	public List <QValue> getQs(State s);
-	public QValue getQ(State s, AbstractGroundedAction a);
+    public List<QValue> getQs(State s);
+
+    public QValue getQ(State s, AbstractGroundedAction a);
 
 }

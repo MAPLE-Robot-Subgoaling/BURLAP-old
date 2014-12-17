@@ -44,9 +44,10 @@ public class AbstractedPolicy extends Policy {
 	this.hashFactory = p.hashFactory;
 	this.gcg = p.gcg;
     }
-    
+
     /**
      * Constructor used for greedy step-wise merging
+     * 
      * @param hf
      * @param ip
      * @param sourcePolicies
@@ -57,8 +58,9 @@ public class AbstractedPolicy extends Policy {
 	this();
 	this.hashFactory = hf;
 	this.originalPolicies = sourcePolicies;
-	
-	List<List<String>> oiCombs = generateAllCombinations(sampleState(ip), gcg);
+
+	List<List<String>> oiCombs = generateAllCombinations(sampleState(ip),
+		gcg);
 	List<Entry<Map<StateHashTuple, GroundedAction>, Double>> policyCandidates = generatePolicyCandidates(
 		hf, ip.getPolicy(), oiCombs, 1);
 
@@ -286,7 +288,8 @@ public class AbstractedPolicy extends Policy {
      *         of new policy
      */
     private static double scoreAbstraction(StateHashFactory hf,
-	    Map<StateHashTuple, GroundedAction> ip, Map<StateHashTuple, GroundedAction> np) {
+	    Map<StateHashTuple, GroundedAction> ip,
+	    Map<StateHashTuple, GroundedAction> np) {
 	double accuracy = 0.;
 	State withRespectTo = np.keySet().iterator().next().s;
 	Map<StateHashTuple, List<Boolean>> correct = new HashMap<StateHashTuple, List<Boolean>>();
@@ -340,33 +343,35 @@ public class AbstractedPolicy extends Policy {
 
 	return newS;
     }
-    
+
     /**
      * Samples a state from the policy provided
+     * 
      * @param p
      * @return a seemingly random state
      */
     public static State sampleState(PolicyBlocksPolicy p) {
 	return p.policy.keySet().iterator().next().s;
     }
-    
+
     /**
      * Samples a state from the policy provided
+     * 
      * @param p
      * @return a seemingly random state
      */
     public static State sampleState(AbstractedPolicy p) {
 	return p.getPolicy().keySet().iterator().next().s;
     }
-    
+
     public static Map<String, Integer> getObjectCounts(State s) {
 	Map<String, Integer> cs = new HashMap<String, Integer>();
 	List<List<ObjectInstance>> os = s.getAllObjectsByTrueClass();
-	
-	for (List<ObjectInstance> o: os) {
+
+	for (List<ObjectInstance> o : os) {
 	    cs.put(o.get(0).getObjectClass().name, o.size());
 	}
-	
+
 	return cs;
     }
 
@@ -397,7 +402,7 @@ public class AbstractedPolicy extends Policy {
 		    stateOccurence.get(hf.hashState(curState)).add(e.getKey());
 		}
 	    }
-	    
+
 	    for (Entry<StateHashTuple, List<StateHashTuple>> e : stateOccurence
 		    .entrySet()) {
 		newPolicy.put(e.getKey(),
@@ -446,9 +451,10 @@ public class AbstractedPolicy extends Policy {
 
 	return policyCandidates;
     }
- 
+
     /**
      * For use when Q-values are not present in the provided policy
+     * 
      * @param hf
      * @param ip
      * @param combinations
@@ -463,24 +469,24 @@ public class AbstractedPolicy extends Policy {
 	for (List<String> combination : combinations) {
 	    Map<StateHashTuple, List<GroundedAction>> stateOccurence = new HashMap<StateHashTuple, List<GroundedAction>>();
 	    Map<StateHashTuple, GroundedAction> newPolicy = new HashMap<StateHashTuple, GroundedAction>();
-	    
+
 	    for (Entry<StateHashTuple, GroundedAction> e : ip.entrySet()) {
 		State curState = formState(e.getKey().s, combination);
 		List<GroundedAction> temp;
-		
+
 		if (!stateOccurence.containsKey(hf.hashState(curState))) {
 		    temp = new ArrayList<GroundedAction>();
 		    temp.add(e.getValue());
 		    stateOccurence.put(hf.hashState(curState), temp);
 		} else {
-		    stateOccurence.get(hf.hashState(curState)).add(e.getValue());
+		    stateOccurence.get(hf.hashState(curState))
+			    .add(e.getValue());
 		}
 	    }
-	    
+
 	    for (Entry<StateHashTuple, List<GroundedAction>> e : stateOccurence
 		    .entrySet()) {
-		newPolicy.put(e.getKey(),
-			getAction(e.getValue()));
+		newPolicy.put(e.getKey(), getAction(e.getValue()));
 	    }
 
 	    if (newPolicy.size() == 0) {
@@ -525,7 +531,7 @@ public class AbstractedPolicy extends Policy {
 
 	return policyCandidates;
     }
-    
+
     /**
      * Gets the proper action for an abstracted state
      * 
@@ -538,15 +544,15 @@ public class AbstractedPolicy extends Policy {
 	    List<StateHashTuple> origStates) {
 	List<List<QValue>> qs = new ArrayList<List<QValue>>();
 	QLearning Q = (QLearning) ip.qplanner;
-    	for (StateHashTuple origState : origStates) {
-    	    QLearningStateNode qNode = Q.getStateNode(origState);
-    	    qs.add(qNode.qEntry);
-    	}
-	
-    	List<QValue> av = findAverages(st, qs);
+	for (StateHashTuple origState : origStates) {
+	    QLearningStateNode qNode = Q.getStateNode(origState);
+	    qs.add(qNode.qEntry);
+	}
+
+	List<QValue> av = findAverages(st, qs);
 	return getActionFromQs(av);
     }
-    
+
     private static GroundedAction getAction(List<GroundedAction> origStates) {
 	return origStates.get(new Random().nextInt(origStates.size()));
     }
@@ -682,7 +688,7 @@ public class AbstractedPolicy extends Policy {
 			});
 	    }
 	}
-	
+
 	subtractAll(mergedPolicies);
 
 	return mergedPolicies;
@@ -719,7 +725,7 @@ public class AbstractedPolicy extends Policy {
 	    int maxPol) {
 	return powerMerge(hf, policies, depth, maxPol, true, false);
     }
-    
+
     /**
      * Abstraction happens on a per-group basis of policies to merge.
      * 
@@ -738,13 +744,13 @@ public class AbstractedPolicy extends Policy {
 	for (List<PolicyBlocksPolicy> ps : getSubsets(policies, 2, depth)) {
 	    boolean toSort = false;
 	    AbstractedPolicy abs;
-	    
+
 	    if (greedyMerge) {
 		abs = greedyMerge(hf, ps);
 	    } else {
 		abs = merge(abstractAll(hf, ps));
 	    }
-	    
+
 	    if (abs.size() == 0) {
 		continue;
 	    }
@@ -784,24 +790,28 @@ public class AbstractedPolicy extends Policy {
 	if (toSubtract) {
 	    subtractAll(mergedPolicies);
 	}
-	
+
 	return mergedPolicies;
     }
-    
+
     /**
-     * Performs the subtract operation, as defined by PolicyBlocks
-     * Removes all states in the top scoring policy from the policies with lower scores and repeats
+     * Performs the subtract operation, as defined by PolicyBlocks Removes all
+     * states in the top scoring policy from the policies with lower scores and
+     * repeats
+     * 
      * @param mergedPolicies
      */
-    public static void subtractAll(List<Entry<AbstractedPolicy, Double>> mergedPolicies) {
+    public static void subtractAll(
+	    List<Entry<AbstractedPolicy, Double>> mergedPolicies) {
 	// Subtract operation
 	for (int i = 0; i < mergedPolicies.size(); i++) {
-	    Map<StateHashTuple, GroundedAction> toSubtract = mergedPolicies.get(i).getKey().getPolicy();
-	    
+	    Map<StateHashTuple, GroundedAction> toSubtract = mergedPolicies
+		    .get(i).getKey().getPolicy();
+
 	    for (StateHashTuple sh : toSubtract.keySet()) {
 		for (int j = i + 1; j < mergedPolicies.size(); j++) {
 		    mergedPolicies.get(j).getKey().getPolicy().remove(sh);
-		    
+
 		    if (mergedPolicies.get(j).getKey().size() == 0) {
 			mergedPolicies.remove(j);
 		    }
@@ -812,8 +822,11 @@ public class AbstractedPolicy extends Policy {
 
     /**
      * Performs greedy step-wise merging on the provided source policies
-     * @param hf - state hashing function
-     * @param ops - source policies
+     * 
+     * @param hf
+     *            - state hashing function
+     * @param ops
+     *            - source policies
      * @return the merged policy
      */
     public static AbstractedPolicy greedyMerge(StateHashFactory hf,
@@ -832,83 +845,88 @@ public class AbstractedPolicy extends Policy {
 	// ps <- [(3O, 2X), (2O, 3X), (3O, 3X)]
 	// gcg <- {'O': 2, 'X': 2}
 	// ordering <- ['O', 'X']
-	
+
 	// Sort source policies according the the gcg's ordering
 	Collections.sort(ps, new Comparator<PolicyBlocksPolicy>() {
-		@Override
-		public int compare(PolicyBlocksPolicy arg0,
-			PolicyBlocksPolicy arg1) {
-		    State s0 = sampleState(arg0);
-		    State s1 = sampleState(arg1);
-		    
-		    for (int i = 0; i < ordering.size(); i++) {
-			Integer c0 = s0.getObjectsOfTrueClass(ordering.get(i)).size();
-			Integer c1 = s1.getObjectsOfTrueClass(ordering.get(i)).size();
-			
-			if (c0 == c1) {
-			    continue;
-			} else {
-				// Reverse order to allow the most counted object classes to be first
-				return c1.compareTo(c0);
-			}
+	    @Override
+	    public int compare(PolicyBlocksPolicy arg0, PolicyBlocksPolicy arg1) {
+		State s0 = sampleState(arg0);
+		State s1 = sampleState(arg1);
+
+		for (int i = 0; i < ordering.size(); i++) {
+		    Integer c0 = s0.getObjectsOfTrueClass(ordering.get(i))
+			    .size();
+		    Integer c1 = s1.getObjectsOfTrueClass(ordering.get(i))
+			    .size();
+
+		    if (c0 == c1) {
+			continue;
+		    } else {
+			// Reverse order to allow the most counted object
+			// classes to be first
+			return c1.compareTo(c0);
 		    }
-		    
-		    return 0;
 		}
+
+		return 0;
+	    }
 	});
-	
+
 	// ps <- [(3O, 3X), (3O, 2X), (2O, 3X)]
-	AbstractedPolicy finalAbs = naiveAbstractAll(hf, singletonList(ps.get(0))).get(0);
+	AbstractedPolicy finalAbs = naiveAbstractAll(hf,
+		singletonList(ps.get(0))).get(0);
 	Set<PolicyBlocksPolicy> originals = new HashSet<PolicyBlocksPolicy>(ops);
 	finalAbs.originalPolicies = originals;
 	for (int i = 1; i < ps.size(); i++) {
 	    // Through every policy
-	    AbstractedPolicy curAbs = naiveAbstractAll(hf, singletonList(ps.get(i))).get(0);
+	    AbstractedPolicy curAbs = naiveAbstractAll(hf,
+		    singletonList(ps.get(i))).get(0);
 	    curAbs.originalPolicies = originals;
-	    
+
 	    State s0 = sampleState(finalAbs);
-    	    State s1 = sampleState(curAbs);
-    	    Map<String, Integer> m0 = getObjectCounts(s0);
-    	    Map<String, Integer> m1 = getObjectCounts(s1);
-    	    
+	    State s1 = sampleState(curAbs);
+	    Map<String, Integer> m0 = getObjectCounts(s0);
+	    Map<String, Integer> m1 = getObjectCounts(s1);
+
 	    while (true) {
-    		boolean flag = true;
-    		Set<String> objSet = new HashSet<String>();
-    		objSet.addAll(m0.keySet());
-    		objSet.addAll(m1.keySet());
-    		
-    		for (String obj : objSet) {
-    		    if (m0.get(obj) < 1 && m1.get(obj) < 1) {
-    			System.out.println(m0);
-    			System.out.println(m1);
-    		    } else if (m0.get(obj) > m1.get(obj)) {
-    			m0.put(obj, m0.get(obj)-1);
-    			finalAbs = new AbstractedPolicy(hf, finalAbs, originals, m0);
-    			
-    			flag = false;
-    			break;
-    		    } else if (m1.get(obj) > m0.get(obj)) {
-    			m1.put(obj, m1.get(obj)-1);
-    			curAbs = new AbstractedPolicy(hf, curAbs, originals, m1);
-    			
-    			flag = false;
-    			break;
-    		    }
-    		}
-    		
-    		if (flag) {
-    		    break;
-    		}
+		boolean flag = true;
+		Set<String> objSet = new HashSet<String>();
+		objSet.addAll(m0.keySet());
+		objSet.addAll(m1.keySet());
+
+		for (String obj : objSet) {
+		    if (m0.get(obj) < 1 && m1.get(obj) < 1) {
+			System.out.println(m0);
+			System.out.println(m1);
+		    } else if (m0.get(obj) > m1.get(obj)) {
+			m0.put(obj, m0.get(obj) - 1);
+			finalAbs = new AbstractedPolicy(hf, finalAbs,
+				originals, m0);
+
+			flag = false;
+			break;
+		    } else if (m1.get(obj) > m0.get(obj)) {
+			m1.put(obj, m1.get(obj) - 1);
+			curAbs = new AbstractedPolicy(hf, curAbs, originals, m1);
+
+			flag = false;
+			break;
+		    }
+		}
+
+		if (flag) {
+		    break;
+		}
 	    }
-	    
+
 	    finalAbs = finalAbs.mergeWith(curAbs);
 	}
-	
+
 	finalAbs.originalPolicies = new HashSet<PolicyBlocksPolicy>(ops);
-	
+
 	return finalAbs;
     }
-    
+
     /**
      * Merges the provided policies
      * 
@@ -1089,7 +1107,8 @@ public class AbstractedPolicy extends Policy {
      */
     public static <T> List<List<T>> getSubsets(List<T> set, int alpha, int beta) {
 	if (set == null || set.size() == 0) {
-	    throw new IllegalArgumentException("Cannot create subsets of an empty set.");
+	    throw new IllegalArgumentException(
+		    "Cannot create subsets of an empty set.");
 	} else if (alpha < 1 || alpha > beta || alpha > set.size()) {
 	    throw new IllegalArgumentException("Invalid minimum depth size: "
 		    + alpha + ".");
@@ -1234,12 +1253,12 @@ public class AbstractedPolicy extends Policy {
      * @return whether or not the source policies are the same
      */
     public boolean isSameAbstraction(AbstractedPolicy other) {
-	for (String s: this.gcg.keySet()) {
+	for (String s : this.gcg.keySet()) {
 	    if (this.gcg.get(s) != other.gcg.get(s)) {
 		return false;
 	    }
 	}
-	
+
 	return true;
     }
 
@@ -1400,7 +1419,8 @@ public class AbstractedPolicy extends Policy {
 
     @Override
     public List<ActionProb> getActionDistributionForState(State s) {
-	throw new UnsupportedOperationException("This policy doesn't support action distributions.");
+	throw new UnsupportedOperationException(
+		"This policy doesn't support action distributions.");
     }
 
     @Override
