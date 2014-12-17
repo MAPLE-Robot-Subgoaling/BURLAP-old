@@ -225,7 +225,7 @@ public class TaxiWorldExperiment {
 
     public static void driver(String path, int targetPassNum)
 	    throws IOException {
-	TaxiWorldDomain.MAXPASS = 3;
+	TaxiWorldDomain.MAXPASS = 4;
 	int max = TaxiWorldDomain.MAXPASS;
 	new TaxiWorldDomain().generateDomain();
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();

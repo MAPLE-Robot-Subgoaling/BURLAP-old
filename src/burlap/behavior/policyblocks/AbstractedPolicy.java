@@ -44,6 +44,28 @@ public class AbstractedPolicy extends Policy {
 	this.hashFactory = p.hashFactory;
 	this.gcg = p.gcg;
     }
+    
+    /**
+     * Constructor used to greedy merging
+     * @param hf
+     * @param ip
+     * @param sourcePolicies
+     * @param gcg
+     */
+    public AbstractedPolicy(StateHashFactory hf, AbstractedPolicy ip,
+	    Set<PolicyBlocksPolicy> sourcePolicies, Map<String, Integer> gcg) {
+	this();
+	this.hashFactory = hf;
+	this.originalPolicies = sourcePolicies;
+	
+	List<List<String>> oiCombs = generateAllCombinations(sampleState(ip), gcg);
+	List<Entry<Map<StateHashTuple, GroundedAction>, Double>> policyCandidates = generatePolicyCandidates(
+		hf, ip.getPolicy(), oiCombs, 1);
+
+	if (policyCandidates.size() > 0) {
+	    this.abstractedPolicy = policyCandidates.get(0).getKey();
+	}
+    }
 
     public AbstractedPolicy(StateHashFactory hf, PolicyBlocksPolicy ip,
 	    PolicyBlocksPolicy p) {
@@ -264,7 +286,7 @@ public class AbstractedPolicy extends Policy {
      *         of new policy
      */
     private static double scoreAbstraction(StateHashFactory hf,
-	    PolicyBlocksPolicy ip, Map<StateHashTuple, GroundedAction> np) {
+	    Map<StateHashTuple, GroundedAction> ip, Map<StateHashTuple, GroundedAction> np) {
 	double accuracy = 0.;
 	State withRespectTo = np.keySet().iterator().next().s;
 	Map<StateHashTuple, List<Boolean>> correct = new HashMap<StateHashTuple, List<Boolean>>();
@@ -273,7 +295,7 @@ public class AbstractedPolicy extends Policy {
 	    onames.add(oi.getName());
 	}
 
-	for (Entry<StateHashTuple, GroundedAction> e : ip.policy.entrySet()) {
+	for (Entry<StateHashTuple, GroundedAction> e : ip.entrySet()) {
 	    State newS = formState(e.getKey().s, onames);
 
 	    if (e.getValue().equals(np.get(hf.hashState(newS)))) {
@@ -386,6 +408,85 @@ public class AbstractedPolicy extends Policy {
 		continue;
 	    }
 
+	    double score = scoreAbstraction(hf, ip.policy, newPolicy);
+	    boolean toSort = false;
+
+	    if (policyCandidates.size() < maxCand) {
+		policyCandidates
+			.add(new AbstractMap.SimpleEntry<Map<StateHashTuple, GroundedAction>, Double>(
+				newPolicy, score));
+
+		toSort = true;
+	    } else {
+		if (policyCandidates.get(policyCandidates.size() - 1)
+			.getValue() < score) {
+		    policyCandidates
+			    .set(policyCandidates.size() - 1,
+				    new AbstractMap.SimpleEntry<Map<StateHashTuple, GroundedAction>, Double>(
+					    newPolicy, score));
+
+		    toSort = true;
+		}
+	    }
+
+	    if (toSort) {
+		Collections
+			.sort(policyCandidates,
+				new Comparator<Entry<Map<StateHashTuple, GroundedAction>, Double>>() {
+				    @Override
+				    public int compare(
+					    Entry<Map<StateHashTuple, GroundedAction>, Double> arg0,
+					    Entry<Map<StateHashTuple, GroundedAction>, Double> arg1) {
+					return -arg0.getValue().compareTo(
+						arg1.getValue());
+				    }
+				});
+	    }
+	}
+
+	return policyCandidates;
+    }
+ 
+    /**
+     * For use when Q-values are not present in the provided policy
+     * @param hf
+     * @param ip
+     * @param combinations
+     * @param maxCand
+     * @return
+     */
+    private static List<Entry<Map<StateHashTuple, GroundedAction>, Double>> generatePolicyCandidates(
+	    StateHashFactory hf, Map<StateHashTuple, GroundedAction> ip,
+	    List<List<String>> combinations, int maxCand) {
+	List<Entry<Map<StateHashTuple, GroundedAction>, Double>> policyCandidates = new ArrayList<Entry<Map<StateHashTuple, GroundedAction>, Double>>();
+
+	for (List<String> combination : combinations) {
+	    Map<StateHashTuple, List<GroundedAction>> stateOccurence = new HashMap<StateHashTuple, List<GroundedAction>>();
+	    Map<StateHashTuple, GroundedAction> newPolicy = new HashMap<StateHashTuple, GroundedAction>();
+	    
+	    for (Entry<StateHashTuple, GroundedAction> e : ip.entrySet()) {
+		State curState = formState(e.getKey().s, combination);
+		List<GroundedAction> temp;
+		
+		if (!stateOccurence.containsKey(hf.hashState(curState))) {
+		    temp = new ArrayList<GroundedAction>();
+		    temp.add(e.getValue());
+		    stateOccurence.put(hf.hashState(curState), temp);
+		} else {
+		    stateOccurence.get(hf.hashState(curState)).add(e.getValue());
+		}
+	    }
+	    
+	    for (Entry<StateHashTuple, List<GroundedAction>> e : stateOccurence
+		    .entrySet()) {
+		newPolicy.put(e.getKey(),
+			getAction(e.getValue()));
+	    }
+
+	    if (newPolicy.size() == 0) {
+		continue;
+	    }
+
 	    double score = scoreAbstraction(hf, ip, newPolicy);
 	    boolean toSort = false;
 
@@ -424,7 +525,7 @@ public class AbstractedPolicy extends Policy {
 
 	return policyCandidates;
     }
-
+    
     /**
      * Gets the proper action for an abstracted state
      * 
@@ -437,18 +538,17 @@ public class AbstractedPolicy extends Policy {
 	    List<StateHashTuple> origStates) {
 	List<List<QValue>> qs = new ArrayList<List<QValue>>();
 	QLearning Q = (QLearning) ip.qplanner;
+    	for (StateHashTuple origState : origStates) {
+    	    QLearningStateNode qNode = Q.getStateNode(origState);
+    	    qs.add(qNode.qEntry);
+    	}
 	
-	if (Q == null) {
-	    return null;
-	} else {
-	    for (StateHashTuple origState : origStates) {
-		QLearningStateNode qNode = Q.getStateNode(origState);
-		qs.add(qNode.qEntry);
-	    }
-	    
-	    List<QValue> av = findAverages(st, qs);
-	    return getActionFromQs(av);
-	}
+    	List<QValue> av = findAverages(st, qs);
+	return getActionFromQs(av);
+    }
+    
+    private static GroundedAction getAction(List<GroundedAction> origStates) {
+	return origStates.get(new Random().nextInt(origStates.size()));
     }
 
     /**
@@ -767,7 +867,7 @@ public class AbstractedPolicy extends Policy {
 	    curAbs.originalPolicies = originals;
 	    
 	    State s0 = sampleState(finalAbs);
-    	    State s1 = sampleState(ps.get(i));
+    	    State s1 = sampleState(curAbs);
     	    Map<String, Integer> m0 = getObjectCounts(s0);
     	    Map<String, Integer> m1 = getObjectCounts(s1);
     	    
@@ -776,48 +876,21 @@ public class AbstractedPolicy extends Policy {
     		Set<String> objSet = new HashSet<String>();
     		objSet.addAll(m0.keySet());
     		objSet.addAll(m1.keySet());
-    		//System.out.println(objSet);
     		
     		for (String obj : objSet) {
-    		    if (m0.get(obj) > m1.get(obj)) {
-    			System.err.println("m0 > m1 " + obj + " " + m0.get(obj) + " > " + m1.get(obj) + ".");
-    			Entry<StateHashTuple, GroundedAction> sample = finalAbs.getPolicy().entrySet().iterator().next();
-    			StateHashTuple sampleS = sample.getKey();
-    			sampleS.s.removeObject(sampleS.s.getFirstObjectOfClass(obj));
-    			sampleS.computeHashCode();
-    			sample = new AbstractMap.SimpleEntry<StateHashTuple, GroundedAction>(sampleS, sample.getValue());
+    		    if (m0.get(obj) < 1 && m1.get(obj) < 1) {
+    			System.out.println(m0);
+    			System.out.println(m1);
+    		    } else if (m0.get(obj) > m1.get(obj)) {
     			m0.put(obj, m0.get(obj)-1);
-    			// TODO Make sure this works in place
-    			
-    			PolicyBlocksPolicy tempP = new PolicyBlocksPolicy(0.0);
-    			tempP.policy.put(sample.getKey(), sample.getValue());
-    			
-    			PolicyBlocksPolicy finalP = new PolicyBlocksPolicy(0.0);
-    			finalP.policy = finalAbs.getPolicy();
-    			
-    			finalAbs = new AbstractedPolicy(hf, finalP, singletonList(tempP));
-    			finalAbs.originalPolicies = originals;
-    			// tempP.qpolicy.put(sample.getKey(), null);
+    			finalAbs = new AbstractedPolicy(hf, finalAbs, originals, m0);
     			
     			flag = false;
     			break;
     		    } else if (m1.get(obj) > m0.get(obj)) {
-    			System.err.println("m0 < m1 " + obj + " " + m0.get(obj) + " < " + m1.get(obj) + ".");
-    			Entry<StateHashTuple, GroundedAction> sample = ps.get(i).policy.entrySet().iterator().next();
-    			sample.getKey().s.removeObject(sample.getKey().s.getFirstObjectOfClass(obj));
-    			StateHashTuple sampleS = sample.getKey();
-    			sampleS.s.removeObject(sampleS.s.getFirstObjectOfClass(obj));
-    			sampleS.computeHashCode();
-    			sample = new AbstractMap.SimpleEntry<StateHashTuple, GroundedAction>(sampleS, sample.getValue());
     			m1.put(obj, m1.get(obj)-1);
-    			// TODO Make sure this works in place
+    			curAbs = new AbstractedPolicy(hf, curAbs, originals, m1);
     			
-    			PolicyBlocksPolicy tempP = new PolicyBlocksPolicy(0.0);
-    			tempP.policy.put(sample.getKey(), sample.getValue());
-    			// tempP.qpolicy.put(sample.getKey(), null);
-    			
-    			curAbs = new AbstractedPolicy(hf, ps.get(i), singletonList(tempP));
-    			curAbs.originalPolicies = originals;
     			flag = false;
     			break;
     		    }
@@ -828,15 +901,11 @@ public class AbstractedPolicy extends Policy {
     		}
 	    }
 	    
-	    System.out.println("boop bop");
-	    System.out.println(curAbs.size());
-	    // Now merge the first two items in ps
 	    finalAbs = finalAbs.mergeWith(curAbs);
 	}
+	
 	finalAbs.originalPolicies = new HashSet<PolicyBlocksPolicy>(ops);
 	
-	System.out.println(finalAbs.size());
-	System.err.println("wee woo");
 	return finalAbs;
     }
     
@@ -1165,7 +1234,13 @@ public class AbstractedPolicy extends Policy {
      * @return whether or not the source policies are the same
      */
     public boolean isSameAbstraction(AbstractedPolicy other) {
-	return this.getOriginalPolicies().equals(other.getOriginalPolicies());
+	for (String s: this.gcg.keySet()) {
+	    if (this.gcg.get(s) != other.gcg.get(s)) {
+		return false;
+	    }
+	}
+	
+	return true;
     }
 
     /**
