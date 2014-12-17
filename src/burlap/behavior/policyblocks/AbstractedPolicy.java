@@ -46,13 +46,13 @@ public class AbstractedPolicy extends Policy {
     }
     
     /**
-     * Constructor used to greedy merging
+     * Constructor used for greedy step-wise merging
      * @param hf
      * @param ip
      * @param sourcePolicies
      * @param gcg
      */
-    public AbstractedPolicy(StateHashFactory hf, AbstractedPolicy ip,
+    private AbstractedPolicy(StateHashFactory hf, AbstractedPolicy ip,
 	    Set<PolicyBlocksPolicy> sourcePolicies, Map<String, Integer> gcg) {
 	this();
 	this.hashFactory = hf;
