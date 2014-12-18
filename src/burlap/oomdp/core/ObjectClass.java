@@ -1,6 +1,9 @@
 package burlap.oomdp.core;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Object classes are part of the OO-MDP definition and define the kinds of

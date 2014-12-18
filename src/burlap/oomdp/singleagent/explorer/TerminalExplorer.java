@@ -2,7 +2,9 @@ package burlap.oomdp.singleagent.explorer;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.State;

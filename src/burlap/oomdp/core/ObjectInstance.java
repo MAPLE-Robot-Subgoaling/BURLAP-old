@@ -1,6 +1,8 @@
 package burlap.oomdp.core;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Object Instances are the primary element for defining states. An object

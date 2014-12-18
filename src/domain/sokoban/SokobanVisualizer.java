@@ -8,7 +8,8 @@ import java.lang.reflect.Field;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
-import burlap.oomdp.visualizer.*;
+import burlap.oomdp.visualizer.ObjectPainter;
+import burlap.oomdp.visualizer.Visualizer;
 
 /**
  * Javadoc test

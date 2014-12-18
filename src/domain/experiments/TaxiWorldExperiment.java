@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import domain.taxiworld.TaxiWorldDomain;
 import burlap.behavior.policyblocks.AbstractedOption;
 import burlap.behavior.policyblocks.AbstractedPolicy;
 import burlap.behavior.policyblocks.PolicyBlocksPolicy;
@@ -21,6 +20,7 @@ import burlap.behavior.statehashing.StateHashFactory;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.common.UniformCostRF;
+import domain.taxiworld.TaxiWorldDomain;
 
 public class TaxiWorldExperiment {
     public static long[] runTaxiLearning(PolicyBlocksPolicy policy,

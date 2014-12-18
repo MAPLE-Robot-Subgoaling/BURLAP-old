@@ -1,6 +1,6 @@
 package domain.sokoban;
 
-import java.util.*;
+import java.util.List;
 
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;

@@ -1,6 +1,7 @@
 package burlap.domain.singleagent.gridworld;
 
 import java.util.List;
+
 import burlap.oomdp.auxiliary.StateParser;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectInstance;

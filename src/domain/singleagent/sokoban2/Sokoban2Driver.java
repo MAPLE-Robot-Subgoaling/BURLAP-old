@@ -9,8 +9,6 @@ import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.explorer.VisualExplorer;
 import burlap.oomdp.visualizer.Visualizer;
-import domain.singleagent.sokoban2.Sokoban2Domain;
-import domain.singleagent.sokoban2.Sokoban2Visualizer;
 
 public class Sokoban2Driver {
 

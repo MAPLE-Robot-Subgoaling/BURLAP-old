@@ -1,6 +1,8 @@
 package burlap.debugtools;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Random factory that allows you to logically group various random generators.

@@ -12,13 +12,13 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
-import burlap.behavior.statehashing.DiscreteStateHashFactory;
-import burlap.behavior.statehashing.StateHashFactory;
-import burlap.behavior.statehashing.StateHashTuple;
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.QValue;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.learning.tdmethods.QLearningStateNode;
+import burlap.behavior.statehashing.DiscreteStateHashFactory;
+import burlap.behavior.statehashing.StateHashFactory;
+import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.ObjectInstance;
@@ -892,7 +892,7 @@ public class AbstractedPolicy extends Policy {
 	    if (finalAbs.size() == 0) {
 		return finalAbs;
 	    }
-	    
+
 	    // Through every policy
 	    AbstractedPolicy curAbs = naiveAbstractAll(hf,
 		    singletonList(ps.get(i))).get(0);

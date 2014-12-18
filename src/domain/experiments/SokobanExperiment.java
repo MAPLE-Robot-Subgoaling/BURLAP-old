@@ -15,8 +15,6 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
-import domain.singleagent.sokoban2.Sokoban2Domain;
-import domain.singleagent.sokoban2.Sokoban2RF;
 import burlap.behavior.policyblocks.AbstractedOption;
 import burlap.behavior.policyblocks.AbstractedPolicy;
 import burlap.behavior.policyblocks.PolicyBlocksPolicy;
@@ -34,6 +32,8 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.common.SinglePFTF;
+import domain.singleagent.sokoban2.Sokoban2Domain;
+import domain.singleagent.sokoban2.Sokoban2RF;
 
 public class SokobanExperiment {
     public static PolicyBlocksPolicy runSokobanBaseLearning(
