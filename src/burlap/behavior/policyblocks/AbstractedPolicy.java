@@ -889,6 +889,10 @@ public class AbstractedPolicy extends Policy {
 	Set<PolicyBlocksPolicy> originals = new HashSet<PolicyBlocksPolicy>(ops);
 	finalAbs.originalPolicies = originals;
 	for (int i = 1; i < ps.size(); i++) {
+	    if (finalAbs.size() == 0) {
+		return finalAbs;
+	    }
+	    
 	    // Through every policy
 	    AbstractedPolicy curAbs = naiveAbstractAll(hf,
 		    singletonList(ps.get(i))).get(0);
@@ -931,8 +935,6 @@ public class AbstractedPolicy extends Policy {
 	    finalAbs = finalAbs.mergeWith(curAbs);
 	}
 
-	finalAbs.originalPolicies = new HashSet<PolicyBlocksPolicy>(ops);
-
 	return finalAbs;
     }
 
@@ -973,7 +975,7 @@ public class AbstractedPolicy extends Policy {
 	AbstractedPolicy merged = new AbstractedPolicy(newPolicies.get(0));
 
 	for (int i = 1; i < newPolicies.size(); i++) {
-	    merged = merged.mergeWith(newPolicies.get(i));
+	    merged = merged.mergeWith(newPolicies.get(i), isNaive);
 	}
 
 	return merged;

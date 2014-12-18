@@ -199,9 +199,9 @@ public class SokobanExperiment {
     }
 
     public static void driver(String path) throws IOException {
-	int episodes = 10000;
-	double epsilon = 0.5;
-	double reward = 100;
+	int episodes = 1000;
+	double epsilon = 0.01;
+	double reward = 2;
 
 	Sokoban2Domain dgen = new Sokoban2Domain();
 	Domain domain = dgen.generateDomain();
