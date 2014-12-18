@@ -238,7 +238,7 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSPASS).attributeList);
 	double epsilon = 0.1;
-	int episodes = 100;
+	int episodes = 10000;
 	long startTime = System.currentTimeMillis();
 	// Offset must always be one, or there will be value errors with
 	// ATTCARRY
@@ -246,8 +246,8 @@ public class TaxiWorldExperiment {
 	// as well
 	// If MAXPASS must be set higher, the domain must be regenerated
 
-	int[][][] passengers = new int[2][][];
-	for (int i = 0; i < 2; i++) {
+	int[][][] passengers = new int[5][][];
+	for (int i = 0; i < 5; i++) {
 	    int j = new Random().nextInt(max) + 1;
 	    TaxiWorldDomain.MAXPASS = j;
 	    new TaxiWorldDomain().generateDomain();
@@ -259,7 +259,7 @@ public class TaxiWorldExperiment {
 	List<PolicyBlocksPolicy> toMerge = driveBaseLearning(hf, passengers,
 		episodes, 0.01, path);
 	long uTime = System.currentTimeMillis();
-	int depth = 2;
+	int depth = 3;
 
 	System.out.println("Starting power merge with depth " + depth + ".");
 	Entry<AbstractedPolicy, Double> absP = AbstractedPolicy.powerMerge(hf,

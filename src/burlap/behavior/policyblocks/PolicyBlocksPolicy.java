@@ -82,4 +82,16 @@ public class PolicyBlocksPolicy extends EpsilonGreedy {
     public int size() {
 	return policy.size();
     }
+
+    public Map<StateHashTuple, GroundedAction> getPolicy() {
+	return policy;
+    }
+
+    public Map<StateHashTuple, List<QValue>> getQPolicy() {
+	return qpolicy;
+    }
+
+    public QLearning getLearner() {
+	return (QLearning) qplanner;
+    }
 }

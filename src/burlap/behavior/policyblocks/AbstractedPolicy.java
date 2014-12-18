@@ -92,10 +92,10 @@ public class AbstractedPolicy extends Policy {
 	// Generate the GCG of the state
 	// Generate every combination of GCG mappings for the original policy
 	// Score each generated combination of GCG mappings
-	State ipS = ip.policy.keySet().iterator().next().s;
+	State ipS = sampleState(ip);
 	List<State> psS = new ArrayList<State>();
 	for (PolicyBlocksPolicy p : ps) {
-	    psS.add(p.policy.keySet().iterator().next().s);
+	    psS.add(sampleState(p));
 	}
 	psS.add(ipS);
 	// If there exists no GCG between the states provided, the final
@@ -244,6 +244,7 @@ public class AbstractedPolicy extends Policy {
 	    for (ObjectInstance oi : s.getObjectsOfTrueClass(e.getKey())) {
 		objNames.add(oi.getName());
 	    }
+
 	    // Only want the kth subset
 	    List<List<String>> subsets = getSubsets(objNames, e.getValue(),
 		    e.getValue());
@@ -291,7 +292,7 @@ public class AbstractedPolicy extends Policy {
 	    Map<StateHashTuple, GroundedAction> ip,
 	    Map<StateHashTuple, GroundedAction> np) {
 	double accuracy = 0.;
-	State withRespectTo = np.keySet().iterator().next().s;
+	State withRespectTo = sampleState(np);
 	Map<StateHashTuple, List<Boolean>> correct = new HashMap<StateHashTuple, List<Boolean>>();
 	List<String> onames = new ArrayList<String>();
 	for (ObjectInstance oi : withRespectTo.getAllObjects()) {
@@ -351,7 +352,7 @@ public class AbstractedPolicy extends Policy {
      * @return a seemingly random state
      */
     public static State sampleState(PolicyBlocksPolicy p) {
-	return p.policy.keySet().iterator().next().s;
+	return sampleState(p.getPolicy());
     }
 
     /**
@@ -361,7 +362,11 @@ public class AbstractedPolicy extends Policy {
      * @return a seemingly random state
      */
     public static State sampleState(AbstractedPolicy p) {
-	return p.getPolicy().keySet().iterator().next().s;
+	return sampleState(p.getPolicy());
+    }
+
+    public static State sampleState(Map<StateHashTuple, GroundedAction> p) {
+	return p.keySet().iterator().next().s;
     }
 
     public static Map<String, Integer> getObjectCounts(State s) {
@@ -391,7 +396,8 @@ public class AbstractedPolicy extends Policy {
 	for (List<String> combination : combinations) {
 	    Map<StateHashTuple, List<StateHashTuple>> stateOccurence = new HashMap<StateHashTuple, List<StateHashTuple>>();
 	    Map<StateHashTuple, GroundedAction> newPolicy = new HashMap<StateHashTuple, GroundedAction>();
-	    for (Entry<StateHashTuple, GroundedAction> e : ip.policy.entrySet()) {
+	    for (Entry<StateHashTuple, GroundedAction> e : ip.getPolicy()
+		    .entrySet()) {
 		State curState = formState(e.getKey().s, combination);
 		List<StateHashTuple> temp;
 		if (!stateOccurence.containsKey(hf.hashState(curState))) {
@@ -413,7 +419,7 @@ public class AbstractedPolicy extends Policy {
 		continue;
 	    }
 
-	    double score = scoreAbstraction(hf, ip.policy, newPolicy);
+	    double score = scoreAbstraction(hf, ip.getPolicy(), newPolicy);
 	    boolean toSort = false;
 
 	    if (policyCandidates.size() < maxCand) {
@@ -522,8 +528,8 @@ public class AbstractedPolicy extends Policy {
 				    public int compare(
 					    Entry<Map<StateHashTuple, GroundedAction>, Double> arg0,
 					    Entry<Map<StateHashTuple, GroundedAction>, Double> arg1) {
-					return -arg0.getValue().compareTo(
-						arg1.getValue());
+					return arg1.getValue().compareTo(
+						arg0.getValue());
 				    }
 				});
 	    }
@@ -549,11 +555,11 @@ public class AbstractedPolicy extends Policy {
 	    qs.add(qNode.qEntry);
 	}
 
-	List<QValue> av = findAverages(st, qs);
-	return getActionFromQs(av);
+	return getActionFromQs(findAverages(st, qs));
     }
 
     private static GroundedAction getAction(List<GroundedAction> origStates) {
+	// return mostCommonElement(origStates);
 	return origStates.get(new Random().nextInt(origStates.size()));
     }
 
@@ -568,6 +574,7 @@ public class AbstractedPolicy extends Policy {
 	List<QValue> best = new ArrayList<QValue>();
 	best.add(av.get(0));
 	double highest = av.get(0).q;
+
 	for (QValue q : av) {
 	    if (q.q > highest) {
 		highest = q.q;
@@ -621,9 +628,8 @@ public class AbstractedPolicy extends Policy {
 	abs.hashFactory = hf;
 	abs.originalPolicies.add(p);
 	abs.originalPolicies.addAll(origPs);
-	abs.abstractedPolicy = p.policy;
-	abs.gcg = greatestCommonGeneralization(singletonList(p.policy.keySet()
-		.iterator().next().s));
+	abs.abstractedPolicy = p.getPolicy();
+	abs.gcg = greatestCommonGeneralization(singletonList(sampleState(p)));
 
 	return abs;
     }
@@ -701,7 +707,7 @@ public class AbstractedPolicy extends Policy {
 	for (Entry<StateHashTuple, GroundedAction> e : p.abstractedPolicy
 		.entrySet()) {
 	    for (PolicyBlocksPolicy pbp : policies) {
-		if (e.getValue().equals(pbp.policy.get(e.getKey()))) {
+		if (e.getValue().equals(pbp.getPolicy().get(e.getKey()))) {
 		    freq++;
 		}
 	    }
@@ -896,8 +902,6 @@ public class AbstractedPolicy extends Policy {
 
 		for (String obj : objSet) {
 		    if (m0.get(obj) < 1 && m1.get(obj) < 1) {
-			System.out.println(m0);
-			System.out.println(m1);
 		    } else if (m0.get(obj) > m1.get(obj)) {
 			m0.put(obj, m0.get(obj) - 1);
 			finalAbs = new AbstractedPolicy(hf, finalAbs,
@@ -951,6 +955,114 @@ public class AbstractedPolicy extends Policy {
 	}
 
 	return merged;
+    }
+
+    public AbstractedPolicy mergeWith(AbstractedPolicy otherPolicy) {
+	if (!isSameAbstraction(otherPolicy)) {
+	    throw new IllegalArgumentException(
+		    "Not the same level of abstraction.");
+	}
+
+	AbstractedPolicy merged = new AbstractedPolicy();
+	merged.hashFactory = this.hashFactory;
+	merged.originalPolicies.addAll(this.originalPolicies);
+	State withRespectTo = sampleState(otherPolicy).copy();
+
+	for (Entry<StateHashTuple, GroundedAction> e : this.abstractedPolicy
+		.entrySet()) {
+	    GroundedAction ga;
+	    if (this.hashFactory instanceof DiscreteStateHashFactory) {
+		ga = otherPolicy.abstractedPolicy.get(e.getKey());
+		if (e.getValue().equals(ga)) {
+		    merged.abstractedPolicy.put(e.getKey(), e.getValue());
+		}
+	    } else {
+		List<State> possibleStates = generatePossibleStates(
+			e.getKey().s, withRespectTo);
+		// This is done in the event that while two abstractions will
+		// share
+		// the GCG, they may have different object names (e.g. [p1, p2]
+		// versus [p3, p2])
+		// DiscreteStateHashFactory doesn't care about names, but this
+		// is in
+		// here just as a safety measure for other hashing methods.
+		for (State possibleState : possibleStates) {
+		    ga = otherPolicy.abstractedPolicy.get(this.hashFactory
+			    .hashState(possibleState));
+		    if (e.getValue().equals(ga)) {
+			merged.abstractedPolicy.put(e.getKey(), e.getValue());
+		    }
+		}
+	    }
+	}
+
+	return merged;
+    }
+
+    /**
+     * Generates every possible arrangement of object classes in s1 with respect
+     * to those in s2. Used in checking for equality in the merge function.
+     * 
+     * @param s1
+     * @param s2
+     * @return
+     */
+    public static List<State> generatePossibleStates(State s1, State s2) {
+	List<State> combs = new ArrayList<State>();
+	boolean firstPass = true;
+
+	for (String obClass : s1.getObjectClassesPresent()) {
+	    List<ObjectInstance> oisOfClass = new ArrayList<ObjectInstance>();
+	    oisOfClass.addAll(s2.getObjectsOfTrueClass(obClass));
+	    List<List<ObjectInstance>> oisPerms = permutations(oisOfClass);
+	    int origSize = combs.size();
+	    combs = multiplyList(combs, oisPerms.size());
+
+	    if (s1.getObjectsOfTrueClass(obClass).size() != s2
+		    .getObjectsOfTrueClass(obClass).size()) {
+		throw new IllegalArgumentException(
+			"States are not on the same level of abstraction.");
+	    }
+	    
+
+	    int c = 0;
+	    for (List<ObjectInstance> oisPerm : oisPerms) {
+		if (firstPass) {
+		    State newS = s1.copy();
+
+		    int k = 0;
+		    for (ObjectInstance oi : newS
+			    .getObjectsOfTrueClass(obClass)) {
+			oi.setName(oisPerm.get(k).getName());
+			k++;
+		    }
+
+		    combs.add(newS);
+		} else {
+		    for (int i = 0; i < origSize; i++) {
+			int index = (c * origSize) + i;
+			State newS = combs.get(index).copy();
+
+			int k = 0;
+			for (ObjectInstance oi : newS
+				.getObjectsOfTrueClass(obClass)) {
+			    oi.setName(oisPerm.get(k).getName());
+			    k++;
+			}
+
+			combs.set(index, newS);
+		    }
+		}
+
+		c++;
+	    }
+
+	    if (firstPass) {
+		firstPass = false;
+	    }
+	}
+
+	return combs;
     }
 
     /**
@@ -1043,7 +1155,7 @@ public class AbstractedPolicy extends Policy {
     }
 
     /**
-     * Creates a list of size * factory through item repetition
+     * Creates a list of size * factor through item repetition
      * 
      * @param l
      * @param factor
@@ -1203,49 +1315,6 @@ public class AbstractedPolicy extends Policy {
 	return c;
     }
 
-    public AbstractedPolicy mergeWith(AbstractedPolicy otherPolicy) {
-	if (!isSameAbstraction(otherPolicy)) {
-	    throw new IllegalArgumentException(
-		    "Not the same level of abstraction.");
-	}
-
-	AbstractedPolicy merged = new AbstractedPolicy();
-	merged.hashFactory = this.hashFactory;
-	merged.originalPolicies.addAll(this.originalPolicies);
-	State withRespectTo = otherPolicy.getPolicy().keySet().iterator()
-		.next().s.copy();
-
-	for (Entry<StateHashTuple, GroundedAction> e : this.abstractedPolicy
-		.entrySet()) {
-	    GroundedAction ga;
-	    if (this.hashFactory instanceof DiscreteStateHashFactory) {
-		ga = otherPolicy.abstractedPolicy.get(e.getKey());
-		if (e.getValue().equals(ga)) {
-		    merged.abstractedPolicy.put(e.getKey(), e.getValue());
-		}
-	    } else {
-		List<State> possibleStates = generatePossibleStates(
-			e.getKey().s, withRespectTo);
-		// This is done in the event that while two abstractions will
-		// share
-		// the GCG, they may have different object names (e.g. [p1, p2]
-		// versus [p3, p2])
-		// DiscreteStateHashFactory doesn't care about names, but this
-		// is in
-		// here just as a safety measure for other hashing methods.
-		for (State possibleState : possibleStates) {
-		    ga = otherPolicy.abstractedPolicy.get(this.hashFactory
-			    .hashState(possibleState));
-		    if (e.getValue().equals(ga)) {
-			merged.abstractedPolicy.put(e.getKey(), e.getValue());
-		    }
-		}
-	    }
-	}
-
-	return merged;
-    }
-
     /**
      * Checks if the original policies are equal
      * 
@@ -1293,71 +1362,6 @@ public class AbstractedPolicy extends Policy {
     }
 
     /**
-     * Generates every possible arrangement of object classes in s1 with respect
-     * to those in s2. Used in checking for equality in the merge function.
-     * 
-     * @param s1
-     * @param s2
-     * @return
-     */
-    public static List<State> generatePossibleStates(State s1, State s2) {
-	List<State> combs = new ArrayList<State>();
-	boolean firstPass = true;
-
-	for (String obClass : s1.getObjectClassesPresent()) {
-	    List<ObjectInstance> oisOfClass = new ArrayList<ObjectInstance>();
-	    oisOfClass.addAll(s2.getObjectsOfTrueClass(obClass));
-	    List<List<ObjectInstance>> oisPerms = permutations(oisOfClass);
-	    int origSize = combs.size();
-	    combs = multiplyList(combs, oisPerms.size());
-
-	    if (s1.getObjectsOfTrueClass(obClass).size() != s2
-		    .getObjectsOfTrueClass(obClass).size()) {
-		throw new IllegalArgumentException(
-			"States are not on the same level of abstraction.");
-	    }
-
-	    int c = 0;
-	    for (List<ObjectInstance> oisPerm : oisPerms) {
-		if (firstPass) {
-		    State newS = s1.copy();
-
-		    int k = 0;
-		    for (ObjectInstance oi : newS
-			    .getObjectsOfTrueClass(obClass)) {
-			oi.setName(oisPerm.get(k).getName());
-			k++;
-		    }
-
-		    combs.add(newS);
-		} else {
-		    for (int i = 0; i < origSize; i++) {
-			int index = (c * origSize) + i;
-			State newS = combs.get(index).copy();
-
-			int k = 0;
-			for (ObjectInstance oi : newS
-				.getObjectsOfTrueClass(obClass)) {
-			    oi.setName(oisPerm.get(k).getName());
-			    k++;
-			}
-
-			combs.set(index, newS);
-		    }
-		}
-
-		c++;
-	    }
-
-	    if (firstPass) {
-		firstPass = false;
-	    }
-	}
-
-	return combs;
-    }
-
-    /**
      * Gets the abstracted policy
      * 
      * @return abstractedPolicy
@@ -1384,7 +1388,7 @@ public class AbstractedPolicy extends Policy {
      * 
      * @return hashFactory
      */
-    public StateHashFactory getHashingFactory() {
+    public StateHashFactory getHashFactory() {
 	return hashFactory;
     }
 
@@ -1419,8 +1423,7 @@ public class AbstractedPolicy extends Policy {
 
     @Override
     public List<ActionProb> getActionDistributionForState(State s) {
-	throw new UnsupportedOperationException(
-		"This policy doesn't support action distributions.");
+	throw new UnsupportedOperationException();
     }
 
     @Override
