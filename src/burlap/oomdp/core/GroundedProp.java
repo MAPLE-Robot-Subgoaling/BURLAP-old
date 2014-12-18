@@ -29,6 +29,7 @@ public class GroundedProp implements Cloneable {
 	params = par;
     }
 
+    @Override
     public Object clone() {
 	try {
 	    return super.clone();
@@ -56,6 +57,7 @@ public class GroundedProp implements Cloneable {
      * groundedProp is specified by two parameters (ob1, ob2) then the returned
      * format is: "PFName(ob1, ob2)"
      */
+    @Override
     public String toString() {
 	StringBuffer buf = new StringBuffer();
 
@@ -71,6 +73,7 @@ public class GroundedProp implements Cloneable {
 	return buf.toString();
     }
 
+    @Override
     public boolean equals(Object obj) {
 	if (this == obj) {
 	    return true;

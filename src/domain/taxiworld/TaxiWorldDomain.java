@@ -125,7 +125,7 @@ public class TaxiWorldDomain implements DomainGenerator {
 
 	for (int i = 0; i < max; i++) {
 	    Integer[] temp = open.get(rand.nextInt(open.size()));
-	    spots[i] = new int[] { (int) temp[0], (int) temp[1] };
+	    spots[i] = new int[] { temp[0], temp[1] };
 	}
 
 	return spots;

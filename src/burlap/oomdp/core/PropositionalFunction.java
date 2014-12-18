@@ -312,6 +312,7 @@ public abstract class PropositionalFunction {
      */
     public abstract boolean isTrue(State s, String[] params);
 
+    @Override
     public boolean equals(Object obj) {
 	PropositionalFunction op = (PropositionalFunction) obj;
 	if (op.name.equals(name))
@@ -319,10 +320,12 @@ public abstract class PropositionalFunction {
 	return false;
     }
 
+    @Override
     public String toString() {
 	return this.name;
     }
 
+    @Override
     public int hashCode() {
 	return name.hashCode();
     }

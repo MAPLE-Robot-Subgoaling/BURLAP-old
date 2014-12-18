@@ -117,7 +117,7 @@ public class DiscreteValue extends Value {
 	if (this.discVal == -1) {
 	    throw new UnsetValueException();
 	}
-	return (double) this.discVal;
+	return this.discVal;
     }
 
     @Override

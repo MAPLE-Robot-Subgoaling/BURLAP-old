@@ -54,6 +54,7 @@ public class Visualizer extends MultiLayerRenderer {
      * @param c
      *            the background color of the canvas
      */
+    @Override
     public void setBGColor(Color c) {
 	this.bgColor = c;
     }

@@ -45,14 +45,6 @@ public class AbstractedPolicy extends Policy {
 	this.gcg = p.gcg;
     }
 
-    /**
-     * Constructor used for greedy step-wise merging
-     * 
-     * @param hf
-     * @param ip
-     * @param sourcePolicies
-     * @param gcg
-     */
     private AbstractedPolicy(StateHashFactory hf, AbstractedPolicy ip,
 	    Set<PolicyBlocksPolicy> sourcePolicies, Map<String, Integer> gcg) {
 	this();
@@ -74,17 +66,6 @@ public class AbstractedPolicy extends Policy {
 	this(hf, ip, singletonList(p));
     }
 
-    /**
-     * Accepts a single initial policy and a set of other initial policies,
-     * abstracts a single abstract policy (the abstraction of the first initial
-     * policy relative to the others).
-     * 
-     * @param sh
-     *            - StateHashFactory is used to go from State - > StateHashTuple
-     *            after abstraction
-     * @param initialPolicy
-     * @param policyList
-     */
     public AbstractedPolicy(StateHashFactory hf, PolicyBlocksPolicy ip,
 	    List<PolicyBlocksPolicy> ps) {
 	this();
@@ -98,6 +79,7 @@ public class AbstractedPolicy extends Policy {
 	    psS.add(sampleState(p));
 	}
 	psS.add(ipS);
+
 	// If there exists no GCG between the states provided, the final
 	// abstracted policy will be empty (this doesn't cause a problem in
 	// merging)
@@ -118,12 +100,13 @@ public class AbstractedPolicy extends Policy {
     }
 
     /**
-     * Abstracts each policy with respect to each other
+     * Abstracts each policy with respect to the others
      * 
+     * @param hf
+     *            - state hash factory
      * @param policies
-     *            - the list of policies to be abstracted with respect to
-     *            another
-     * @return the list of abstracted policies
+     *            - the policies to abstract
+     * @return a list of all abstracted policies
      */
     public static List<AbstractedPolicy> abstractAll(StateHashFactory hf,
 	    List<PolicyBlocksPolicy> policies) {
@@ -147,10 +130,11 @@ public class AbstractedPolicy extends Policy {
     }
 
     /**
-     * Finds the greatest common generalization between all states
+     * Generates the GCG of a list of states
      * 
      * @param ss
-     * @return a mapping from object class to occurrence
+     *            - list of states to sample
+     * @return the GCG of object classes
      */
     public static Map<String, Integer> greatestCommonGeneralization(
 	    List<State> ss) {
@@ -225,11 +209,13 @@ public class AbstractedPolicy extends Policy {
     }
 
     /**
-     * Finds all combinations of object names in the provided state
+     * Generates all combinations of objects with respect to the GCG
      * 
      * @param s
+     *            - state to sample from
      * @param gcg
-     * @return a list of all possible combinations of object names
+     *            - the greatest common generalization
+     * @return the list of all possible object combinations
      */
     public static List<List<String>> generateAllCombinations(State s,
 	    Map<String, Integer> gcg) {
@@ -280,13 +266,15 @@ public class AbstractedPolicy extends Policy {
     }
 
     /**
-     * Scores the abstraction relative to its source policies
+     * Scores the abstraction with respect to the initial policy
      * 
      * @param hf
+     *            - the state hashing factory
      * @param ip
+     *            - the initial policy
      * @param np
-     * @return occurrence in the source policy (normalized by redundancy) / size
-     *         of new policy
+     *            - the new policy
+     * @return a floating point score of similarity to the initial policy
      */
     private static double scoreAbstraction(StateHashFactory hf,
 	    Map<StateHashTuple, GroundedAction> ip,
@@ -295,6 +283,7 @@ public class AbstractedPolicy extends Policy {
 	State withRespectTo = sampleState(np);
 	Map<StateHashTuple, List<Boolean>> correct = new HashMap<StateHashTuple, List<Boolean>>();
 	List<String> onames = new ArrayList<String>();
+
 	for (ObjectInstance oi : withRespectTo.getAllObjects()) {
 	    onames.add(oi.getName());
 	}
@@ -328,65 +317,17 @@ public class AbstractedPolicy extends Policy {
     }
 
     /**
-     * Creates a state that only contains the objects in object names
-     * 
-     * @param s
-     * @param onames
-     * @return a new reduced state
-     */
-    public static State formState(State s, List<String> onames) {
-	State newS = new State();
-	for (ObjectInstance oi : s.getAllObjects()) {
-	    if (onames.contains(oi.getName())) {
-		newS.addObject(oi);
-	    }
-	}
-
-	return newS;
-    }
-
-    /**
-     * Samples a state from the policy provided
-     * 
-     * @param p
-     * @return a seemingly random state
-     */
-    public static State sampleState(PolicyBlocksPolicy p) {
-	return sampleState(p.getPolicy());
-    }
-
-    /**
-     * Samples a state from the policy provided
-     * 
-     * @param p
-     * @return a seemingly random state
-     */
-    public static State sampleState(AbstractedPolicy p) {
-	return sampleState(p.getPolicy());
-    }
-
-    public static State sampleState(Map<StateHashTuple, GroundedAction> p) {
-	return p.keySet().iterator().next().s;
-    }
-
-    public static Map<String, Integer> getObjectCounts(State s) {
-	Map<String, Integer> cs = new HashMap<String, Integer>();
-	List<List<ObjectInstance>> os = s.getAllObjectsByTrueClass();
-
-	for (List<ObjectInstance> o : os) {
-	    cs.put(o.get(0).getObjectClass().name, o.size());
-	}
-
-	return cs;
-    }
-
-    /**
-     * Generates all policy candidates from the list of combinations
+     * Generates maxCand policy candidates, ranked by score
      * 
      * @param hf
+     *            - the state hash factory
      * @param ip
+     *            - the initial policy
      * @param combinations
-     * @return all policy candidates
+     *            - all possible object combinations
+     * @param maxCand
+     *            - maximum number of policies to generate
+     * @return the list of maxCand generated policies
      */
     private static List<Entry<Map<StateHashTuple, GroundedAction>, Double>> generatePolicyCandidates(
 	    StateHashFactory hf, PolicyBlocksPolicy ip,
@@ -459,13 +400,17 @@ public class AbstractedPolicy extends Policy {
     }
 
     /**
-     * For use when Q-values are not present in the provided policy
+     * Generates maxCand policy candidates, using a Q-value free tabular policy
      * 
      * @param hf
+     *            - state hash factory
      * @param ip
+     *            - initial policy
      * @param combinations
+     *            - all object combinations
      * @param maxCand
-     * @return
+     *            - max number of policies to generate
+     * @return maxCand policies, ranked by score
      */
     private static List<Entry<Map<StateHashTuple, GroundedAction>, Double>> generatePolicyCandidates(
 	    StateHashFactory hf, Map<StateHashTuple, GroundedAction> ip,
@@ -539,12 +484,16 @@ public class AbstractedPolicy extends Policy {
     }
 
     /**
-     * Gets the proper action for an abstracted state
+     * Averages the Q-values and gets the best action
      * 
      * @param ip
+     *            - initial policy (must have a QComputablePlanner present and
+     *            non-null)
      * @param st
+     *            - abstracted state to sample from
      * @param origStates
-     * @return correct action weighted by q-values
+     *            - original states from ip that map into st
+     * @return the best fitting action
      */
     private static GroundedAction getAction(PolicyBlocksPolicy ip, State st,
 	    List<StateHashTuple> origStates) {
@@ -564,11 +513,11 @@ public class AbstractedPolicy extends Policy {
     }
 
     /**
-     * Gets the best action from the list. If more than one action have the same
-     * q-value, there's a dice roll.
+     * Gets the highest ranking action; dice roll if there are multiple
      * 
      * @param av
-     * @return the action with the highest q-value
+     *            - the list of state-action values
+     * @return the best fitting action
      */
     private static GroundedAction getActionFromQs(List<QValue> av) {
 	List<QValue> best = new ArrayList<QValue>();
@@ -590,11 +539,13 @@ public class AbstractedPolicy extends Policy {
     }
 
     /**
-     * Reduce the lists of q-values by averaging each of the same action
+     * Averages all of the provided Q-values
      * 
      * @param s
+     *            - initial state to sample from
      * @param toAverage
-     * @return the averaged q-values.
+     *            - list of Q-values to average
+     * @return the list of averages Q-values
      */
     private static List<QValue> findAverages(State s,
 	    List<List<QValue>> toAverage) {
@@ -622,6 +573,17 @@ public class AbstractedPolicy extends Policy {
 	return averageQ;
     }
 
+    /**
+     * Abstracts a policy with respect to itself
+     * 
+     * @param hf
+     *            - state hash factory
+     * @param p
+     *            - policy to abstract
+     * @param origPs
+     *            - policies to set as source policies (not sampled from)
+     * @return the new abstracted policy
+     */
     public static AbstractedPolicy naiveAbstraction(StateHashFactory hf,
 	    PolicyBlocksPolicy p, List<PolicyBlocksPolicy> origPs) {
 	AbstractedPolicy abs = new AbstractedPolicy();
@@ -634,6 +596,15 @@ public class AbstractedPolicy extends Policy {
 	return abs;
     }
 
+    /**
+     * Abstracts all provides policies with respect to themselves
+     * 
+     * @param hf
+     *            - state hash factory
+     * @param policies
+     *            - policies to abstract
+     * @return list of abstracted policies
+     */
     public static List<AbstractedPolicy> naiveAbstractAll(StateHashFactory hf,
 	    List<PolicyBlocksPolicy> policies) {
 	List<AbstractedPolicy> abstractedPolicies = new ArrayList<AbstractedPolicy>();
@@ -650,6 +621,19 @@ public class AbstractedPolicy extends Policy {
 	return abstractedPolicies;
     }
 
+    /**
+     * Performs the power merge as described by PolicyBlocks
+     * 
+     * @param hf
+     *            - state hash factory
+     * @param policies
+     *            - policies to merge
+     * @param depth
+     *            - depth of the merge
+     * @param maxPol
+     *            - max number of candidates
+     * @return the list of abstracted policies, along with scores
+     */
     public static List<Entry<AbstractedPolicy, Double>> naivePowerMerge(
 	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
 	    int maxPol) {
@@ -700,6 +684,17 @@ public class AbstractedPolicy extends Policy {
 	return mergedPolicies;
     }
 
+    /**
+     * Scores the policy with respect to sources as defined by PolicyBlocks
+     * 
+     * @param hf
+     *            - state hash factory
+     * @param p
+     *            - newly abstracted policy
+     * @param policies
+     *            - source policies
+     * @return floating point score of fitness
+     */
     public static double naiveScoreMerge(StateHashFactory hf,
 	    AbstractedPolicy p, List<PolicyBlocksPolicy> policies) {
 	int freq = 0;
@@ -717,30 +712,40 @@ public class AbstractedPolicy extends Policy {
     }
 
     /**
-     * Abstraction happens on a per-group basis of policies to merge.
+     * Performs the power merge as defined by P-MODAL
      * 
+     * @param hf
+     *            - state hash factory
      * @param policies
-     *            - the set of policies to be merged
+     *            - source policies
      * @param depth
-     *            - the upper bound of k
-     * @return performs the merge operation on all k-subsets of the list of
-     *         policies
+     *            - depth of the merge
+     * @param maxPol
+     *            - max number of option candidates to create
+     * @return list of option candidates, along with score
      */
     public static List<Entry<AbstractedPolicy, Double>> powerMerge(
 	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
 	    int maxPol) {
-	return powerMerge(hf, policies, depth, maxPol, true, false);
+	return powerMerge(hf, policies, depth, maxPol, true, true);
     }
 
     /**
-     * Abstraction happens on a per-group basis of policies to merge.
+     * Performs the power merge as defined by P-MODAL
      * 
+     * @param hf
+     *            - state hash factory
      * @param policies
-     *            - the set of policies to be merged
+     *            - source policies
      * @param depth
-     *            - the upper bound of k
-     * @return performs the merge operation on all k-subsets of the list of
-     *         policies
+     *            - depth of the merge
+     * @param maxPol
+     *            - max number of or option candidates to create
+     * @param toSubtract
+     *            - whether or not to subtract redundant states in all options
+     * @param greedyMerge
+     *            - whether or not to perform the greedy step-wise merging
+     * @return list of option candidates, along with score
      */
     public static List<Entry<AbstractedPolicy, Double>> powerMerge(
 	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
@@ -801,7 +806,7 @@ public class AbstractedPolicy extends Policy {
     }
 
     /**
-     * Performs the subtract operation, as defined by PolicyBlocks Removes all
+     * Performs the subtract operation, as defined by PolicyBlocks. Removes all
      * states in the top scoring policy from the policies with lower scores and
      * repeats
      * 
@@ -937,7 +942,7 @@ public class AbstractedPolicy extends Policy {
      * @param abstractedPolicies
      *            - this list is modified as part of the recursion (becomes 1
      *            element after all recursion is done).
-     * @return
+     * @return the final merged abstracted policy
      */
     public static AbstractedPolicy merge(
 	    List<AbstractedPolicy> abstractedPolicies) {
@@ -957,6 +962,13 @@ public class AbstractedPolicy extends Policy {
 	return merged;
     }
 
+    /**
+     * Merges this with the provided policy
+     * 
+     * @param otherPolicy
+     *            - policy to merge with
+     * @return the merged policy
+     */
     public AbstractedPolicy mergeWith(AbstractedPolicy otherPolicy) {
 	if (!isSameAbstraction(otherPolicy)) {
 	    throw new IllegalArgumentException(
@@ -1005,7 +1017,7 @@ public class AbstractedPolicy extends Policy {
      * 
      * @param s1
      * @param s2
-     * @return
+     * @return all possible arrangement of s1 with respect to s2
      */
     public static List<State> generatePossibleStates(State s1, State s2) {
 	List<State> combs = new ArrayList<State>();
@@ -1023,7 +1035,6 @@ public class AbstractedPolicy extends Policy {
 		throw new IllegalArgumentException(
 			"States are not on the same level of abstraction.");
 	    }
-	    
 
 	    int c = 0;
 	    for (List<ObjectInstance> oisPerm : oisPerms) {
@@ -1101,10 +1112,75 @@ public class AbstractedPolicy extends Policy {
     }
 
     /**
+     * Creates a state that only contains the objects in object names
+     * 
+     * @param s
+     * @param onames
+     * @return a new reduced state
+     */
+    public static State formState(State s, List<String> onames) {
+	State newS = new State();
+	for (ObjectInstance oi : s.getAllObjects()) {
+	    if (onames.contains(oi.getName())) {
+		newS.addObject(oi);
+	    }
+	}
+
+	return newS;
+    }
+
+    /**
+     * Samples a state from the policy provided
+     * 
+     * @param p
+     * @return a seemingly random state
+     */
+    public static State sampleState(PolicyBlocksPolicy p) {
+	return sampleState(p.getPolicy());
+    }
+
+    /**
+     * Samples a state from the policy provided
+     * 
+     * @param p
+     * @return a seemingly random state
+     */
+    public static State sampleState(AbstractedPolicy p) {
+	return sampleState(p.getPolicy());
+    }
+
+    /**
+     * Samples a state from the policy provided
+     * 
+     * @param p
+     * @return a seemingly random state
+     */
+    public static State sampleState(Map<StateHashTuple, GroundedAction> p) {
+	return p.keySet().iterator().next().s;
+    }
+
+    /**
+     * Gets the count of each object class in a state
+     * 
+     * @param s
+     * @return mapping of object class -> count
+     */
+    public static Map<String, Integer> getObjectCounts(State s) {
+	Map<String, Integer> cs = new HashMap<String, Integer>();
+	List<List<ObjectInstance>> os = s.getAllObjectsByTrueClass();
+
+	for (List<ObjectInstance> o : os) {
+	    cs.put(o.get(0).getObjectClass().name, o.size());
+	}
+
+	return cs;
+    }
+
+    /**
      * Creates a list initialized to its indices
      * 
      * @param size
-     * @return
+     * @return array of [0..size-1]
      */
     public static int[] range(int size) {
 	int[] range = new int[size];
@@ -1181,7 +1257,7 @@ public class AbstractedPolicy extends Policy {
      * Gets all permutations of a list
      * 
      * @param l
-     * @return
+     * @return list of all permutations of l
      */
     public static <T> List<List<T>> permutations(List<T> l) {
 	if (l.size() == 0) {
@@ -1336,7 +1412,7 @@ public class AbstractedPolicy extends Policy {
      * policy
      * 
      * @param ocomb
-     * @return true/false
+     * @return whether or not the abstraction is possible
      */
     public static boolean isProperAbstraction(State s, List<String> ocomb) {
 	Map<String, Boolean> matches = new HashMap<String, Boolean>();
@@ -1364,12 +1440,17 @@ public class AbstractedPolicy extends Policy {
     /**
      * Gets the abstracted policy
      * 
-     * @return abstractedPolicy
+     * @return this.abstractedPolicy
      */
     public Map<StateHashTuple, GroundedAction> getPolicy() {
 	return abstractedPolicy;
     }
 
+    /**
+     * Gets the GCG
+     * 
+     * @return this.gcg
+     */
     public Map<String, Integer> getGCG() {
 	return gcg;
     }

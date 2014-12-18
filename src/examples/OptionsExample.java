@@ -2,7 +2,6 @@ package examples;
 
 import java.util.Iterator;
 
-import burlap.behavior.*;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.learning.LearningAgent;
@@ -59,6 +58,7 @@ public class OptionsExample extends BasicBehavior {
     // //////////////////////////////////////////BEGIN BEAHVIOR
     // EXAMPLES/////////////////////////////////////////////////////////
 
+    @Override
     public void QLearningExample(String outputPath) {
 
 	if (!outputPath.endsWith("/")) {
@@ -87,6 +87,7 @@ public class OptionsExample extends BasicBehavior {
 
     }
 
+    @Override
     public void SarsaLearningExample(String outputPath) {
 
 	if (!outputPath.endsWith("/")) {
@@ -116,6 +117,7 @@ public class OptionsExample extends BasicBehavior {
 
     }
 
+    @Override
     public void BFSExample(String outputPath) {
 
 	if (!outputPath.endsWith("/")) {
@@ -139,6 +141,7 @@ public class OptionsExample extends BasicBehavior {
 
     }
 
+    @Override
     public void DFSExample(String outputPath) {
 
 	if (!outputPath.endsWith("/")) {
@@ -162,6 +165,7 @@ public class OptionsExample extends BasicBehavior {
 
     }
 
+    @Override
     public void AStarExample(String outputPath) {
 
 	if (!outputPath.endsWith("/")) {
@@ -217,6 +221,7 @@ public class OptionsExample extends BasicBehavior {
 
     }
 
+    @Override
     public void ValueIterationExample(String outputPath) {
 
 	if (!outputPath.endsWith("/")) {

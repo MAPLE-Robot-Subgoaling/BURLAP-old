@@ -51,6 +51,7 @@ public class SokobanVisualizer {
 	public RoomPainter(Domain domain) {
 	}
 
+	@Override
 	public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
 		float cWidth, float cHeight) {
 	    float domainXScale = (SokobanDomain.MAXX + 1) - SokobanDomain.MINX;
@@ -119,6 +120,7 @@ public class SokobanVisualizer {
 	public AgentPainter(Domain domain) {
 	}
 
+	@Override
 	public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
 		float cWidth, float cHeight) {
 
@@ -154,6 +156,7 @@ public class SokobanVisualizer {
 	public GoalPainter(Domain domain) {
 	}
 
+	@Override
 	public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
 		float cWidth, float cHeight) {
 
@@ -181,6 +184,7 @@ public class SokobanVisualizer {
 	public BlockPainter(Domain domain) {
 	}
 
+	@Override
 	public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
 		float cWidth, float cHeight) {
 

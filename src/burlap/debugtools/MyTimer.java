@@ -81,7 +81,7 @@ public class MyTimer {
     public double getTime() {
 
 	long diff = stopTime - startTime;
-	double timeInSeconds = (double) diff / 1000.0;
+	double timeInSeconds = diff / 1000.0;
 
 	return timeInSeconds;
 
@@ -104,7 +104,7 @@ public class MyTimer {
      * @return the total time in seconds recorded over all start-stop calls.
      */
     public double getTotalTime() {
-	return (double) sumTime / 1000.0;
+	return sumTime / 1000.0;
     }
 
     /**

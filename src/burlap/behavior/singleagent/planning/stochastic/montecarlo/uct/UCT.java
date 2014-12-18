@@ -410,7 +410,7 @@ public class UCT extends OOMDPPlanner {
      *         to produce the upper confidence Q-value.
      */
     protected double explorationQBoost(int ns, int na) {
-	return explorationBias * Math.sqrt(Math.log(ns) / (double) na);
+	return explorationBias * Math.sqrt(Math.log(ns) / na);
     }
 
     /**

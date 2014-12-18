@@ -65,7 +65,7 @@ public class SokobanExperiment {
 	QLearning Q = new QLearning(domain, rf, tf,
 		Sokoban2Domain.DISCOUNTFACTOR, hf, 0.2,
 		Sokoban2Domain.LEARNINGRATE, p, (int) goodReward);
-	p.setPlanner((OOMDPPlanner) Q);
+	p.setPlanner(Q);
 
 	for (int i = 1; i <= episodes; i++) {
 	    Q.runLearningEpisodeFrom(s).numTimeSteps();
@@ -105,7 +105,7 @@ public class SokobanExperiment {
 	QLearning Q = new QLearning(domain, rf, tf,
 		Sokoban2Domain.DISCOUNTFACTOR, hf, 0.2,
 		Sokoban2Domain.LEARNINGRATE, p, (int) goodReward);
-	p.setPlanner((OOMDPPlanner) Q);
+	p.setPlanner(Q);
 	Q.addNonDomainReferencedAction(o);
 
 	EpisodeAnalysis analyzer = new EpisodeAnalysis();
@@ -164,7 +164,7 @@ public class SokobanExperiment {
 	QLearning Q = new QLearning(domain, rf, tf,
 		Sokoban2Domain.DISCOUNTFACTOR, hf, 0.2,
 		Sokoban2Domain.LEARNINGRATE, p, (int) goodReward);
-	p.setPlanner((OOMDPPlanner) Q);
+	p.setPlanner(Q);
 
 	for (Option o : os) {
 	    Q.addNonDomainReferencedAction(o);

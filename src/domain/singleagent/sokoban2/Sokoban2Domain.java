@@ -32,7 +32,6 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.SADomain;
 import burlap.oomdp.singleagent.common.SinglePFTF;
-import burlap.oomdp.singleagent.common.UniformCostRF;
 import burlap.oomdp.visualizer.Visualizer;
 
 public class Sokoban2Domain implements DomainGenerator {
@@ -741,6 +740,7 @@ public class Sokoban2Domain implements DomainGenerator {
 	    super(name, domain, params);
 	}
 
+	@Override
 	public boolean isTrue(State s, String[] params) {
 	    ObjectInstance o = s.getObject(params[0]);
 	    ObjectInstance r = s.getObject(params[1]);
@@ -804,6 +804,7 @@ public class Sokoban2Domain implements DomainGenerator {
 	    this.PF = domain.getPropFunction(PF);
 	}
 
+	@Override
 	public boolean isTerminal(State s) {
 	    // find the room the agent is in
 	    List<GroundedProp> inRoomGPs = s.getAllGroundedPropsFor(this.PF);
@@ -906,6 +907,7 @@ public class Sokoban2Domain implements DomainGenerator {
 
 	// Gonna Try Calling a TF to see if it works
 	// Technically it's boolean so it should be fine.
+	@Override
 	public boolean satisfies(State s) {
 	    return roomTF.isTerminal(s);
 	}
@@ -915,6 +917,7 @@ public class Sokoban2Domain implements DomainGenerator {
 
 	    return new Iterator<State>() {
 
+		@Override
 		public boolean hasNext() {
 		    State s = new State();
 
@@ -924,10 +927,12 @@ public class Sokoban2Domain implements DomainGenerator {
 		    return roomTF.isTerminal(s);
 		}
 
+		@Override
 		public State next() {
 		    return null;
 		}
 
+		@Override
 		public void remove() {
 		}
 	    };
@@ -949,6 +954,7 @@ public class Sokoban2Domain implements DomainGenerator {
 
 	// Gonna Try Calling a TF to see if it works
 	// Technically it's boolean so it should be fine.
+	@Override
 	public boolean satisfies(State s) {
 	    return roomTF.isTerminal(s);
 	}

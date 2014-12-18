@@ -89,7 +89,7 @@ public class GreedyQPolicy extends Policy implements PlannerDerivedPolicy {
 	}
 
 	List<ActionProb> res = new ArrayList<Policy.ActionProb>();
-	double uniformMax = 1. / (double) numMax;
+	double uniformMax = 1. / numMax;
 	for (int i = 0; i < qValues.size(); i++) {
 	    QValue q = qValues.get(i);
 	    double p = 0.;

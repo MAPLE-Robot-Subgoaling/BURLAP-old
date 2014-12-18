@@ -63,6 +63,7 @@ public class GroundedAction extends AbstractGroundedAction {
      *            the state on which to execute the action
      * @return The state after the action has been executed
      */
+    @Override
     public State executeIn(State s) {
 	return action.performAction(s, params);
     }
@@ -72,6 +73,7 @@ public class GroundedAction extends AbstractGroundedAction {
      * 
      * @return the action name for this grounded action.
      */
+    @Override
     public String actionName() {
 	return this.action.getName();
     }

@@ -161,6 +161,7 @@ public class EpisodeSequenceVisualizer extends JFrame {
 	iterationList.setLayoutOrientation(JList.VERTICAL);
 	iterationList.setVisibleRowCount(-1);
 	iterationList.addListSelectionListener(new ListSelectionListener() {
+	    @Override
 	    public void valueChanged(ListSelectionEvent e) {
 		handleIterationSelection(e);
 	    }
@@ -203,6 +204,7 @@ public class EpisodeSequenceVisualizer extends JFrame {
 	final String ext = ".episode";
 
 	FilenameFilter filter = new FilenameFilter() {
+	    @Override
 	    public boolean accept(File dir, String name) {
 		if (name.endsWith(ext)) {
 		    return true;

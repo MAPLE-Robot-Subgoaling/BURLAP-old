@@ -570,10 +570,12 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner,
 
     }
 
+    @Override
     public EpisodeAnalysis runLearningEpisodeFrom(State initialState) {
 	return this.runLearningEpisodeFrom(initialState, maxEpisodeSize);
     }
 
+    @Override
     public EpisodeAnalysis runLearningEpisodeFrom(State initialState,
 	    int maxSteps) {
 

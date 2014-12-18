@@ -5,12 +5,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.Set;
 
 import domain.taxiworld.TaxiWorldDomain;
 import burlap.behavior.policyblocks.AbstractedOption;
@@ -21,9 +18,7 @@ import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
-import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.State;
-import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.common.UniformCostRF;
 
@@ -46,6 +41,11 @@ public class TaxiWorldExperiment {
     public static long[] runTaxiLearning(PolicyBlocksPolicy policy,
 	    StateHashFactory hf, int[][] passPos, List<? extends Option> os,
 	    int episodes, String filepath, boolean log) throws IOException {
+
+	long sTime = System.currentTimeMillis();
+	if (log) {
+	    System.out.println("Starting " + filepath);
+	}
 	TaxiWorldDomain.MAXPASS = passPos.length;
 	QLearning Q = new QLearning(TaxiWorldDomain.DOMAIN,
 		new UniformCostRF(), TaxiWorldDomain.tf,
@@ -62,19 +62,25 @@ public class TaxiWorldExperiment {
 
 	BufferedWriter bS = null;
 	BufferedWriter bR = null;
+	BufferedWriter bO = null;
 	if (log) {
 	    File fS = new File(filepath + "-Steps.csv");
 	    File fR = new File(filepath + "-Reward.csv");
+	    File fO = new File(filepath + "-Options.csv");
 	    bS = new BufferedWriter(new FileWriter(fS));
 	    bR = new BufferedWriter(new FileWriter(fR));
+	    bO = new BufferedWriter(new FileWriter(fO));
 	    bS.write("Episode,Steps\n");
 	    bR.write("Episode,Reward\n");
+	    bO.write("Episode,Usage\n");
 	}
 	long[] cumulArr = new long[episodes];
 	long cumul = 0;
 	long cumulR = 0;
 
 	for (int i = 0; i < episodes; i++) {
+	    double primTaken = 0.;
+	    double optiTaken = 0.;
 	    TaxiWorldDomain.setAgent(s, 4, 5);
 	    TaxiWorldDomain.setGoal(3, 5);
 
@@ -85,107 +91,35 @@ public class TaxiWorldExperiment {
 
 	    EpisodeAnalysis analyzer = new EpisodeAnalysis();
 	    analyzer = Q.runLearningEpisodeFrom(s);
+
 	    cumul += analyzer.numTimeSteps();
 	    cumulR += ExperimentUtils.sum(analyzer.rewardSequence);
+	    for (GroundedAction a : analyzer.actionSequence) {
+		if (!TaxiWorldDomain.DOMAIN.getActions().contains(a.action)) {
+		    optiTaken++;
+		} else {
+		    primTaken++;
+		}
+	    }
+
 	    if (log) {
 		bS.write((i + 1) + "," + cumul + "\n");
 		bR.write((i + 1) + "," + cumulR + "\n");
+		bO.write((i + 1) + "," + (optiTaken / primTaken) + "\n");
 	    }
+
 	    cumulArr[i] = cumul;
 	}
 	if (log) {
 	    bS.close();
 	    bR.close();
+	    bO.close();
+	    System.out.println(filepath + " finished in "
+		    + (System.currentTimeMillis() - sTime) / 1000.0
+		    + " seconds.");
 	}
 
 	return cumulArr;
-    }
-
-    /**
-     * Generates a random options defined over a random chunk of the state space
-     * 
-     * @param hf
-     * @param actionSpace
-     * @param stateSpace
-     * @return a AbstractedOption randomly initialized
-     */
-    public static AbstractedOption generateRandomOption(StateHashFactory hf,
-	    List<Action> actionSpace, Set<StateHashTuple> stateSpace) {
-	Map<StateHashTuple, GroundedAction> policy = new HashMap<StateHashTuple, GroundedAction>();
-	Random rand = new Random();
-	int count = 0;
-	int max = rand.nextInt((stateSpace.size()));
-
-	// Samples from the state space
-	for (StateHashTuple s : stateSpace) {
-	    if (count >= max) {
-		break;
-	    }
-	    policy.put(
-		    s,
-		    new GroundedAction(actionSpace.get(rand.nextInt(actionSpace
-			    .size())), ""));
-	    count++;
-	}
-
-	System.out.println(count);
-	System.out.println(stateSpace.size());
-	return new AbstractedOption(hf, policy,
-		TaxiWorldDomain.DOMAIN.getActions(), 0., "random");
-    }
-
-    /**
-     * This method generates an option to have the agent take a cyclic path in
-     * the TaxiWorldDomain. Acts as a sanity check to make sure that options
-     * wont cycle forever
-     * 
-     * @param hf
-     * @param actionSpace
-     * @param stateSpace
-     * @return an option representing a cyclic path
-     */
-    public static AbstractedOption generateCyclicOption(StateHashFactory hf,
-	    List<Action> actionSpace, Set<StateHashTuple> stateSpace) {
-	Map<StateHashTuple, GroundedAction> policy = new HashMap<StateHashTuple, GroundedAction>();
-	Action n = null;
-	Action s = null;
-	Action e = null;
-	Action w = null;
-	for (Action a : actionSpace) {
-	    if (a.getName().equals(TaxiWorldDomain.ACTIONNORTH)) {
-		n = a;
-	    } else if (a.getName().equals(TaxiWorldDomain.ACTIONSOUTH)) {
-		s = a;
-	    } else if (a.getName().equals(TaxiWorldDomain.ACTIONEAST)) {
-		e = a;
-	    } else if (a.getName().equals(TaxiWorldDomain.ACTIONWEST)) {
-		w = a;
-	    }
-	}
-
-	if (n == null || s == null || e == null || w == null) {
-	    throw new NullPointerException(
-		    "Action space doesn't define the correct actions for this domain.");
-	}
-	// (1, 5) -> e; (2, 5) -> n; (2, 6) -> w; (1,6) -> s
-	for (StateHashTuple st : stateSpace) {
-	    int x = st.s.getFirstObjectOfClass(TaxiWorldDomain.CLASSAGENT)
-		    .getDiscValForAttribute(TaxiWorldDomain.ATTX);
-	    int y = st.s.getFirstObjectOfClass(TaxiWorldDomain.CLASSAGENT)
-		    .getDiscValForAttribute(TaxiWorldDomain.ATTY);
-	    if (x == 1 && y == 5) {
-		policy.put(st, new GroundedAction(e, ""));
-	    } else if (x == 2 && y == 5) {
-		policy.put(st, new GroundedAction(n, ""));
-	    } else if (x == 2 && y == 6) {
-		policy.put(st, new GroundedAction(w, ""));
-	    } else if (x == 1 && y == 6) {
-		policy.put(st, new GroundedAction(s, ""));
-	    }
-	}
-
-	return new AbstractedOption(hf, policy,
-		TaxiWorldDomain.DOMAIN.getActions(), 0., "cyclic");
     }
 
     public static List<PolicyBlocksPolicy> driveBaseLearning(
@@ -214,18 +148,18 @@ public class TaxiWorldExperiment {
     }
 
     public static void main(String args[]) throws IOException {
-	String path = "/home/hanicho1/taxi05/";
-	for (int i = 1; i <= 1; i++) {
+	String path = "/home/hanicho1/greedy-test/";
+	for (int i = 1; i <= 20; i++) {
 	    String oldPath = path;
 	    path = path + i + "/";
-	    driver(path, 1);
+	    driver(path, 8);
 	    path = oldPath;
 	}
     }
 
     public static void driver(String path, int targetPassNum)
 	    throws IOException {
-	TaxiWorldDomain.MAXPASS = 4;
+	TaxiWorldDomain.MAXPASS = 5;
 	int max = TaxiWorldDomain.MAXPASS;
 	new TaxiWorldDomain().generateDomain();
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
@@ -237,8 +171,10 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.CLASSPASS,
 		TaxiWorldDomain.DOMAIN
 			.getObjectClass(TaxiWorldDomain.CLASSPASS).attributeList);
+
+	double termProb = 0.1;
 	double epsilon = 0.1;
-	int episodes = 10000;
+	int episodes = 100;
 	long startTime = System.currentTimeMillis();
 	// Offset must always be one, or there will be value errors with
 	// ATTCARRY
@@ -246,8 +182,8 @@ public class TaxiWorldExperiment {
 	// as well
 	// If MAXPASS must be set higher, the domain must be regenerated
 
-	int[][][] passengers = new int[5][][];
-	for (int i = 0; i < 5; i++) {
+	int[][][] passengers = new int[20][][];
+	for (int i = 0; i < 20; i++) {
 	    int j = new Random().nextInt(max) + 1;
 	    TaxiWorldDomain.MAXPASS = j;
 	    new TaxiWorldDomain().generateDomain();
@@ -261,23 +197,89 @@ public class TaxiWorldExperiment {
 	long uTime = System.currentTimeMillis();
 	int depth = 3;
 
+	Entry<AbstractedPolicy, Double> absP = null;
+	Entry<AbstractedPolicy, Double> absGP = null;
+
+	PolicyBlocksPolicy qPBP = new PolicyBlocksPolicy(epsilon);
+	PolicyBlocksPolicy pqPBP = new PolicyBlocksPolicy(epsilon);
+	PolicyBlocksPolicy pPBP = new PolicyBlocksPolicy(epsilon);
+	PolicyBlocksPolicy gpPBP = new PolicyBlocksPolicy(epsilon);
+
+	// Merging
+
 	System.out.println("Starting power merge with depth " + depth + ".");
-	Entry<AbstractedPolicy, Double> absP = AbstractedPolicy.powerMerge(hf,
-		toMerge, depth, 1).get(0);
+
+	List<Entry<AbstractedPolicy, Double>> absPs = AbstractedPolicy
+		.powerMerge(hf, toMerge, depth, 1);
+	if (absPs.size() != 0) {
+	    absP = absPs.get(0);
+	    System.out.println("Size: " + absP.getKey().size());
+	    System.out.println("Score: " + absP.getValue());
+	}
+
 	System.out.println("Finished power merge with time "
 		+ (System.currentTimeMillis() - uTime) / 1000.0 + " seconds.");
-	System.out.println("Size: " + absP.getKey().size());
-	System.out.println("Score: " + absP.getValue());
 
 	uTime = System.currentTimeMillis();
 
 	System.out.println("Starting greedy power merge with depth " + depth
 		+ ".");
-	Entry<AbstractedPolicy, Double> absGP = AbstractedPolicy.powerMerge(hf,
-		toMerge, depth, 1, true, true).get(0);
+
+	List<Entry<AbstractedPolicy, Double>> absGPs = AbstractedPolicy
+		.powerMerge(hf, toMerge, depth, 1, true, true);
+	if (absGPs.size() != 0) {
+	    absGP = absGPs.get(0);
+	    System.out.println("Size: " + absGP.getKey().size());
+	    System.out.println("Score: " + absGP.getValue());
+	}
+
 	System.out.println("Finished greedy power merge with time "
 		+ (System.currentTimeMillis() - uTime) / 1000.0 + " seconds.");
-	System.out.println("Size: " + absGP.getKey().size());
-	System.out.println("Score: " + absGP.getValue());
+
+	// Learning
+
+	TaxiWorldDomain.MAXPASS = targetPassNum;
+	new TaxiWorldDomain().generateDomain();
+	int[][] targPassengers = TaxiWorldDomain.getRandomSpots(targetPassNum);
+
+	// Q-Learning
+	runTaxiLearning(qPBP, hf, targPassengers, episodes,
+		path + "Q-Learning", true);
+
+	// Perfect Option
+	AbstractedOption qO = new AbstractedOption(hf, qPBP.getPolicy(),
+		TaxiWorldDomain.DOMAIN.getActions(), termProb, "Q-Learning");
+	runTaxiLearning(pqPBP, hf, targPassengers, qO, episodes, path
+		+ "Perfect", true);
+
+	// P-MODAL
+	if (absP != null) {
+	    AbstractedOption pO = new AbstractedOption(hf, absP.getKey()
+		    .getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
+		    termProb, "P-MODAL");
+	    runTaxiLearning(pPBP, hf, targPassengers, pO, episodes, path
+		    + "P-MODAL", true);
+	} else {
+	    System.out.println("P-MODAL has no available options!");
+	    runTaxiLearning(pPBP, hf, targPassengers, episodes, path
+		    + "P-MODAL", true);
+	}
+
+	// Greedy P-MODAL
+	if (absGP != null) {
+	    AbstractedOption gpO = new AbstractedOption(hf, absGP.getKey()
+		    .getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
+		    termProb, "Greedy P-MODAL");
+	    runTaxiLearning(gpPBP, hf, targPassengers, gpO, episodes, path
+		    + "Greedy-P-MODAL", true);
+	} else {
+	    System.out.println("Greedy P-MODAL has no available options!");
+	    runTaxiLearning(gpPBP, hf, targPassengers, episodes, path
+		    + "Greedy-P-MODAL", true);
+	}
+
+	System.out.println("Experiment finished! Took "
+		+ (System.currentTimeMillis() - startTime) / 1000.0
+		+ " seconds.");
     }
 }

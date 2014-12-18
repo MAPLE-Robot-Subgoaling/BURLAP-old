@@ -47,7 +47,7 @@ public class RealValue extends Value {
 
     @Override
     public void setValue(int v) {
-	this.realVal = (double) v;
+	this.realVal = v;
     }
 
     @Override

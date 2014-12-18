@@ -28,6 +28,12 @@ public class PolicyBlocksPolicy extends EpsilonGreedy {
 	qpolicy = new HashMap<StateHashTuple, List<QValue>>();
     }
 
+    /**
+     * Adds a new entry to the policy
+     * 
+     * @param s
+     * @param a
+     */
     public void addEntry(State s, GroundedAction a) {
 	policy.put(((OOMDPPlanner) qplanner).stateHash(s), a);
     }
@@ -79,18 +85,38 @@ public class PolicyBlocksPolicy extends EpsilonGreedy {
 	return corr;
     }
 
+    /**
+     * Size of the policy
+     * 
+     * @return this.policy.size()
+     */
     public int size() {
 	return policy.size();
     }
 
+    /**
+     * Gets the tabular policy (Q-value free)
+     * 
+     * @return this.policy
+     */
     public Map<StateHashTuple, GroundedAction> getPolicy() {
 	return policy;
     }
 
+    /**
+     * Gets the Q-value policy
+     * 
+     * @return this.qpolicy
+     */
     public Map<StateHashTuple, List<QValue>> getQPolicy() {
 	return qpolicy;
     }
 
+    /**
+     * Gets the QLearning agent
+     * 
+     * @return this.qplanner
+     */
     public QLearning getLearner() {
 	return (QLearning) qplanner;
     }

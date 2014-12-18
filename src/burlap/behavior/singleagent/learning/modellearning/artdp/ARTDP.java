@@ -303,6 +303,7 @@ public class ARTDP extends OOMDPPlanner implements QComputablePlanner,
 	return q;
     }
 
+    @Override
     public void resetPlannerResults() {
 	this.model.resetModel();
 	this.modelPlanner.resetPlannerResults();

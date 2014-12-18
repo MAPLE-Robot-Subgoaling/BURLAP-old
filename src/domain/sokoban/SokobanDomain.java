@@ -257,7 +257,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    door2.setValue(BOTTOMYATTNAME, 3);
 
 	    if (wLocation == -1) {
-		constructor.createMap(st);
+		SokobanDomain.createMap(st);
 	    }
 
 	    ObjectInstance agent = st.getObject(AGENTCLASS + 0);
@@ -501,6 +501,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
      * 
      * @return the initialized domain
      */
+    @Override
     public Domain generateDomain() {
 
 	if (SOKOBANDOMAIN != null) {
@@ -912,6 +913,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 
 	    if (params.length != 2) {
@@ -950,6 +952,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -970,6 +973,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -990,6 +994,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1010,6 +1015,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1030,6 +1036,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1050,6 +1057,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1070,6 +1078,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1090,6 +1099,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1111,6 +1121,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1131,6 +1142,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1151,6 +1163,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1172,6 +1185,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1192,6 +1206,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1212,6 +1227,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1232,6 +1248,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1252,6 +1269,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1272,6 +1290,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1292,6 +1311,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 1) {
 		return false;
@@ -1312,6 +1332,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	public boolean isTrue(State st, String[] params) {
 	    if (params.length != 2) {
 		return false;
@@ -1368,6 +1389,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	protected State performActionHelper(State st, String[] params) {
 	    SokobanDomain.createMap(st);
 	    SokobanDomain.move(st, 0, 1);
@@ -1384,6 +1406,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	protected State performActionHelper(State st, String[] params) {
 	    SokobanDomain.createMap(st);
 	    SokobanDomain.move(st, 0, -1);
@@ -1400,6 +1423,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	protected State performActionHelper(State st, String[] params) {
 	    SokobanDomain.createMap(st);
 	    SokobanDomain.move(st, 1, 0);
@@ -1416,6 +1440,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 	    super(name, domain, parameterClasses);
 	}
 
+	@Override
 	protected State performActionHelper(State st, String[] params) {
 	    SokobanDomain.createMap(st);
 	    SokobanDomain.move(st, -1, 0);
@@ -1547,7 +1572,7 @@ public class SokobanDomain implements DomainGenerator, StateParser {
 		agents++;
 	    }
 	}
-	this.createMap(st);
+	SokobanDomain.createMap(st);
 	return st;
     }
 

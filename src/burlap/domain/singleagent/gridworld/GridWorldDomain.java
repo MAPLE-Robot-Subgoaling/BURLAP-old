@@ -505,6 +505,7 @@ public class GridWorldDomain implements DomainGenerator {
 	    return st;
 	}
 
+	@Override
 	public List<TransitionProbability> getTransitions(State st,
 		String[] params) {
 

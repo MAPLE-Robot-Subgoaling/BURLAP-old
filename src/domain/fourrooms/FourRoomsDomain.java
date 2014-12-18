@@ -1,8 +1,5 @@
 package domain.fourrooms;
 
-import java.util.List;
-import java.util.Map;
-
 import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;

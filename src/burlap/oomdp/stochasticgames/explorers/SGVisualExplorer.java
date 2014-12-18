@@ -187,12 +187,15 @@ public class SGVisualExplorer extends JFrame {
 	getContentPane().add(painter, BorderLayout.CENTER);
 
 	addKeyListener(new KeyListener() {
+	    @Override
 	    public void keyPressed(KeyEvent e) {
 	    }
 
+	    @Override
 	    public void keyReleased(KeyEvent e) {
 	    }
 
+	    @Override
 	    public void keyTyped(KeyEvent e) {
 		handleKeyPressed(e);
 	    }
@@ -201,12 +204,15 @@ public class SGVisualExplorer extends JFrame {
 
 	// also add key listener to the painter in case the focus is changed
 	painter.addKeyListener(new KeyListener() {
+	    @Override
 	    public void keyPressed(KeyEvent e) {
 	    }
 
+	    @Override
 	    public void keyReleased(KeyEvent e) {
 	    }
 
+	    @Override
 	    public void keyTyped(KeyEvent e) {
 		handleKeyPressed(e);
 	    }
@@ -214,12 +220,15 @@ public class SGVisualExplorer extends JFrame {
 	});
 
 	propViewer.addKeyListener(new KeyListener() {
+	    @Override
 	    public void keyPressed(KeyEvent e) {
 	    }
 
+	    @Override
 	    public void keyReleased(KeyEvent e) {
 	    }
 
+	    @Override
 	    public void keyTyped(KeyEvent e) {
 		handleKeyPressed(e);
 	    }

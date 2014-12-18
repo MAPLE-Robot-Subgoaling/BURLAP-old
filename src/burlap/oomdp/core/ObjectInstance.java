@@ -324,6 +324,7 @@ public class ObjectInstance {
 	return obsFeatureVec;
     }
 
+    @Override
     public boolean equals(Object obj) {
 	ObjectInstance op = (ObjectInstance) obj;
 	if (op.name.equals(name))
@@ -360,6 +361,7 @@ public class ObjectInstance {
 
     }
 
+    @Override
     public int hashCode() {
 	return name.hashCode();
     }

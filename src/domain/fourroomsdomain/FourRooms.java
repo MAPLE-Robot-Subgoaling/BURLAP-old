@@ -5,7 +5,6 @@ import java.util.*;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
 import burlap.behavior.singleagent.Policy;
-import burlap.behavior.singleagent.QValue;
 import burlap.behavior.singleagent.learning.LearningAgent;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.learning.tdmethods.SarsaLam;
@@ -20,14 +19,12 @@ import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.GroundedProp;
 import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.Action;
-import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.SADomain;
 import burlap.oomdp.singleagent.common.SingleGoalPFRF;
@@ -198,6 +195,7 @@ public class FourRooms implements DomainGenerator {
 	}
     }
 
+    @Override
     public Domain generateDomain() {
 	if (DOMAIN != null)
 	    return DOMAIN;
@@ -456,6 +454,7 @@ public class FourRooms implements DomainGenerator {
 	 * @return boolean true or false
 	 */
 
+	@Override
 	public boolean satisfies(State s) {
 	    ObjectInstance agentState = s.getObject(CLASSAGENT + 0);
 	    ObjectInstance agentCondition = condition.getObject(CLASSAGENT + 0);

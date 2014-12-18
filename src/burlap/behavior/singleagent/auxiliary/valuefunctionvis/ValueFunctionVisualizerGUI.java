@@ -195,6 +195,7 @@ public class ValueFunctionVisualizerGUI extends JFrame implements ItemListener {
      * Called when the check back for the policy rendering is checked or
      * unchecked.
      */
+    @Override
     public void itemStateChanged(ItemEvent e) {
 
 	Object source = e.getItemSelectable();

@@ -388,6 +388,7 @@ public abstract class Action {
      */
     protected abstract State performActionHelper(State s, String[] params);
 
+    @Override
     public boolean equals(Object obj) {
 	Action op = (Action) obj;
 	if (op.name.equals(name))
@@ -395,6 +396,7 @@ public abstract class Action {
 	return false;
     }
 
+    @Override
     public int hashCode() {
 	return name.hashCode();
     }

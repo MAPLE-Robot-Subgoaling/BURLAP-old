@@ -106,6 +106,7 @@ public class LimitedMemoryDFS extends DFS {
      * @return the SearchNode with a goal, or null if it cannot be found from
      *         this state.
      */
+    @Override
     protected SearchNode dfs(SearchNode n, int depth,
 	    Set<StateHashTuple> statesOnPath) {
 
