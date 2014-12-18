@@ -104,7 +104,7 @@ public class IntValue extends Value {
 
     @Override
     public double getNumericRepresentation() {
-	return this.intVal;
+	return (double) this.intVal;
     }
 
     @Override

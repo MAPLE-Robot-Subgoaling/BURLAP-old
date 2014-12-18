@@ -104,7 +104,7 @@ public class TabularModel extends Model {
 		if (san.nTries == 0) {
 		    return 0.;
 		}
-		return san.sumR / san.nTries;
+		return san.sumR / (double) san.nTries;
 	    }
 	};
     }
