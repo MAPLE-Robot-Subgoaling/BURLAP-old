@@ -642,7 +642,7 @@ public class AbstractedPolicy extends Policy {
 	for (List<PolicyBlocksPolicy> ps : getSubsets(policies, 2, depth)) {
 	    boolean toSort = false;
 
-	    AbstractedPolicy abs = merge(naiveAbstractAll(hf, ps));
+	    AbstractedPolicy abs = merge(naiveAbstractAll(hf, ps), true);
 	    if (abs.size() == 0) {
 		continue;
 	    }
@@ -946,6 +946,23 @@ public class AbstractedPolicy extends Policy {
      */
     public static AbstractedPolicy merge(
 	    List<AbstractedPolicy> abstractedPolicies) {
+	return merge(abstractedPolicies, false);
+    }
+
+    /**
+     * Merges the provided policies
+     * 
+     * @param abstractedPolicies
+     *            - this list is modified as part of the recursion (becomes 1
+     *            element after all recursion is done).
+     * @param isNaive
+     *            - whether or not to consider the level of abstraction for
+     *            validation; if this is true and abstractions are different,
+     *            the merge will be empty
+     * @return the final merged abstracted policy
+     */
+    public static AbstractedPolicy merge(
+	    List<AbstractedPolicy> abstractedPolicies, boolean isNaive) {
 	if (abstractedPolicies == null || abstractedPolicies.isEmpty()) {
 	    throw new IllegalArgumentException(
 		    "Cannot pass a null or empty list of abstracted policies to merge.");
@@ -970,7 +987,23 @@ public class AbstractedPolicy extends Policy {
      * @return the merged policy
      */
     public AbstractedPolicy mergeWith(AbstractedPolicy otherPolicy) {
-	if (!isSameAbstraction(otherPolicy)) {
+	return mergeWith(otherPolicy, false);
+    }
+
+    /**
+     * Merges this with the provided policy
+     * 
+     * @param otherPolicy
+     *            - policy to merge with
+     * @param isNaive
+     *            - whether or not to consider the level of abstraction for
+     *            validation; if this is true and abstractions are different,
+     *            the merge will be empty
+     * @return the merged policy
+     */
+    public AbstractedPolicy mergeWith(AbstractedPolicy otherPolicy,
+	    boolean isNaive) {
+	if (!isNaive && !isSameAbstraction(otherPolicy)) {
 	    throw new IllegalArgumentException(
 		    "Not the same level of abstraction.");
 	}
