@@ -49,7 +49,7 @@ public class TaxiWorldExperiment {
 	TaxiWorldDomain.MAXPASS = passPos.length;
 	QLearning Q = new QLearning(TaxiWorldDomain.DOMAIN,
 		new UniformCostRF(), TaxiWorldDomain.tf,
-		TaxiWorldDomain.DISCOUNTFACTOR, hf, 1,
+		TaxiWorldDomain.DISCOUNTFACTOR, hf, 0,
 		TaxiWorldDomain.LEARNINGRATE, Integer.MAX_VALUE);
 
 	State s = TaxiWorldDomain.getCleanState();
@@ -152,7 +152,7 @@ public class TaxiWorldExperiment {
 	for (int i = 1; i <= 20; i++) {
 	    String oldPath = path;
 	    path = path + i + "/";
-	    driver(path, 8);
+	    driver(path, 7);
 	    path = oldPath;
 	}
     }
@@ -174,7 +174,7 @@ public class TaxiWorldExperiment {
 
 	double termProb = 0.1;
 	double epsilon = 0.1;
-	int episodes = 100;
+	int episodes = 10000;
 	long startTime = System.currentTimeMillis();
 	// Offset must always be one, or there will be value errors with
 	// ATTCARRY
@@ -182,8 +182,8 @@ public class TaxiWorldExperiment {
 	// as well
 	// If MAXPASS must be set higher, the domain must be regenerated
 
-	int[][][] passengers = new int[20][][];
-	for (int i = 0; i < 20; i++) {
+	int[][][] passengers = new int[15][][];
+	for (int i = 0; i < 15; i++) {
 	    int j = new Random().nextInt(max) + 1;
 	    TaxiWorldDomain.MAXPASS = j;
 	    new TaxiWorldDomain().generateDomain();
@@ -210,7 +210,7 @@ public class TaxiWorldExperiment {
 	System.out.println("Starting power merge with depth " + depth + ".");
 
 	List<Entry<AbstractedPolicy, Double>> absPs = AbstractedPolicy
-		.powerMerge(hf, toMerge, depth, 1);
+		.powerMerge(hf, toMerge, depth, 1, true, false);
 	if (absPs.size() != 0) {
 	    absP = absPs.get(0);
 	    System.out.println("Size: " + absP.getKey().size());
