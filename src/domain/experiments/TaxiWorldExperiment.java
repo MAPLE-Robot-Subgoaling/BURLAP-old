@@ -105,7 +105,7 @@ public class TaxiWorldExperiment {
 	    if (log) {
 		bS.write((i + 1) + "," + cumul + "\n");
 		bR.write((i + 1) + "," + cumulR + "\n");
-		bO.write((i + 1) + "," + (optiTaken / primTaken) + "\n");
+		bO.write((i + 1) + "," + (optiTaken / (primTaken+optiTaken)) + "\n");
 	    }
 
 	    cumulArr[i] = cumul;
