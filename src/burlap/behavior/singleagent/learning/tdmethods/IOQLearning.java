@@ -103,8 +103,8 @@ public class IOQLearning extends QLearning {
 		    updateGA = ((Option) updateAction).oneStepActionSelection(
 			    curState.s, absAction.params);
 
-		    if (updateGA != null
-			    && !primAction.action.equals(updateGA.action)) {
+		    if (updateGA == null
+			    || !primAction.action.equals(updateGA.action)) {
 			continue;
 		    }
 		} else {
