@@ -88,7 +88,7 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.setPassenger(s, j, passPos[j - 1][0],
 			passPos[j - 1][1]);
 	    }
-
+	    //Q.setPsi(Q.getPsi() * 0.95);
 	    EpisodeAnalysis analyzer = new EpisodeAnalysis();
 	    analyzer = Q.runLearningEpisodeFrom(s);
 
@@ -149,6 +149,7 @@ public class TaxiWorldExperiment {
 
     public static void main(String args[]) throws IOException {
 	String path = "/home/hanicho1/greedy-test/";
+	//String path = "C:\\Users\\denizen\\Desktop\\Data\\";
 	for (int i = 1; i <= 20; i++) {
 	    String oldPath = path;
 	    path = path + i + "/";

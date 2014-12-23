@@ -27,6 +27,7 @@ import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.behavior.singleagent.planning.commonpolicies.PsiEpsilonGreedy;
 
 /**
  * Tabular Q-learning algorithm [1]. This implementation will work correctly
@@ -146,17 +147,17 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner,
      *            the learning rate
      */
     public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf,
-	    double gamma, StateHashFactory hashingFactory, double qInit,
-	    double learningRate) {
-	this.QLInit(
-		domain,
-		rf,
-		tf,
-		gamma,
-		hashingFactory,
-		new ValueFunctionInitialization.ConstantValueFunctionInitialization(
-			qInit), learningRate, new EpsilonGreedy(this, 0.1),
-		Integer.MAX_VALUE);
+    		double gamma, StateHashFactory hashingFactory, double qInit,
+    		double learningRate) {
+    	this.QLInit(
+    			domain,
+    			rf,
+    			tf,
+    			gamma,
+    			hashingFactory,
+    			new ValueFunctionInitialization.ConstantValueFunctionInitialization(
+    					qInit), learningRate, new EpsilonGreedy(this, 0.1),
+    					Integer.MAX_VALUE);
     }
 
     /**
@@ -186,17 +187,17 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner,
      *            episode for the agent stops trying.
      */
     public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf,
-	    double gamma, StateHashFactory hashingFactory, double qInit,
-	    double learningRate, int maxEpisodeSize) {
-	this.QLInit(
-		domain,
-		rf,
-		tf,
-		gamma,
-		hashingFactory,
-		new ValueFunctionInitialization.ConstantValueFunctionInitialization(
-			qInit), learningRate, new EpsilonGreedy(this, 0.1),
-		maxEpisodeSize);
+    		double gamma, StateHashFactory hashingFactory, double qInit,
+    		double learningRate, int maxEpisodeSize) {
+    	this.QLInit(
+    			domain,
+    			rf,
+    			tf,
+    			gamma,
+    			hashingFactory,
+    			new ValueFunctionInitialization.ConstantValueFunctionInitialization(
+    					qInit), learningRate, new EpsilonGreedy(this, 0.1),
+    					maxEpisodeSize);
     }
 
     /**
@@ -232,16 +233,16 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner,
      *            episode for the agent stops trying.
      */
     public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf,
-	    double gamma, StateHashFactory hashingFactory, double qInit,
-	    double learningRate, Policy learningPolicy, int maxEpisodeSize) {
-	this.QLInit(
-		domain,
-		rf,
-		tf,
-		gamma,
-		hashingFactory,
-		new ValueFunctionInitialization.ConstantValueFunctionInitialization(
-			qInit), learningRate, learningPolicy, maxEpisodeSize);
+    		double gamma, StateHashFactory hashingFactory, double qInit,
+    		double learningRate, Policy learningPolicy, int maxEpisodeSize) {
+    	this.QLInit(
+    			domain,
+    			rf,
+    			tf,
+    			gamma,
+    			hashingFactory,
+    			new ValueFunctionInitialization.ConstantValueFunctionInitialization(
+    					qInit), learningRate, learningPolicy, maxEpisodeSize);
     }
 
     /**
@@ -278,12 +279,64 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner,
      *            episode for the agent stops trying.
      */
     public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf,
-	    double gamma, StateHashFactory hashingFactory,
-	    ValueFunctionInitialization qInit, double learningRate,
-	    Policy learningPolicy, int maxEpisodeSize) {
-	this.QLInit(domain, rf, tf, gamma, hashingFactory, qInit, learningRate,
-		learningPolicy, maxEpisodeSize);
+    		double gamma, StateHashFactory hashingFactory,
+    		ValueFunctionInitialization qInit, double learningRate,
+    		Policy learningPolicy, int maxEpisodeSize) {
+    	this.QLInit(domain, rf, tf, gamma, hashingFactory, qInit, learningRate,
+    			learningPolicy, maxEpisodeSize);
     }
+    //Temporary constructor to allow comparison of psi and non-psi epsilon learning 
+    public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf,
+    		double gamma, StateHashFactory hashingFactory, double qInit,
+    		double learningRate, int maxEpisodeSize, boolean usePsi) {
+    	if(usePsi) {
+    		this.QLInit(
+    				domain,
+    				rf,
+    				tf,
+    				gamma,
+    				hashingFactory,
+    				new ValueFunctionInitialization.ConstantValueFunctionInitialization(
+    						qInit), learningRate, new PsiEpsilonGreedy(this, 0.1, 0.9),
+    						maxEpisodeSize);
+    	}
+    	else {
+    		this.QLInit(
+    				domain,
+    				rf,
+    				tf,
+    				gamma,
+    				hashingFactory,
+    				new ValueFunctionInitialization.ConstantValueFunctionInitialization(
+    						qInit), learningRate, new EpsilonGreedy(this, 0.1),
+    						maxEpisodeSize);
+    	}
+    }
+
+    public double getEpsilon() {
+    	if(learningPolicy instanceof EpsilonGreedy)
+    		return ((EpsilonGreedy)learningPolicy).getEpsilon();
+    	else
+    		return -1;
+    }
+
+    public void setEpsilon(double epsilon) {
+    	if(learningPolicy instanceof EpsilonGreedy)
+    		((EpsilonGreedy)learningPolicy).setEpsilon(epsilon);
+    }
+
+    public double getPsi() {
+    	if(learningPolicy instanceof EpsilonGreedy)
+    		return ((PsiEpsilonGreedy)learningPolicy).getPsi();
+    	else
+    		return -1;
+    }
+
+    public void setPsi(double psi) {
+    	if(learningPolicy instanceof EpsilonGreedy)
+    		((PsiEpsilonGreedy)learningPolicy).setPsi(psi);
+    }
+
 
     /**
      * Initializes the algorithm. By default the agent will only save the last
@@ -315,22 +368,22 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner,
      *            episode for the agent stops trying.
      */
     protected void QLInit(Domain domain, RewardFunction rf,
-	    TerminalFunction tf, double gamma, StateHashFactory hashingFactory,
-	    ValueFunctionInitialization qInitFunction, double learningRate,
-	    Policy learningPolicy, int maxEpisodeSize) {
+    		TerminalFunction tf, double gamma, StateHashFactory hashingFactory,
+    		ValueFunctionInitialization qInitFunction, double learningRate,
+    		Policy learningPolicy, int maxEpisodeSize) {
 
-	this.plannerInit(domain, rf, tf, gamma, hashingFactory);
-	this.qIndex = new HashMap<StateHashTuple, QLearningStateNode>();
-	this.learningRate = new ConstantLR(learningRate);
-	this.learningPolicy = learningPolicy;
-	this.maxEpisodeSize = maxEpisodeSize;
-	this.qInitFunction = qInitFunction;
+    	this.plannerInit(domain, rf, tf, gamma, hashingFactory);
+    	this.qIndex = new HashMap<StateHashTuple, QLearningStateNode>();
+    	this.learningRate = new ConstantLR(learningRate);
+    	this.learningPolicy = learningPolicy;
+    	this.maxEpisodeSize = maxEpisodeSize;
+    	this.qInitFunction = qInitFunction;
 
-	numEpisodesToStore = 1;
-	episodeHistory = new LinkedList<EpisodeAnalysis>();
+    	numEpisodesToStore = 1;
+    	episodeHistory = new LinkedList<EpisodeAnalysis>();
 
-	numEpisodesForPlanning = 1;
-	maxQChangeForPlanningTermination = 0.;
+    	numEpisodesForPlanning = 1;
+    	maxQChangeForPlanningTermination = 0.;
 
     }
 
