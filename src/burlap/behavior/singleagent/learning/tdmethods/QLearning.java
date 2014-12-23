@@ -147,17 +147,17 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner,
      *            the learning rate
      */
     public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf,
-    		double gamma, StateHashFactory hashingFactory, double qInit,
-    		double learningRate) {
-    	this.QLInit(
-    			domain,
-    			rf,
-    			tf,
-    			gamma,
-    			hashingFactory,
-    			new ValueFunctionInitialization.ConstantValueFunctionInitialization(
-    					qInit), learningRate, new EpsilonGreedy(this, 0.1),
-    					Integer.MAX_VALUE);
+	    double gamma, StateHashFactory hashingFactory, double qInit,
+	    double learningRate) {
+	this.QLInit(
+		domain,
+		rf,
+		tf,
+		gamma,
+		hashingFactory,
+		new ValueFunctionInitialization.ConstantValueFunctionInitialization(
+			qInit), learningRate, new EpsilonGreedy(this, 0.1),
+		Integer.MAX_VALUE);
     }
 
     /**
@@ -187,17 +187,17 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner,
      *            episode for the agent stops trying.
      */
     public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf,
-    		double gamma, StateHashFactory hashingFactory, double qInit,
-    		double learningRate, int maxEpisodeSize) {
-    	this.QLInit(
-    			domain,
-    			rf,
-    			tf,
-    			gamma,
-    			hashingFactory,
-    			new ValueFunctionInitialization.ConstantValueFunctionInitialization(
-    					qInit), learningRate, new EpsilonGreedy(this, 0.1),
-    					maxEpisodeSize);
+	    double gamma, StateHashFactory hashingFactory, double qInit,
+	    double learningRate, int maxEpisodeSize) {
+	this.QLInit(
+		domain,
+		rf,
+		tf,
+		gamma,
+		hashingFactory,
+		new ValueFunctionInitialization.ConstantValueFunctionInitialization(
+			qInit), learningRate, new EpsilonGreedy(this, 0.1),
+		maxEpisodeSize);
     }
 
     /**
@@ -233,16 +233,16 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner,
      *            episode for the agent stops trying.
      */
     public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf,
-    		double gamma, StateHashFactory hashingFactory, double qInit,
-    		double learningRate, Policy learningPolicy, int maxEpisodeSize) {
-    	this.QLInit(
-    			domain,
-    			rf,
-    			tf,
-    			gamma,
-    			hashingFactory,
-    			new ValueFunctionInitialization.ConstantValueFunctionInitialization(
-    					qInit), learningRate, learningPolicy, maxEpisodeSize);
+	    double gamma, StateHashFactory hashingFactory, double qInit,
+	    double learningRate, Policy learningPolicy, int maxEpisodeSize) {
+	this.QLInit(
+		domain,
+		rf,
+		tf,
+		gamma,
+		hashingFactory,
+		new ValueFunctionInitialization.ConstantValueFunctionInitialization(
+			qInit), learningRate, learningPolicy, maxEpisodeSize);
     }
 
     /**
@@ -279,64 +279,64 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner,
      *            episode for the agent stops trying.
      */
     public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf,
-    		double gamma, StateHashFactory hashingFactory,
-    		ValueFunctionInitialization qInit, double learningRate,
-    		Policy learningPolicy, int maxEpisodeSize) {
-    	this.QLInit(domain, rf, tf, gamma, hashingFactory, qInit, learningRate,
-    			learningPolicy, maxEpisodeSize);
+	    double gamma, StateHashFactory hashingFactory,
+	    ValueFunctionInitialization qInit, double learningRate,
+	    Policy learningPolicy, int maxEpisodeSize) {
+	this.QLInit(domain, rf, tf, gamma, hashingFactory, qInit, learningRate,
+		learningPolicy, maxEpisodeSize);
     }
-    //Temporary constructor to allow comparison of psi and non-psi epsilon learning 
+
+    // Temporary constructor to allow comparison of psi and non-psi epsilon
+    // learning
     public QLearning(Domain domain, RewardFunction rf, TerminalFunction tf,
-    		double gamma, StateHashFactory hashingFactory, double qInit,
-    		double learningRate, int maxEpisodeSize, boolean usePsi) {
-    	if(usePsi) {
-    		this.QLInit(
-    				domain,
-    				rf,
-    				tf,
-    				gamma,
-    				hashingFactory,
-    				new ValueFunctionInitialization.ConstantValueFunctionInitialization(
-    						qInit), learningRate, new PsiEpsilonGreedy(this, 0.1, 0.9),
-    						maxEpisodeSize);
-    	}
-    	else {
-    		this.QLInit(
-    				domain,
-    				rf,
-    				tf,
-    				gamma,
-    				hashingFactory,
-    				new ValueFunctionInitialization.ConstantValueFunctionInitialization(
-    						qInit), learningRate, new EpsilonGreedy(this, 0.1),
-    						maxEpisodeSize);
-    	}
+	    double gamma, StateHashFactory hashingFactory, double qInit,
+	    double learningRate, int maxEpisodeSize, boolean usePsi) {
+	if (usePsi) {
+	    this.QLInit(
+		    domain,
+		    rf,
+		    tf,
+		    gamma,
+		    hashingFactory,
+		    new ValueFunctionInitialization.ConstantValueFunctionInitialization(
+			    qInit), learningRate, new PsiEpsilonGreedy(this,
+			    0.1, 0.9), maxEpisodeSize);
+	} else {
+	    this.QLInit(
+		    domain,
+		    rf,
+		    tf,
+		    gamma,
+		    hashingFactory,
+		    new ValueFunctionInitialization.ConstantValueFunctionInitialization(
+			    qInit), learningRate, new EpsilonGreedy(this, 0.1),
+		    maxEpisodeSize);
+	}
     }
 
     public double getEpsilon() {
-    	if(learningPolicy instanceof EpsilonGreedy)
-    		return ((EpsilonGreedy)learningPolicy).getEpsilon();
-    	else
-    		return -1;
+	if (learningPolicy instanceof EpsilonGreedy)
+	    return ((EpsilonGreedy) learningPolicy).getEpsilon();
+	else
+	    return -1;
     }
 
     public void setEpsilon(double epsilon) {
-    	if(learningPolicy instanceof EpsilonGreedy)
-    		((EpsilonGreedy)learningPolicy).setEpsilon(epsilon);
+	if (learningPolicy instanceof EpsilonGreedy)
+	    ((EpsilonGreedy) learningPolicy).setEpsilon(epsilon);
     }
 
     public double getPsi() {
-    	if(learningPolicy instanceof EpsilonGreedy)
-    		return ((PsiEpsilonGreedy)learningPolicy).getPsi();
-    	else
-    		return -1;
+	if (learningPolicy instanceof EpsilonGreedy)
+	    return ((PsiEpsilonGreedy) learningPolicy).getPsi();
+	else
+	    return -1;
     }
 
     public void setPsi(double psi) {
-    	if(learningPolicy instanceof EpsilonGreedy)
-    		((PsiEpsilonGreedy)learningPolicy).setPsi(psi);
+	if (learningPolicy instanceof EpsilonGreedy)
+	    ((PsiEpsilonGreedy) learningPolicy).setPsi(psi);
     }
-
 
     /**
      * Initializes the algorithm. By default the agent will only save the last
@@ -368,22 +368,22 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner,
      *            episode for the agent stops trying.
      */
     protected void QLInit(Domain domain, RewardFunction rf,
-    		TerminalFunction tf, double gamma, StateHashFactory hashingFactory,
-    		ValueFunctionInitialization qInitFunction, double learningRate,
-    		Policy learningPolicy, int maxEpisodeSize) {
+	    TerminalFunction tf, double gamma, StateHashFactory hashingFactory,
+	    ValueFunctionInitialization qInitFunction, double learningRate,
+	    Policy learningPolicy, int maxEpisodeSize) {
 
-    	this.plannerInit(domain, rf, tf, gamma, hashingFactory);
-    	this.qIndex = new HashMap<StateHashTuple, QLearningStateNode>();
-    	this.learningRate = new ConstantLR(learningRate);
-    	this.learningPolicy = learningPolicy;
-    	this.maxEpisodeSize = maxEpisodeSize;
-    	this.qInitFunction = qInitFunction;
+	this.plannerInit(domain, rf, tf, gamma, hashingFactory);
+	this.qIndex = new HashMap<StateHashTuple, QLearningStateNode>();
+	this.learningRate = new ConstantLR(learningRate);
+	this.learningPolicy = learningPolicy;
+	this.maxEpisodeSize = maxEpisodeSize;
+	this.qInitFunction = qInitFunction;
 
-    	numEpisodesToStore = 1;
-    	episodeHistory = new LinkedList<EpisodeAnalysis>();
+	numEpisodesToStore = 1;
+	episodeHistory = new LinkedList<EpisodeAnalysis>();
 
-    	numEpisodesForPlanning = 1;
-    	maxQChangeForPlanningTermination = 0.;
+	numEpisodesForPlanning = 1;
+	maxQChangeForPlanningTermination = 0.;
 
     }
 
@@ -657,47 +657,36 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner,
 	    // manage option specifics
 	    double r = 0.;
 	    double discount = this.gamma;
-	    	r = rf.reward(curState.s, action, nextState.s);
-	    	eStepCounter++;
-	    	if (action.action instanceof Option && shouldDecomposeOptions) {
-	    		ea.appendAndMergeEpisodeAnalysis(((Option) action.action)
-	    				.getLastExecutionResults());
-	    	} else {
-	    	    ea.recordTransitionTo(nextState.s, action, r);
-	    	}
-	    //} else {
-	    	// Option o = (Option) action.action;
-	    	// r = o.getLastCumulativeReward();
-	    	// int n = o.getLastNumSteps();
-	    	// discount = Math.pow(this.gamma, n);
-	    	// FIXME
-	    	// eStepCounter += n;
-	    	/*eStepCounter++;
-	    	if (this.shouldDecomposeOptions) {
-	    		ea.appendAndMergeEpisodeAnalysis(o
-	    				.getLastExecutionResults());
-	    	} else {
-	    		ea.recordTransitionTo(nextState.s, action, r);
-	    	}
-	    }*/
-
-	    //for (Action toUpdate: actions) {
-		GroundedAction updateGA = null;
-		QValue curQ = this.getQ(curState, action);
-		double oldQ = curQ.q;
-
-		// TODO intra-option stuff
-	    
-		// update Q-value
-		curQ.q = curQ.q
-			+ this.learningRate.pollLearningRate(curState.s, action)
-			* (r + (discount * maxQ) - curQ.q);
-
-		double deltaQ = Math.abs(oldQ - curQ.q);
-		if (deltaQ > maxQChangeInLastEpisode) {
-		    maxQChangeInLastEpisode = deltaQ;
+	    if (action.action.isPrimitive()) {
+		r = rf.reward(curState.s, action, nextState.s);
+		eStepCounter++;
+		ea.recordTransitionTo(nextState.s, action, r);
+	    } else {
+		Option o = (Option) action.action;
+		r = o.getLastCumulativeReward();
+		int n = o.getLastNumSteps();
+		discount = Math.pow(this.gamma, n);
+		eStepCounter += n;
+		if (this.shouldDecomposeOptions) {
+		    ea.appendAndMergeEpisodeAnalysis(o
+			    .getLastExecutionResults());
+		} else {
+		    ea.recordTransitionTo(nextState.s, action, r);
 		}
-	    //}
+	    }
+
+	    QValue curQ = this.getQ(curState, action);
+	    double oldQ = curQ.q;
+
+	    // update Q-value
+	    curQ.q = curQ.q
+		    + this.learningRate.pollLearningRate(curState.s, action)
+		    * (r + (discount * maxQ) - curQ.q);
+
+	    double deltaQ = Math.abs(oldQ - curQ.q);
+	    if (deltaQ > maxQChangeInLastEpisode) {
+		maxQChangeInLastEpisode = deltaQ;
+	    }
 
 	    // move on
 	    curState = nextState;

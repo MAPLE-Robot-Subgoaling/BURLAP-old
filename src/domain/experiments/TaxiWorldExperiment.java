@@ -13,6 +13,7 @@ import burlap.behavior.policyblocks.AbstractedOption;
 import burlap.behavior.policyblocks.AbstractedPolicy;
 import burlap.behavior.policyblocks.PolicyBlocksPolicy;
 import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.learning.tdmethods.IOQLearning;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
@@ -25,33 +26,42 @@ import domain.taxiworld.TaxiWorldDomain;
 public class TaxiWorldExperiment {
     public static long[] runTaxiLearning(PolicyBlocksPolicy policy,
 	    StateHashFactory hf, int[][] passPos, int episodes,
-	    String filepath, boolean log) throws IOException {
+	    String filepath, boolean log, boolean intraOption)
+	    throws IOException {
 	return runTaxiLearning(policy, hf, passPos, new ArrayList<Option>(),
-		episodes, filepath, log);
+		episodes, filepath, log, intraOption);
     }
 
     public static long[] runTaxiLearning(PolicyBlocksPolicy policy,
 	    StateHashFactory hf, int[][] passPos, Option o, int episodes,
-	    String filepath, boolean log) throws IOException {
+	    String filepath, boolean log, boolean intraOption)
+	    throws IOException {
 	List<Option> os = new ArrayList<Option>();
 	os.add(o);
-	return runTaxiLearning(policy, hf, passPos, os, episodes, filepath, log);
+	return runTaxiLearning(policy, hf, passPos, os, episodes, filepath,
+		log, intraOption);
     }
 
     public static long[] runTaxiLearning(PolicyBlocksPolicy policy,
 	    StateHashFactory hf, int[][] passPos, List<? extends Option> os,
-	    int episodes, String filepath, boolean log) throws IOException {
+	    int episodes, String filepath, boolean log, boolean intraOption)
+	    throws IOException {
 
 	long sTime = System.currentTimeMillis();
 	if (log) {
 	    System.out.println("Starting " + filepath);
 	}
 	TaxiWorldDomain.MAXPASS = passPos.length;
-	QLearning Q = new QLearning(TaxiWorldDomain.DOMAIN,
-		new UniformCostRF(), TaxiWorldDomain.tf,
-		TaxiWorldDomain.DISCOUNTFACTOR, hf, 0,
-		TaxiWorldDomain.LEARNINGRATE, Integer.MAX_VALUE);
-
+	QLearning Q;
+	if (intraOption) {
+	    Q = new IOQLearning(TaxiWorldDomain.DOMAIN, new UniformCostRF(),
+		    TaxiWorldDomain.tf, TaxiWorldDomain.DISCOUNTFACTOR, hf, 0,
+		    TaxiWorldDomain.LEARNINGRATE, Integer.MAX_VALUE);
+	} else {
+	    Q = new QLearning(TaxiWorldDomain.DOMAIN, new UniformCostRF(),
+		    TaxiWorldDomain.tf, TaxiWorldDomain.DISCOUNTFACTOR, hf, 0,
+		    TaxiWorldDomain.LEARNINGRATE, Integer.MAX_VALUE);
+	}
 	State s = TaxiWorldDomain.getCleanState();
 	Q.setLearningPolicy(policy);
 	policy.setPlanner(Q);
@@ -88,7 +98,7 @@ public class TaxiWorldExperiment {
 		TaxiWorldDomain.setPassenger(s, j, passPos[j - 1][0],
 			passPos[j - 1][1]);
 	    }
-	    //Q.setPsi(Q.getPsi() * 0.95);
+	    // Q.setPsi(Q.getPsi() * 0.95);
 	    EpisodeAnalysis analyzer = new EpisodeAnalysis();
 	    analyzer = Q.runLearningEpisodeFrom(s);
 
@@ -105,7 +115,8 @@ public class TaxiWorldExperiment {
 	    if (log) {
 		bS.write((i + 1) + "," + cumul + "\n");
 		bR.write((i + 1) + "," + cumulR + "\n");
-		bO.write((i + 1) + "," + (optiTaken / (primTaken+optiTaken)) + "\n");
+		bO.write((i + 1) + "," + (optiTaken / (primTaken + optiTaken))
+			+ "\n");
 	    }
 
 	    cumulArr[i] = cumul;
@@ -137,7 +148,7 @@ public class TaxiWorldExperiment {
 	    System.out.println("Starting policy " + c + ": MAXPASS="
 		    + TaxiWorldDomain.MAXPASS);
 	    System.out.println(runTaxiLearning(policy, hf, passengers,
-		    episodes, basepath + c, false)[episodes - 1]);
+		    episodes, basepath + c, false, false)[episodes - 1]);
 	    System.out.println("Finished policy: " + c + " in "
 		    + (System.currentTimeMillis() - time) / 1000.0
 		    + " seconds.");
@@ -148,19 +159,19 @@ public class TaxiWorldExperiment {
     }
 
     public static void main(String args[]) throws IOException {
-	String path = "/home/hanicho1/greedy-test/";
-	//String path = "C:\\Users\\denizen\\Desktop\\Data\\";
+	String path = "/home/hanicho1/io-exp/";
+	// String path = "C:\\Users\\denizen\\Desktop\\Data\\";
 	for (int i = 1; i <= 20; i++) {
 	    String oldPath = path;
 	    path = path + i + "/";
-	    driver(path, 7);
+	    driver(path, 5);
 	    path = oldPath;
 	}
     }
 
     public static void driver(String path, int targetPassNum)
 	    throws IOException {
-	TaxiWorldDomain.MAXPASS = 5;
+	TaxiWorldDomain.MAXPASS = 3;
 	int max = TaxiWorldDomain.MAXPASS;
 	new TaxiWorldDomain().generateDomain();
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
@@ -194,11 +205,11 @@ public class TaxiWorldExperiment {
 	}
 
 	List<PolicyBlocksPolicy> toMerge = driveBaseLearning(hf, passengers,
-		episodes, 0.01, path);
+		episodes, 0.1, path);
 	long uTime = System.currentTimeMillis();
 	int depth = 3;
 
-	Entry<AbstractedPolicy, Double> absP = null;
+	// Entry<AbstractedPolicy, Double> absP = null;
 	Entry<AbstractedPolicy, Double> absGP = null;
 
 	PolicyBlocksPolicy qPBP = new PolicyBlocksPolicy(epsilon);
@@ -208,21 +219,20 @@ public class TaxiWorldExperiment {
 
 	// Merging
 
-	System.out.println("Starting power merge with depth " + depth + ".");
-
-	List<Entry<AbstractedPolicy, Double>> absPs = AbstractedPolicy
-		.powerMerge(hf, toMerge, depth, 1, true, false);
-	if (absPs.size() != 0) {
-	    absP = absPs.get(0);
-	    System.out.println("Size: " + absP.getKey().size());
-	    System.out.println("Score: " + absP.getValue());
-	}
-
-	System.out.println("Finished power merge with time "
-		+ (System.currentTimeMillis() - uTime) / 1000.0 + " seconds.");
-
-	uTime = System.currentTimeMillis();
-
+	/*
+	 * System.out.println("Starting power merge with depth " + depth + ".");
+	 * 
+	 * List<Entry<AbstractedPolicy, Double>> absPs = AbstractedPolicy
+	 * .powerMerge(hf, toMerge, depth, 1, true, false); if (absPs.size() !=
+	 * 0) { absP = absPs.get(0); System.out.println("Size: " +
+	 * absP.getKey().size()); System.out.println("Score: " +
+	 * absP.getValue()); }
+	 * 
+	 * System.out.println("Finished power merge with time " +
+	 * (System.currentTimeMillis() - uTime) / 1000.0 + " seconds.");
+	 * 
+	 * uTime = System.currentTimeMillis();
+	 */
 	System.out.println("Starting greedy power merge with depth " + depth
 		+ ".");
 
@@ -245,38 +255,40 @@ public class TaxiWorldExperiment {
 
 	// Q-Learning
 	runTaxiLearning(qPBP, hf, targPassengers, episodes,
-		path + "Q-Learning", true);
+		path + "Q-Learning", true, false);
 
 	// Perfect Option
 	AbstractedOption qO = new AbstractedOption(hf, qPBP.getPolicy(),
 		TaxiWorldDomain.DOMAIN.getActions(), termProb, "Q-Learning");
 	runTaxiLearning(pqPBP, hf, targPassengers, qO, episodes, path
-		+ "Perfect", true);
+		+ "Perfect", true, false);
+	runTaxiLearning(pqPBP, hf, targPassengers, qO, episodes, path
+		+ "IOPerfect", true, true);
 
-	// P-MODAL
-	if (absP != null) {
-	    AbstractedOption pO = new AbstractedOption(hf, absP.getKey()
+	// Non-IO G-P-MODAL
+	if (absGP != null) {
+	    AbstractedOption pO = new AbstractedOption(hf, absGP.getKey()
 		    .getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
 		    termProb, "P-MODAL");
 	    runTaxiLearning(pPBP, hf, targPassengers, pO, episodes, path
-		    + "P-MODAL", true);
+		    + "P-MODAL", true, false);
 	} else {
 	    System.out.println("P-MODAL has no available options!");
 	    runTaxiLearning(pPBP, hf, targPassengers, episodes, path
-		    + "P-MODAL", true);
+		    + "P-MODAL", true, false);
 	}
 
 	// Greedy P-MODAL
 	if (absGP != null) {
 	    AbstractedOption gpO = new AbstractedOption(hf, absGP.getKey()
 		    .getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
-		    termProb, "Greedy P-MODAL");
+		    termProb, "IOP-MODAL");
 	    runTaxiLearning(gpPBP, hf, targPassengers, gpO, episodes, path
-		    + "Greedy-P-MODAL", true);
+		    + "IOP-MODAL", true, true);
 	} else {
 	    System.out.println("Greedy P-MODAL has no available options!");
 	    runTaxiLearning(gpPBP, hf, targPassengers, episodes, path
-		    + "Greedy-P-MODAL", true);
+		    + "IOP-MODAL", true, true);
 	}
 
 	System.out.println("Experiment finished! Took "

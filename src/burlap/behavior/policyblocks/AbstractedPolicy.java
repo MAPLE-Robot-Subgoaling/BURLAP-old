@@ -911,12 +911,12 @@ public class AbstractedPolicy extends Policy {
 
 		for (String obj : objSet) {
 		    if (m0.get(obj) == null) {
-		    	m0.put(obj, 0);
+			m0.put(obj, 0);
 		    }
 		    if (m1.get(obj) == null) {
-		    	m1.put(obj, 0);
+			m1.put(obj, 0);
 		    }
-		    
+
 		    if (m0.get(obj) < 1 && m1.get(obj) < 1) {
 		    } else if (m0.get(obj) > m1.get(obj)) {
 			m0.put(obj, m0.get(obj) - 1);
