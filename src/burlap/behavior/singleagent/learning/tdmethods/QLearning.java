@@ -645,7 +645,6 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner,
 
 	    GroundedAction action = (GroundedAction) learningPolicy
 		    .getAction(curState.s);
-	    QValue curQ = this.getQ(curState, action);
 
 	    StateHashTuple nextState = this.stateHash(action
 		    .executeIn(curState.s));
@@ -658,35 +657,47 @@ public class QLearning extends OOMDPPlanner implements QComputablePlanner,
 	    // manage option specifics
 	    double r = 0.;
 	    double discount = this.gamma;
-	    if (action.action.isPrimitive()) {
-		r = rf.reward(curState.s, action, nextState.s);
-		eStepCounter++;
-		ea.recordTransitionTo(nextState.s, action, r);
-	    } else {
-		Option o = (Option) action.action;
-		r = o.getLastCumulativeReward();
-		int n = o.getLastNumSteps();
-		discount = Math.pow(this.gamma, n);
-		eStepCounter += n;
-		if (this.shouldDecomposeOptions) {
-		    ea.appendAndMergeEpisodeAnalysis(o
-			    .getLastExecutionResults());
-		} else {
-		    ea.recordTransitionTo(nextState.s, action, r);
+	    	r = rf.reward(curState.s, action, nextState.s);
+	    	eStepCounter++;
+	    	if (action.action instanceof Option && shouldDecomposeOptions) {
+	    		ea.appendAndMergeEpisodeAnalysis(((Option) action.action)
+	    				.getLastExecutionResults());
+	    	} else {
+	    	    ea.recordTransitionTo(nextState.s, action, r);
+	    	}
+	    //} else {
+	    	// Option o = (Option) action.action;
+	    	// r = o.getLastCumulativeReward();
+	    	// int n = o.getLastNumSteps();
+	    	// discount = Math.pow(this.gamma, n);
+	    	// FIXME
+	    	// eStepCounter += n;
+	    	/*eStepCounter++;
+	    	if (this.shouldDecomposeOptions) {
+	    		ea.appendAndMergeEpisodeAnalysis(o
+	    				.getLastExecutionResults());
+	    	} else {
+	    		ea.recordTransitionTo(nextState.s, action, r);
+	    	}
+	    }*/
+
+	    //for (Action toUpdate: actions) {
+		GroundedAction updateGA = null;
+		QValue curQ = this.getQ(curState, action);
+		double oldQ = curQ.q;
+
+		// TODO intra-option stuff
+	    
+		// update Q-value
+		curQ.q = curQ.q
+			+ this.learningRate.pollLearningRate(curState.s, action)
+			* (r + (discount * maxQ) - curQ.q);
+
+		double deltaQ = Math.abs(oldQ - curQ.q);
+		if (deltaQ > maxQChangeInLastEpisode) {
+		    maxQChangeInLastEpisode = deltaQ;
 		}
-	    }
-
-	    double oldQ = curQ.q;
-
-	    // update Q-value
-	    curQ.q = curQ.q
-		    + this.learningRate.pollLearningRate(curState.s, action)
-		    * (r + (discount * maxQ) - curQ.q);
-
-	    double deltaQ = Math.abs(oldQ - curQ.q);
-	    if (deltaQ > maxQChangeInLastEpisode) {
-		maxQChangeInLastEpisode = deltaQ;
-	    }
+	    //}
 
 	    // move on
 	    curState = nextState;
