@@ -18,7 +18,7 @@ import burlap.behavior.policyblocks.PolicyBlocksPolicy;
  * value when determining which action to choose.
  * 
  */
-public class PsiEpsilonGreedy extends PolicyBlocksPolicy implements
+public class PsiEpsilonGreedy extends EpsilonGreedy implements
 	PlannerDerivedPolicy {
     protected double psi;
 
@@ -40,16 +40,8 @@ public class PsiEpsilonGreedy extends PolicyBlocksPolicy implements
 	this.psi = psi;
     }
 
-    protected void updatePolicy(State s, AbstractGroundedAction corr) {
-	policy.put(((OOMDPPlanner) qplanner).stateHash(s),
-		(GroundedAction) corr);
-    }
-
     public AbstractGroundedAction getAction(State s) {
-
 	List<QValue> qValues = this.qplanner.getQs(s);
-	qpolicy.put(((OOMDPPlanner) qplanner).stateHash(s), qValues);
-
 	List<QValue> optionValues = new ArrayList<QValue>();
 	List<QValue> primitiveValues = new ArrayList<QValue>();
 
@@ -91,7 +83,6 @@ public class PsiEpsilonGreedy extends PolicyBlocksPolicy implements
 		    }
 
 		}
-		updatePolicy(s, maxActions.get(0).a);
 	    }
 	}
 
