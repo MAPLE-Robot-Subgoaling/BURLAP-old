@@ -78,6 +78,7 @@ public class PolicyBlocksPolicy extends EpsilonGreedy {
 	policy.put(((OOMDPPlanner) qplanner).stateHash(s),
 		(GroundedAction) corr);
 
+	// TODO make it so it cannot return invalid options
 	double roll = rand.nextDouble();
 	if (roll <= epsilon) {
 	    return qValues.get(rand.nextInt(qValues.size())).a;

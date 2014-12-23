@@ -55,12 +55,12 @@ public class TaxiWorldExperiment {
 	QLearning Q;
 	if (intraOption) {
 	    Q = new IOQLearning(TaxiWorldDomain.DOMAIN, new UniformCostRF(),
-		    TaxiWorldDomain.tf, TaxiWorldDomain.DISCOUNTFACTOR, hf, 0,
-		    TaxiWorldDomain.LEARNINGRATE, Integer.MAX_VALUE);
+		    TaxiWorldDomain.tf, TaxiWorldDomain.DISCOUNTFACTOR, hf,
+		    0.0, TaxiWorldDomain.LEARNINGRATE, Integer.MAX_VALUE);
 	} else {
 	    Q = new QLearning(TaxiWorldDomain.DOMAIN, new UniformCostRF(),
-		    TaxiWorldDomain.tf, TaxiWorldDomain.DISCOUNTFACTOR, hf, 0,
-		    TaxiWorldDomain.LEARNINGRATE, Integer.MAX_VALUE);
+		    TaxiWorldDomain.tf, TaxiWorldDomain.DISCOUNTFACTOR, hf,
+		    0.0, TaxiWorldDomain.LEARNINGRATE, Integer.MAX_VALUE);
 	}
 	State s = TaxiWorldDomain.getCleanState();
 	Q.setLearningPolicy(policy);
@@ -164,14 +164,14 @@ public class TaxiWorldExperiment {
 	for (int i = 1; i <= 20; i++) {
 	    String oldPath = path;
 	    path = path + i + "/";
-	    driver(path, 5);
+	    driver(path, 7);
 	    path = oldPath;
 	}
     }
 
     public static void driver(String path, int targetPassNum)
 	    throws IOException {
-	TaxiWorldDomain.MAXPASS = 3;
+	TaxiWorldDomain.MAXPASS = 5;
 	int max = TaxiWorldDomain.MAXPASS;
 	new TaxiWorldDomain().generateDomain();
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
@@ -278,7 +278,7 @@ public class TaxiWorldExperiment {
 		    + "P-MODAL", true, false);
 	}
 
-	// Greedy P-MODAL
+	// IO P-MODAL
 	if (absGP != null) {
 	    AbstractedOption gpO = new AbstractedOption(hf, absGP.getKey()
 		    .getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
@@ -286,7 +286,7 @@ public class TaxiWorldExperiment {
 	    runTaxiLearning(gpPBP, hf, targPassengers, gpO, episodes, path
 		    + "IOP-MODAL", true, true);
 	} else {
-	    System.out.println("Greedy P-MODAL has no available options!");
+	    System.out.println("IO P-MODAL has no available options!");
 	    runTaxiLearning(gpPBP, hf, targPassengers, episodes, path
 		    + "IOP-MODAL", true, true);
 	}

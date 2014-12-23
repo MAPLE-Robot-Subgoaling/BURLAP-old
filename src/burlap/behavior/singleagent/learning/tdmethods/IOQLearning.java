@@ -1,7 +1,5 @@
 package burlap.behavior.singleagent.learning.tdmethods;
 
-import java.util.List;
-
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.QValue;
@@ -73,7 +71,12 @@ public class IOQLearning extends QLearning {
 		    QValue nullQ = this.getQ(curState, absAction);
 		    // This action isn't defined for the option, lower its
 		    // Q-Value
-		    nullQ.q = Double.MIN_VALUE;
+		    for (QValue Q : this.getQs(curState)) {
+			if (Q.q < nullQ.q) {
+			    nullQ.q = Q.q;
+			}
+		    }
+
 		    continue;
 		}
 	    } else {
@@ -136,6 +139,7 @@ public class IOQLearning extends QLearning {
 	if (episodeHistory.size() >= numEpisodesToStore) {
 	    episodeHistory.poll();
 	}
+
 	episodeHistory.offer(ea);
 
 	return ea;
