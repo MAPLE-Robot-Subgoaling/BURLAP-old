@@ -18,6 +18,7 @@ import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.commonpolicies.EpsilonGreedy;
+import burlap.behavior.singleagent.planning.commonpolicies.PsiEpsilonGreedy;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.AbstractGroundedAction;
@@ -27,7 +28,6 @@ import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
-import burlap.behavior.singleagent.planning.commonpolicies.PsiEpsilonGreedy;
 
 /**
  * Tabular Q-learning algorithm [1]. This implementation will work correctly

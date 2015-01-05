@@ -498,7 +498,7 @@ public class AbstractedPolicy extends Policy {
     private static GroundedAction getAction(PolicyBlocksPolicy ip, State st,
 	    List<StateHashTuple> origStates) {
 	List<List<QValue>> qs = new ArrayList<List<QValue>>();
-	QLearning Q = (QLearning) ip.qplanner;
+	QLearning Q = ip.getLearner();
 	for (StateHashTuple origState : origStates) {
 	    QLearningStateNode qNode = Q.getStateNode(origState);
 	    qs.add(qNode.qEntry);

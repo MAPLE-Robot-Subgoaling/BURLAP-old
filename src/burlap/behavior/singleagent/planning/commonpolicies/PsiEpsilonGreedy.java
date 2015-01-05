@@ -4,14 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import burlap.behavior.singleagent.QValue;
-import burlap.behavior.singleagent.planning.OOMDPPlanner;
-import burlap.behavior.singleagent.planning.PlannerDerivedPolicy;
-//import burlap.behavior.singleagent.planning.QComputablePlanner;
-import burlap.oomdp.core.AbstractGroundedAction;
-import burlap.oomdp.singleagent.GroundedAction;
-import burlap.oomdp.core.State;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
-import burlap.behavior.policyblocks.PolicyBlocksPolicy;
+import burlap.behavior.singleagent.planning.PlannerDerivedPolicy;
+import burlap.oomdp.core.AbstractGroundedAction;
+import burlap.oomdp.core.State;
+import burlap.oomdp.singleagent.GroundedAction;
 
 /**
  * This class is an extension of PolicyBlocksPolicy that uses an additional psi
@@ -21,6 +18,7 @@ import burlap.behavior.policyblocks.PolicyBlocksPolicy;
 public class PsiEpsilonGreedy extends EpsilonGreedy implements
 	PlannerDerivedPolicy {
     protected double psi;
+    protected boolean psiOn = true;
 
     public PsiEpsilonGreedy(double epsilon, double psi) {
 	super(epsilon);
@@ -44,7 +42,6 @@ public class PsiEpsilonGreedy extends EpsilonGreedy implements
 	List<QValue> qValues = this.qplanner.getQs(s);
 	List<QValue> optionValues = new ArrayList<QValue>();
 	List<QValue> primitiveValues = new ArrayList<QValue>();
-
 	List<QValue> maxActions = new ArrayList<QValue>();
 
 	for (int i = 0; i < qValues.size(); i++) {
@@ -56,7 +53,7 @@ public class PsiEpsilonGreedy extends EpsilonGreedy implements
 	}
 
 	// roll psi
-	if (rand.nextDouble() <= psi && optionValues.size() > 0) {
+	if (psiOn && rand.nextDouble() <= psi && optionValues.size() > 0) {
 	    maxActions.add(optionValues.get(0));
 	    for (int i = 1; i < optionValues.size(); i++) {
 		if (optionValues.get(i).q == maxActions.get(0).q) {
@@ -87,5 +84,13 @@ public class PsiEpsilonGreedy extends EpsilonGreedy implements
 	}
 
 	return maxActions.get(rand.nextInt(maxActions.size())).a;
+    }
+
+    public void psiOff() {
+	psiOn = false;
+    }
+
+    public void psiOn() {
+	psiOn = true;
     }
 }

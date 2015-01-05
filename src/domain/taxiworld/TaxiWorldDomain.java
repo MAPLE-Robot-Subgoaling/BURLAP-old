@@ -65,8 +65,6 @@ public class TaxiWorldDomain implements DomainGenerator {
 
     public static final double LEARNINGRATE = 0.99;
     public static final double DISCOUNTFACTOR = 0.95;
-    public static final double LAMBDA = 1.0;
-    public static final double GAMMA = 0.2;
     public static RewardFunction rf;
     public static TerminalFunction tf;
 

@@ -8,25 +8,35 @@ import java.util.Map;
 import burlap.behavior.singleagent.QValue;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
-import burlap.behavior.singleagent.planning.commonpolicies.EpsilonGreedy;
 import burlap.behavior.singleagent.planning.commonpolicies.PsiEpsilonGreedy;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
-public class PolicyBlocksPolicy extends EpsilonGreedy {
-    public Map<StateHashTuple, GroundedAction> policy;
-    public Map<StateHashTuple, List<QValue>> qpolicy;
+/**
+ * Policy used in PolicyBlocks and P-MODAL.
+ */
+public class PolicyBlocksPolicy extends PsiEpsilonGreedy {
+    protected Map<StateHashTuple, GroundedAction> policy;
 
     public PolicyBlocksPolicy(double epsilon) {
-	this(null, epsilon);
+	this(null, epsilon, 0.0);
+	psiOff();
     }
 
     public PolicyBlocksPolicy(QLearning qplanner, double epsilon) {
-	super(qplanner, epsilon);
+	this(qplanner, epsilon, 0.0);
+	psiOff();
+    }
+
+    public PolicyBlocksPolicy(double epsilon, double psi) {
+	this(null, epsilon, psi);
+    }
+
+    public PolicyBlocksPolicy(QLearning qplanner, double epsilon, double psi) {
+	super(qplanner, epsilon, psi);
 	policy = new HashMap<StateHashTuple, GroundedAction>();
-	qpolicy = new HashMap<StateHashTuple, List<QValue>>();
     }
 
     /**
@@ -72,13 +82,11 @@ public class PolicyBlocksPolicy extends EpsilonGreedy {
 
     @Override
     public AbstractGroundedAction getAction(State s) {
-	List<QValue> qValues = super.qplanner.getQs(s);
-	qpolicy.put(((OOMDPPlanner) qplanner).stateHash(s), qValues);
+	List<QValue> qValues = qplanner.getQs(s);
 	AbstractGroundedAction corr = getCorrectAction(s);
 	policy.put(((OOMDPPlanner) qplanner).stateHash(s),
 		(GroundedAction) corr);
 
-	// TODO make it so it cannot return invalid options
 	double roll = rand.nextDouble();
 	if (roll <= epsilon) {
 	    return qValues.get(rand.nextInt(qValues.size())).a;
@@ -103,15 +111,6 @@ public class PolicyBlocksPolicy extends EpsilonGreedy {
      */
     public Map<StateHashTuple, GroundedAction> getPolicy() {
 	return policy;
-    }
-
-    /**
-     * Gets the Q-value policy
-     * 
-     * @return this.qpolicy
-     */
-    public Map<StateHashTuple, List<QValue>> getQPolicy() {
-	return qpolicy;
     }
 
     /**

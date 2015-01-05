@@ -277,8 +277,8 @@ public class SokobanExperiment {
 	PolicyBlocksPolicy qp = runSokobanBaseLearning(hf, target, episodes,
 		epsilon, reward, "Q-Learning");
 	AbstractedOption ro = generateRandomOption(hf, domain,
-		domain.getActions(), qp.policy.keySet());
-	AbstractedOption po = new AbstractedOption(hf, qp.policy,
+		domain.getActions(), qp.getPolicy().keySet());
+	AbstractedOption po = new AbstractedOption(hf, qp.getPolicy(),
 		domain.getActions(), 0.0, "perfect");
 
 	// Q-Learning
@@ -306,8 +306,8 @@ public class SokobanExperiment {
 	int numTops = toMerge.size() / 3;
 	int t = 1;
 	for (PolicyBlocksPolicy merge : toMerge) {
-	    AbstractedOption tempO = new AbstractedOption(hf, merge.policy,
-		    domain.getActions(), 0.0, "top-" + t);
+	    AbstractedOption tempO = new AbstractedOption(hf,
+		    merge.getPolicy(), domain.getActions(), 0.0, "top-" + t);
 	    tops.add(new AbstractMap.SimpleEntry<AbstractedOption, Long>(tempO,
 		    runSokobanTopLearning(hf, tempO, target, episodes, epsilon,
 			    reward, "TOP-" + t)));
@@ -353,16 +353,7 @@ public class SokobanExperiment {
     }
 
     public static void removeRooms(PolicyBlocksPolicy p) {
-	for (StateHashTuple sh : p.policy.keySet()) {
-	    for (ObjectInstance oi : sh.s.getAllObjects()) {
-		if (oi.getName().equals(Sokoban2Domain.CLASSROOM)
-			|| oi.getName().equals(Sokoban2Domain.CLASSDOOR)) {
-		    sh.s.removeObject(oi);
-		    sh.computeHashCode();
-		}
-	    }
-	}
-	for (StateHashTuple sh : p.qpolicy.keySet()) {
+	for (StateHashTuple sh : p.getPolicy().keySet()) {
 	    for (ObjectInstance oi : sh.s.getAllObjects()) {
 		if (oi.getName().equals(Sokoban2Domain.CLASSROOM)
 			|| oi.getName().equals(Sokoban2Domain.CLASSDOOR)) {

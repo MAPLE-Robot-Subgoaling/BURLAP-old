@@ -215,7 +215,7 @@ public class BlockDudeExperiment {
 	PolicyBlocksPolicy p = runBlockDudeBaseLearning(hf, lvl, episodes,
 		epsilon, stateCap, "craft");
 
-	return new AbstractedOption(hf, p.policy, dd.d.getActions(), 0.,
+	return new AbstractedOption(hf, p.getPolicy(), dd.d.getActions(), 0.,
 		"Crafted");
     }
 
@@ -322,11 +322,11 @@ public class BlockDudeExperiment {
 		path + "P-MODAL");
 
 	AbstractedOption oR = generateRandomOption(hf, dd.d, dd.d.getActions(),
-		qPolicy.policy.keySet());
+		qPolicy.getPolicy().keySet());
 	runBlockDudeOptionLearning(hf, oR, lvlt, episodes, epsilon, stateCap,
 		path + "Random Option");
 
-	AbstractedOption oC = new AbstractedOption(hf, qPolicy.policy,
+	AbstractedOption oC = new AbstractedOption(hf, qPolicy.getPolicy(),
 		dd.d.getActions(), 0., "Crafted");
 	// craftOption(episodes, 0.0, stateCap);
 	System.out.println(oC.size());
@@ -335,8 +335,8 @@ public class BlockDudeExperiment {
 
 	List<Entry<AbstractedOption, Long>> topOs = new ArrayList<Entry<AbstractedOption, Long>>();
 	for (PolicyBlocksPolicy merge : toMerge) {
-	    AbstractedOption tempO = new AbstractedOption(hf, merge.policy,
-		    dd.d.getActions(), 0.0, "top");
+	    AbstractedOption tempO = new AbstractedOption(hf,
+		    merge.getPolicy(), dd.d.getActions(), 0.0, "top");
 	    topOs.add(new AbstractMap.SimpleEntry<AbstractedOption, Long>(
 		    tempO, runBlockDudeTopLearning(hf, tempO, lvlt, episodes,
 			    epsilon, stateCap, "TOP")));
@@ -375,13 +375,7 @@ public class BlockDudeExperiment {
     }
 
     public static void removePlatforms(PolicyBlocksPolicy p) {
-	for (StateHashTuple sh : p.policy.keySet()) {
-	    for (ObjectInstance oi : sh.s.getObjectsOfTrueClass("platform")) {
-		sh.s.removeObject(oi.getName());
-		sh.computeHashCode();
-	    }
-	}
-	for (StateHashTuple sh : p.qpolicy.keySet()) {
+	for (StateHashTuple sh : p.getPolicy().keySet()) {
 	    for (ObjectInstance oi : sh.s.getObjectsOfTrueClass("platform")) {
 		sh.s.removeObject(oi.getName());
 		sh.computeHashCode();
