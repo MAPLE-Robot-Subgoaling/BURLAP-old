@@ -159,19 +159,19 @@ public class TaxiWorldExperiment {
     }
 
     public static void main(String args[]) throws IOException {
-	String path = "/home/hanicho1/io-exp/";
+	String path = "/home/hanicho1/opt-term/";
 	// String path = "C:\\Users\\denizen\\Desktop\\Data\\";
-	for (int i = 1; i <= 20; i++) {
+	for (int i = 1; i <= 10; i++) {
 	    String oldPath = path;
 	    path = path + i + "/";
-	    driver(path, 7);
+	    driver(path, 4);
 	    path = oldPath;
 	}
     }
 
     public static void driver(String path, int targetPassNum)
 	    throws IOException {
-	TaxiWorldDomain.MAXPASS = 5;
+	TaxiWorldDomain.MAXPASS = 3;
 	int max = TaxiWorldDomain.MAXPASS;
 	new TaxiWorldDomain().generateDomain();
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
@@ -186,7 +186,7 @@ public class TaxiWorldExperiment {
 
 	double termProb = 0.05;
 	double epsilon = 0.05;
-	int episodes = 30000;
+	int episodes = 75000;
 	long startTime = System.currentTimeMillis();
 	// Offset must always be one, or there will be value errors with
 	// ATTCARRY
@@ -194,8 +194,8 @@ public class TaxiWorldExperiment {
 	// as well
 	// If MAXPASS must be set higher, the domain must be regenerated
 
-	int[][][] passengers = new int[20][][];
-	for (int i = 0; i < 20; i++) {
+	int[][][] passengers = new int[10][][];
+	for (int i = 0; i < 10; i++) {
 	    int j = new Random().nextInt(max) + 1;
 	    TaxiWorldDomain.MAXPASS = j;
 	    new TaxiWorldDomain().generateDomain();
@@ -215,24 +215,8 @@ public class TaxiWorldExperiment {
 	PolicyBlocksPolicy qPBP = new PolicyBlocksPolicy(epsilon);
 	PolicyBlocksPolicy pqPBP = new PolicyBlocksPolicy(epsilon);
 	PolicyBlocksPolicy pPBP = new PolicyBlocksPolicy(epsilon);
-	PolicyBlocksPolicy gpPBP = new PolicyBlocksPolicy(epsilon);
 
 	// Merging
-
-	/*
-	 * System.out.println("Starting power merge with depth " + depth + ".");
-	 * 
-	 * List<Entry<AbstractedPolicy, Double>> absPs = AbstractedPolicy
-	 * .powerMerge(hf, toMerge, depth, 1, true, false); if (absPs.size() !=
-	 * 0) { absP = absPs.get(0); System.out.println("Size: " +
-	 * absP.getKey().size()); System.out.println("Score: " +
-	 * absP.getValue()); }
-	 * 
-	 * System.out.println("Finished power merge with time " +
-	 * (System.currentTimeMillis() - uTime) / 1000.0 + " seconds.");
-	 * 
-	 * uTime = System.currentTimeMillis();
-	 */
 	System.out.println("Starting greedy power merge with depth " + depth
 		+ ".");
 
@@ -260,35 +244,31 @@ public class TaxiWorldExperiment {
 	// Perfect Option
 	AbstractedOption qO = new AbstractedOption(hf, qPBP.getPolicy(),
 		TaxiWorldDomain.DOMAIN.getActions(), termProb, "Q-Learning");
+	AbstractedOption qOO = new AbstractedOption(hf, qPBP.getPolicy(),
+		TaxiWorldDomain.DOMAIN.getActions(), 0.0, "Q-Learning");
+	runTaxiLearning(pqPBP, hf, targPassengers, qOO, episodes, path
+		+ "Perfect", true, true);
 	runTaxiLearning(pqPBP, hf, targPassengers, qO, episodes, path
-		+ "Perfect", true, false);
-	runTaxiLearning(pqPBP, hf, targPassengers, qO, episodes, path
-		+ "IOPerfect", true, true);
+		+ "Term-Perfect", true, true);
 
 	// Non-IO G-P-MODAL
 	if (absGP != null) {
+	    AbstractedOption pOO = new AbstractedOption(hf, absGP.getKey()
+		    .getPolicy(), TaxiWorldDomain.DOMAIN.getActions(), 0.0,
+		    "P-MODAL");
 	    AbstractedOption pO = new AbstractedOption(hf, absGP.getKey()
 		    .getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
 		    termProb, "P-MODAL");
 	    runTaxiLearning(pPBP, hf, targPassengers, pO, episodes, path
-		    + "P-MODAL", true, false);
+		    + "Term-P-MODAL", true, true);
+	    runTaxiLearning(pPBP, hf, targPassengers, pOO, episodes, path
+		    + "P-MODAL", true, true);
 	} else {
 	    System.out.println("P-MODAL has no available options!");
 	    runTaxiLearning(pPBP, hf, targPassengers, episodes, path
-		    + "P-MODAL", true, false);
-	}
-
-	// IO P-MODAL
-	if (absGP != null) {
-	    AbstractedOption gpO = new AbstractedOption(hf, absGP.getKey()
-		    .getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
-		    termProb, "IOP-MODAL");
-	    runTaxiLearning(gpPBP, hf, targPassengers, gpO, episodes, path
-		    + "IOP-MODAL", true, true);
-	} else {
-	    System.out.println("IO P-MODAL has no available options!");
-	    runTaxiLearning(gpPBP, hf, targPassengers, episodes, path
-		    + "IOP-MODAL", true, true);
+		    + "P-MODAL", true, true);
+	    runTaxiLearning(pPBP, hf, targPassengers, episodes, path
+		    + "Term-P-MODAL", true, true);
 	}
 
 	System.out.println("Experiment finished! Took "
