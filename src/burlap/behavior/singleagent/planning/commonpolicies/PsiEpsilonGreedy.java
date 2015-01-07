@@ -5,7 +5,6 @@ import java.util.List;
 
 import burlap.behavior.singleagent.QValue;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
-import burlap.behavior.singleagent.planning.PlannerDerivedPolicy;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
@@ -15,8 +14,7 @@ import burlap.oomdp.singleagent.GroundedAction;
  * value when determining which action to choose.
  * 
  */
-public class PsiEpsilonGreedy extends EpsilonGreedy implements
-	PlannerDerivedPolicy {
+public class PsiEpsilonGreedy extends EpsilonGreedy {
     protected double psi;
     protected boolean psiOn = true;
 
