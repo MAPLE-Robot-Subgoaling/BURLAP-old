@@ -51,7 +51,7 @@ public class PolicyBlocksPolicy extends PsiEpsilonGreedy {
 
     /**
      * For getting the learned state-action mapping offline If Q-values are
-     * equal for two actions, it picks the first action
+     * equal for two actions, it picks randomly
      * 
      * @param s
      *            - the state
@@ -77,7 +77,7 @@ public class PolicyBlocksPolicy extends PsiEpsilonGreedy {
 	    }
 	}
 
-	return maxActions.get(0).a;
+	return maxActions.get(rand.nextInt(maxActions.size())).a;
     }
 
     @Override

@@ -70,13 +70,14 @@ public class IOQLearning extends QLearning {
 		if (primAction == null) {
 		    QValue nullQ = this.getQ(curState, absAction);
 		    // This action isn't defined for the option, lower its
-		    // Q-Value
+		    // Q-Value to the current minimum
 		    for (QValue Q : this.getQs(curState)) {
 			if (Q.q < nullQ.q) {
 			    nullQ.q = Q.q;
 			}
 		    }
 
+		    nullQ.q--;
 		    continue;
 		}
 	    } else {
