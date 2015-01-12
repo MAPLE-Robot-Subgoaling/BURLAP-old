@@ -35,7 +35,37 @@ public class PsiEpsilonGreedy extends EpsilonGreedy {
     public void setPsi(double psi) {
 	this.psi = psi;
     }
+    /**
+     * For getting the learned state-action mapping offline If Q-values are
+     * equal for two actions, it picks randomly
+     * 
+     * @param s
+     *            - the state
+     * @return the action corresponding to the state
+     */
+    public AbstractGroundedAction getCorrectAction(State s) {
+	if (qplanner == null) {
+	    throw new RuntimeException("QPlanner not set.");
+	}
+	List<QValue> qValues = super.qplanner.getQs(s);
+	List<QValue> maxActions = new ArrayList<QValue>();
+	maxActions.add(qValues.get(0));
 
+	double maxQ = qValues.get(0).q;
+	for (int i = 1; i < qValues.size(); i++) {
+	    QValue q = qValues.get(i);
+	    if (q.q == maxQ) {
+		maxActions.add(q);
+	    } else if (q.q > maxQ) {
+		maxActions.clear();
+		maxActions.add(q);
+		maxQ = q.q;
+	    }
+	}
+
+	return maxActions.get(rand.nextInt(maxActions.size())).a;
+    }
+    
     public AbstractGroundedAction getAction(State s) {
 	List<QValue> qValues = this.qplanner.getQs(s);
 	List<QValue> optionValues = new ArrayList<QValue>();
