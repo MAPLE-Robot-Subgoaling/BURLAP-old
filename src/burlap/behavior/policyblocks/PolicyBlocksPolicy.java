@@ -45,12 +45,12 @@ public class PolicyBlocksPolicy extends PsiEpsilonGreedy {
     public void addEntry(State s, GroundedAction a) {
 	policy.put(((OOMDPPlanner) qplanner).stateHash(s), a);
     }
-    
+
     @Override
     public AbstractGroundedAction getAction(State s) {
 	policy.put(((OOMDPPlanner) qplanner).stateHash(s),
 		(GroundedAction) super.getCorrectAction(s));
-	
+
 	return super.getAction(s);
     }
 

@@ -64,7 +64,7 @@ public class IOQLearning extends QLearning {
 		    .getAction(curState.s);
 	    GroundedAction primAction;
 
-	    if (absAction.action instanceof Option) {
+	    if (!absAction.action.isPrimitive()) {
 		primAction = ((Option) absAction.action)
 			.oneStepActionSelection(curState.s, absAction.params);
 		if (primAction == null) {
