@@ -776,11 +776,10 @@ public class AbstractedPolicy extends Policy {
 	    int maxPol, boolean toSubtract, boolean greedyMerge, boolean toCache) {
 	Map<Integer, List<Entry<AbstractedPolicy, Double>>> mappedPolicies = new HashMap<Integer, List<Entry<AbstractedPolicy, Double>>>(
 		depth - 1);
+	List<Entry<AbstractedPolicy, Double>> mergedPolicies = new ArrayList<Entry<AbstractedPolicy, Double>>();
 	int c = 2;
 
 	for (List<PolicyBlocksPolicy> ps : getSubsets(policies, 2, depth)) {
-	    List<Entry<AbstractedPolicy, Double>> mergedPolicies = new ArrayList<Entry<AbstractedPolicy, Double>>(
-		    maxPol);
 	    boolean toSort = false;
 	    AbstractedPolicy abs;
 
