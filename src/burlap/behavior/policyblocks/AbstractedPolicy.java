@@ -824,7 +824,7 @@ public class AbstractedPolicy extends Policy {
 			});
 	    }
 
-	    if (toSubtract) {
+	    if (toCache && toSubtract) {
 		subtractAll(mergedPolicies);
 	    }
 
@@ -832,6 +832,13 @@ public class AbstractedPolicy extends Policy {
 		mappedPolicies.put(c, mergedPolicies);
 	    }
 	    c++;
+	}
+
+	if (!toCache && toSubtract) {
+	    List<Entry<AbstractedPolicy, Double>> newPolicies = mappedPolicies
+		    .get(c);
+	    subtractAll(newPolicies);
+	    mappedPolicies.put(c, newPolicies);
 	}
 
 	return mappedPolicies;
