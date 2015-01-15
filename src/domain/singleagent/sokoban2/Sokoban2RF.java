@@ -68,6 +68,6 @@ public class Sokoban2RF extends UniformCostRF {
 	    }
 	}
 
-	return blockCount == blocks.size() ? goodReward : -1;
+	return blockCount == blocks.size() ? goodReward : 0;
     }
 }

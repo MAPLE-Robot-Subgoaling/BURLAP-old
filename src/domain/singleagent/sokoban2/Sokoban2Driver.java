@@ -24,21 +24,26 @@ public class Sokoban2Driver {
     public static void main(String[] args) {
 	Sokoban2Domain dgen = new Sokoban2Domain();
 	Domain domain = dgen.generateDomain();
-	State s = Sokoban2Domain.getCleanState(domain, 3, 2, 3);
+	State s = Sokoban2Domain.getCleanState(domain, 5, 4, 3);
 
-	Sokoban2Domain.setRoom(s, 0, 4, 0, 0, 8, "red");
-	Sokoban2Domain.setRoom(s, 1, 8, 0, 4, 4, "green");
-	Sokoban2Domain.setRoom(s, 2, 8, 4, 4, 8, "blue");
+	// top left bottom right
+	Sokoban2Domain.setRoom(s, 0, 10, 0, 0, 20, "red");
+	Sokoban2Domain.setRoom(s, 1, 10, 20, 0, 40, "green");
+	Sokoban2Domain.setRoom(s, 2, 20, 0, 10, 10, "blue");
+	Sokoban2Domain.setRoom(s, 3, 20, 10, 10, 20, "magenta");
+	Sokoban2Domain.setRoom(s, 4, 20, 20, 10, 40, "yellow");
 
-	Sokoban2Domain.setDoor(s, 0, 4, 6, 4, 6);
-	Sokoban2Domain.setDoor(s, 1, 4, 2, 4, 2);
+	Sokoban2Domain.setDoor(s, 0, 10, 2, 10, 8);
+	Sokoban2Domain.setDoor(s, 1, 10, 12, 10, 18);
+	Sokoban2Domain.setDoor(s, 2, 10, 22, 10, 38);
+	Sokoban2Domain.setDoor(s, 3, 8, 20, 2, 20);
 
-	Sokoban2Domain.setAgent(s, 6, 6);
+	Sokoban2Domain.setAgent(s, 1, 1);
 	Sokoban2Domain.setBlock(s, 0, 6, 5, "backpack", "red");
-	Sokoban2Domain.setBlock(s, 1, 2, 2, "backpack", "blue");
+	Sokoban2Domain.setBlock(s, 1, 3, 4, "backpack", "blue");
 	Sokoban2Domain.setBlock(s, 2, 2, 3, "backpack", "green");
 
-	Visualizer v = Sokoban2Visualizer.getVisualizer();
+	Visualizer v = Sokoban2Visualizer.getVisualizer("img");
 	VisualExplorer exp = new VisualExplorer(domain, v, s);
 
 	exp.addKeyAction("w", Sokoban2Domain.ACTIONNORTH);

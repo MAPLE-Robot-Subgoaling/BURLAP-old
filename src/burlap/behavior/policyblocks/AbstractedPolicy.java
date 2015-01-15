@@ -745,14 +745,42 @@ public class AbstractedPolicy extends Policy {
      *            - whether or not to subtract redundant states in all options
      * @param greedyMerge
      *            - whether or not to perform the greedy step-wise merging
-     * @return list of option candidates, along with score
+     * @return list of learned policies + score
      */
     public static List<Entry<AbstractedPolicy, Double>> powerMerge(
 	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
 	    int maxPol, boolean toSubtract, boolean greedyMerge) {
-	List<Entry<AbstractedPolicy, Double>> mergedPolicies = new ArrayList<Entry<AbstractedPolicy, Double>>();
+	return powerMergeCache(hf, policies, depth, maxPol, toSubtract,
+		greedyMerge, false).get(depth);
+    }
+
+    /**
+     * Performs the power merge as defined by P-MODAL
+     * 
+     * @param hf
+     *            - state hash factory
+     * @param policies
+     *            - source policies
+     * @param depth
+     *            - depth of the merge
+     * @param maxPol
+     *            - max number of or option candidates to create
+     * @param toSubtract
+     *            - whether or not to subtract redundant states in all options
+     * @param greedyMerge
+     *            - whether or not to perform the greedy step-wise merging
+     * @return Map of depth -> list of learned policies + score
+     */
+    public static Map<Integer, List<Entry<AbstractedPolicy, Double>>> powerMergeCache(
+	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
+	    int maxPol, boolean toSubtract, boolean greedyMerge, boolean toCache) {
+	Map<Integer, List<Entry<AbstractedPolicy, Double>>> mappedPolicies = new HashMap<Integer, List<Entry<AbstractedPolicy, Double>>>(
+		depth - 1);
+	int c = 2;
 
 	for (List<PolicyBlocksPolicy> ps : getSubsets(policies, 2, depth)) {
+	    List<Entry<AbstractedPolicy, Double>> mergedPolicies = new ArrayList<Entry<AbstractedPolicy, Double>>(
+		    maxPol);
 	    boolean toSort = false;
 	    AbstractedPolicy abs;
 
@@ -796,13 +824,18 @@ public class AbstractedPolicy extends Policy {
 
 			});
 	    }
+
+	    if (toSubtract) {
+		subtractAll(mergedPolicies);
+	    }
+
+	    if (toCache || c == depth) {
+		mappedPolicies.put(c, mergedPolicies);
+	    }
+	    c++;
 	}
 
-	if (toSubtract) {
-	    subtractAll(mergedPolicies);
-	}
-
-	return mergedPolicies;
+	return mappedPolicies;
     }
 
     /**
