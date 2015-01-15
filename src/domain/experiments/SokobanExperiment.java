@@ -234,7 +234,7 @@ public class SokobanExperiment {
 	int episodes = 1000;
 	double epsilon = 0.01;
 	double reward = 1;
-
+	
 	Sokoban2Domain dgen = new Sokoban2Domain();
 	Domain domain = dgen.generateDomain();
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();

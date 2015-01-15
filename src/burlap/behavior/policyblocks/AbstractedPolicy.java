@@ -836,9 +836,9 @@ public class AbstractedPolicy extends Policy {
 
 	if (!toCache && toSubtract) {
 	    List<Entry<AbstractedPolicy, Double>> newPolicies = mappedPolicies
-		    .get(c);
+		    .get(depth);
 	    subtractAll(newPolicies);
-	    mappedPolicies.put(c, newPolicies);
+	    mappedPolicies.put(depth, newPolicies);
 	}
 
 	return mappedPolicies;
