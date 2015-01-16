@@ -46,8 +46,8 @@ public class TaxiWorldExperiment {
 
     public static long[] runTaxiLearning(PolicyBlocksPolicy policy,
 	    StateHashFactory hf, int[][] passPos, List<? extends Option> os,
-	    int episodes, String filepath, boolean log, boolean intraOption, double qInit)
-	    throws IOException {
+	    int episodes, String filepath, boolean log, boolean intraOption,
+	    double qInit) throws IOException {
 
 	long sTime = System.currentTimeMillis();
 	if (log) {
@@ -55,7 +55,7 @@ public class TaxiWorldExperiment {
 	}
 	TaxiWorldDomain.MAXPASS = passPos.length;
 	QLearning Q;
-	
+
 	// TODO analytically get the right q-init
 	if (intraOption) {
 	    Q = new IOQLearning(TaxiWorldDomain.DOMAIN, new UniformCostRF(),
@@ -163,7 +163,7 @@ public class TaxiWorldExperiment {
     }
 
     public static void main(String args[]) throws IOException {
-	String path = "/home/nick/mult-opt/";
+	String path = "/home/hanicho1/mult-opt/";
 	// String path = "C:\\Users\\denizen\\Desktop\\Data\\";
 	for (int i = 1; i <= 20; i++) {
 	    String oldPath = path;
@@ -228,7 +228,8 @@ public class TaxiWorldExperiment {
 		+ ".");
 
 	List<Entry<AbstractedPolicy, Double>> absGPs = AbstractedPolicy
-		.powerMerge(hf, toMerge, depth, 25);
+		.powerMerge(hf, toMerge, depth, 50);
+	System.out.println("Created " + absGPs.size() + " options.");
 	toMerge = null;
 	if (absGPs.size() != 0) {
 	    absGP = absGPs.get(0);
@@ -247,10 +248,11 @@ public class TaxiWorldExperiment {
 
 	// Run an additional learning episode to get the proper qInit value
 	PolicyBlocksPolicy qInitPolicy = new PolicyBlocksPolicy(epsilon);
-	runTaxiLearning(qInitPolicy, hf, targPassengers, episodes, path + "Q-Init-Policy", false, true, 0.0);
+	runTaxiLearning(qInitPolicy, hf, targPassengers, episodes, path
+		+ "Q-Init-Policy", false, true, 0.0);
 	double qInit = getLowestQ(qInitPolicy);
 	System.out.println("Found Q-value initialization of " + qInit + ".");
-	
+
 	// Q-Learning
 	runTaxiLearning(qPBP, hf, targPassengers, episodes,
 		path + "Q-Learning", true, true, qInit);
@@ -273,70 +275,75 @@ public class TaxiWorldExperiment {
 	    runTaxiLearning(pPBP1, hf, targPassengers, pT1, episodes, path
 		    + "P-MODAL-1", true, true, qInit);
 	    pT1 = null;
-
-	    List<AbstractedOption> pTOs = new ArrayList<AbstractedOption>(25);
-
-	    for (int i = 0; i < 5; i++) {
-		pTOs.add(new AbstractedOption(hf, absGPs.get(i).getKey()
-			.getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
-			termProb, "P-MODAL"));
-	    }
-	    runTaxiLearning(pPBP5, hf, targPassengers, pTOs, episodes, path
-		    + "P-MODAL-5", true, true, qInit);
-
-	    for (int i = 5; i < 10; i++) {
-		pTOs.add(new AbstractedOption(hf, absGPs.get(i).getKey()
-			.getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
-			termProb, "P-MODAL"));
-	    }
-	    runTaxiLearning(pPBP10, hf, targPassengers, pTOs, episodes, path
-		    + "P-MODAL-10", true, true, qInit);
-
-	    for (int i = 10; i < 15; i++) {
-		pTOs.add(new AbstractedOption(hf, absGPs.get(i).getKey()
-			.getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
-			termProb, "P-MODAL"));
-	    }
-	    runTaxiLearning(pPBP15, hf, targPassengers, pTOs, episodes, path
-		    + "P-MODAL-15", true, true, qInit);
-
-	    for (int i = 15; i < 20; i++) {
-		pTOs.add(new AbstractedOption(hf, absGPs.get(i).getKey()
-			.getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
-			termProb, "P-MODAL"));
-	    }
-	    runTaxiLearning(pPBP20, hf, targPassengers, pTOs, episodes, path
-		    + "P-MODAL-20", true, true, qInit);
-
-	    for (int i = 20; i < 25; i++) {
-		pTOs.add(new AbstractedOption(hf, absGPs.get(i).getKey()
-			.getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
-			termProb, "P-MODAL"));
-	    }
-	    runTaxiLearning(pPBP25, hf, targPassengers, pTOs, episodes, path
-		    + "P-MODAL-20", true, true, qInit);
-
-	    pTOs = null;
 	} else {
 	    System.out.println("P-MODAL has no available options!");
 	    runTaxiLearning(pPBP1, hf, targPassengers, episodes, path
-		    + "P-MODAL", true, true, qInit);
-
-	    runTaxiLearning(pPBP5, hf, targPassengers, episodes, path
-		    + "P-MODAL", true, true, qInit);
-
-	    runTaxiLearning(pPBP10, hf, targPassengers, episodes, path
-		    + "P-MODAL", true, true, qInit);
-
-	    runTaxiLearning(pPBP15, hf, targPassengers, episodes, path
-		    + "P-MODAL", true, true, qInit);
-
-	    runTaxiLearning(pPBP20, hf, targPassengers, episodes, path
-		    + "P-MODAL", true, true, qInit);
-
-	    runTaxiLearning(pPBP25, hf, targPassengers, episodes, path
-		    + "P-MODAL", true, true, qInit);
+		    + "P-MODAL-1", true, true, qInit);
 	}
+	List<AbstractedOption> pTOs = new ArrayList<AbstractedOption>(25);
+
+	for (int i = 0; i < 5; i++) {
+	    try {
+		pTOs.add(new AbstractedOption(hf, absGPs.get(i).getKey()
+			.getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
+			termProb, "P-MODAL"));
+	    } catch (IndexOutOfBoundsException e) {
+		break;
+	    }
+	}
+	runTaxiLearning(pPBP5, hf, targPassengers, pTOs, episodes, path
+		+ "P-MODAL-5", true, true, qInit);
+
+	for (int i = 5; i < 10; i++) {
+	    try {
+		pTOs.add(new AbstractedOption(hf, absGPs.get(i).getKey()
+			.getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
+			termProb, "P-MODAL"));
+	    } catch (IndexOutOfBoundsException e) {
+		break;
+	    }
+	}
+	runTaxiLearning(pPBP10, hf, targPassengers, pTOs, episodes, path
+		+ "P-MODAL-10", true, true, qInit);
+
+	for (int i = 10; i < 15; i++) {
+	    try {
+		pTOs.add(new AbstractedOption(hf, absGPs.get(i).getKey()
+			.getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
+			termProb, "P-MODAL"));
+	    } catch (IndexOutOfBoundsException e) {
+		break;
+	    }
+	}
+	runTaxiLearning(pPBP15, hf, targPassengers, pTOs, episodes, path
+		+ "P-MODAL-15", true, true, qInit);
+
+	for (int i = 15; i < 20; i++) {
+	    try {
+		pTOs.add(new AbstractedOption(hf, absGPs.get(i).getKey()
+			.getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
+			termProb, "P-MODAL"));
+	    } catch (IndexOutOfBoundsException e) {
+		break;
+	    }
+	}
+	runTaxiLearning(pPBP20, hf, targPassengers, pTOs, episodes, path
+		+ "P-MODAL-20", true, true, qInit);
+
+	for (int i = 20; i < 25; i++) {
+	    try {
+		pTOs.add(new AbstractedOption(hf, absGPs.get(i).getKey()
+			.getPolicy(), TaxiWorldDomain.DOMAIN.getActions(),
+			termProb, "P-MODAL"));
+	    } catch (IndexOutOfBoundsException e) {
+		break;
+	    }
+	}
+	runTaxiLearning(pPBP25, hf, targPassengers, pTOs, episodes, path
+		+ "P-MODAL-25", true, true, qInit);
+
+	pTOs = null;
+
 	pPBP1 = null;
 	pPBP5 = null;
 	pPBP10 = null;
@@ -348,18 +355,18 @@ public class TaxiWorldExperiment {
 		+ (System.currentTimeMillis() - startTime) / 1000.0
 		+ " seconds.");
     }
-    
+
     public static double getLowestQ(PolicyBlocksPolicy p) {
 	double minQ = Integer.MAX_VALUE;
-	
-	for (StateHashTuple sh: p.getPolicy().keySet()) {
-	    for (QValue curQ: p.qplanner.getQs(sh.s)) {
+
+	for (StateHashTuple sh : p.getPolicy().keySet()) {
+	    for (QValue curQ : p.qplanner.getQs(sh.s)) {
 		if (curQ.q < minQ) {
 		    minQ = curQ.q;
 		}
 	    }
 	}
-	
+
 	return minQ;
     }
 }
