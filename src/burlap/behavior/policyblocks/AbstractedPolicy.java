@@ -769,6 +769,9 @@ public class AbstractedPolicy extends Policy {
      *            - whether or not to subtract redundant states in all options
      * @param greedyMerge
      *            - whether or not to perform the greedy step-wise merging
+     * @param toCache
+     *            - whether or not data from all depths in cached in the map to
+     *            be returned
      * @return Map of depth -> list of learned policies + score
      */
     public static Map<Integer, List<Entry<AbstractedPolicy, Double>>> powerMergeCache(
