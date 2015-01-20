@@ -103,7 +103,7 @@ public class IOQLearning extends QLearning {
 	    for (Action updateAction : domain.getActions()) {
 		// Intra-option stuff
 		GroundedAction updateGA;
-		if (updateAction instanceof Option) {
+		if (!updateAction.isPrimitive()) {
 		    updateGA = ((Option) updateAction).oneStepActionSelection(
 			    curState.s, absAction.params);
 
