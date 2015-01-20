@@ -4,6 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import burlap.behavior.policyblocks.PolicyBlocksPolicy;
+import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.learning.tdmethods.IOQLearning;
+import burlap.behavior.singleagent.learning.tdmethods.QLearning;
+import burlap.behavior.singleagent.planning.StateConditionTest;
+import burlap.behavior.singleagent.planning.deterministic.GoalConditionTF;
+import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
@@ -11,8 +18,10 @@ import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
+import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.SADomain;
+import burlap.oomdp.singleagent.common.UniformCostRF;
 import burlap.oomdp.singleagent.explorer.TerminalExplorer;
 import burlap.oomdp.singleagent.explorer.VisualExplorer;
 import burlap.oomdp.visualizer.Visualizer;
@@ -38,7 +47,7 @@ public class BlockDudeDomain implements DomainGenerator {
 
     public static final String PFHOLDINGBLOCK = "holdingBlock";
     public static final String PFATEXIT = "atExit";
-
+    
     public int minx = 0;
     public int maxx = 25;
     public int miny = 0;
@@ -650,33 +659,6 @@ public class BlockDudeDomain implements DomainGenerator {
      * @param args
      */
     public static void main(String[] args) {
-
-	/*
-	 * int maxx = 18; int maxy = 18;
-	 * 
-	 * BlockDudeDomain constructor = new BlockDudeDomain(maxx, maxy); Domain
-	 * d = constructor.generateDomain();
-	 * 
-	 * List<Integer> px = new ArrayList<Integer>(); List<Integer> ph = new
-	 * ArrayList<Integer>();
-	 * 
-	 * px.add(0); px.add(2); px.add(3); px.add(4); px.add(5); px.add(6);
-	 * px.add(7); px.add(8); px.add(9); px.add(11); px.add(12); px.add(13);
-	 * px.add(14); px.add(15); px.add(16); px.add(17); px.add(18);
-	 * 
-	 * ph.add(15); ph.add(3); ph.add(3); ph.add(3); ph.add(0); ph.add(0);
-	 * ph.add(0); ph.add(1); ph.add(2); ph.add(0); ph.add(2); ph.add(3);
-	 * ph.add(2); ph.add(2); ph.add(3); ph.add(3); ph.add(15);
-	 * 
-	 * State s = getCleanState(d, px, ph, 6); BlockDudeDomain.setAgent(s, 9,
-	 * 3, 1, 0); BlockDudeDomain.setExit(s, 1, 0);
-	 * 
-	 * BlockDudeDomain.setBlock(s, 0, 5, 1); BlockDudeDomain.setBlock(s, 1,
-	 * 6, 1); BlockDudeDomain.setBlock(s, 2, 14, 3);
-	 * BlockDudeDomain.setBlock(s, 3, 16, 4); BlockDudeDomain.setBlock(s, 4,
-	 * 17, 4); BlockDudeDomain.setBlock(s, 5, 17, 5);
-	 */
-
 	/*
 	 * WARNING: Platforms only store height! This means that platforms
 	 * always extend from the bottom of the level to the given height. This
@@ -684,205 +666,67 @@ public class BlockDudeDomain implements DomainGenerator {
 	 * walk under platforms. Possibly fix this in the future although we
 	 * don't have to for the levels given.
 	 */
-
-	char[][] lvl1 = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', 'g', ' ', ' ', ' ', 'b', ' ', ' ', 't', ' ', 'b', ' ',
-			' ', ' ', 'b', ' ', '>', ' ', ' ', ' ' },
-		{ ' ', 't', 't', 't', ' ', 't', 't', 't', ' ', 't', 't', 't',
-			' ', 't', 't', 't', 't', 't', 't', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' } };
-
-	/*
-	 * char[][] lvl1 = { {'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'}, {'t', ' ', ' ',
-	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-	 * ' ', ' ', 't'}, {'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'}, {'t', ' ', ' ',
-	 * ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ',
-	 * ' ', ' ', 't'}, {'t', 'g', ' ', ' ', 't', 'b', ' ', ' ', 't', ' ',
-	 * 'b', ' ', 't', ' ', 'b', ' ', '>', ' ', ' ', 't'}, {'t', 't', 't',
-	 * 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't', 't',
-	 * 't', 't', 't'}, {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '} };
-	 */
-
-	char[][] lvl2 = {
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', 'g', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', 't', ' ', ' ', 'b', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', 'b', ' ', 'b', 'b', '<', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', 't', ' ', ' ', ' ', 't', 't', 't',
-			't', ' ', 't', 't', 't', 't', 't', 't', 't', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' } };
-
-	char[][] lvl3 = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', '<', ' ', ' ',
-			' ', 't', ' ', ' ', 't', 't', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ',
-			't', ' ', 't', 't', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', ' ', 't', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', 't',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ' } };
-
-	char[][] lvl5 = {
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', 'b', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', ' ', 't', 't', 't', 't', 't',
-			'<', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			't', ' ', 't', ' ', ' ', ' ', ' ', ' ', 'b', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', 't', ' ', ' ', ' ', 'b', 'b', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', ' ' },
-		{ ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', 't', 't', 't', 't', 't', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' } };
-
-	lvl5[0][0] = ' ';
-
-	/*
-	 * char[][] lvl5 = { {' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ',
-	 * ' ', ' ', 't', 't', 't', 't', 't', 't', 't', 't', 't', ' '}, {' ',
-	 * 't', 't', 't', 't', ' ', ' ', ' ', 't', 't', 't', 't', ' ', ' ', ' ',
-	 * ' ', ' ', ' ', ' ', ' ', ' ', 't'}, {'t', ' ', ' ', ' ', ' ', ' ',
-	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-	 * ' ', 't'}, {'t', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'}, {'t', ' ',
-	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-	 * ' ', ' ', ' ', ' ', ' ', 't'}, {'t', ' ', ' ', ' ', ' ', ' ', 't',
-	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-	 * 't'}, {'t', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ',
-	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't'}, {'t', ' ', ' ',
-	 * ' ', ' ', ' ', 't', 'b', 'b', 'b', 'b', ' ', ' ', ' ', ' ', ' ', ' ',
-	 * ' ', ' ', ' ', ' ', 't'}, {'t', 'g', ' ', ' ', ' ', 't', 't', 't',
-	 * 't', 't', 't', 't', '<', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-	 * 't'}, {'t', 't', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', 't',
-	 * 't', ' ', 't', ' ', ' ', ' ', ' ', ' ', 'b', 't'}, {' ', 't', ' ',
-	 * 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', 't', 't', ' ',
-	 * ' ', ' ', 'b', 'b', 't'}, {' ', 't', ' ', 't', ' ', ' ', ' ', ' ',
-	 * ' ', ' ', ' ', ' ', 't', ' ', 't', 't', ' ', ' ', 'b', 'b', 'b',
-	 * 't'}, {' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-	 * 't', ' ', 't', 't', 't', 't', 't', 't', 't', 't'}, {' ', ' ', ' ',
-	 * ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', ' ',
-	 * ' ', ' ', ' ', ' ', ' '} };
-	 */
+	
 	char[][] lvl = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', 't', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', ' ', ' ', ' ', 't', ' ', ' ',
-			' ', ' ', ' ', ' ', 'b', '<', 'b' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', ' ', 't', ' ', ' ', ' ',
-			'b', ' ', 't', ' ', 't', 't', 't' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', 'b',
-			'b', ' ', ' ', 't', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't',
-			't', ' ', ' ', ' ', ' ', ' ', ' ' } };
+		{ 't', ' ', '<', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', ' ', ' ', 't', ' ', ' ', 'b', ' ', 't', ' ' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', 't', 't', 't', 't', ' ', ' ' } };
+	
+	DomainData dd = BlockDudeDomain.createDomain(lvl);
 
-	char[][] lvlt = { { 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', ' ' },
-		{ ' ', ' ', 'b', ' ', ' ', 'b', 'b', 't', ' ' },
-		{ ' ', ' ', 't', 't', 't', 'b', 't', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
-
-	char[][] lvlc = { { 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', 'b', ' ', ' ', ' ', '<', ' ' },
-		{ ' ', ' ', ' ', 'b', 'b', ' ', ' ', 't', ' ' },
-		{ ' ', ' ', 't', 't', 't', 'b', 't', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
-	DomainData dd = BlockDudeDomain.createDomain(lvlc);
-
-	Domain d = dd.d;
+	final Domain d = dd.d;
 	State s = dd.s;
 	BlockDudeDomain constructor = dd.c;
 
-	int expMode = 1;
-	if (args.length > 0) {
-	    if (args[0].equals("v")) {
-		expMode = 1;
-	    }
-	}
+	int expMode = 2;
 
-	if (expMode == 0) {
-
-	    TerminalExplorer exp = new TerminalExplorer(d);
-	    exp.addActionShortHand("u", ACTIONUP);
-	    exp.addActionShortHand("e", ACTIONEAST);
-	    exp.addActionShortHand("w", ACTIONWEST);
-	    exp.addActionShortHand("p", ACTIONPICKUP);
-	    exp.addActionShortHand("d", ACTIONPUTDOWN);
-
-	} else if (expMode == 1) {
-
+	if (expMode == 1) {
 	    Visualizer v = BlockDudeVisualizer.getVisualizer(constructor.minx,
 		    constructor.maxx, constructor.miny, constructor.maxy);
 	    VisualExplorer exp = new VisualExplorer(d, v, s);
 	    exp.enableEpisodeRecording("'", "]");
 
-	    // use w-s-a-d-x
+	    // use w-s-a-d-e
 	    exp.addKeyAction("w", ACTIONUP);
 	    exp.addKeyAction("s", ACTIONPICKUP);
 	    exp.addKeyAction("a", ACTIONWEST);
 	    exp.addKeyAction("d", ACTIONEAST);
-	    exp.addKeyAction("x", ACTIONPUTDOWN);
+	    exp.addKeyAction("e", ACTIONPUTDOWN);
 
 	    exp.initGUI();
+	} else {
+		DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
+		hf.setAttributesForClass(BlockDudeDomain.CLASSAGENT,
+			dd.d.getObjectClass(BlockDudeDomain.CLASSAGENT).attributeList);
+		hf.setAttributesForClass(BlockDudeDomain.CLASSBLOCK,
+			dd.d.getObjectClass(BlockDudeDomain.CLASSBLOCK).attributeList);
+		hf.setAttributesForClass(BlockDudeDomain.CLASSEXIT,
+			dd.d.getObjectClass(BlockDudeDomain.CLASSEXIT).attributeList);
+	    double gamma = 0.995;
+	    double learningRate = 0.99;
+	    TerminalFunction tf = new GoalConditionTF(new StateConditionTest() {
+		    private PropositionalFunction pf = d
+			    .getPropFunction(BlockDudeDomain.PFATEXIT);
+		@Override
+		public boolean satisfies(State s) {
+			return pf.isTrue(s, new String[] { "agent0", "exit0" });
+		}
+	    });
+	    
+	    PolicyBlocksPolicy p = new PolicyBlocksPolicy(0.05);
+	    QLearning agent = new IOQLearning(dd.d, new UniformCostRF(), tf, gamma, hf, 0, learningRate, p, Integer.MAX_VALUE);
+	    p.qplanner = agent;
+	    long t = System.currentTimeMillis();
+	    
+	    for (int i = 0; i < 1000; i++) {
+		System.out.println("Running episode " + (i+1) + " [" + (System.currentTimeMillis()-t)/1000.0 + "]");
+		
+		t = System.currentTimeMillis();
+		agent.runLearningEpisodeFrom(dd.s);
+	    }
 	}
 
     }
