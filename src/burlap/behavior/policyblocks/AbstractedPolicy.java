@@ -785,6 +785,7 @@ public class AbstractedPolicy extends Policy {
 
 	for (List<PolicyBlocksPolicy> ps : getSubsets(policies, 2, depth)) {
 	    if (!Arrays.asList(toCache).contains(c)) {
+		c++;
 		continue;
 	    }
 
