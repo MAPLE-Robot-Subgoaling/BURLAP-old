@@ -1,5 +1,6 @@
 package domain.singleagent.sokoban2;
 
+import domain.blockdude.BlockDudeVisualizer;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.learning.LearningAgent;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
@@ -27,17 +28,16 @@ public class Sokoban2Driver {
 	State s = Sokoban2Domain.getCleanState(domain, 5, 4, 3);
 
 	// top left bottom right
-	Sokoban2Domain.setRoom(s, 0, 10, 0, 0, 20, "red");
-	Sokoban2Domain.setRoom(s, 1, 10, 20, 0, 40, "green");
-	Sokoban2Domain.setRoom(s, 2, 20, 0, 10, 10, "blue");
-	Sokoban2Domain.setRoom(s, 3, 20, 10, 10, 20, "magenta");
-	Sokoban2Domain.setRoom(s, 4, 20, 20, 10, 40, "yellow");
+	Sokoban2Domain.setRoom(s, 0, 5, 0, 0, 10, "red");
+	Sokoban2Domain.setRoom(s, 1, 5, 10, 0, 20, "green");
+	Sokoban2Domain.setRoom(s, 2, 10, 0, 5, 5, "blue");
+	Sokoban2Domain.setRoom(s, 3, 10, 5, 5, 10, "magenta");
+	Sokoban2Domain.setRoom(s, 4, 10, 10, 5, 20, "yellow");
 
-	Sokoban2Domain.setDoor(s, 0, 10, 2, 10, 8);
-	Sokoban2Domain.setDoor(s, 1, 10, 12, 10, 18);
-	Sokoban2Domain.setDoor(s, 2, 10, 22, 10, 38);
-	Sokoban2Domain.setDoor(s, 3, 8, 20, 2, 20);
-
+	Sokoban2Domain.setDoor(s, 0, 5, 2, 5, 3);
+	Sokoban2Domain.setDoor(s, 1, 5, 7, 5, 8);
+	Sokoban2Domain.setDoor(s, 2, 5, 12, 5, 18);
+	Sokoban2Domain.setDoor(s, 3, 3, 10, 2, 10);
 	Sokoban2Domain.setAgent(s, 1, 1);
 	Sokoban2Domain.setBlock(s, 0, 6, 5, "backpack", "red");
 	Sokoban2Domain.setBlock(s, 1, 3, 4, "backpack", "blue");
@@ -45,6 +45,7 @@ public class Sokoban2Driver {
 
 	Visualizer v = Sokoban2Visualizer.getVisualizer("img");
 	VisualExplorer exp = new VisualExplorer(domain, v, s);
+	exp.enableEpisodeRecording("'", "]");
 
 	exp.addKeyAction("w", Sokoban2Domain.ACTIONNORTH);
 	exp.addKeyAction("s", Sokoban2Domain.ACTIONSOUTH);

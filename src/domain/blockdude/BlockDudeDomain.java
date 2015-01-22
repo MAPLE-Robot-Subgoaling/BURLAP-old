@@ -47,7 +47,7 @@ public class BlockDudeDomain implements DomainGenerator {
 
     public static final String PFHOLDINGBLOCK = "holdingBlock";
     public static final String PFATEXIT = "atExit";
-    
+
     public int minx = 0;
     public int maxx = 25;
     public int miny = 0;
@@ -666,15 +666,21 @@ public class BlockDudeDomain implements DomainGenerator {
 	 * walk under platforms. Possibly fix this in the future although we
 	 * don't have to for the levels given.
 	 */
-	
+
 	char[][] lvl = {
-		{ 't', ' ', '<', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', ' ', ' ', 't', ' ', ' ', 'b', ' ', 't', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', 't', 't', 't', 't', ' ', ' ' } };
-	
+		{ 't', ' ', '<', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', ' ', 't', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', ' ',
+			' ', 't', ' ', ' ', 'b', ' ', 't', ' ' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't',
+			't', ' ', 't', 't', 't', 't', ' ', ' ' } };
+
 	DomainData dd = BlockDudeDomain.createDomain(lvl);
 
 	final Domain d = dd.d;
@@ -698,32 +704,38 @@ public class BlockDudeDomain implements DomainGenerator {
 
 	    exp.initGUI();
 	} else {
-		DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
-		hf.setAttributesForClass(BlockDudeDomain.CLASSAGENT,
-			dd.d.getObjectClass(BlockDudeDomain.CLASSAGENT).attributeList);
-		hf.setAttributesForClass(BlockDudeDomain.CLASSBLOCK,
-			dd.d.getObjectClass(BlockDudeDomain.CLASSBLOCK).attributeList);
-		hf.setAttributesForClass(BlockDudeDomain.CLASSEXIT,
-			dd.d.getObjectClass(BlockDudeDomain.CLASSEXIT).attributeList);
+	    DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
+	    hf.setAttributesForClass(
+		    BlockDudeDomain.CLASSAGENT,
+		    dd.d.getObjectClass(BlockDudeDomain.CLASSAGENT).attributeList);
+	    hf.setAttributesForClass(
+		    BlockDudeDomain.CLASSBLOCK,
+		    dd.d.getObjectClass(BlockDudeDomain.CLASSBLOCK).attributeList);
+	    hf.setAttributesForClass(
+		    BlockDudeDomain.CLASSEXIT,
+		    dd.d.getObjectClass(BlockDudeDomain.CLASSEXIT).attributeList);
 	    double gamma = 0.995;
 	    double learningRate = 0.99;
 	    TerminalFunction tf = new GoalConditionTF(new StateConditionTest() {
-		    private PropositionalFunction pf = d
-			    .getPropFunction(BlockDudeDomain.PFATEXIT);
+		private PropositionalFunction pf = d
+			.getPropFunction(BlockDudeDomain.PFATEXIT);
+
 		@Override
 		public boolean satisfies(State s) {
-			return pf.isTrue(s, new String[] { "agent0", "exit0" });
+		    return pf.isTrue(s, new String[] { "agent0", "exit0" });
 		}
 	    });
-	    
+
 	    PolicyBlocksPolicy p = new PolicyBlocksPolicy(0.05);
-	    QLearning agent = new IOQLearning(dd.d, new UniformCostRF(), tf, gamma, hf, 0, learningRate, p, Integer.MAX_VALUE);
+	    QLearning agent = new IOQLearning(dd.d, new UniformCostRF(), tf,
+		    gamma, hf, 0, learningRate, p, Integer.MAX_VALUE);
 	    p.qplanner = agent;
 	    long t = System.currentTimeMillis();
-	    
+
 	    for (int i = 0; i < 1000; i++) {
-		System.out.println("Running episode " + (i+1) + " [" + (System.currentTimeMillis()-t)/1000.0 + "]");
-		
+		System.out.println("Running episode " + (i + 1) + " ["
+			+ (System.currentTimeMillis() - t) / 1000.0 + "]");
+
 		t = System.currentTimeMillis();
 		agent.runLearningEpisodeFrom(dd.s);
 	    }

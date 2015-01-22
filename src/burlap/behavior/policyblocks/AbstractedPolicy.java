@@ -2,6 +2,7 @@ package burlap.behavior.policyblocks;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -751,7 +752,7 @@ public class AbstractedPolicy extends Policy {
 	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
 	    int maxPol, boolean toSubtract, boolean greedyMerge) {
 	return powerMergeCache(hf, policies, depth, maxPol, toSubtract,
-		greedyMerge, false).get(depth);
+		greedyMerge, new int[] { depth }).get(depth);
     }
 
     /**
@@ -776,13 +777,17 @@ public class AbstractedPolicy extends Policy {
      */
     public static Map<Integer, List<Entry<AbstractedPolicy, Double>>> powerMergeCache(
 	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
-	    int maxPol, boolean toSubtract, boolean greedyMerge, boolean toCache) {
+	    int maxPol, boolean toSubtract, boolean greedyMerge, int[] toCache) {
 	Map<Integer, List<Entry<AbstractedPolicy, Double>>> mappedPolicies = new HashMap<Integer, List<Entry<AbstractedPolicy, Double>>>(
-		depth - 1);
+		toCache.length);
 	List<Entry<AbstractedPolicy, Double>> mergedPolicies = new ArrayList<Entry<AbstractedPolicy, Double>>();
 	int c = 2;
 
 	for (List<PolicyBlocksPolicy> ps : getSubsets(policies, 2, depth)) {
+	    if (!Arrays.asList(toCache).contains(c)) {
+		continue;
+	    }
+
 	    boolean toSort = false;
 	    AbstractedPolicy abs;
 
@@ -827,21 +832,9 @@ public class AbstractedPolicy extends Policy {
 			});
 	    }
 
-	    if (toCache && toSubtract) {
-		subtractAll(mergedPolicies);
-	    }
-
-	    if (toCache || c == depth) {
-		mappedPolicies.put(c, mergedPolicies);
-	    }
+	    subtractAll(mergedPolicies);
+	    mappedPolicies.put(c, mergedPolicies);
 	    c++;
-	}
-
-	if (!toCache && toSubtract) {
-	    List<Entry<AbstractedPolicy, Double>> newPolicies = mappedPolicies
-		    .get(depth);
-	    subtractAll(newPolicies);
-	    mappedPolicies.put(depth, newPolicies);
 	}
 
 	return mappedPolicies;
