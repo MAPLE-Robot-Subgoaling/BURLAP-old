@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -225,8 +226,8 @@ public class TaxiWorldExperiment {
 		+ ".");
 
 	Map<Integer, List<Entry<AbstractedPolicy, Double>>> absGPs = AbstractedPolicy
-		.powerMergeCache(hf, toMerge, depth, 1, true, true, new int[] {
-			3, 5, 10 });
+		.powerMergeCache(hf, toMerge, depth, 1, true, true,
+			new Integer[] { 3, 5, 10 });
 	System.out.println("Created " + absGPs.size() + " options.");
 	toMerge = null;
 

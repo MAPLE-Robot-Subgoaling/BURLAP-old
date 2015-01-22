@@ -752,7 +752,7 @@ public class AbstractedPolicy extends Policy {
 	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
 	    int maxPol, boolean toSubtract, boolean greedyMerge) {
 	return powerMergeCache(hf, policies, depth, maxPol, toSubtract,
-		greedyMerge, new int[] { depth }).get(depth);
+		greedyMerge, new Integer[] { depth }).get(depth);
     }
 
     /**
@@ -777,7 +777,8 @@ public class AbstractedPolicy extends Policy {
      */
     public static Map<Integer, List<Entry<AbstractedPolicy, Double>>> powerMergeCache(
 	    StateHashFactory hf, List<PolicyBlocksPolicy> policies, int depth,
-	    int maxPol, boolean toSubtract, boolean greedyMerge, int[] toCache) {
+	    int maxPol, boolean toSubtract, boolean greedyMerge,
+	    Integer[] toCache) {
 	Map<Integer, List<Entry<AbstractedPolicy, Double>>> mappedPolicies = new HashMap<Integer, List<Entry<AbstractedPolicy, Double>>>(
 		toCache.length);
 	List<Entry<AbstractedPolicy, Double>> mergedPolicies = new ArrayList<Entry<AbstractedPolicy, Double>>();
