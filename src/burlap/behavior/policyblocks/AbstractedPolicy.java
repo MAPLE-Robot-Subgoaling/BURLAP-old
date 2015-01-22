@@ -781,11 +781,11 @@ public class AbstractedPolicy extends Policy {
 	Map<Integer, List<Entry<AbstractedPolicy, Double>>> mappedPolicies = new HashMap<Integer, List<Entry<AbstractedPolicy, Double>>>(
 		toCache.length);
 	List<Entry<AbstractedPolicy, Double>> mergedPolicies = new ArrayList<Entry<AbstractedPolicy, Double>>();
-	int c = 2;
+	int c = 1;
 
 	for (List<PolicyBlocksPolicy> ps : getSubsets(policies, 2, depth)) {
+	    c++;
 	    if (!Arrays.asList(toCache).contains(c)) {
-		c++;
 		continue;
 	    }
 
@@ -835,7 +835,6 @@ public class AbstractedPolicy extends Policy {
 
 	    subtractAll(mergedPolicies);
 	    mappedPolicies.put(c, mergedPolicies);
-	    c++;
 	}
 
 	return mappedPolicies;
