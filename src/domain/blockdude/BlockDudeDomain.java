@@ -3,6 +3,7 @@ package domain.blockdude;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import burlap.behavior.policyblocks.PolicyBlocksPolicy;
 import burlap.behavior.singleagent.Policy;
@@ -655,10 +656,7 @@ public class BlockDudeDomain implements DomainGenerator {
 	return new DomainData(c, d, s);
     }
 
-    /**
-     * @param args
-     */
-    public static void main(String[] args) {
+    public static char[][] genLevel(int numBlocks) {
 	/*
 	 * WARNING: Platforms only store height! This means that platforms
 	 * always extend from the bottom of the level to the given height. This
@@ -666,22 +664,56 @@ public class BlockDudeDomain implements DomainGenerator {
 	 * walk under platforms. Possibly fix this in the future although we
 	 * don't have to for the levels given.
 	 */
-
+	
+	if (numBlocks < 2 || numBlocks > 10) {
+	    throw new IllegalArgumentException("Number of blocks must be [2, 10].");
+	}
+	
+	// Optional blocks
+	int[][] f_int = { {4, 14}, {4, 15}, {4, 16}, {4, 17}, {4, 10}, {4, 11}, {4, 12}, {3, 5}, {3, 6}, {3, 7} };
+	
+	// Requisite blocks at the first trough
+	int[][] t_int = { {4, 10}, {4, 11}, {4, 12} };
+	
+	// Requisite blocks at the second trough
+	int[][] s_int = { {3, 5}, {3, 6}, {3, 7} };
+	
 	char[][] lvl = {
-		{ 't', ' ', '<', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', 'b', 'b', ' ', 't', ' ', ' ',
-			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', 'b', ' ',
-			' ', 't', ' ', ' ', 'b', ' ', 't', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't',
-			't', ' ', 't', 't', 't', 't', ' ', ' ' } };
+		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '<', ' ' },
+		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', 't', ' ' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', 't', 't', 't', 't', ' ', ' ' } };
 
-	DomainData dd = BlockDudeDomain.createDomain(lvl);
+	Random rand = new Random();
+	// Set up the first two blocks
+	int r = rand.nextInt(t_int.length);
+	
+	lvl[t_int[r][0]][t_int[r][1]] = 'b';
+	numBlocks--;
+	r = rand.nextInt(s_int.length);
+	lvl[s_int[r][0]][s_int[r][1]] = 'b';
+	numBlocks--;
+	
+	while (numBlocks > 0) {
+	    r = rand.nextInt(f_int.length);
+	    if (lvl[f_int[r][0]][f_int[r][1]] == 'b') {
+		continue;
+	    }
+	    
+	    lvl[f_int[r][0]][f_int[r][1]] = 'b';
+	    numBlocks--;
+	}
+	
+	return lvl;
+    }
+    
+    /**
+     * @param args
+     */
+    public static void main(String[] args) {
+	DomainData dd = BlockDudeDomain.createDomain(genLevel(2));
 
 	final Domain d = dd.d;
 	State s = dd.s;
@@ -728,7 +760,7 @@ public class BlockDudeDomain implements DomainGenerator {
 
 	    PolicyBlocksPolicy p = new PolicyBlocksPolicy(0.05);
 	    QLearning agent = new IOQLearning(dd.d, new UniformCostRF(), tf,
-		    gamma, hf, 0, learningRate, p, Integer.MAX_VALUE);
+		    gamma, hf, -1, learningRate, p, 10000);
 	    p.qplanner = agent;
 	    long t = System.currentTimeMillis();
 
@@ -740,7 +772,5 @@ public class BlockDudeDomain implements DomainGenerator {
 		agent.runLearningEpisodeFrom(dd.s);
 	    }
 	}
-
     }
-
 }
