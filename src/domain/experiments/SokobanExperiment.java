@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import burlap.behavior.policyblocks.AbstractedPolicy;
 import burlap.behavior.policyblocks.PolicyBlocksPolicy;
 import burlap.behavior.singleagent.learning.tdmethods.IOQLearning;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
@@ -161,7 +162,25 @@ public class SokobanExperiment {
 
 	return open;
     }
+    
+    public static Map<Entry<Integer, Integer>, String> genBlocks(State s, int numBlocks) {
+	Random rand = new Random();
+	Map<String, List<Entry<Integer, Integer>>> open = getOpenSpots(s);
+	Map<Entry<Integer, Integer>, String> ret = new HashMap<Entry<Integer, Integer>, String>(numBlocks);
 
+	for (int i = 0; i < numBlocks; i++) {
+	    List<String> colors = new ArrayList<String>(open.keySet());
+	    String color = colors.get(rand.nextInt(colors.size()));
+
+	    Entry<Integer, Integer> pos = open.get(color).get(
+		    rand.nextInt(open.get(color).size()));
+
+	    ret.put(new AbstractMap.SimpleEntry<Integer, Integer>(pos.getKey(), pos.getValue()), color);
+	}
+	
+	return ret;
+    }
+    
     public static PolicyBlocksPolicy runSokobanBaseLearning(
 	    StateHashFactory hf, int numBlocks, int episodes, double epsilon,
 	    double goodReward, String path) {
@@ -203,7 +222,7 @@ public class SokobanExperiment {
 	TerminalFunction tf = new SinglePFTF(
 		domain.getPropFunction(Sokoban2Domain.PFATGOAL));
 	QLearning Q = new IOQLearning(domain, rf, tf,
-		Sokoban2Domain.DISCOUNTFACTOR, hf, -1.0,
+		Sokoban2Domain.DISCOUNTFACTOR, hf, 1.0,
 		Sokoban2Domain.LEARNINGRATE, p, Integer.MAX_VALUE);
 	p.setPlanner(Q);
 
@@ -231,9 +250,11 @@ public class SokobanExperiment {
     }
 
     public static void driver(String path) throws IOException {
-	int episodes = 1000;
-	double epsilon = 0.01;
+	int episodes = 100000;
+	double epsilon = 0.05;
+	double termProb = 0.05;
 	double reward = 1;
+	double qInit = -reward;
 
 	Sokoban2Domain dgen = new Sokoban2Domain();
 	Domain domain = dgen.generateDomain();
@@ -243,7 +264,21 @@ public class SokobanExperiment {
 	hf.setAttributesForClass(Sokoban2Domain.CLASSBLOCK,
 		domain.getObjectClass(Sokoban2Domain.CLASSAGENT).attributeList);
 
-	runSokobanBaseLearning(hf, 2, episodes, epsilon, reward, path);
+	List<PolicyBlocksPolicy> toMerge = new ArrayList<PolicyBlocksPolicy>(20);
+	Random rand = new Random();
+	int maxBlocks = 6;
+	int maxTarg = 10;
+	
+	for (int i = 0; i < 20; i++) {
+	    toMerge.add(runSokobanBaseLearning(hf, rand.nextInt(maxBlocks)+1, episodes, epsilon, reward, path));
+	}
+	
+	// Map<Entry<Integer, Integer>, String> targetBlocks = genBlocks(maxTarg);
+	
+	List<Entry<AbstractedPolicy, Double>> merged = AbstractedPolicy.powerMerge(hf, toMerge, 3, Integer.MAX_VALUE);
+	
+	// Q-Learning
+	
     }
 
     public static void removeRooms(PolicyBlocksPolicy p) {
