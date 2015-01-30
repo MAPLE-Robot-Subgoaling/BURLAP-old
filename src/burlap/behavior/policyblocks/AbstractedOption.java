@@ -33,12 +33,11 @@ public class AbstractedOption extends Option {
 	    Map<StateHashTuple, GroundedAction> policy, List<Action> actions,
 	    double termProb, String name) {
 	if (policy.isEmpty()) {
-	    throw new RuntimeException("Empty policy provided.");
+	    throw new IllegalArgumentException("Empty policy provided.");
 	} else if (actions.isEmpty()) {
-	    throw new RuntimeException("No actions provided.");
-	}
-	if (termProb > 1 || termProb < 0) {
-	    throw new RuntimeException("Invalid termination probability");
+	    throw new IllegalArgumentException("No actions provided.");
+	} else if (termProb > 1 || termProb < 0) {
+	    throw new IllegalArgumentException("Invalid termination probability");
 	}
 
 	this.policy = policy;
