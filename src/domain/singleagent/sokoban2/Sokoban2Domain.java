@@ -589,10 +589,6 @@ public class Sokoban2Domain implements DomainGenerator {
 	    ObjectInstance roomWithLastBlock = roomContainingPoint(s, lastX,
 		    lastY);
 	    if (!wallAt(s, roomWithLastBlock, lastX, lastY)) {
-		// remove this bit after experiments are done
-		if (lastX == 1 || lastY == 1 || lastX == 7 || lastY == 8) {
-		    ;
-		} else {
 		    for (int i = 0; i < blocks.size(); i++) {
 			ObjectInstance block = blocks.get(i);
 			int bx = block.getDiscValForAttribute(ATTX);
@@ -603,7 +599,6 @@ public class Sokoban2Domain implements DomainGenerator {
 			block.setValue(ATTX, bx);
 			block.setValue(ATTY, by);
 		    }
-		}
 
 		permissibleMove = true;
 	    }
