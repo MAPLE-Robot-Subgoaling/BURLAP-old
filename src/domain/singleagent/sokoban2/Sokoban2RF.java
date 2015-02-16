@@ -9,9 +9,13 @@ import burlap.oomdp.singleagent.common.UniformCostRF;
 
 public class Sokoban2RF extends UniformCostRF {
     private double goodReward;
+    private double badReward;
+    private boolean uniform;
 
-    public Sokoban2RF(double goodReward) {
+    public Sokoban2RF(double goodReward, double badReward, boolean uniform) {
 	this.goodReward = goodReward;
+	this.badReward = badReward;
+	this.uniform = uniform;
     }
 
     @Override
@@ -45,7 +49,7 @@ public class Sokoban2RF extends UniformCostRF {
 
 	    if (wallsprimeouched >= 2
 		    && Sokoban2Domain.doorContainingPoint(sprime, bx, by) == null) {
-		return -goodReward;
+		return badReward;
 	    }
 	}
 
@@ -68,6 +72,18 @@ public class Sokoban2RF extends UniformCostRF {
 	    }
 	}
 
-	return blockCount == blocks.size() ? goodReward : 0;
+	if (blockCount == blocks.size()) {
+	    System.out.println("Found the goal!");
+	    return goodReward;
+	}
+
+	if (uniform) {
+	    return -1;
+	}
+	return 0;
+    }
+
+    public boolean isUniform() {
+	return uniform;
     }
 }

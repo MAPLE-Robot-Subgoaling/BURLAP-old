@@ -84,8 +84,8 @@ public class Sokoban2Domain implements DomainGenerator {
     protected boolean includeDirectionAttribute = false;;
 
     // for the learning algorithm
-    public static final double LEARNINGRATE = 0.99;
-    public static final double DISCOUNTFACTOR = 0.95;
+    public static final double LEARNINGRATE = 0.9999;
+    public static final double DISCOUNTFACTOR = 0.999995;
     public static final double LAMBDA = 1.0;
 
     public static void main(String[] args) {
@@ -107,7 +107,7 @@ public class Sokoban2Domain implements DomainGenerator {
 	DiscreteStateHashFactory hashFactory = new DiscreteStateHashFactory();
 	hashFactory.setAttributesForClass(CLASSAGENT,
 		domain.getObjectClass(CLASSAGENT).attributeList);
-	RewardFunction rf = new Sokoban2RF(1000);
+	RewardFunction rf = new Sokoban2RF(1000, -1000, false);
 	// RewardFunction rf = new UniformCostRF();
 	TerminalFunction tf = new SinglePFTF(domain.getPropFunction(PFATGOAL));
 	LearningAgent Q = new QLearning(domain, rf, tf,
@@ -589,18 +589,23 @@ public class Sokoban2Domain implements DomainGenerator {
 	    ObjectInstance roomWithLastBlock = roomContainingPoint(s, lastX,
 		    lastY);
 	    if (!wallAt(s, roomWithLastBlock, lastX, lastY)) {
-		permissibleMove = true;
+		// remove this bit after experiments are done
+		if (lastX == 1 || lastY == 1 || lastX == 7 || lastY == 8) {
+		    ;
+		} else {
+		    for (int i = 0; i < blocks.size(); i++) {
+			ObjectInstance block = blocks.get(i);
+			int bx = block.getDiscValForAttribute(ATTX);
+			int by = block.getDiscValForAttribute(ATTY);
+			bx += xdelta;
+			by += ydelta;
 
-		for (int i = 0; i < blocks.size(); i++) {
-		    ObjectInstance block = blocks.get(i);
-		    int bx = block.getDiscValForAttribute(ATTX);
-		    int by = block.getDiscValForAttribute(ATTY);
-		    bx += xdelta;
-		    by += ydelta;
-
-		    block.setValue(ATTX, bx);
-		    block.setValue(ATTY, by);
+			block.setValue(ATTX, bx);
+			block.setValue(ATTY, by);
+		    }
 		}
+
+		permissibleMove = true;
 	    }
 
 	    /*
@@ -676,7 +681,7 @@ public class Sokoban2Domain implements DomainGenerator {
 
 		if (wallsTouched >= 2
 			&& doorContainingPoint(st, bx, by) == null) {
-		    return true;
+		    // return true;
 		}
 	    }
 

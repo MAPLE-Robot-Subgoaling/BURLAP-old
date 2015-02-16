@@ -4,21 +4,18 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.Set;
 
 import burlap.behavior.policyblocks.AbstractedOption;
 import burlap.behavior.policyblocks.AbstractedPolicy;
 import burlap.behavior.policyblocks.PolicyBlocksPolicy;
 import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.QValue;
+import burlap.behavior.singleagent.learning.tdmethods.IOQLearning;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.singleagent.planning.StateConditionTest;
@@ -26,57 +23,22 @@ import burlap.behavior.singleagent.planning.deterministic.GoalConditionTF;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
-import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
-import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.common.UniformCostRF;
 import domain.blockdude.BlockDudeDomain;
 import domain.blockdude.BlockDudeDomain.DomainData;
 
 public class BlockDudeExperiment {
-    public static long runBlockDudeTopLearning(StateHashFactory hf, Option o,
-	    char[][] level, int episodes, double epsilon, int maxsteps,
-	    String name) {
-	long cumul = 0;
-	long time = System.currentTimeMillis();
-	System.out.println("Learning base policy " + name + ".");
-	final DomainData dd = BlockDudeDomain.createDomain(level);
-	QLearning Q = new QLearning(dd.d, new UniformCostRF(),
-		new GoalConditionTF(new StateConditionTest() {
-		    private PropositionalFunction pf = dd.d
-			    .getPropFunction(BlockDudeDomain.PFATEXIT);
-
-		    @Override
-		    public boolean satisfies(State s) {
-			return pf.isTrue(s, new String[] { "agent0", "exit0" });
-		    }
-		}), 0.95, hf, 0.2, 0.99, maxsteps - 1);
-
-	PolicyBlocksPolicy policy = new PolicyBlocksPolicy(Q, epsilon);
-	Q.setLearningPolicy(policy);
-	Q.addNonDomainReferencedAction(o);
-	EpisodeAnalysis analyzer = new EpisodeAnalysis();
-	for (int i = 0; i < episodes; i++) {
-	    analyzer = Q.runLearningEpisodeFrom(dd.s);
-	    cumul += analyzer.numTimeSteps();
-	}
-
-	System.out.println("Finished base policy " + name + " in "
-		+ (System.currentTimeMillis() - time) / 1000.0 + " seconds.");
-
-	return cumul;
-    }
-
     public static PolicyBlocksPolicy runBlockDudeBaseLearning(
 	    StateHashFactory hf, char[][] level, int episodes, double epsilon,
-	    int maxsteps, String name) {
+	    int maxsteps, double qInit, String name) {
 	long time = System.currentTimeMillis();
 	System.out.println("Learning base policy " + name + ".");
 	final DomainData dd = BlockDudeDomain.createDomain(level);
-	QLearning Q = new QLearning(dd.d, new UniformCostRF(),
+	QLearning Q = new IOQLearning(dd.d, new UniformCostRF(),
 		new GoalConditionTF(new StateConditionTest() {
 		    private PropositionalFunction pf = dd.d
 			    .getPropFunction(BlockDudeDomain.PFATEXIT);
@@ -85,13 +47,14 @@ public class BlockDudeExperiment {
 		    public boolean satisfies(State s) {
 			return pf.isTrue(s, new String[] { "agent0", "exit0" });
 		    }
-		}), 0.95, hf, 0.2, 0.99, maxsteps - 1);
+		}), 0.9995, hf, qInit, 0.999, maxsteps - 1);
 
 	PolicyBlocksPolicy policy = new PolicyBlocksPolicy(Q, epsilon);
 	Q.setLearningPolicy(policy);
 
+	State start = dd.s.copy();
 	for (int i = 0; i < episodes; i++) {
-	    Q.runLearningEpisodeFrom(dd.s);
+	    Q.runLearningEpisodeFrom(start);
 	}
 
 	System.out.println("Finished base policy " + name + " in "
@@ -102,18 +65,19 @@ public class BlockDudeExperiment {
 
     public static PolicyBlocksPolicy runBlockDudeOptionLearning(
 	    StateHashFactory hf, Option o, char[][] level, int episodes,
-	    double epsilon, int maxsteps, String path) throws IOException {
+	    double epsilon, int maxsteps, double qInit, String path)
+	    throws IOException {
 	return runBlockDudeOptionLearning(hf,
 		AbstractedPolicy.singletonList(o), level, episodes, epsilon,
-		maxsteps, path);
+		maxsteps, qInit, path);
     }
 
     public static PolicyBlocksPolicy runBlockDudeOptionLearning(
 	    StateHashFactory hf, List<? extends Option> os, char[][] level,
-	    int episodes, double epsilon, int maxsteps, String path)
-	    throws IOException {
+	    int episodes, double epsilon, int maxsteps, double qInit,
+	    String path) throws IOException {
 	final DomainData dd = BlockDudeDomain.createDomain(level);
-	QLearning Q = new QLearning(dd.d, new UniformCostRF(),
+	QLearning Q = new IOQLearning(dd.d, new UniformCostRF(),
 		new GoalConditionTF(new StateConditionTest() {
 		    private PropositionalFunction pf = dd.d
 			    .getPropFunction(BlockDudeDomain.PFATEXIT);
@@ -122,7 +86,7 @@ public class BlockDudeExperiment {
 		    public boolean satisfies(State s) {
 			return pf.isTrue(s, new String[] { "agent0", "exit0" });
 		    }
-		}), 0.95, hf, 0.2, 0.99, maxsteps - 1);
+		}), 0.9995, hf, qInit, 0.999, maxsteps - 1);
 
 	for (Option o : os) {
 	    Q.addNonDomainReferencedAction(o);
@@ -134,93 +98,47 @@ public class BlockDudeExperiment {
 	long cumulR = 0;
 	File fS = new File(path + "-Steps.csv");
 	File fR = new File(path + "-Reward.csv");
+	File fO = new File(path + "-Options.csv");
 	BufferedWriter bS = new BufferedWriter(new FileWriter(fS));
 	bS.write("Episode,Steps\n");
 	BufferedWriter bR = new BufferedWriter(new FileWriter(fR));
 	bR.write("Episode,Reward\n");
+	BufferedWriter bO = new BufferedWriter(new FileWriter(fO));
+	bO.write("Episode,Usage\n");
 
+	State start = dd.s.copy();
 	for (int i = 0; i < episodes; i++) {
+	    double optiTaken = 0.0;
+	    double primTaken = 0.0;
 	    EpisodeAnalysis analyzer = new EpisodeAnalysis();
-	    analyzer = Q.runLearningEpisodeFrom(dd.s);
+	    analyzer = Q.runLearningEpisodeFrom(start);
 
-	    if (i % 500 == 0) {
-		System.out.println("Episode " + i + ": "
-			+ analyzer.numTimeSteps());
+	    for (GroundedAction a : analyzer.actionSequence) {
+		if (!a.action.isPrimitive()) {
+		    optiTaken++;
+		} else {
+		    primTaken++;
+		}
 	    }
 	    cumulS += analyzer.numTimeSteps();
 	    cumulR += ExperimentUtils.sum(analyzer.rewardSequence);
 
 	    bS.write((i + 1) + "," + cumulS + "\n");
 	    bR.write((i + 1) + "," + cumulR + "\n");
-
-	    // analyzer.writeToFile(String.format("output/e%03d", i), sp);
+	    bO.write((i + 1) + "," + (optiTaken / (primTaken + optiTaken))
+		    + "\n");
 	}
 
 	bS.close();
 	bR.close();
+	bO.close();
 
 	return policy;
     }
 
-    /**
-     * Generates a random options defined over a random chunk of the state space
-     * 
-     * @param hf
-     * @param actionSpace
-     * @param stateSpace
-     * @return a AbstractedOption randomly initialized
-     */
-    public static AbstractedOption generateRandomOption(StateHashFactory hf,
-	    Domain d, List<Action> actionSpace, Set<StateHashTuple> stateSpace) {
-	Map<StateHashTuple, GroundedAction> policy = new HashMap<StateHashTuple, GroundedAction>();
-	Random rand = new Random();
-	int count = 0;
-	int max = rand.nextInt((stateSpace.size()));
-
-	// Samples from the state space
-	for (StateHashTuple s : stateSpace) {
-	    if (count >= max) {
-		break;
-	    }
-	    policy.put(
-		    s,
-		    new GroundedAction(actionSpace.get(rand.nextInt(actionSpace
-			    .size())), ""));
-	    count++;
-	}
-
-	System.out.println(count);
-	System.out.println(stateSpace.size());
-	return new AbstractedOption(hf, policy, d.getActions(), 0., "random");
-    }
-
-    public static AbstractedOption craftOption(int episodes, double epsilon,
-	    int stateCap) {
-	char[][] lvl = { { ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', 't', 't', 't', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', 'b', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 'b', '<' },
-		{ 'g', ' ', ' ', ' ', 't', 't', 't' },
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ' } };
-
-	DomainData dd = BlockDudeDomain.createDomain(lvl);
-	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
-	hf.setAttributesForClass(BlockDudeDomain.CLASSAGENT,
-		dd.d.getObjectClass(BlockDudeDomain.CLASSAGENT).attributeList);
-	hf.setAttributesForClass(BlockDudeDomain.CLASSBLOCK,
-		dd.d.getObjectClass(BlockDudeDomain.CLASSBLOCK).attributeList);
-	hf.setAttributesForClass(BlockDudeDomain.CLASSEXIT,
-		dd.d.getObjectClass(BlockDudeDomain.CLASSEXIT).attributeList);
-
-	PolicyBlocksPolicy p = runBlockDudeBaseLearning(hf, lvl, episodes,
-		epsilon, stateCap, "craft");
-
-	return new AbstractedOption(hf, p.getPolicy(), dd.d.getActions(), 0.,
-		"Crafted");
-    }
-
-    public static void main(String[] args) throws IOException {
-	String path = "/home/hanicho1/blockdude/";
+    public static void main(String[] args) throws IOException,
+	    InterruptedException {
+	String path = "/home/hanicho1/blockdude/ftm/";
 	for (int i = 1; i <= 20; i++) {
 	    String oldPath = path;
 	    path = path + i + "/";
@@ -229,54 +147,16 @@ public class BlockDudeExperiment {
 	}
     }
 
-    public static void driver(String path) throws IOException {
-	char[][] lvla = { { 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 'b', ' ', ' ', ' ', ' ', '<', ' ' },
-		{ ' ', ' ', 'b', 'b', ' ', ' ', ' ', 't', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', 't', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
-
-	char[][] lvlb = { { 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', ' ' },
-		{ ' ', ' ', 'b', 'b', ' ', ' ', ' ', 't', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', 't', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
-
-	char[][] lvlc = { { 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', 'b', ' ', ' ', ' ', '<', ' ' },
-		{ ' ', ' ', ' ', 'b', 'b', ' ', ' ', 't', ' ' },
-		{ ' ', ' ', 't', 't', 't', 'b', 't', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
-
-	char[][] lvld = { { 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', '<', ' ' },
-		{ ' ', ' ', ' ', 'b', ' ', 'b', 'b', 't', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', 't', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
-
-	char[][] lvle = { { 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', 'b', '<', ' ' },
-		{ ' ', ' ', 'b', 'b', ' ', ' ', 'b', 't', ' ' },
-		{ ' ', ' ', 't', 't', 't', 'b', 't', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
-
-	char[][] lvlt = { { 't', 'g', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 'b', ' ', ' ', ' ', 'b', '<', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', 't', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ' } };
-
-	double epsilon = 0.5;
-	int episodes = 5000;
-	int stateCap = 50;
+    public static void driver(String path) throws IOException,
+	    InterruptedException {
+	double epsilon = 0.025;
+	double termProb = 0.025;
+	double qInit;
+	int episodes = 15000;
+	int stateCap = 1000;
 	long startTime = System.currentTimeMillis();
-	DomainData dd = BlockDudeDomain.createDomain(lvla);
+	DomainData dd = BlockDudeDomain.createDomain(BlockDudeDomain
+		.genLevel(8));
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
 	hf.setAttributesForClass(BlockDudeDomain.CLASSAGENT,
 		dd.d.getObjectClass(BlockDudeDomain.CLASSAGENT).attributeList);
@@ -286,88 +166,137 @@ public class BlockDudeExperiment {
 		dd.d.getObjectClass(BlockDudeDomain.CLASSEXIT).attributeList);
 
 	List<PolicyBlocksPolicy> toMerge = new ArrayList<PolicyBlocksPolicy>();
+	// 2-3->4
+	Random rand = new Random();
 
-	toMerge.add(runBlockDudeBaseLearning(hf, lvla, episodes, epsilon,
-		stateCap, "A"));
-	toMerge.add(runBlockDudeBaseLearning(hf, lvlb, episodes, epsilon,
-		stateCap, "B"));
-	toMerge.add(runBlockDudeBaseLearning(hf, lvlc, episodes, epsilon,
-		stateCap, "C"));
-	toMerge.add(runBlockDudeBaseLearning(hf, lvld, episodes, epsilon,
-		stateCap, "D"));
-	toMerge.add(runBlockDudeBaseLearning(hf, lvle, episodes, epsilon,
-		stateCap, "E"));
+	for (int i = 0; i < 20; i++) {
+	    char[][] lvl = BlockDudeDomain.genLevel(rand.nextInt(2) + 6);
+	    for (int j = 0; j < lvl.length; j++) {
+		for (int k = 0; k < lvl[j].length; k++) {
+		    System.out.print(lvl[j][k] + " ");
+		}
+		System.out.println();
+	    }
 
-	for (PolicyBlocksPolicy merge : toMerge) {
-	    removePlatforms(merge);
+	    toMerge.add(runBlockDudeBaseLearning(hf, lvl, episodes, epsilon,
+		    stateCap, -10.0, "" + (i+1)));
 	}
 
-	long mTime = System.currentTimeMillis();
-	System.out.println("Starting merging.");
+	char[][] toLvl = BlockDudeDomain.genLevel(8);
+	dd = BlockDudeDomain.createDomain(toLvl);
+	/*
+	 * (StateHashFactory hf, List<? extends Option> os, char[][] level, int
+	 * episodes, double epsilon, int maxsteps, double qInit, String path)
+	 */
+	PolicyBlocksPolicy qInitP = runBlockDudeOptionLearning(hf,
+		new ArrayList<Option>(), toLvl, episodes, epsilon, stateCap,
+		-10.0, "qInit");
+	qInit = getLowestQ(qInitP);
+	qInitP = null;
+
+	// Q-Learning
+	PolicyBlocksPolicy qPolicy = runBlockDudeOptionLearning(hf,
+		new ArrayList<Option>(), toLvl, episodes, epsilon, stateCap,
+		qInit, path+"Q-Learning");
+	// Perfect
+	AbstractedOption perOption = new AbstractedOption(hf,
+		qPolicy.getPolicy(), dd.d.getActions(), termProb, "perfect");
+	runBlockDudeOptionLearning(hf, perOption, toLvl, episodes, epsilon,
+		stateCap, qInit, path+"Perfect");
+	perOption = null;
+
+	// Merging
 	List<Entry<AbstractedPolicy, Double>> merged = AbstractedPolicy
 		.powerMerge(hf, toMerge, 3, 1);
-	System.out.println(merged.size());
-	System.out.println(merged.get(0).getKey().size() + ": "
-		+ merged.get(0).getValue());
-	AbstractedOption o1 = new AbstractedOption(hf, merged.get(0).getKey()
-		.getPolicy(), dd.d.getActions(), 0., "one");
-	System.out.println("Merging complete. Took "
-		+ (System.currentTimeMillis() - mTime) / 1000.0 + " seconds.");
+	List<Entry<AbstractedPolicy, Double>> naiveMerged = AbstractedPolicy
+		.naivePowerMerge(hf, toMerge, 3, 1);
 
-	PolicyBlocksPolicy qPolicy = runBlockDudeOptionLearning(hf,
-		new ArrayList<Option>(), lvlt, episodes, epsilon, stateCap,
-		path + "Q-Learning");
-
-	runBlockDudeOptionLearning(hf, o1, lvlt, episodes, epsilon, stateCap,
-		path + "P-MODAL");
-
-	AbstractedOption oR = generateRandomOption(hf, dd.d, dd.d.getActions(),
-		qPolicy.getPolicy().keySet());
-	runBlockDudeOptionLearning(hf, oR, lvlt, episodes, epsilon, stateCap,
-		path + "Random Option");
-
-	AbstractedOption oC = new AbstractedOption(hf, qPolicy.getPolicy(),
-		dd.d.getActions(), 0., "Crafted");
-	// craftOption(episodes, 0.0, stateCap);
-	System.out.println(oC.size());
-	runBlockDudeOptionLearning(hf, oC, lvlt, episodes, epsilon, stateCap,
-		path + "Perfect Policy Option");
-
-	List<Entry<AbstractedOption, Long>> topOs = new ArrayList<Entry<AbstractedOption, Long>>();
-	for (PolicyBlocksPolicy merge : toMerge) {
-	    AbstractedOption tempO = new AbstractedOption(hf,
-		    merge.getPolicy(), dd.d.getActions(), 0.0, "top");
-	    topOs.add(new AbstractMap.SimpleEntry<AbstractedOption, Long>(
-		    tempO, runBlockDudeTopLearning(hf, tempO, lvlt, episodes,
-			    epsilon, stateCap, "TOP")));
+	// PPB
+	if (merged != null && merged.get(0).getKey().size() > 0) {
+	    System.out.println("Generated PPB of size "
+		    + merged.get(0).getKey().size());
+	    AbstractedOption ppbOption = new AbstractedOption(hf, merged.get(0)
+		    .getKey().getPolicy(), dd.d.getActions(), termProb, "PPB");
+	    runBlockDudeOptionLearning(hf, ppbOption, toLvl, episodes, epsilon,
+		    stateCap, qInit, path+"PPB");
+	} else {
+	    System.out.println("No option candidates generated.");
+	    runBlockDudeOptionLearning(hf, new ArrayList<Option>(), toLvl,
+		    episodes, epsilon, stateCap, qInit, path+"PPB");
 	}
-	Collections.sort(topOs,
-		new Comparator<Entry<AbstractedOption, Long>>() {
-		    @Override
-		    public int compare(Entry<AbstractedOption, Long> arg0,
-			    Entry<AbstractedOption, Long> arg1) {
-			return arg0.getValue().compareTo(arg1.getValue());
-		    }
-		});
+	merged = null;
 
-	System.out.println(topOs.get(0).getValue() + " "
-		+ topOs.get(1).getValue());
-	int maxTopOs = toMerge.size() / 3;
-	for (int t = 1; t <= maxTopOs; t++) {
-	    runBlockDudeOptionLearning(hf, topOs.get(t - 1).getKey(), lvlt,
-		    episodes, epsilon, stateCap, path + "Transfer Option-" + t);
+	// PTOPs
+	List<AbstractedOption> ptopOptions = new ArrayList<AbstractedOption>(
+		toMerge.size());
+	for (PolicyBlocksPolicy p : toMerge) {
+	    ptopOptions.add(new AbstractedOption(hf, p.getPolicy(), dd.d
+		    .getActions(), termProb, "TOP"));
 	}
+	runBlockDudeOptionLearning(hf, ptopOptions, toLvl, episodes, epsilon,
+		stateCap, qInit, path+"PTOPs");
 
-	System.out.println("Starting PolicyBlocks merge.");
-	long pTime = System.currentTimeMillis();
-	List<Entry<AbstractedPolicy, Double>> vanillaAbs = AbstractedPolicy
-		.naivePowerMerge(hf, toMerge, 3, Integer.MAX_VALUE);
-	System.out.println("Finished PolicyBlocks merge in "
-		+ (System.currentTimeMillis() - pTime) / 1000.0 + " seconds.");
-	AbstractedOption pbo = new AbstractedOption(hf, vanillaAbs.get(0)
-		.getKey().getPolicy(), dd.d.getActions(), 0.0, "PolicyBlocks");
-	runBlockDudeOptionLearning(hf, pbo, lvlt, episodes, epsilon, stateCap,
-		path + "PolicyBlocks");
+	List<String> objects = new ArrayList<String>(10);
+	objects.add("block0");
+	objects.add("block1");
+	objects.add("block2");
+	objects.add("block3");
+	objects.add("block4");
+	objects.add("block5");
+	objects.add("agent0");
+	List<String> blockObjs = new ArrayList<String>(objects);
+	blockObjs.remove("agent0");
+
+	List<List<String>> oisToRemove = AbstractedPolicy
+		.permutations(blockObjs);
+	Collections.shuffle(oisToRemove);
+	int c = 1;
+	for (List<String> oiToRemove : oisToRemove) {
+	    System.out.println("To remove: " + oiToRemove + "\n");
+	    List<AbstractedOption> topOptions = new ArrayList<AbstractedOption>(
+		    toMerge.size());
+	    for (PolicyBlocksPolicy p : toMerge) {
+		List<String> tempObjects = new ArrayList<String>(objects);
+		State sp = AbstractedPolicy.sampleState(p);
+		for (int b = 0; b < 8 - sp.getObjectsOfTrueClass("block")
+			.size(); b++) {
+		    tempObjects.remove(oiToRemove.get(b));
+		}
+		System.out.println(tempObjects);
+		topOptions.add(new AbstractedOption(hf, p.getPolicy(), dd.d
+			.getActions(), termProb, true, tempObjects, "TOPs"));
+	    }
+
+	    runBlockDudeOptionLearning(hf, topOptions, toLvl, episodes,
+		    epsilon, stateCap, qInit, path+"TOPs" + c);
+
+	    if (naiveMerged != null && naiveMerged.size() > 0) {
+		// Random PolicyBlocks
+		List<String> pbObjects = new ArrayList<String>(objects);
+		State pbS = AbstractedPolicy.sampleState(naiveMerged.get(0)
+			.getKey());
+		for (int b = 0; b < 8 - pbS.getObjectsOfTrueClass("block")
+			.size(); b++) {
+		    pbObjects.remove(oiToRemove.get(b));
+		}
+		System.out.println(pbObjects);
+		AbstractedOption rpbOption = new AbstractedOption(hf,
+			naiveMerged.get(0).getKey().getPolicy(),
+			dd.d.getActions(), termProb, true, pbObjects, "RPB-"
+				+ c);
+
+		runBlockDudeOptionLearning(hf, rpbOption, toLvl, episodes,
+			epsilon, stateCap, qInit, path+"RPB" + c);
+	    } else {
+		runBlockDudeOptionLearning(hf, new ArrayList<Option>(), toLvl,
+			episodes, epsilon, stateCap, qInit, path+"RPB" + c);
+	    }
+
+	    if (c == 6) {
+		break;
+	    }
+	    c++;
+	}
 
 	System.out.println("Experiment finished. Took "
 		+ (System.currentTimeMillis() - startTime) / 1000.0
@@ -381,5 +310,19 @@ public class BlockDudeExperiment {
 		sh.computeHashCode();
 	    }
 	}
+    }
+
+    public static double getLowestQ(PolicyBlocksPolicy p) {
+	double minQ = Integer.MAX_VALUE;
+
+	for (StateHashTuple sh : p.getPolicy().keySet()) {
+	    for (QValue curQ : p.qplanner.getQs(sh.s)) {
+		if (curQ.q < minQ) {
+		    minQ = curQ.q;
+		}
+	    }
+	}
+
+	return minQ;
     }
 }

@@ -21,6 +21,7 @@ public class AbstractedOption extends Option {
     private Map<StateHashTuple, GroundedAction> policy;
     private Map<StateHashTuple, List<GroundedAction>> abstractedPolicy;
     private List<List<String>> ocombs;
+    private List<String> combToUse;
     private Map<String, Integer> gcg;
     private StateHashFactory hf;
     private List<Action> actions;
@@ -28,16 +29,30 @@ public class AbstractedOption extends Option {
     private Random rand;
     private double termProb;
     private boolean abstractionGenerated;
+    private boolean roll;
 
     public AbstractedOption(StateHashFactory hf,
 	    Map<StateHashTuple, GroundedAction> policy, List<Action> actions,
 	    double termProb, String name) {
+	this(hf, policy, actions, termProb, true, null, name);
+    }
+
+    public AbstractedOption(StateHashFactory hf,
+	    Map<StateHashTuple, GroundedAction> policy, List<Action> actions,
+	    double termProb, List<String> combToUse, String name) {
+	this(hf, policy, actions, termProb, true, combToUse, name);
+    }
+
+    public AbstractedOption(StateHashFactory hf,
+	    Map<StateHashTuple, GroundedAction> policy, List<Action> actions,
+	    double termProb, boolean roll, List<String> combToUse, String name) {
 	if (policy.isEmpty()) {
 	    throw new IllegalArgumentException("Empty policy provided.");
 	} else if (actions.isEmpty()) {
 	    throw new IllegalArgumentException("No actions provided.");
 	} else if (termProb > 1 || termProb < 0) {
-	    throw new IllegalArgumentException("Invalid termination probability");
+	    throw new IllegalArgumentException(
+		    "Invalid termination probability");
 	}
 
 	this.policy = policy;
@@ -51,6 +66,8 @@ public class AbstractedOption extends Option {
 	this.ocombs = new ArrayList<List<String>>();
 	this.termProb = termProb;
 	this.abstractionGenerated = false;
+	this.roll = roll;
+	this.combToUse = combToUse;
     }
 
     @Override
@@ -155,18 +172,29 @@ public class AbstractedOption extends Option {
 	GroundedAction ga = null;
 
 	if (gas.size() > 0) {
-	    // Weighted dice roll for selection
-	    ga = gas.get(rand.nextInt(gas.size()));
+	    if (gas.size() == 1) {
+		return gas.get(0);
+	    }
 
-	    // Most common for selection
-	    /*
-	     * Map<GroundedAction, Integer> weights = new
-	     * HashMap<GroundedAction, Integer>(); for (GroundedAction ga: gas)
-	     * { weights.put(ga, weights.containsKey(ga) ? weights.get(ga) + 1 :
-	     * 1); } GroundedAction ga = null; int max = 0; for
-	     * (Entry<GroundedAction, Integer> e: weights.entrySet()) { if
-	     * (e.getValue() > max) { ga = e.getKey(); max = e.getValue() } }
-	     */
+	    if (roll) {
+		// Weighted dice roll for selection
+		ga = gas.get(rand.nextInt(gas.size()));
+	    } else {
+		// Most common for selection
+		Map<GroundedAction, Integer> weights = new HashMap<GroundedAction, Integer>();
+		for (GroundedAction gac : gas) {
+		    weights.put(gac,
+			    weights.containsKey(gac) ? weights.get(gac) + 1 : 1);
+		}
+
+		int max = 0;
+		for (Entry<GroundedAction, Integer> e : weights.entrySet()) {
+		    if (e.getValue() > max) {
+			ga = e.getKey();
+			max = e.getValue();
+		    }
+		}
+	    }
 
 	    // After the selection is made, it is cached for the future
 	    for (StateHashTuple state : definedFor) {
@@ -186,8 +214,14 @@ public class AbstractedOption extends Option {
 
 	List<StateHashTuple> states = new ArrayList<StateHashTuple>();
 
-	for (List<String> ocomb : ocombs) {
-	    states.add(hf.hashState(AbstractedPolicy.formState(incoming, ocomb)));
+	if (combToUse != null) {
+	    states.add(hf.hashState(AbstractedPolicy.formState(incoming,
+		    combToUse)));
+	} else {
+	    for (List<String> ocomb : ocombs) {
+		states.add(hf.hashState(AbstractedPolicy.formState(incoming,
+			ocomb)));
+	    }
 	}
 
 	return states;
@@ -213,6 +247,17 @@ public class AbstractedOption extends Option {
 	    GroundedAction curGA = new GroundedAction(actions.get(actions
 		    .indexOf(e.getValue().action)), e.getValue().params);
 
+	    /*
+	     * if (combToUse != null) { State newS = AbstractedPolicy
+	     * .formState(e.getKey().s, combToUse);
+	     * 
+	     * List<GroundedAction> aList; if
+	     * (!abstractedPolicy.containsKey(hf.hashState(newS))) { aList = new
+	     * ArrayList<GroundedAction>(); aList.add(curGA);
+	     * abstractedPolicy.put(hf.hashState(newS), aList); } else { // TODO
+	     * look into this
+	     * abstractedPolicy.get(hf.hashState(newS)).add(curGA); } } else {
+	     */
 	    for (List<String> ocomb : ocombs) {
 		State newS = AbstractedPolicy.formState(e.getKey().s, ocomb);
 		List<GroundedAction> aList;
@@ -224,6 +269,7 @@ public class AbstractedOption extends Option {
 		    abstractedPolicy.get(hf.hashState(newS)).add(curGA);
 		}
 	    }
+	    // }
 	}
 
 	abstractionGenerated = true;
@@ -257,5 +303,9 @@ public class AbstractedOption extends Option {
 
     public int size() {
 	return policy.size();
+    }
+
+    public void setRoll(boolean roll) {
+	this.roll = roll;
     }
 }

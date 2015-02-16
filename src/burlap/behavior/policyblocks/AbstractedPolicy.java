@@ -1337,7 +1337,8 @@ public class AbstractedPolicy extends Policy {
      * @param l
      * @return list of all permutations of l
      */
-    public static <T> List<List<T>> permutations(List<T> l) {
+    public static <T> List<List<T>> permutations(List<T> t) {
+	List<T> l = new ArrayList<T>(t);
 	if (l.size() == 0) {
 	    List<List<T>> result = new ArrayList<List<T>>();
 	    result.add(new ArrayList<T>());

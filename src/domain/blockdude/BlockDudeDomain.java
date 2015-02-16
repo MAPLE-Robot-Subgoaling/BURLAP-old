@@ -85,7 +85,7 @@ public class BlockDudeDomain implements DomainGenerator {
 
 	Attribute yAtt = new Attribute(domain, ATTY,
 		Attribute.AttributeType.DISC);
-	yAtt.setDiscValuesForRange(miny, miny, 1);
+	yAtt.setDiscValuesForRange(miny, maxy, 1);
 
 	Attribute dirAtt = new Attribute(domain, ATTDIR,
 		Attribute.AttributeType.DISC);
@@ -320,6 +320,10 @@ public class BlockDudeDomain implements DomainGenerator {
 	ObjectInstance block = getBlockAt(s, ax, ay + 1); // carried block is
 							  // one unit above
 							  // agent
+	/*
+	 * if (getBlockAt(s, nx, ay) != null || (getBlockAt(s, nx, ay-1) != null
+	 * && (nx != 11 && nx != 3))) { return; }
+	 */
 	block.setValue(ATTX, nx);
 	block.setValue(ATTY, heightAtNX + 1); // stacked on top of this position
 
@@ -531,8 +535,13 @@ public class BlockDudeDomain implements DomainGenerator {
 
 	    ObjectInstance agent = st.getObject(params[0]);
 	    ObjectInstance exit = st.getObject(params[1]);
+	    int ax;
+	    try {
+		     ax= agent.getDiscValForAttribute(ATTX);
+	    } catch (Exception e) {
 
-	    int ax = agent.getDiscValForAttribute(ATTX);
+		    ax = agent.getDiscValForAttribute(ATTX);
+	    }
 	    int ay = agent.getDiscValForAttribute(ATTY);
 
 	    int ex = exit.getDiscValForAttribute(ATTX);
@@ -585,7 +594,8 @@ public class BlockDudeDomain implements DomainGenerator {
 
     public static DomainData createDomain(char[][] lvl) {
 	if (lvl == null || lvl.length == 0)
-	    return null; // For now just return without breaking
+	    throw new IllegalArgumentException();
+	    
 	int maxx = lvl[0].length;
 	int maxy = lvl.length;
 	List<Integer> px = new ArrayList<Integer>();
@@ -629,7 +639,7 @@ public class BlockDudeDomain implements DomainGenerator {
 
 	// Needs 1 agent and 1 goal
 	if (needed != 2)
-	    return null; // For now just return and not do anything.
+	    throw new IllegalArgumentException();
 
 	Collections.sort(bc);
 	Collections.sort(pc);
@@ -664,51 +674,57 @@ public class BlockDudeDomain implements DomainGenerator {
 	 * walk under platforms. Possibly fix this in the future although we
 	 * don't have to for the levels given.
 	 */
-	
-	if (numBlocks < 2 || numBlocks > 10) {
-	    throw new IllegalArgumentException("Number of blocks must be [2, 10].");
+
+	if (numBlocks < 6 || numBlocks > 10) {
+	    throw new IllegalArgumentException(
+		    "Number of blocks must be [6, 10].");
 	}
-	
-	// Optional blocks
-	int[][] f_int = { {4, 14}, {4, 15}, {4, 16}, {4, 17}, {4, 10}, {4, 11}, {4, 12}, {3, 5}, {3, 6}, {3, 7} };
-	
-	// Requisite blocks at the first trough
-	int[][] t_int = { {4, 10}, {4, 11}, {4, 12} };
-	
-	// Requisite blocks at the second trough
-	int[][] s_int = { {3, 5}, {3, 6}, {3, 7} };
-	
+
+	int[][] f_blocks = new int[][] { { 4, 12 }, { 4, 13 }, { 4, 14 },
+		{ 4, 15 }, { 4, 16 }, { 4, 17 } };
+	int[][] s_blocks = new int[][] { { 4, 3 }, { 4, 4 }, { 4, 5 },
+		{ 4, 6 }, { 4, 7 } };
+
 	char[][] lvl = {
 		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', 'g', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', 't', 't', 't', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '<', ' ' },
-		{ ' ', 'g', ' ', ' ', ' ', 't', 't', 't', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', 't', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', 't', 't', ' ', 't', 't', 't', 't', ' ', ' ' } };
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '<', ' ' },
+		{ ' ', ' ', 't', 't', 't', 't', 't', 't', 't', ' ', ' ', 't', 't', 't', 't', 't', 't', 't', 't', ' ' } };
 
 	Random rand = new Random();
 	// Set up the first two blocks
-	int r = rand.nextInt(t_int.length);
-	
-	lvl[t_int[r][0]][t_int[r][1]] = 'b';
-	numBlocks--;
-	r = rand.nextInt(s_int.length);
-	lvl[s_int[r][0]][s_int[r][1]] = 'b';
-	numBlocks--;
-	
-	while (numBlocks > 0) {
-	    r = rand.nextInt(f_int.length);
-	    if (lvl[f_int[r][0]][f_int[r][1]] == 'b') {
-		continue;
+	int r = rand.nextInt(f_blocks.length);
+	lvl[f_blocks[r][0]][f_blocks[r][1]] = 'b';
+	r = rand.nextInt(s_blocks.length);
+	lvl[s_blocks[r][0]][s_blocks[r][1]] = 'b';
+	int f = 2;
+	int s = 2;
+	int c = numBlocks - 2;
+	while (c > 0) {
+	    if (f > 0 || (s == 0 && rand.nextBoolean())) {
+		r = rand.nextInt(f_blocks.length);
+		if (lvl[f_blocks[r][0]][f_blocks[r][1]] == 'b') {
+		    continue;
+		}
+		lvl[f_blocks[r][0]][f_blocks[r][1]] = 'b';
+		c--;
+		f--;
+	    } else {
+		r = rand.nextInt(s_blocks.length);
+		if (lvl[s_blocks[r][0]][s_blocks[r][1]] == 'b') {
+		    continue;
+		}
+		lvl[s_blocks[r][0]][s_blocks[r][1]] = 'b';
+		c--;
+		s--;
 	    }
-	    
-	    lvl[f_int[r][0]][f_int[r][1]] = 'b';
-	    numBlocks--;
 	}
-	
+
 	return lvl;
     }
-    
+
     /**
      * @param args
      */

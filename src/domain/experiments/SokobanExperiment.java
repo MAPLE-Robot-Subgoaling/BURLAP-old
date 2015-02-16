@@ -1,5 +1,8 @@
 package domain.experiments;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -9,10 +12,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import burlap.behavior.policyblocks.AbstractedOption;
 import burlap.behavior.policyblocks.AbstractedPolicy;
 import burlap.behavior.policyblocks.PolicyBlocksPolicy;
+import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.QValue;
 import burlap.behavior.singleagent.learning.tdmethods.IOQLearning;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
+import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
@@ -21,13 +28,11 @@ import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.core.values.UnsetValueException;
+import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.common.SinglePFTF;
-import burlap.oomdp.singleagent.explorer.VisualExplorer;
-import burlap.oomdp.visualizer.Visualizer;
+import burlap.oomdp.singleagent.common.UniformCostRF;
 import domain.singleagent.sokoban2.Sokoban2Domain;
-import domain.singleagent.sokoban2.Sokoban2RF;
-import domain.singleagent.sokoban2.Sokoban2Visualizer;
 
 public class SokobanExperiment {
     public static boolean badState(State sprime) {
@@ -70,15 +75,11 @@ public class SokobanExperiment {
 		return true;
 	    }
 
-	    if (bx == 0 || bx == 1 || bx == 19 || bx == 20) {
+	    if (bx == 0 || bx == 1 || bx == 7 || bx == 8) {
 		return true;
-	    } else if (by == 0 || by == 1 || by == 9 || by == 10) {
+	    } else if (by == 0 || by == 1 || by == 8 || by == 9) {
 		return true;
-	    } else if (by == 4 || by == 5 || by == 6) {
-		return true;
-	    } else if (bx == 4 || bx == 5 || bx == 6) {
-		return true;
-	    } else if (bx == 9 || bx == 10 || bx == 11) {
+	    } else if (bx == 3 || bx == 4 || bx == 5) {
 		return true;
 	    }
 
@@ -136,24 +137,26 @@ public class SokobanExperiment {
 	    }
 	}
 
+	String[] colors = new String[] { "blue", "magenta", "red" };
+
 	for (int x = leftb; x <= rightb; x++) {
 	    for (int y = bottomb; y <= topb; y++) {
-		for (int c = 0; c < Sokoban2Domain.COLORS.length; c++) {
+		for (int c = 0; c < colors.length; c++) {
 		    State sprime = s.copy();
 		    Sokoban2Domain.setBlock(sprime, 0, x, y, "backpack",
-			    Sokoban2Domain.COLORS[c]);
+			    colors[c]);
 
 		    if (!badState(sprime)) {
 			List<Entry<Integer, Integer>> temp = new ArrayList<Entry<Integer, Integer>>();
-			if (!open.containsKey(Sokoban2Domain.COLORS[c])) {
+			if (!open.containsKey(colors[c])) {
 			    temp.add(new AbstractMap.SimpleEntry<Integer, Integer>(
 				    x, y));
-			    open.put(Sokoban2Domain.COLORS[c], temp);
+			    open.put(colors[c], temp);
 			} else {
-			    temp = open.get(Sokoban2Domain.COLORS[c]);
+			    temp = open.get(colors[c]);
 			    temp.add(new AbstractMap.SimpleEntry<Integer, Integer>(
 				    x, y));
-			    open.put(Sokoban2Domain.COLORS[c], temp);
+			    open.put(colors[c], temp);
 			}
 		    }
 		}
@@ -162,55 +165,176 @@ public class SokobanExperiment {
 
 	return open;
     }
-    
-    public static Map<Entry<Integer, Integer>, String> genBlocks(State s, int numBlocks) {
+
+    public static Map<Entry<Integer, Integer>, String> genBlocks(State s,
+	    int numBlocks) {
 	Random rand = new Random();
 	Map<String, List<Entry<Integer, Integer>>> open = getOpenSpots(s);
-	Map<Entry<Integer, Integer>, String> ret = new HashMap<Entry<Integer, Integer>, String>(numBlocks);
+	Map<Entry<Integer, Integer>, String> ret = new HashMap<Entry<Integer, Integer>, String>(
+		numBlocks);
 
+	// first red, second blue, third magenta
 	for (int i = 0; i < numBlocks; i++) {
-	    List<String> colors = new ArrayList<String>(open.keySet());
-	    String color = colors.get(rand.nextInt(colors.size()));
-
+	    String color = "";
+	    if (i == 0) {
+		color = "red";
+	    } else if (i == 1) {
+		color = "blue";
+	    } else if (i == 2) {
+		color = "magenta";
+	    } else {
+		throw new IllegalArgumentException("Only 3 blocks allowed.");
+	    }
+	    
 	    Entry<Integer, Integer> pos = open.get(color).get(
 		    rand.nextInt(open.get(color).size()));
 
-	    ret.put(new AbstractMap.SimpleEntry<Integer, Integer>(pos.getKey(), pos.getValue()), color);
+	    ret.put(new AbstractMap.SimpleEntry<Integer, Integer>(pos.getKey(),
+		    pos.getValue()), color);
 	}
-	
+
+	System.out.println(ret);
 	return ret;
     }
-    
-    public static PolicyBlocksPolicy runSokobanBaseLearning(
-	    StateHashFactory hf, int numBlocks, int episodes, double epsilon,
-	    double goodReward, String path) {
+
+    public static PolicyBlocksPolicy runSokobanOptionLearning(
+	    StateHashFactory hf, Map<Entry<Integer, Integer>, String> blocks,
+	    Option o, int episodes, double epsilon, int maxSteps, double qInit,
+	    boolean record, String path) throws IOException {
+	return runSokobanOptionLearning(hf, blocks,
+		AbstractedPolicy.singletonList(o), episodes, epsilon, maxSteps,
+		qInit, record, path);
+    }
+
+    public static PolicyBlocksPolicy runSokobanOptionLearning(
+	    StateHashFactory hf, Map<Entry<Integer, Integer>, String> blocks,
+	    List<? extends Option> os, int episodes, double epsilon,
+	    int maxSteps, double qInit, boolean record, String path)
+	    throws IOException {
 	long time = System.currentTimeMillis();
-	System.out.println("Starting base policy " + path + ".");
+	System.out.println("Starting option policy " + path + " with "
+		+ blocks.size() + " blocks.");
 	PolicyBlocksPolicy p = new PolicyBlocksPolicy(epsilon);
 
 	Sokoban2Domain dgen = new Sokoban2Domain();
 	Domain domain = dgen.generateDomain();
-	State s = Sokoban2Domain.getCleanState(domain, 5, 4, numBlocks);
+	State s = Sokoban2Domain.getCleanState(domain, 3, 3, blocks.size());
+
+	Sokoban2Domain.setRoom(s, 0, 4, 0, 0, 8, "red");
+	Sokoban2Domain.setRoom(s, 1, 9, 0, 4, 4, "blue");
+	Sokoban2Domain.setRoom(s, 2, 9, 4, 4, 8, "magenta");
+
+	Sokoban2Domain.setDoor(s, 0, 4, 1, 4, 3);
+	Sokoban2Domain.setDoor(s, 1, 4, 5, 4, 7);
+	Sokoban2Domain.setDoor(s, 2, 8, 4, 7, 4);
+	Sokoban2Domain.setAgent(s, 1, 1);
+
+	BufferedWriter bS = null;
+	BufferedWriter bR = null;
+	BufferedWriter bO = null;
+	if (record) {
+	    File fS = new File(path + "-Steps.csv");
+	    File fR = new File(path + "-Reward.csv");
+	    File fO = new File(path + "-Options.csv");
+	    bS = new BufferedWriter(new FileWriter(fS));
+	    bR = new BufferedWriter(new FileWriter(fR));
+	    bO = new BufferedWriter(new FileWriter(fO));
+	    bS.write("Episode,Steps\n");
+	    bR.write("Episode,Reward\n");
+	    bO.write("Episode,Usage\n");
+	}
+	long cumulS = 0;
+	long cumulR = 0;
+
+	int b = 0;
+	for (Entry<Entry<Integer, Integer>, String> e : blocks.entrySet()) {
+	    Sokoban2Domain.setBlock(s, b, e.getKey().getKey(), e.getKey()
+		    .getValue(), "backpack", e.getValue());
+	    b++;
+	}
+
+	RewardFunction rf = new UniformCostRF();
+	TerminalFunction tf = new SinglePFTF(
+		domain.getPropFunction(Sokoban2Domain.PFATGOAL));
+	QLearning Q = new IOQLearning(domain, rf, tf,
+		Sokoban2Domain.DISCOUNTFACTOR, hf, qInit,
+		Sokoban2Domain.LEARNINGRATE, p, maxSteps);
+	p.setPlanner(Q);
+
+	for (Option o : os) {
+	    Q.addNonDomainReferencedAction(o);
+	}
+
+	for (int i = 1; i <= episodes; i++) {
+	    double primTaken = 0.0;
+	    double optiTaken = 0.0;
+	    EpisodeAnalysis analyzer = Q.runLearningEpisodeFrom(s);
+	    cumulS += analyzer.numTimeSteps();
+	    cumulR += ExperimentUtils.sum(analyzer.rewardSequence);
+	    for (GroundedAction a : analyzer.actionSequence) {
+		if (domain.getActions().contains(a.action)) {
+		    primTaken++;
+		} else {
+		    optiTaken++;
+		}
+	    }
+
+	    if (record) {
+		bS.write(i + "," + cumulS + "\n");
+		bR.write(i + "," + cumulR + "\n");
+		bO.write(i + "," + (optiTaken / (primTaken + optiTaken)) + "\n");
+	    }
+	}
+
+	if (record) {
+	    bS.close();
+	    bR.close();
+	    bO.close();
+	}
+
+	System.out.println("Finished option policy " + path + " in "
+		+ (System.currentTimeMillis() - time) / 1000.0 + " seconds.");
+
+	return p;
+    }
+
+    public static PolicyBlocksPolicy runSokobanBaseLearning(
+	    StateHashFactory hf, int numBlocks, int episodes, double epsilon,
+	    int maxSteps, double qInit, String path) {
+	long time = System.currentTimeMillis();
+	System.out.println("Starting base policy " + path + " with "
+		+ numBlocks + " blocks.");
+	PolicyBlocksPolicy p = new PolicyBlocksPolicy(epsilon);
+
+	Sokoban2Domain dgen = new Sokoban2Domain();
+	Domain domain = dgen.generateDomain();
+	State s = Sokoban2Domain.getCleanState(domain, 3, 3, numBlocks);
 
 	Random rand = new Random();
-	Sokoban2Domain.setRoom(s, 0, 5, 0, 0, 10, "red");
-	Sokoban2Domain.setRoom(s, 1, 5, 10, 0, 20, "green");
-	Sokoban2Domain.setRoom(s, 2, 10, 0, 5, 5, "blue");
-	Sokoban2Domain.setRoom(s, 3, 10, 5, 5, 10, "magenta");
-	Sokoban2Domain.setRoom(s, 4, 10, 10, 5, 20, "yellow");
+	Sokoban2Domain.setRoom(s, 0, 4, 0, 0, 8, "red");
+	Sokoban2Domain.setRoom(s, 1, 9, 0, 4, 4, "blue");
+	Sokoban2Domain.setRoom(s, 2, 9, 4, 4, 8, "magenta");
 
-	Sokoban2Domain.setDoor(s, 0, 5, 2, 5, 3);
-	Sokoban2Domain.setDoor(s, 1, 5, 7, 5, 8);
-	Sokoban2Domain.setDoor(s, 2, 5, 12, 5, 18);
-	Sokoban2Domain.setDoor(s, 3, 3, 10, 2, 10);
+	Sokoban2Domain.setDoor(s, 0, 4, 1, 4, 3);
+	Sokoban2Domain.setDoor(s, 1, 4, 5, 4, 7);
+	Sokoban2Domain.setDoor(s, 2, 8, 4, 7, 4);
 	Sokoban2Domain.setAgent(s, 1, 1);
 
 	Map<String, List<Entry<Integer, Integer>>> open = getOpenSpots(s);
 
 	for (int i = 0; i < numBlocks; i++) {
-	    List<String> colors = new ArrayList<String>(open.keySet());
-	    String color = colors.get(rand.nextInt(colors.size()));
+	    String color = "";
+	    if (i == 0) {
+		color = "red";
+	    } else if (i == 1) {
+		color = "blue";
+	    } else if (i == 2) {
+		color = "magenta";
+	    } else {
+		throw new IllegalArgumentException();
+	    }
 
+	    System.out.println(color);
 	    Entry<Integer, Integer> pos = open.get(color).get(
 		    rand.nextInt(open.get(color).size()));
 
@@ -218,19 +342,16 @@ public class SokobanExperiment {
 		    "backpack", color);
 	}
 
-	RewardFunction rf = new Sokoban2RF(goodReward);
+	RewardFunction rf = new UniformCostRF();
 	TerminalFunction tf = new SinglePFTF(
 		domain.getPropFunction(Sokoban2Domain.PFATGOAL));
 	QLearning Q = new IOQLearning(domain, rf, tf,
-		Sokoban2Domain.DISCOUNTFACTOR, hf, 1.0,
-		Sokoban2Domain.LEARNINGRATE, p, Integer.MAX_VALUE);
+		Sokoban2Domain.DISCOUNTFACTOR, hf, qInit,
+		Sokoban2Domain.LEARNINGRATE, p, maxSteps);
 	p.setPlanner(Q);
 
-	Visualizer v = Sokoban2Visualizer.getVisualizer("img");
-	VisualExplorer exp = new VisualExplorer(domain, v, s);
-	exp.initGUI();
 	for (int i = 1; i <= episodes; i++) {
-	    Q.runLearningEpisodeFrom(s).numTimeSteps();
+	    Q.runLearningEpisodeFrom(s);
 	}
 
 	System.out.println("Finished base policy " + path + " in "
@@ -239,9 +360,9 @@ public class SokobanExperiment {
     }
 
     public static void main(String[] args) throws IOException {
-	String path = "/home/hanicho1/sokoban/";
+	String path = "/home/hanicho1/sokoban/ftm2/";
 
-	for (int i = 1; i <= 1; i++) {
+	for (int i = 1; i <= 20; i++) {
 	    String oldPath = path;
 	    path += i + "/";
 	    driver(path);
@@ -250,35 +371,196 @@ public class SokobanExperiment {
     }
 
     public static void driver(String path) throws IOException {
-	int episodes = 100000;
-	double epsilon = 0.05;
-	double termProb = 0.05;
-	double reward = 1;
-	double qInit = -reward;
+	int episodes = 10000;
+	double epsilon = 0.025;
+	double termProb = 0.025;
+	int maxSteps = Integer.MAX_VALUE;
+	double qInit;
+	int sourcePolicies = 20;
+	int targetNum = 3;
 
 	Sokoban2Domain dgen = new Sokoban2Domain();
 	Domain domain = dgen.generateDomain();
+
 	DiscreteStateHashFactory hf = new DiscreteStateHashFactory();
 	hf.setAttributesForClass(Sokoban2Domain.CLASSAGENT,
 		domain.getObjectClass(Sokoban2Domain.CLASSAGENT).attributeList);
 	hf.setAttributesForClass(Sokoban2Domain.CLASSBLOCK,
 		domain.getObjectClass(Sokoban2Domain.CLASSAGENT).attributeList);
 
-	List<PolicyBlocksPolicy> toMerge = new ArrayList<PolicyBlocksPolicy>(20);
+	List<PolicyBlocksPolicy> toMerge = new ArrayList<PolicyBlocksPolicy>(
+		sourcePolicies);
+
 	Random rand = new Random();
-	int maxBlocks = 6;
-	int maxTarg = 10;
-	
-	for (int i = 0; i < 20; i++) {
-	    toMerge.add(runSokobanBaseLearning(hf, rand.nextInt(maxBlocks)+1, episodes, epsilon, reward, path));
+	System.out.println("Running " + sourcePolicies + " base trials.");
+	for (int i = 1; i <= sourcePolicies; i++) {
+	    toMerge.add(runSokobanBaseLearning(hf, rand.nextInt(2) + 1,
+		    episodes, epsilon, maxSteps, 0.0, path));
 	}
-	
-	// Map<Entry<Integer, Integer>, String> targetBlocks = genBlocks(maxTarg);
-	
-	List<Entry<AbstractedPolicy, Double>> merged = AbstractedPolicy.powerMerge(hf, toMerge, 3, Integer.MAX_VALUE);
-	
+
+	State s = Sokoban2Domain.getCleanState(domain, 3, 3, targetNum);
+	Sokoban2Domain.setRoom(s, 0, 4, 0, 0, 8, "red");
+	Sokoban2Domain.setRoom(s, 1, 9, 0, 4, 4, "blue");
+	Sokoban2Domain.setRoom(s, 2, 9, 4, 4, 8, "magenta");
+	Sokoban2Domain.setDoor(s, 0, 4, 1, 4, 3);
+	Sokoban2Domain.setDoor(s, 1, 4, 5, 4, 7);
+	Sokoban2Domain.setDoor(s, 2, 8, 4, 7, 4);
+	Sokoban2Domain.setAgent(s, 1, 1);
+
+	Map<Entry<Integer, Integer>, String> targetBlocks = genBlocks(s,
+		targetNum);
+
+	while (targetBlocks.size() < targetNum) {
+	    targetBlocks = genBlocks(s, targetNum);
+	}
+
+	System.out.println("Target blocks:");
+	for (Entry<Entry<Integer, Integer>, String> e : targetBlocks.entrySet()) {
+	    System.out.println(e.getValue() + " : [" + e.getKey().getKey()
+		    + ", " + e.getKey().getValue() + "]");
+	}
+
+	PolicyBlocksPolicy initPolicy = runSokobanOptionLearning(hf,
+		targetBlocks, new ArrayList<Option>(), episodes, epsilon,
+		maxSteps, 0.0, false, path + "qInit");
+	qInit = getLowestQ(initPolicy);
+	System.out.println("qInit set to " + qInit);
 	// Q-Learning
-	
+	// StateHashFactory hf, Map<Entry<Integer, Integer>, String> blocks,
+	// List<Option> os,
+	// int episodes, double epsilon, int maxSteps, double qInit, boolean
+	// record, String path
+	PolicyBlocksPolicy qPolicy = runSokobanOptionLearning(hf, targetBlocks,
+		new ArrayList<Option>(), episodes, epsilon, maxSteps, qInit,
+		true, path + "Q-Learning");
+
+	// Perfect
+	AbstractedOption qOption = new AbstractedOption(hf,
+		qPolicy.getPolicy(), domain.getActions(), termProb, "Perfect");
+	runSokobanOptionLearning(hf, targetBlocks, qOption, episodes, epsilon,
+		maxSteps, qInit, true, path + "Perfect");
+	qOption = null;
+	qPolicy = null;
+
+	System.gc();
+
+	List<String> objects = new ArrayList<String>(10);
+	objects.add("room0");
+	objects.add("room1");
+	objects.add("room2");
+	objects.add("door0");
+	objects.add("door1");
+	objects.add("door2");
+	objects.add("block0");
+	objects.add("block1");
+	objects.add("block2");
+	objects.add("agent0");
+
+	System.out.println("Starting P-MODAL power merge.");
+	long pmT = System.currentTimeMillis();
+	List<Entry<AbstractedPolicy, Double>> merged = AbstractedPolicy
+		.powerMerge(hf, toMerge, 3, 1);
+	System.out.println("Finished P-MODAL power merge in "
+		+ (System.currentTimeMillis() - pmT) / 1000.0 + " seconds.");
+	if (merged == null || merged.size() == 0) {
+	    System.out.println("No options generated.");
+	} else {
+	    System.out.println("Top option of size "
+		    + merged.get(0).getKey().size() + ".");
+	}
+	pmT = System.currentTimeMillis();
+
+	System.out.println("Starting naive power merge.");
+	List<Entry<AbstractedPolicy, Double>> naiveMerged = AbstractedPolicy
+		.naivePowerMerge(hf, toMerge, 3, 1);
+	System.out.println("Finished naive power merge in "
+		+ (System.currentTimeMillis() - pmT) / 1000.0 + " seconds.");
+	if (naiveMerged == null || naiveMerged.size() == 0) {
+	    System.out.println("No options generated.");
+	} else {
+	    System.out.println("Top option of size "
+		    + naiveMerged.get(0).getKey().size() + ".");
+	}
+	pmT = System.currentTimeMillis();
+
+	// Random TOPs
+	// 6 ways (3 perm 2)
+	List<String> blocksT = new ArrayList<String>(3);
+	blocksT.add("block0");
+	blocksT.add("block1");
+	blocksT.add("block2");
+	List<List<String>> oisToRemove = AbstractedPolicy.permutations(blocksT);
+	int c = 1;
+	for (List<String> oiToRemove : oisToRemove) {
+	    System.out.println("To remove: " + oiToRemove + "\n");
+	    List<AbstractedOption> topOptions = new ArrayList<AbstractedOption>(
+		    sourcePolicies);
+	    for (PolicyBlocksPolicy p : toMerge) {
+		List<String> tempObjects = new ArrayList<String>(objects);
+		State sp = AbstractedPolicy.sampleState(p);
+		for (int b = 0; b < targetNum
+			- sp.getObjectsOfTrueClass("block").size(); b++) {
+		    tempObjects.remove(oiToRemove.get(b));
+		}
+		System.out.println(tempObjects);
+		topOptions.add(new AbstractedOption(hf, p.getPolicy(), domain
+			.getActions(), termProb, true, tempObjects, "TOPs"));
+	    }
+
+	    runSokobanOptionLearning(hf, targetBlocks, topOptions, episodes,
+		    epsilon, maxSteps, qInit, true, path + "TOPs-" + c);
+
+	    if (naiveMerged != null && naiveMerged.size() > 0) {
+		// Random PolicyBlocks
+		List<String> pbObjects = new ArrayList<String>(objects);
+		State pbS = AbstractedPolicy.sampleState(naiveMerged.get(0)
+			.getKey());
+		for (int b = 0; b < targetNum
+			- pbS.getObjectsOfTrueClass("block").size(); b++) {
+		    pbObjects.remove(oiToRemove.get(b));
+		}
+		System.out.println(pbObjects);
+		AbstractedOption rpbOption = new AbstractedOption(hf,
+			naiveMerged.get(0).getKey().getPolicy(),
+			domain.getActions(), termProb, true, pbObjects, "RPB-"
+				+ c);
+		runSokobanOptionLearning(hf, targetBlocks, rpbOption, episodes,
+			epsilon, maxSteps, qInit, true, path + "RPB-" + c);
+	    } else {
+		runSokobanOptionLearning(hf, targetBlocks,
+			new ArrayList<Option>(), episodes, epsilon, maxSteps,
+			qInit, true, path + "RPB-" + c);
+	    }
+
+	    c++;
+	}
+	naiveMerged = null;
+	System.gc();
+
+	// Portable TOPs
+	List<AbstractedOption> ptopOptions = new ArrayList<AbstractedOption>(
+		sourcePolicies);
+	for (PolicyBlocksPolicy p : toMerge) {
+	    ptopOptions.add(new AbstractedOption(hf, p.getPolicy(), domain
+		    .getActions(), termProb, "PTOPs"));
+	}
+	runSokobanOptionLearning(hf, targetBlocks, ptopOptions, episodes,
+		epsilon, maxSteps, qInit, true, path + "PTOPs");
+	ptopOptions = null;
+	toMerge = null;
+	System.gc();
+
+	// Portable PolicyBlocks
+	if (merged != null && merged.size() > 0) {
+	    AbstractedOption ppbOption = new AbstractedOption(hf, merged.get(0)
+		    .getKey().getPolicy(), domain.getActions(), termProb, "PPB");
+	    runSokobanOptionLearning(hf, targetBlocks, ppbOption, episodes,
+		    epsilon, maxSteps, qInit, true, path + "PPB");
+	} else {
+	    runSokobanOptionLearning(hf, targetBlocks, new ArrayList<Option>(),
+		    episodes, epsilon, maxSteps, qInit, true, path + "PPB");
+	}
+
     }
 
     public static void removeRooms(PolicyBlocksPolicy p) {
@@ -291,5 +573,19 @@ public class SokobanExperiment {
 		}
 	    }
 	}
+    }
+
+    public static double getLowestQ(PolicyBlocksPolicy p) {
+	double minQ = Integer.MAX_VALUE;
+
+	for (StateHashTuple sh : p.getPolicy().keySet()) {
+	    for (QValue curQ : p.qplanner.getQs(sh.s)) {
+		if (curQ.q < minQ) {
+		    minQ = curQ.q;
+		}
+	    }
+	}
+
+	return minQ;
     }
 }
