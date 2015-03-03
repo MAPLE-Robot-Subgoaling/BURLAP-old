@@ -3,6 +3,7 @@ package domain.experiments;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import burlap.behavior.policyblocks.AbstractedPolicy;
 
@@ -18,24 +19,23 @@ public class ExperimentUtils {
     }
 
     public static void main(String[] args) {
-	List<String> objects = new ArrayList<String>(10);
-	List<String> objects1 = new ArrayList<String>(5);
-	List<String> objects2 = new ArrayList<String>(5);
-	objects.add("room0");
-	objects.add("room1");
-	objects.add("room2");
-	objects1.add("door0");
-	objects1.add("door1");
-	objects1.add("door2");
-	objects2.add("block0");
-	objects2.add("block1");
-	objects2.add("block2");
-	objects2.add("agent0");
-
-	List<List<String>> stuff = AbstractedPolicy.permutations(objects);
-
-	System.out.println(stuff);
-	Collections.shuffle(stuff);
-	System.out.println(stuff);
+	Random rand = new Random();
+	for (int i = 0; i < 7; i++) {
+	    System.out.println("i="+i);
+	    for (int j = 0; j < 10; j++) {
+		System.out.println("j="+j);
+		if (i < 4) {
+		    // 0[1,5], 1[1,4], 2[1,3], 3[1,2]
+		    int r = 50 - (i*10);
+		    System.out.println(r-1);
+		} else {
+		    // 4[2, 5], 5[3, 5], 6[4, 5]
+		    int k = 10 + (i- 4)*10;
+		    int r = 49-k;
+		    System.out.println(k);
+		    System.out.println(k+r);
+		}
+	    }
+	}
     }
 }
