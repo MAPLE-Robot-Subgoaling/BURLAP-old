@@ -12,7 +12,7 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
 /**
- * Policy used in PolicyBlocks and P-MODAL.
+ * Policy used in PolicyBlocks and POD.
  */
 public class PolicyBlocksPolicy extends PsiEpsilonGreedy {
     protected Map<StateHashTuple, GroundedAction> policy;
