@@ -104,9 +104,9 @@ public class AbstractedPolicy extends Policy {
      * Abstracts each policy with respect to the others
      * 
      * @param hf
-     *            - state hash factory
+     *            state hash factory
      * @param policies
-     *            - the policies to abstract
+     *            the policies to abstract
      * @return a list of all abstracted policies
      */
     public static List<AbstractedPolicy> abstractAll(StateHashFactory hf,
@@ -134,7 +134,7 @@ public class AbstractedPolicy extends Policy {
      * Generates the GCG of a list of states
      * 
      * @param ss
-     *            - list of states to sample
+     *            list of states to sample
      * @return the GCG of object classes
      */
     public static Map<String, Integer> greatestCommonGeneralization(
@@ -145,9 +145,11 @@ public class AbstractedPolicy extends Policy {
 	Map<String, Integer> gcg = new HashMap<String, Integer>();
 	int i = 0;
 
+    // For each state, add the map of object class => count to mappings
 	for (State s : ss) {
 	    mappings.add(new HashMap<String, Integer>());
 
+        // For each object, add the number of instances of each object class
 	    for (ObjectInstance oi : s.getAllObjects()) {
 		String className = oi.getTrueClassName();
 
@@ -155,6 +157,7 @@ public class AbstractedPolicy extends Policy {
 		    mappings.get(i).put(className, 1);
 		    List<Attribute> atts = oi.getObjectClass().attributeList;
 
+            // Perform loose type-checking to make sure the objects classes are correct
 		    if (!attributes.containsKey(className)) {
 			// Attributes of this class haven't been set yet
 			attributes.put(className, atts);
@@ -201,7 +204,7 @@ public class AbstractedPolicy extends Policy {
 	}
 	for (Entry<String, Integer> e : classCount.entrySet()) {
 	    if (gcg.containsKey(e.getKey()) && e.getValue() < ss.size()) {
-		// If the object class does not exist for all states
+		// If the object class does not exist for all states, remove it
 		gcg.remove(e.getKey());
 	    }
 	}
@@ -213,9 +216,9 @@ public class AbstractedPolicy extends Policy {
      * Generates all combinations of objects with respect to the GCG
      * 
      * @param s
-     *            - state to sample from
+     *            state to sample from
      * @param gcg
-     *            - the greatest common generalization
+     *            the greatest common generalization
      * @return the list of all possible object combinations
      */
     public static List<List<String>> generateAllCombinations(State s,
@@ -270,11 +273,11 @@ public class AbstractedPolicy extends Policy {
      * Scores the abstraction with respect to the initial policy
      * 
      * @param hf
-     *            - the state hashing factory
+     *            the state hashing factory
      * @param ip
-     *            - the initial policy
+     *            the initial policy
      * @param np
-     *            - the new policy
+     *            the new policy
      * @return a floating point score of similarity to the initial policy
      */
     private static double scoreAbstraction(StateHashFactory hf,
@@ -321,13 +324,13 @@ public class AbstractedPolicy extends Policy {
      * Generates maxCand policy candidates, ranked by score
      * 
      * @param hf
-     *            - the state hash factory
+     *            the state hash factory
      * @param ip
-     *            - the initial policy
+     *            the initial policy
      * @param combinations
-     *            - all possible object combinations
+     *            all possible object combinations
      * @param maxCand
-     *            - maximum number of policies to generate
+     *            maximum number of policies to generate
      * @return the list of maxCand generated policies
      */
     private static List<Entry<Map<StateHashTuple, GroundedAction>, Double>> generatePolicyCandidates(
