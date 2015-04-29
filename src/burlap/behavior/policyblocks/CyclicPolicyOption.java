@@ -10,7 +10,7 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
 /**
- * This class is used in P-MODAL for applying options without grounding. This
+ * This class is for applying options without grounding. This
  * differs from PolicyDefinedSubgoalOption in that it has stochastic termination
  * and has bookkeeping to prevent the option from having a cyclic trajectory.
  */
