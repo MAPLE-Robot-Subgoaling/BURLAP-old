@@ -70,7 +70,8 @@ public class IOQLearning extends QLearning {
 	policyReuse = true;
     }
 
-    public void addSourcePolicies(List<Map<StateHashTuple, List<QValue>>> sourcePolicies) {
+    public void addSourcePolicies(
+	    List<Map<StateHashTuple, List<QValue>>> sourcePolicies) {
 	for (Map<StateHashTuple, List<QValue>> sourcePolicy : sourcePolicies) {
 	    addSourcePolicy(sourcePolicy);
 	}
@@ -83,16 +84,16 @@ public class IOQLearning extends QLearning {
 
     public Map<StateHashTuple, List<QValue>> getQPolicy() {
 	Map<StateHashTuple, List<QValue>> qPolicy = new HashMap<StateHashTuple, List<QValue>>();
-	
-	for (Entry<StateHashTuple, QLearningStateNode> e: qIndex.entrySet()) {
+
+	for (Entry<StateHashTuple, QLearningStateNode> e : qIndex.entrySet()) {
 	    List<QValue> qS = new ArrayList<QValue>();
 	    qS.addAll(e.getValue().qEntry);
 	    qPolicy.put(e.getKey(), qS);
 	}
-	 
+
 	return qPolicy;
     }
-    
+
     @Override
     public EpisodeAnalysis runLearningEpisodeFrom(State initialState,
 	    int maxSteps) {
@@ -142,22 +143,23 @@ public class IOQLearning extends QLearning {
 			}
 		    }
 		}
-		
+
 		System.out.println(qIndex.get(curState));
 		for (QValue Q : qIndex.get(curState).qEntry) {
-		    // Average all of the Q-values (including the new domains initialization?)
+		    // Average all of the Q-values (including the new domains
+		    // initialization?)
 		    double avg = Q.q;
 		    for (Double qDub : qValues.get(Q.a)) {
 			avg += qDub;
 		    }
-		    
+
 		    avg /= (qValues.get(Q.a).size() + 1.0);
 		    Q.q = avg;
 		    // need to check to make sure this is persistent
 		}
 		System.out.println(qIndex.get(curState));
 	    }
-	    
+
 	    GroundedAction absAction = (GroundedAction) learningPolicy
 		    .getAction(curState.s);
 	    GroundedAction primAction;
