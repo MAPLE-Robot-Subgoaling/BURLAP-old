@@ -441,7 +441,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Performs the binomial coefficient function C(n, k)
+     * Performs the binomial coefficient function C(n, k). Implementation provided here: http://stackoverflow.com/a/15603638
      * 
      * @param n
      * @param k
