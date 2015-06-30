@@ -174,6 +174,7 @@ public class AbstractedTabularPolicy extends
 		// Sample a state from each source policy
 		ss.add(sampleState(ps.get(i)));
 	    }
+
 	    Map<ObjectClass, Integer> gcg = greatestCommonGeneralization(ss);
 	    List<ObjectClass> tempO = new ArrayList<ObjectClass>(gcg.keySet());
 	    // Randomly order the gcg for now
