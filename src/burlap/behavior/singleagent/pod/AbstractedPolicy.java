@@ -2,27 +2,34 @@ package burlap.behavior.singleagent.pod;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.statehashing.StateHashFactory;
+import burlap.oomdp.core.ObjectClass;
 
-public abstract class AbstractedPolicy {
-    AbstractedPolicyFactory<? extends Policy> apf;
+public abstract class AbstractedPolicy<P extends Policy> {
+    AbstractedPolicyFactory<P> apf;
     StateHashFactory hf;
-    Map<String, Integer> gcg;
-    List<? extends Policy> originalPolicies;
+    Map<ObjectClass, Integer> gcg;
+    List<P> originalPolicies;
+    P abstractedPolicy;
 
-    public abstract AbstractedPolicy mergeWith(AbstractedPolicy otherPolicy);
+    public abstract List<Entry<P, Double>> generatePolicyCandidates(P ip, List<List<ObjectClass>> oiCombs, int n);
+    
+    public abstract double scoreAbstraction(P ip, P np);
+    
+    public abstract AbstractedPolicy<P> mergeWith(AbstractedPolicy<P> otherPolicy);
 
-    public abstract boolean isSameAbstraction(AbstractedPolicy otherPolicy);
+    public abstract boolean isSameAbstraction(AbstractedPolicy<P> otherPolicy);
 
     public abstract Policy getPolicy();
 
-    public Map<String, Integer> getGCG() {
+    public Map<ObjectClass, Integer> getGCG() {
 	return gcg;
     }
 
-    public List<? extends Policy> getOriginalPolicies() {
+    public List<P> getOriginalPolicies() {
 	return originalPolicies;
     }
 

@@ -13,6 +13,7 @@ import burlap.behavior.singleagent.Policy.ActionProb;
 import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
+import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
@@ -20,9 +21,9 @@ import burlap.oomdp.singleagent.GroundedAction;
 public class AbstractedTabularOption extends Option {
     private Map<StateHashTuple, GroundedAction> policy;
     private Map<StateHashTuple, List<GroundedAction>> abstractedPolicy;
-    private List<List<String>> ocombs;
-    private List<String> combToUse;
-    private Map<String, Integer> gcg;
+    private List<List<ObjectClass>> ocombs;
+    private List<ObjectClass> combToUse;
+    private Map<ObjectClass, Integer> gcg;
     private StateHashFactory hf;
     private List<Action> actions;
     private Set<StateHashTuple> visited;
@@ -39,13 +40,13 @@ public class AbstractedTabularOption extends Option {
 
     public AbstractedTabularOption(StateHashFactory hf,
 	    Map<StateHashTuple, GroundedAction> policy, List<Action> actions,
-	    double termProb, List<String> combToUse, String name) {
+	    double termProb, List<ObjectClass> combToUse, String name) {
 	this(hf, policy, actions, termProb, true, combToUse, name);
     }
 
     public AbstractedTabularOption(StateHashFactory hf,
 	    Map<StateHashTuple, GroundedAction> policy, List<Action> actions,
-	    double termProb, boolean roll, List<String> combToUse, String name) {
+	    double termProb, boolean roll, List<ObjectClass> combToUse, String name) {
 	if (policy.isEmpty()) {
 	    throw new IllegalArgumentException("Empty policy provided.");
 	} else if (actions.isEmpty()) {
@@ -62,8 +63,8 @@ public class AbstractedTabularOption extends Option {
 	this.rand = new Random();
 	this.actions = actions;
 	this.abstractedPolicy = new HashMap<StateHashTuple, List<GroundedAction>>();
-	this.gcg = new HashMap<String, Integer>();
-	this.ocombs = new ArrayList<List<String>>();
+	this.gcg = new HashMap<ObjectClass, Integer>();
+	this.ocombs = new ArrayList<List<ObjectClass>>();
 	this.termProb = termProb;
 	this.abstractionGenerated = false;
 	this.roll = roll;
@@ -218,7 +219,7 @@ public class AbstractedTabularOption extends Option {
 	    states.add(hf.hashState(AbstractedPolicyFactory.formState(incoming,
 		    combToUse)));
 	} else {
-	    for (List<String> ocomb : ocombs) {
+	    for (List<ObjectClass> ocomb : ocombs) {
 		states.add(hf.hashState(AbstractedPolicyFactory.formState(incoming,
 			ocomb)));
 	    }
@@ -257,7 +258,7 @@ public class AbstractedTabularOption extends Option {
 	     * abstractedPolicy.put(hf.hashState(newS), aList); } else {
 	     * abstractedPolicy.get(hf.hashState(newS)).add(curGA); } } else {
 	     */
-	    for (List<String> ocomb : ocombs) {
+	    for (List<ObjectClass> ocomb : ocombs) {
 		State newS = AbstractedPolicyFactory.formState(e.getKey().s, ocomb);
 		List<GroundedAction> aList;
 		if (!abstractedPolicy.containsKey(hf.hashState(newS))) {
@@ -284,8 +285,8 @@ public class AbstractedTabularOption extends Option {
     public void resetAbstraction() {
 	abstractionGenerated = false;
 	abstractedPolicy = new HashMap<StateHashTuple, List<GroundedAction>>();
-	gcg = new HashMap<String, Integer>();
-	ocombs = new ArrayList<List<String>>();
+	gcg = new HashMap<ObjectClass, Integer>();
+	ocombs = new ArrayList<List<ObjectClass>>();
     }
 
     public void setHashFactory(StateHashFactory hf) {
