@@ -185,7 +185,7 @@ public class SokobanExperiment {
 	    } else {
 		throw new IllegalArgumentException("Only 3 blocks allowed.");
 	    }
-	    
+
 	    Entry<Integer, Integer> pos = open.get(color).get(
 		    rand.nextInt(open.get(color).size()));
 

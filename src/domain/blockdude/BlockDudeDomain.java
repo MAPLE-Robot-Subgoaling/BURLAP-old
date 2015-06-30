@@ -537,10 +537,10 @@ public class BlockDudeDomain implements DomainGenerator {
 	    ObjectInstance exit = st.getObject(params[1]);
 	    int ax;
 	    try {
-		     ax= agent.getDiscValForAttribute(ATTX);
+		ax = agent.getDiscValForAttribute(ATTX);
 	    } catch (Exception e) {
 
-		    ax = agent.getDiscValForAttribute(ATTX);
+		ax = agent.getDiscValForAttribute(ATTX);
 	    }
 	    int ay = agent.getDiscValForAttribute(ATTY);
 
@@ -595,7 +595,7 @@ public class BlockDudeDomain implements DomainGenerator {
     public static DomainData createDomain(char[][] lvl) {
 	if (lvl == null || lvl.length == 0)
 	    throw new IllegalArgumentException();
-	    
+
 	int maxx = lvl[0].length;
 	int maxy = lvl.length;
 	List<Integer> px = new ArrayList<Integer>();
@@ -686,12 +686,18 @@ public class BlockDudeDomain implements DomainGenerator {
 		{ 4, 6 }, { 4, 7 } };
 
 	char[][] lvl = {
-		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
-		{ ' ', 'g', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '<', ' ' },
-		{ ' ', ' ', 't', 't', 't', 't', 't', 't', 't', ' ', ' ', 't', 't', 't', 't', 't', 't', 't', 't', ' ' } };
+		{ 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', 't' },
+		{ ' ', 'g', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', 't', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 't', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			' ', ' ', ' ', ' ', ' ', ' ', '<', ' ' },
+		{ ' ', ' ', 't', 't', 't', 't', 't', 't', 't', ' ', ' ', 't',
+			't', 't', 't', 't', 't', 't', 't', ' ' } };
 
 	Random rand = new Random();
 	// Set up the first two blocks

@@ -14,6 +14,7 @@ import burlap.oomdp.singleagent.GroundedAction;
 /**
  * Policy used in PolicyBlocks and POD.
  */
+@Deprecated
 public class PolicyBlocksPolicy extends PsiEpsilonGreedy {
     protected Map<StateHashTuple, GroundedAction> policy;
 

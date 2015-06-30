@@ -16,17 +16,23 @@ import burlap.oomdp.core.State;
 public abstract class AbstractedPolicyFactory<P extends Policy> {
     StateHashFactory hf;
 
-    public abstract List<AbstractedPolicy<P>> abstractAll(
-	    List<P> policies);
+    public abstract List<AbstractedPolicy<P>> abstractAll(List<P> policies);
 
     public abstract AbstractedPolicy<P> merge(
 	    List<AbstractedPolicy<P>> abstractedPolicies);
 
-    public abstract Map<AbstractedPolicy<P>, Double> powerMerge(
+    public abstract double scoreMerge(AbstractedPolicy<P> np);
+
+    public abstract List<Entry<AbstractedPolicy<P>, Double>> powerMerge(
 	    List<P> policies, int depth, int maxPol);
 
+    public abstract void subtractAll(
+	    List<Entry<AbstractedPolicy<PolicyBlocksPolicy>, Double>> merged);
+
     public abstract State sampleState(P policy);
-    
+
+    public abstract State sampleState(AbstractedPolicy<P> policy);
+
     public static Map<ObjectClass, Integer> greatestCommonGeneralization(
 	    List<State> ss) {
 	List<Map<ObjectClass, Integer>> mappings = new ArrayList<Map<ObjectClass, Integer>>(
@@ -118,8 +124,8 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 	    }
 
 	    // Only want the kth subset
-	    List<List<ObjectClass>> subsets = getSubsets(objClasses, e.getValue(),
-		    e.getValue());
+	    List<List<ObjectClass>> subsets = getSubsets(objClasses,
+		    e.getValue(), e.getValue());
 	    combs.put(e.getKey(), subsets);
 	}
 

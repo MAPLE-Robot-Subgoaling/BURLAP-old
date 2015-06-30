@@ -10,10 +10,11 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
 /**
- * This class is for applying options without grounding. This
- * differs from PolicyDefinedSubgoalOption in that it has stochastic termination
- * and has bookkeeping to prevent the option from having a cyclic trajectory.
+ * This class is for applying options without grounding. This differs from
+ * PolicyDefinedSubgoalOption in that it has stochastic termination and has
+ * bookkeeping to prevent the option from having a cyclic trajectory.
  */
+@Deprecated
 public class CyclicPolicyOption extends Option {
     private Policy policy;
     private List<State> visited;

@@ -26,6 +26,7 @@ import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
+@Deprecated
 public class AbstractedPolicy extends Policy {
     private Map<StateHashTuple, GroundedAction> abstractedPolicy;
     private Set<PolicyBlocksPolicy> originalPolicies;
@@ -145,11 +146,11 @@ public class AbstractedPolicy extends Policy {
 	Map<String, Integer> gcg = new HashMap<String, Integer>();
 	int i = 0;
 
-    // For each state, add the map of object class => count to mappings
+	// For each state, add the map of object class => count to mappings
 	for (State s : ss) {
 	    mappings.add(new HashMap<String, Integer>());
 
-        // For each object, add the number of instances of each object class
+	    // For each object, add the number of instances of each object class
 	    for (ObjectInstance oi : s.getAllObjects()) {
 		String className = oi.getTrueClassName();
 
@@ -157,7 +158,8 @@ public class AbstractedPolicy extends Policy {
 		    mappings.get(i).put(className, 1);
 		    List<Attribute> atts = oi.getObjectClass().attributeList;
 
-            // Perform loose type-checking to make sure the objects classes are correct
+		    // Perform loose type-checking to make sure the objects
+		    // classes are correct
 		    if (!attributes.containsKey(className)) {
 			// Attributes of this class haven't been set yet
 			attributes.put(className, atts);

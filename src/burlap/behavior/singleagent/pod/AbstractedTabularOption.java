@@ -46,7 +46,8 @@ public class AbstractedTabularOption extends Option {
 
     public AbstractedTabularOption(StateHashFactory hf,
 	    Map<StateHashTuple, GroundedAction> policy, List<Action> actions,
-	    double termProb, boolean roll, List<ObjectClass> combToUse, String name) {
+	    double termProb, boolean roll, List<ObjectClass> combToUse,
+	    String name) {
 	if (policy.isEmpty()) {
 	    throw new IllegalArgumentException("Empty policy provided.");
 	} else if (actions.isEmpty()) {
@@ -220,8 +221,8 @@ public class AbstractedTabularOption extends Option {
 		    combToUse)));
 	} else {
 	    for (List<ObjectClass> ocomb : ocombs) {
-		states.add(hf.hashState(AbstractedPolicyFactory.formState(incoming,
-			ocomb)));
+		states.add(hf.hashState(AbstractedPolicyFactory.formState(
+			incoming, ocomb)));
 	    }
 	}
 
@@ -234,8 +235,8 @@ public class AbstractedTabularOption extends Option {
 	ss.add(incoming);
 	ss.add(withRespectTo);
 	this.gcg = AbstractedPolicyFactory.greatestCommonGeneralization(ss);
-	this.ocombs = AbstractedPolicyFactory.generateAllCombinations(withRespectTo,
-		gcg);
+	this.ocombs = AbstractedPolicyFactory.generateAllCombinations(
+		withRespectTo, gcg);
 
 	for (Entry<StateHashTuple, GroundedAction> e : policy.entrySet()) {
 	    if (!actions.contains(e.getValue().action)) {
@@ -259,7 +260,8 @@ public class AbstractedTabularOption extends Option {
 	     * abstractedPolicy.get(hf.hashState(newS)).add(curGA); } } else {
 	     */
 	    for (List<ObjectClass> ocomb : ocombs) {
-		State newS = AbstractedPolicyFactory.formState(e.getKey().s, ocomb);
+		State newS = AbstractedPolicyFactory.formState(e.getKey().s,
+			ocomb);
 		List<GroundedAction> aList;
 		if (!abstractedPolicy.containsKey(hf.hashState(newS))) {
 		    aList = new ArrayList<GroundedAction>();

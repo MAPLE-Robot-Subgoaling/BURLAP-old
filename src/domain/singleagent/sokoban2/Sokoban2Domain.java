@@ -589,16 +589,16 @@ public class Sokoban2Domain implements DomainGenerator {
 	    ObjectInstance roomWithLastBlock = roomContainingPoint(s, lastX,
 		    lastY);
 	    if (!wallAt(s, roomWithLastBlock, lastX, lastY)) {
-		    for (int i = 0; i < blocks.size(); i++) {
-			ObjectInstance block = blocks.get(i);
-			int bx = block.getDiscValForAttribute(ATTX);
-			int by = block.getDiscValForAttribute(ATTY);
-			bx += xdelta;
-			by += ydelta;
+		for (int i = 0; i < blocks.size(); i++) {
+		    ObjectInstance block = blocks.get(i);
+		    int bx = block.getDiscValForAttribute(ATTX);
+		    int by = block.getDiscValForAttribute(ATTY);
+		    bx += xdelta;
+		    by += ydelta;
 
-			block.setValue(ATTX, bx);
-			block.setValue(ATTY, by);
-		    }
+		    block.setValue(ATTX, bx);
+		    block.setValue(ATTY, by);
+		}
 
 		permissibleMove = true;
 	    }

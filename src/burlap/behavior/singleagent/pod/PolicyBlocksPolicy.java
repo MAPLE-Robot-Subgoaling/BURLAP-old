@@ -21,8 +21,9 @@ public class PolicyBlocksPolicy extends PsiEpsilonGreedy {
 	this(null, epsilon, 0.0);
 	psiOff();
     }
-    
-    public PolicyBlocksPolicy( Map<StateHashTuple, GroundedAction> p, double epsilon) {
+
+    public PolicyBlocksPolicy(Map<StateHashTuple, GroundedAction> p,
+	    double epsilon) {
 	this(epsilon);
 	setPolicy(p);
     }
@@ -76,8 +77,8 @@ public class PolicyBlocksPolicy extends PsiEpsilonGreedy {
     public Map<StateHashTuple, GroundedAction> getPolicy() {
 	return policy;
     }
-    
-    public void setPolicy(Map<StateHashTuple, GroundedAction> p) {
+
+    private void setPolicy(Map<StateHashTuple, GroundedAction> p) {
 	policy.putAll(p);
     }
 

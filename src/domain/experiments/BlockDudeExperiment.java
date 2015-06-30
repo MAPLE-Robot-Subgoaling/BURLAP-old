@@ -179,7 +179,7 @@ public class BlockDudeExperiment {
 	    }
 
 	    toMerge.add(runBlockDudeBaseLearning(hf, lvl, episodes, epsilon,
-		    stateCap, -10.0, "" + (i+1)));
+		    stateCap, -10.0, "" + (i + 1)));
 	}
 
 	char[][] toLvl = BlockDudeDomain.genLevel(8);
@@ -197,12 +197,12 @@ public class BlockDudeExperiment {
 	// Q-Learning
 	PolicyBlocksPolicy qPolicy = runBlockDudeOptionLearning(hf,
 		new ArrayList<Option>(), toLvl, episodes, epsilon, stateCap,
-		qInit, path+"Q-Learning");
+		qInit, path + "Q-Learning");
 	// Perfect
 	AbstractedOption perOption = new AbstractedOption(hf,
 		qPolicy.getPolicy(), dd.d.getActions(), termProb, "perfect");
 	runBlockDudeOptionLearning(hf, perOption, toLvl, episodes, epsilon,
-		stateCap, qInit, path+"Perfect");
+		stateCap, qInit, path + "Perfect");
 	perOption = null;
 
 	// Merging
@@ -218,11 +218,11 @@ public class BlockDudeExperiment {
 	    AbstractedOption ppbOption = new AbstractedOption(hf, merged.get(0)
 		    .getKey().getPolicy(), dd.d.getActions(), termProb, "PPB");
 	    runBlockDudeOptionLearning(hf, ppbOption, toLvl, episodes, epsilon,
-		    stateCap, qInit, path+"PPB");
+		    stateCap, qInit, path + "PPB");
 	} else {
 	    System.out.println("No option candidates generated.");
 	    runBlockDudeOptionLearning(hf, new ArrayList<Option>(), toLvl,
-		    episodes, epsilon, stateCap, qInit, path+"PPB");
+		    episodes, epsilon, stateCap, qInit, path + "PPB");
 	}
 	merged = null;
 
@@ -234,7 +234,7 @@ public class BlockDudeExperiment {
 		    .getActions(), termProb, "TOP"));
 	}
 	runBlockDudeOptionLearning(hf, ptopOptions, toLvl, episodes, epsilon,
-		stateCap, qInit, path+"PTOPs");
+		stateCap, qInit, path + "PTOPs");
 
 	List<String> objects = new ArrayList<String>(10);
 	objects.add("block0");
@@ -268,7 +268,7 @@ public class BlockDudeExperiment {
 	    }
 
 	    runBlockDudeOptionLearning(hf, topOptions, toLvl, episodes,
-		    epsilon, stateCap, qInit, path+"TOPs" + c);
+		    epsilon, stateCap, qInit, path + "TOPs" + c);
 
 	    if (naiveMerged != null && naiveMerged.size() > 0) {
 		// Random PolicyBlocks
@@ -286,10 +286,10 @@ public class BlockDudeExperiment {
 				+ c);
 
 		runBlockDudeOptionLearning(hf, rpbOption, toLvl, episodes,
-			epsilon, stateCap, qInit, path+"RPB" + c);
+			epsilon, stateCap, qInit, path + "RPB" + c);
 	    } else {
 		runBlockDudeOptionLearning(hf, new ArrayList<Option>(), toLvl,
-			episodes, epsilon, stateCap, qInit, path+"RPB" + c);
+			episodes, epsilon, stateCap, qInit, path + "RPB" + c);
 	    }
 
 	    if (c == 6) {
