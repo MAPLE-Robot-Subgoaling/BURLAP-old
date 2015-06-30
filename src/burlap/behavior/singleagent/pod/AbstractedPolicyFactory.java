@@ -9,73 +9,76 @@ import java.util.Map.Entry;
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.oomdp.core.Attribute;
+import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 
 public abstract class AbstractedPolicyFactory<P extends Policy> {
     StateHashFactory hf;
 
-    public abstract List<AbstractedPolicy> abstractAll(
+    public abstract List<AbstractedPolicy<P>> abstractAll(
 	    List<P> policies);
 
-    public abstract AbstractedPolicy merge(
-	    List<AbstractedPolicy> abstractedPolicies);
+    public abstract AbstractedPolicy<P> merge(
+	    List<AbstractedPolicy<P>> abstractedPolicies);
 
-    public abstract Map<AbstractedPolicy, Double> powerMerge(
+    public abstract Map<AbstractedPolicy<P>, Double> powerMerge(
 	    List<P> policies, int depth, int maxPol);
 
-    public static Map<String, Integer> greatestCommonGeneralization(
+    public abstract State sampleState(P policy);
+    
+    public static Map<ObjectClass, Integer> greatestCommonGeneralization(
 	    List<State> ss) {
-	List<Map<String, Integer>> mappings = new ArrayList<Map<String, Integer>>(
+	List<Map<ObjectClass, Integer>> mappings = new ArrayList<Map<ObjectClass, Integer>>(
 		ss.size());
-	Map<String, List<Attribute>> attributes = new HashMap<String, List<Attribute>>();
-	Map<String, Integer> gcg = new HashMap<String, Integer>();
+	Map<ObjectClass, List<Attribute>> attributes = new HashMap<ObjectClass, List<Attribute>>();
+	Map<ObjectClass, Integer> gcg = new HashMap<ObjectClass, Integer>();
 	int i = 0;
 
 	// For each state, add the map of object class => count to mappings
 	for (State s : ss) {
-	    mappings.add(new HashMap<String, Integer>());
+	    mappings.add(new HashMap<ObjectClass, Integer>());
 
 	    // For each object, add the number of instances of each object class
 	    for (ObjectInstance oi : s.getAllObjects()) {
-		String className = oi.getTrueClassName();
+		ObjectClass objClass = oi.getObjectClass();
 
-		if (!mappings.get(i).containsKey(className)) {
-		    mappings.get(i).put(className, 1);
+		if (!mappings.get(i).containsKey(objClass)) {
+		    mappings.get(i).put(objClass, 1);
 		    List<Attribute> atts = oi.getObjectClass().attributeList;
 
 		    // Perform loose type-checking to make sure the objects
 		    // classes are correct
-		    if (!attributes.containsKey(className)) {
+		    if (!attributes.containsKey(objClass)) {
 			// Attributes of this class haven't been set yet
-			attributes.put(className, atts);
+			attributes.put(objClass, atts);
 		    } else {
-			if (!attributes.get(className).equals(atts)) {
+			if (!attributes.get(objClass).equals(atts)) {
 			    throw new IllegalArgumentException(
 				    "Attributes belonging to the class "
-					    + className + " don't match.");
+					    + objClass.name + " don't match.");
 			}
 		    }
 		} else {
-		    mappings.get(i).put(className,
-			    mappings.get(i).get(className) + 1);
+		    mappings.get(i).put(objClass,
+			    mappings.get(i).get(objClass) + 1);
 		}
 	    }
 
 	    i++;
 	}
 
-	Map<String, Integer> classCount = new HashMap<String, Integer>();
+	Map<ObjectClass, Integer> classCount = new HashMap<ObjectClass, Integer>();
 	// Initialize the GCG
-	for (Entry<String, Integer> e : mappings.get(0).entrySet()) {
+	for (Entry<ObjectClass, Integer> e : mappings.get(0).entrySet()) {
 	    gcg.put(e.getKey(), e.getValue());
 	    classCount.put(e.getKey(), 1);
 	}
 	mappings.remove(0);
 
 	// Fill up the GCG with the greatest intersection between all states
-	for (Map<String, Integer> mapping : mappings) {
-	    for (Entry<String, Integer> e : mapping.entrySet()) {
+	for (Map<ObjectClass, Integer> mapping : mappings) {
+	    for (Entry<ObjectClass, Integer> e : mapping.entrySet()) {
 		if (gcg.containsKey(e.getKey())) {
 		    if (gcg.get(e.getKey()) > e.getValue()) {
 			gcg.put(e.getKey(), e.getValue());
@@ -90,7 +93,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 		}
 	    }
 	}
-	for (Entry<String, Integer> e : classCount.entrySet()) {
+	for (Entry<ObjectClass, Integer> e : classCount.entrySet()) {
 	    if (gcg.containsKey(e.getKey()) && e.getValue() < ss.size()) {
 		// If the object class does not exist for all states, remove it
 		gcg.remove(e.getKey());
@@ -100,52 +103,52 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 	return gcg;
     }
 
-    public static List<List<String>> generateAllCombinations(State s,
-	    Map<String, Integer> gcg) {
-	Map<String, List<List<String>>> combs = new HashMap<String, List<List<String>>>();
+    public static List<List<ObjectClass>> generateAllCombinations(State s,
+	    Map<ObjectClass, Integer> gcg) {
+	Map<ObjectClass, List<List<ObjectClass>>> combs = new HashMap<ObjectClass, List<List<ObjectClass>>>();
 
-	for (Entry<String, Integer> e : gcg.entrySet()) {
-	    if (s.getFirstObjectOfClass(e.getKey()) == null) {
+	for (Entry<ObjectClass, Integer> e : gcg.entrySet()) {
+	    if (s.getFirstObjectOfClass(e.getKey().name) == null) {
 		throw new IllegalArgumentException(
 			"State provided does not match the GCG.");
 	    }
-	    List<String> objNames = new ArrayList<String>();
-	    for (ObjectInstance oi : s.getObjectsOfTrueClass(e.getKey())) {
-		objNames.add(oi.getName());
+	    List<ObjectClass> objClasses = new ArrayList<ObjectClass>();
+	    for (ObjectInstance oi : s.getObjectsOfTrueClass(e.getKey().name)) {
+		objClasses.add(oi.getObjectClass());
 	    }
 
 	    // Only want the kth subset
-	    List<List<String>> subsets = getSubsets(objNames, e.getValue(),
+	    List<List<ObjectClass>> subsets = getSubsets(objClasses, e.getValue(),
 		    e.getValue());
 	    combs.put(e.getKey(), subsets);
 	}
 
-	List<List<String>> names = new ArrayList<List<String>>();
+	List<List<ObjectClass>> classes = new ArrayList<List<ObjectClass>>();
 	boolean firstPass = true;
-	for (List<List<String>> objClass : combs.values()) {
+	for (List<List<ObjectClass>> objClass : combs.values()) {
 	    if (firstPass) {
-		names.addAll(objClass);
+		classes.addAll(objClass);
 		firstPass = false;
 		continue;
 	    }
 
-	    int originalSize = names.size();
+	    int originalSize = classes.size();
 	    int c = 0;
 	    int f = objClass.size();
-	    names = multiplyList(names, f);
+	    classes = multiplyList(classes, f);
 
-	    for (List<String> objComb : objClass) {
+	    for (List<ObjectClass> objComb : objClass) {
 		for (int i = c * originalSize; i < (c + 1) * originalSize; i++) {
-		    List<String> temp = names.get(i);
+		    List<ObjectClass> temp = classes.get(i);
 		    temp.addAll(objComb);
-		    names.set(i, temp);
+		    classes.set(i, temp);
 		}
 
 		c++;
 	    }
 	}
 
-	return names;
+	return classes;
     }
 
     /**
@@ -220,10 +223,10 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
      * @param onames
      * @return a new reduced state
      */
-    public static State formState(State s, List<String> onames) {
+    public static State formState(State s, List<ObjectClass> classes) {
 	State newS = new State();
 	for (ObjectInstance oi : s.getAllObjects()) {
-	    if (onames.contains(oi.getName())) {
+	    if (classes.contains(oi.getClass())) {
 		newS.addObject(oi);
 	    }
 	}
@@ -237,12 +240,12 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
      * @param s
      * @return mapping of object class -> count
      */
-    public static Map<String, Integer> getObjectCounts(State s) {
-	Map<String, Integer> cs = new HashMap<String, Integer>();
+    public static Map<ObjectClass, Integer> getObjectCounts(State s) {
+	Map<ObjectClass, Integer> cs = new HashMap<ObjectClass, Integer>();
 	List<List<ObjectInstance>> os = s.getAllObjectsByTrueClass();
 
 	for (List<ObjectInstance> o : os) {
-	    cs.put(o.get(0).getObjectClass().name, o.size());
+	    cs.put(o.get(0).getObjectClass(), o.size());
 	}
 
 	return cs;
@@ -395,7 +398,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Implements the NEXKSB algorithm. Gets all k-subsets of the set provided. Implementation provided here: http://stackoverflow.com/a/15603638
+     * Implements the NEXKSB algorithm. Gets all k-subsets of the set provided.
      * 
      * @param k
      *            - size of subset tuples
@@ -441,7 +444,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Performs the binomial coefficient function C(n, k). Implementation provided here: http://stackoverflow.com/a/15603638
+     * Performs the binomial coefficient function C(n, k)
      * 
      * @param n
      * @param k
