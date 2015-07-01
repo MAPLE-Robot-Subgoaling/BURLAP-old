@@ -2,9 +2,11 @@ package burlap.behavior.singleagent.pod;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.statehashing.StateHashFactory;
@@ -27,7 +29,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 	    List<P> policies, int depth, int maxPol);
 
     public abstract void subtractAll(
-	    List<Entry<AbstractedPolicy<PolicyBlocksPolicy>, Double>> merged);
+	    List<Entry<AbstractedPolicy<P>, Double>> merged);
 
     public abstract State sampleState(P policy);
 
@@ -35,77 +37,58 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 
     public static Map<ObjectClass, Integer> greatestCommonGeneralization(
 	    List<State> ss) {
-	List<Map<ObjectClass, Integer>> mappings = new ArrayList<Map<ObjectClass, Integer>>(
-		ss.size());
-	Map<ObjectClass, List<Attribute>> attributes = new HashMap<ObjectClass, List<Attribute>>();
 	Map<ObjectClass, Integer> gcg = new HashMap<ObjectClass, Integer>();
-	int i = 0;
-
-	// For each state, add the map of object class => count to mappings
-	for (State s : ss) {
-	    mappings.add(new HashMap<ObjectClass, Integer>());
-
-	    // For each object, add the number of instances of each object class
-	    for (ObjectInstance oi : s.getAllObjects()) {
-		ObjectClass objClass = oi.getObjectClass();
-
-		if (!mappings.get(i).containsKey(objClass)) {
-		    mappings.get(i).put(objClass, 1);
-		    List<Attribute> atts = oi.getObjectClass().attributeList;
-
-		    // Perform loose type-checking to make sure the objects
-		    // classes are correct
-		    if (!attributes.containsKey(objClass)) {
-			// Attributes of this class haven't been set yet
-			attributes.put(objClass, atts);
-		    } else {
-			if (!attributes.get(objClass).equals(atts)) {
-			    throw new IllegalArgumentException(
-				    "Attributes belonging to the class "
-					    + objClass.name + " don't match.");
-			}
-		    }
+	Map<String, List<Attribute>> atts = new HashMap<String, List<Attribute>>();
+	Map<String, Integer> classCounts = new HashMap<String, Integer>();
+	
+	for (State s: ss) {
+	    List<String> classesSeen = new ArrayList<String>();
+	    for (List<ObjectInstance> objs: s.getAllObjectsByTrueClass()) {
+		String curClass = objs.get(0).getObjectClass().name;
+		classesSeen.add(curClass);
+		
+		if (!classCounts.containsKey(curClass)) {
+		    classCounts.put(curClass, objs.size());
 		} else {
-		    mappings.get(i).put(objClass,
-			    mappings.get(i).get(objClass) + 1);
-		}
-	    }
-
-	    i++;
-	}
-
-	Map<ObjectClass, Integer> classCount = new HashMap<ObjectClass, Integer>();
-	// Initialize the GCG
-	for (Entry<ObjectClass, Integer> e : mappings.get(0).entrySet()) {
-	    gcg.put(e.getKey(), e.getValue());
-	    classCount.put(e.getKey(), 1);
-	}
-	mappings.remove(0);
-
-	// Fill up the GCG with the greatest intersection between all states
-	for (Map<ObjectClass, Integer> mapping : mappings) {
-	    for (Entry<ObjectClass, Integer> e : mapping.entrySet()) {
-		if (gcg.containsKey(e.getKey())) {
-		    if (gcg.get(e.getKey()) > e.getValue()) {
-			gcg.put(e.getKey(), e.getValue());
+		    if (classCounts.get(curClass) > objs.size()) {
+			classCounts.put(curClass, objs.size());
 		    }
-
-		    if (!classCount.containsKey(e.getKey())) {
-			classCount.put(e.getKey(), 1);
+		}
+		
+		for (ObjectInstance obj: objs) {
+		    if (atts.containsKey(curClass)) {
+			// Find the intersection between the currently stored list of attributes and the most recently seen,
+			// for the current object class
+			List<Attribute> curAtts = atts.get(curClass);
+			Set<Attribute> inter = new HashSet<Attribute>(curAtts);
+			inter.retainAll(obj.getObjectClass().attributeList);
+			List<Attribute> newAtts = new ArrayList<Attribute>(inter);
+			
+			atts.put(curClass, newAtts);
 		    } else {
-			classCount.put(e.getKey(),
-				classCount.get(e.getKey()) + 1);
+			// Initialize the counts
+			atts.put(curClass, obj.getObjectClass().attributeList);
 		    }
 		}
 	    }
-	}
-	for (Entry<ObjectClass, Integer> e : classCount.entrySet()) {
-	    if (gcg.containsKey(e.getKey()) && e.getValue() < ss.size()) {
-		// If the object class does not exist for all states, remove it
-		gcg.remove(e.getKey());
+	    
+	    for (String gcgClass: atts.keySet()) {
+		if (!classesSeen.contains(gcgClass)) {
+		    // Remove any object classes that don't exist in this state
+		    atts.remove(gcgClass);
+		    classCounts.remove(gcgClass);
+		}
 	    }
 	}
-
+	
+	for (String classCount: classCounts.keySet()) {
+	    // Construct the final structure
+	    ObjectClass finalClass = new ObjectClass(null, classCount);
+	    finalClass.setAttributes(atts.get(classCount));
+	    
+	    gcg.put(finalClass, classCounts.get(classCount));
+	}
+	
 	return gcg;
     }
 
@@ -149,7 +132,6 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 		    temp.addAll(objComb);
 		    classes.set(i, temp);
 		}
-
 		c++;
 	    }
 	}
