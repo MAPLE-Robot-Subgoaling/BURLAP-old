@@ -37,7 +37,7 @@ public class PsiEpsilonGreedy extends EpsilonGreedy {
     }
 
     /**
-     * For getting the learned state-action mapping offline If Q-values are
+     * For getting the learned state-action mapping offline. If Q-values are
      * equal for two actions, it picks randomly
      * 
      * @param s

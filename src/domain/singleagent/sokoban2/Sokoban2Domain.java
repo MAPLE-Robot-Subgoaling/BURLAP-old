@@ -35,7 +35,46 @@ import burlap.oomdp.singleagent.common.SinglePFTF;
 import burlap.oomdp.visualizer.Visualizer;
 
 public class Sokoban2Domain implements DomainGenerator {
-
+    public class AgentClass extends ObjectClass {
+	public AgentClass(Domain domain, String name) {
+	    this(domain, name, false);
+	}
+	
+	public AgentClass(Domain domain, String name, boolean hidden) {
+	    super(domain, name, hidden);
+	}
+    }
+    
+    public class BlockClass extends ObjectClass {
+	public BlockClass(Domain domain, String name) {
+	    this(domain, name, false);
+	}
+	
+	public BlockClass(Domain domain, String name, boolean hidden) {
+	    super(domain, name, hidden);
+	}
+    }
+    
+    public class RoomClass extends ObjectClass {
+	public RoomClass(Domain domain, String name) {
+	    this(domain, name, false);
+	}
+	
+	public RoomClass(Domain domain, String name, boolean hidden) {
+	    super(domain, name, hidden);
+	}
+    }
+    
+    public class DoorClass extends ObjectClass {
+	public DoorClass(Domain domain, String name) {
+	    this(domain, name, false);
+	}
+	
+	public DoorClass(Domain domain, String name, boolean hidden) {
+	    super(domain, name, hidden);
+	}
+    }
+    
     public static final String ATTX = "x";
     public static final String ATTY = "y";
     public static final String ATTDIR = "direction"; // optionally added
@@ -200,14 +239,14 @@ public class Sokoban2Domain implements DomainGenerator {
 	}
 
 	// declare the objects associated with the domain
-	ObjectClass agent = new ObjectClass(domain, CLASSAGENT);
+	AgentClass agent = new AgentClass(domain, CLASSAGENT);
 	agent.addAttribute(xatt);
 	agent.addAttribute(yatt);
 	if (this.includeDirectionAttribute) {
 	    agent.addAttribute(domain.getAttribute(ATTDIR));
 	}
 
-	ObjectClass block = new ObjectClass(domain, CLASSBLOCK);
+	BlockClass block = new BlockClass(domain, CLASSBLOCK);
 	block.addAttribute(xatt);
 	block.addAttribute(yatt);
 	block.addAttribute(colAtt);
@@ -217,11 +256,11 @@ public class Sokoban2Domain implements DomainGenerator {
 	    block.addAttribute(domain.getAttribute(ATTDIR));
 	}
 
-	ObjectClass room = new ObjectClass(domain, CLASSROOM);
+	RoomClass room = new RoomClass(domain, CLASSROOM);
 	this.addRectAtts(domain, room);
 	room.addAttribute(colAtt);
 
-	ObjectClass door = new ObjectClass(domain, CLASSDOOR);
+	DoorClass door = new DoorClass(domain, CLASSDOOR);
 	this.addRectAtts(domain, door);
 
 	// add the objects to the domain

@@ -14,6 +14,7 @@ import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
+import burlap.oomdp.core.Value;
 
 public abstract class AbstractedPolicyFactory<P extends Policy> {
     StateHashFactory hf;
@@ -92,8 +93,8 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 	return gcg;
     }
 
-    public static List<List<ObjectClass>> generateAllCombinations(State s,
-	    Map<ObjectClass, Integer> gcg) {
+    public static List<List<ObjectClass>> generateAllCombinations(
+	    Map<ObjectClass, Integer> gcg, State s) {
 	Map<ObjectClass, List<List<ObjectClass>>> combs = new HashMap<ObjectClass, List<List<ObjectClass>>>();
 
 	for (Entry<ObjectClass, Integer> e : gcg.entrySet()) {
@@ -101,9 +102,10 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 		throw new IllegalArgumentException(
 			"State provided does not match the GCG.");
 	    }
+	    
 	    List<ObjectClass> objClasses = new ArrayList<ObjectClass>();
-	    for (ObjectInstance oi : s.getObjectsOfTrueClass(e.getKey().name)) {
-		objClasses.add(oi.getObjectClass());
+	    for (int i = 0; i < s.getObjectsOfTrueClass(e.getKey().name).size(); i++) {
+		objClasses.add(e.getKey().copy(null));
 	    }
 
 	    // Only want the kth subset
@@ -114,6 +116,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 
 	List<List<ObjectClass>> classes = new ArrayList<List<ObjectClass>>();
 	boolean firstPass = true;
+	
 	for (List<List<ObjectClass>> objClass : combs.values()) {
 	    if (firstPass) {
 		classes.addAll(objClass);
@@ -196,9 +199,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 		c++;
 	    }
 
-	    if (firstPass) {
-		firstPass = false;
-	    }
+	    firstPass = false;
 	}
 
 	return combs;
@@ -212,10 +213,45 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
      * @return a new reduced state
      */
     public static State formState(State s, List<ObjectClass> classes) {
+	class TempObjectInstance extends ObjectInstance {
+	    public TempObjectInstance(ObjectInstance oi) {
+		super(oi);
+	    }
+	    
+	    public TempObjectInstance(ObjectClass oc, String name) {
+		super(oc, name);
+	    }
+	    
+	    public ObjectInstance formObjectInstance(ObjectClass oc) {
+		TempObjectInstance ret = new TempObjectInstance(oc, name);
+		List<Value> newValues = new ArrayList<Value>(ret.values.size());
+		
+		for (String valName : ret.obClass.attributeIndex.keySet()) {
+		    newValues.add(getValueForAttribute(valName));
+		}
+		
+		ret.values = newValues;
+		return (ObjectInstance) ret;
+	    }
+	}
+	
 	State newS = new State();
+	List<String> classNames = new ArrayList<String>(classes.size());
+	Map<String, Integer> classMap = new HashMap<String, Integer>();
+	
+	int k = 0;
+	for (ObjectClass oc: classes) {
+	    classNames.add(oc.name);
+	    classMap.put(oc.name, k);
+	    k++;
+	}
+	
 	for (ObjectInstance oi : s.getAllObjects()) {
-	    if (classes.contains(oi.getClass())) {
-		newS.addObject(oi);
+	    if (classNames.contains(oi.getTrueClassName())) {
+		// Remove any attributes that don't exist within the gcg
+		TempObjectInstance toi = new TempObjectInstance(oi);
+		ObjectInstance newOI = toi.formObjectInstance(classes.get(classMap.get(oi.getTrueClassName())));
+		newS.addObject(newOI);
 	    }
 	}
 
@@ -243,7 +279,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
      * Creates a list initialized to its indices
      * 
      * @param size
-     * @return array of [0..size-1]
+     * @return array of [0 .. size-1]
      */
     public static int[] range(int size) {
 	int[] range = new int[size];
@@ -304,7 +340,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 	if (factor == 1) {
 	    return l;
 	} else if (factor < 1) {
-	    throw new IllegalArgumentException("Invalid factor");
+	    throw new IllegalArgumentException("Invalid factor.");
 	}
 
 	List<T> ret = new ArrayList<T>(l.size() * factor);
@@ -375,6 +411,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 	    int[][] combs = nexksb(range(set.size()), i);
 	    for (int[] cs : combs) {
 		List<T> temp = new ArrayList<T>();
+		
 		for (int c : cs) {
 		    temp.add(set.get(c));
 		}
@@ -386,7 +423,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Implements the NEXKSB algorithm. Gets all k-subsets of the set provided.
+     * Implements the NEXKSB algorithm. Gets all k-subsets of the set provided. Source: http://stackoverflow.com/questions/4504974/
      * 
      * @param k
      *            - size of subset tuples
@@ -432,7 +469,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Performs the binomial coefficient function C(n, k)
+     * Performs the binomial coefficient function C(n, k). Source: http://stackoverflow.com/questions/4504974/
      * 
      * @param n
      * @param k
@@ -462,16 +499,18 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
      * @param ocomb
      * @return whether or not the abstraction is possible
      */
-    public static boolean isProperAbstraction(State s, List<String> ocomb) {
+    public static boolean isProperAbstraction(State s, List<ObjectClass> ocomb) {
 	Map<String, Boolean> matches = new HashMap<String, Boolean>();
-	for (String o : ocomb) {
-	    matches.put(o, false);
+	for (ObjectClass o : ocomb) {
+	    matches.put(o.name, false);
 	}
 
 	for (ObjectInstance oi : s.getAllObjects()) {
-	    for (String o : ocomb) {
-		if (oi.getName().equals(o)) {
-		    matches.put(o, true);
+	    for (ObjectClass oc : ocomb) {
+		if (oi.getName().equals(oc)) {
+		    if (oi.getObjectClass().attributeMap.keySet().equals(oc.attributeMap.keySet())) {
+			matches.put(oc.name, true);
+		    }
 		}
 	    }
 	}

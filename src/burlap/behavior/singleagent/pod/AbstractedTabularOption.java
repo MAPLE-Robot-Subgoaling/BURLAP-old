@@ -235,8 +235,8 @@ public class AbstractedTabularOption extends Option {
 	ss.add(incoming);
 	ss.add(withRespectTo);
 	this.gcg = AbstractedPolicyFactory.greatestCommonGeneralization(ss);
-	this.ocombs = AbstractedPolicyFactory.generateAllCombinations(
-		withRespectTo, gcg);
+	this.ocombs = AbstractedPolicyFactory.generateAllCombinations(gcg,
+		withRespectTo);
 
 	for (Entry<StateHashTuple, GroundedAction> e : policy.entrySet()) {
 	    if (!actions.contains(e.getValue().action)) {

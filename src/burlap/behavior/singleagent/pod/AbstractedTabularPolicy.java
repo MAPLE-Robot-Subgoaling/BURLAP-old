@@ -385,7 +385,7 @@ public class AbstractedTabularPolicy extends
 	this.originalPolicies = sourcePolicies;
 
 	List<List<ObjectClass>> oiCombs = AbstractedPolicyFactory
-		.generateAllCombinations(apf.sampleState(ip), gcg);
+		.generateAllCombinations(gcg, apf.sampleState(ip));
 	List<Entry<PolicyBlocksPolicy, Double>> policyCandidates = generatePolicyCandidates(
 		ip.abstractedPolicy, oiCombs, 1);
 
@@ -411,7 +411,7 @@ public class AbstractedTabularPolicy extends
 	// Generate the GCG respective to the sampled states
 	gcg = AbstractedPolicyFactory.greatestCommonGeneralization(psS);
 	List<List<ObjectClass>> oiCombs = AbstractedPolicyFactory
-		.generateAllCombinations(ipS, gcg);
+		.generateAllCombinations(gcg, ipS);
 	List<Entry<PolicyBlocksPolicy, Double>> policyCandidates = generatePolicyCandidates(
 		ip, oiCombs, 1);
 
