@@ -15,8 +15,8 @@ import burlap.oomdp.core.ObjectClass;
  * 
  * <p>
  * 1. Nicholay Topin, Nicholas Haltmeyer, Shawn Squire, John Winder, Marie
- * desJardins, James MacGlashan, “Portable option discovery for automated
- * learning transfer in object-oriented Markov Decision Processes,”
+ * desJardins, James MacGlashan, "Portable option discovery for automated
+ * learning transfer in object-oriented Markov Decision Processes,"
  * <i>Proceedings of the International Joint Conference on Artificial
  * Intelligence (IJCAI-15)</i>, Buenos Aires, Argentina, July 2015.
  * </p>

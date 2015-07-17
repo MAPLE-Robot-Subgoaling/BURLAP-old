@@ -23,8 +23,8 @@ import burlap.oomdp.core.Value;
  * 
  * <p>
  * 1. Nicholay Topin, Nicholas Haltmeyer, Shawn Squire, John Winder, Marie
- * desJardins, James MacGlashan, “Portable option discovery for automated
- * learning transfer in object-oriented Markov Decision Processes,”
+ * desJardins, James MacGlashan, "Portable option discovery for automated
+ * learning transfer in object-oriented Markov Decision Processes,"
  * <i>Proceedings of the International Joint Conference on Artificial
  * Intelligence (IJCAI-15)</i>, Buenos Aires, Argentina, July 2015. <br>
  * 2. Pickett, Marc, and Andrew G. Barto.
@@ -67,7 +67,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
      * Scores a merged policy relative to its original policies.
      * 
      * @param np
-     *            THe newly formed merged policy
+     *            The newly formed merged policy
      * @return A real number score
      */
     public abstract double scoreMerge(AbstractedPolicy<P> np);
