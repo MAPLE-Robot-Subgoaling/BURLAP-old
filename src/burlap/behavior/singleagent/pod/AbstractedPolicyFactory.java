@@ -41,13 +41,13 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 	Map<ObjectClass, Integer> gcg = new HashMap<ObjectClass, Integer>();
 	Map<String, List<Attribute>> atts = new HashMap<String, List<Attribute>>();
 	Map<String, Integer> classCounts = new HashMap<String, Integer>();
-	
-	for (State s: ss) {
+
+	for (State s : ss) {
 	    List<String> classesSeen = new ArrayList<String>();
-	    for (List<ObjectInstance> objs: s.getAllObjectsByTrueClass()) {
+	    for (List<ObjectInstance> objs : s.getAllObjectsByTrueClass()) {
 		String curClass = objs.get(0).getObjectClass().name;
 		classesSeen.add(curClass);
-		
+
 		if (!classCounts.containsKey(curClass)) {
 		    classCounts.put(curClass, objs.size());
 		} else {
@@ -55,16 +55,18 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 			classCounts.put(curClass, objs.size());
 		    }
 		}
-		
-		for (ObjectInstance obj: objs) {
+
+		for (ObjectInstance obj : objs) {
 		    if (atts.containsKey(curClass)) {
-			// Find the intersection between the currently stored list of attributes and the most recently seen,
+			// Find the intersection between the currently stored
+			// list of attributes and the most recently seen,
 			// for the current object class
 			List<Attribute> curAtts = atts.get(curClass);
 			Set<Attribute> inter = new HashSet<Attribute>(curAtts);
 			inter.retainAll(obj.getObjectClass().attributeList);
-			List<Attribute> newAtts = new ArrayList<Attribute>(inter);
-			
+			List<Attribute> newAtts = new ArrayList<Attribute>(
+				inter);
+
 			atts.put(curClass, newAtts);
 		    } else {
 			// Initialize the counts
@@ -72,8 +74,8 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 		    }
 		}
 	    }
-	    
-	    for (String gcgClass: atts.keySet()) {
+
+	    for (String gcgClass : atts.keySet()) {
 		if (!classesSeen.contains(gcgClass)) {
 		    // Remove any object classes that don't exist in this state
 		    atts.remove(gcgClass);
@@ -81,15 +83,15 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 		}
 	    }
 	}
-	
-	for (String classCount: classCounts.keySet()) {
+
+	for (String classCount : classCounts.keySet()) {
 	    // Construct the final structure
 	    ObjectClass finalClass = new ObjectClass(null, classCount);
 	    finalClass.setAttributes(atts.get(classCount));
-	    
+
 	    gcg.put(finalClass, classCounts.get(classCount));
 	}
-	
+
 	return gcg;
     }
 
@@ -102,7 +104,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 		throw new IllegalArgumentException(
 			"State provided does not match the GCG.");
 	    }
-	    
+
 	    List<ObjectClass> objClasses = new ArrayList<ObjectClass>();
 	    for (int i = 0; i < s.getObjectsOfTrueClass(e.getKey().name).size(); i++) {
 		objClasses.add(e.getKey().copy(null));
@@ -116,7 +118,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 
 	List<List<ObjectClass>> classes = new ArrayList<List<ObjectClass>>();
 	boolean firstPass = true;
-	
+
 	for (List<List<ObjectClass>> objClass : combs.values()) {
 	    if (firstPass) {
 		classes.addAll(objClass);
@@ -148,7 +150,10 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
      * 
      * @param s1
      * @param s2
-     * @return all possible arrangement of s1 with respect to s2
+     * @return all possible arrangement of s1 with respect to s2. Note that this
+     *         method will not intersect the attributes belonging to each object
+     *         class. That is, it assumes all object instances belong to the
+     *         same class schema if the names are equal.
      */
     public static List<State> generatePossibleStates(State s1, State s2) {
 	List<State> combs = new ArrayList<State>();
@@ -217,40 +222,41 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 	    public TempObjectInstance(ObjectInstance oi) {
 		super(oi);
 	    }
-	    
+
 	    public TempObjectInstance(ObjectClass oc, String name) {
 		super(oc, name);
 	    }
-	    
+
 	    public ObjectInstance formObjectInstance(ObjectClass oc) {
 		TempObjectInstance ret = new TempObjectInstance(oc, name);
 		List<Value> newValues = new ArrayList<Value>(ret.values.size());
-		
+
 		for (String valName : ret.obClass.attributeIndex.keySet()) {
 		    newValues.add(getValueForAttribute(valName));
 		}
-		
+
 		ret.values = newValues;
 		return (ObjectInstance) ret;
 	    }
 	}
-	
+
 	State newS = new State();
 	List<String> classNames = new ArrayList<String>(classes.size());
 	Map<String, Integer> classMap = new HashMap<String, Integer>();
-	
+
 	int k = 0;
-	for (ObjectClass oc: classes) {
+	for (ObjectClass oc : classes) {
 	    classNames.add(oc.name);
 	    classMap.put(oc.name, k);
 	    k++;
 	}
-	
+
 	for (ObjectInstance oi : s.getAllObjects()) {
 	    if (classNames.contains(oi.getTrueClassName())) {
 		// Remove any attributes that don't exist within the gcg
 		TempObjectInstance toi = new TempObjectInstance(oi);
-		ObjectInstance newOI = toi.formObjectInstance(classes.get(classMap.get(oi.getTrueClassName())));
+		ObjectInstance newOI = toi.formObjectInstance(classes
+			.get(classMap.get(oi.getTrueClassName())));
 		newS.addObject(newOI);
 	    }
 	}
@@ -259,7 +265,10 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Gets the count of each object class in a state
+     * Gets the count of each object class in a state. Note that this method
+     * selects the object class to index by in an observably random fashion.
+     * That is, no checking is performed to make sure all object classes of the
+     * same name have identical schemas.
      * 
      * @param s
      * @return mapping of object class -> count
@@ -411,7 +420,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 	    int[][] combs = nexksb(range(set.size()), i);
 	    for (int[] cs : combs) {
 		List<T> temp = new ArrayList<T>();
-		
+
 		for (int c : cs) {
 		    temp.add(set.get(c));
 		}
@@ -423,7 +432,8 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Implements the NEXKSB algorithm. Gets all k-subsets of the set provided. Source: http://stackoverflow.com/questions/4504974/
+     * Implements the NEXKSB algorithm. Gets all k-subsets of the set provided.
+     * Source: http://stackoverflow.com/questions/4504974/
      * 
      * @param k
      *            - size of subset tuples
@@ -469,7 +479,8 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Performs the binomial coefficient function C(n, k). Source: http://stackoverflow.com/questions/4504974/
+     * Performs the binomial coefficient function C(n, k). Source:
+     * http://stackoverflow.com/questions/4504974/
      * 
      * @param n
      * @param k
@@ -508,7 +519,8 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 	for (ObjectInstance oi : s.getAllObjects()) {
 	    for (ObjectClass oc : ocomb) {
 		if (oi.getName().equals(oc)) {
-		    if (oi.getObjectClass().attributeMap.keySet().equals(oc.attributeMap.keySet())) {
+		    if (oi.getObjectClass().attributeMap.keySet().equals(
+			    oc.attributeMap.keySet())) {
 			matches.put(oc.name, true);
 		    }
 		}

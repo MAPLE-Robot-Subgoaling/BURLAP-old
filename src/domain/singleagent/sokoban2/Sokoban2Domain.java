@@ -39,42 +39,42 @@ public class Sokoban2Domain implements DomainGenerator {
 	public AgentClass(Domain domain, String name) {
 	    this(domain, name, false);
 	}
-	
+
 	public AgentClass(Domain domain, String name, boolean hidden) {
 	    super(domain, name, hidden);
 	}
     }
-    
+
     public class BlockClass extends ObjectClass {
 	public BlockClass(Domain domain, String name) {
 	    this(domain, name, false);
 	}
-	
+
 	public BlockClass(Domain domain, String name, boolean hidden) {
 	    super(domain, name, hidden);
 	}
     }
-    
+
     public class RoomClass extends ObjectClass {
 	public RoomClass(Domain domain, String name) {
 	    this(domain, name, false);
 	}
-	
+
 	public RoomClass(Domain domain, String name, boolean hidden) {
 	    super(domain, name, hidden);
 	}
     }
-    
+
     public class DoorClass extends ObjectClass {
 	public DoorClass(Domain domain, String name) {
 	    this(domain, name, false);
 	}
-	
+
 	public DoorClass(Domain domain, String name, boolean hidden) {
 	    super(domain, name, hidden);
 	}
     }
-    
+
     public static final String ATTX = "x";
     public static final String ATTY = "y";
     public static final String ATTDIR = "direction"; // optionally added
