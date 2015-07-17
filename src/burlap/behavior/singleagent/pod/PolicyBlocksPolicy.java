@@ -12,7 +12,9 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
 /**
- * Policy used in PolicyBlocks and tabular POD.
+ * The policy used in POD and PolicyBlocks. Contains an internal reference to
+ * its tabular policy.
+ * 
  */
 public class PolicyBlocksPolicy extends PsiEpsilonGreedy {
     protected Map<StateHashTuple, GroundedAction> policy;
@@ -63,7 +65,7 @@ public class PolicyBlocksPolicy extends PsiEpsilonGreedy {
     /**
      * Size of the policy
      * 
-     * @return this.policy.size()
+     * @return {@link #policy.size()}
      */
     public int size() {
 	return policy.size();
@@ -72,7 +74,7 @@ public class PolicyBlocksPolicy extends PsiEpsilonGreedy {
     /**
      * Gets the tabular policy (Q-value free)
      * 
-     * @return this.policy
+     * @return {@link #policy}
      */
     public Map<StateHashTuple, GroundedAction> getPolicy() {
 	return policy;
@@ -85,7 +87,7 @@ public class PolicyBlocksPolicy extends PsiEpsilonGreedy {
     /**
      * Gets the QLearning agent
      * 
-     * @return this.qplanner
+     * @return {@link #super.qplanner}
      */
     public QLearning getLearner() {
 	return (QLearning) qplanner;

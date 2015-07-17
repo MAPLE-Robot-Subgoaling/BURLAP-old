@@ -16,26 +16,115 @@ import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.Value;
 
+/**
+ * This class acts within the abstract factory pattern to facilitate easy access
+ * to generator methods seen in both Portable Option Discovery (POD) [1] and
+ * PolicyBlocks [2].
+ * 
+ * <p>
+ * 1. Nicholay Topin, Nicholas Haltmeyer, Shawn Squire, John Winder, Marie
+ * desJardins, James MacGlashan, “Portable option discovery for automated
+ * learning transfer in object-oriented Markov Decision Processes,”
+ * <i>Proceedings of the International Joint Conference on Artificial
+ * Intelligence (IJCAI-15)</i>, Buenos Aires, Argentina, July 2015. <br>
+ * 2. Pickett, Marc, and Andrew G. Barto.
+ * "Policyblocks: An algorithm for creating useful macro-actions in reinforcement learning."
+ * <i>ICML</i>. Vol. 2. 2002.
+ * </p>
+ * 
+ * @author Nicholas Haltmeyer
+ * 
+ * @param <P extends burlap.behavior.singleagent.Policy>
+ *        The policy for which the extending sub-classes abstract from
+ */
 public abstract class AbstractedPolicyFactory<P extends Policy> {
-    StateHashFactory hf;
+    /**
+     * The object used to properly transform state objects into state hash
+     * tuples.
+     */
+    protected StateHashFactory hf;
 
+    /**
+     * Abstracts each provided policy relative to another.
+     * 
+     * @param policies
+     *            The policies to abstract relative to.
+     * @return The newly abstracted policies
+     */
     public abstract List<AbstractedPolicy<P>> abstractAll(List<P> policies);
 
+    /**
+     * Merges the provided policies into a single policy.
+     * 
+     * @param abstractedPolicies
+     *            The policies to be abstracted
+     * @return The newly merged policy.
+     */
     public abstract AbstractedPolicy<P> merge(
 	    List<AbstractedPolicy<P>> abstractedPolicies);
 
+    /**
+     * Scores a merged policy relative to its original policies.
+     * 
+     * @param np
+     *            THe newly formed merged policy
+     * @return A real number score
+     */
     public abstract double scoreMerge(AbstractedPolicy<P> np);
 
+    /**
+     * Performs the power merge as described in PolicyBlocks [2].
+     * 
+     * @param policies
+     *            The policies to merge
+     * @param depth
+     *            The depth of which to generate subsets (2 to doubles, 3 for
+     *            triples, etc.)
+     * @param maxPol
+     *            The number of policies to generate
+     * @return A sorted list of maxPol policies, along with their score.
+     */
     public abstract List<Entry<AbstractedPolicy<P>, Double>> powerMerge(
 	    List<P> policies, int depth, int maxPol);
 
+    /**
+     * Subtracts redundant references within each policy. May do nothing.
+     * 
+     * @param merged
+     *            The policies formed as a result of powerMerge
+     */
     public abstract void subtractAll(
 	    List<Entry<AbstractedPolicy<P>, Double>> merged);
 
+    /**
+     * Samples a state from the given policy. May not be supported for all
+     * policy types.
+     * 
+     * @param policy
+     *            The policy to sample from
+     * @return A seemingly random state from the policy
+     */
     public abstract State sampleState(P policy);
 
+    /**
+     * Samples a state from the given policy. May not be supported for all
+     * policy types.
+     * 
+     * @param policy
+     *            The policy to sample from
+     * @return A seemingly random state from the policy
+     */
     public abstract State sampleState(AbstractedPolicy<P> policy);
 
+    /**
+     * Creates the greatest common generalization between states. That is, the
+     * intersection of object classes and their attribute schemas.
+     * 
+     * @param ss
+     *            The states to intersect
+     * @return A mapping of object classes (with potentially reduced attributes)
+     *         to counts
+     */
     public static Map<ObjectClass, Integer> greatestCommonGeneralization(
 	    List<State> ss) {
 	Map<ObjectClass, Integer> gcg = new HashMap<ObjectClass, Integer>();
@@ -95,6 +184,17 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 	return gcg;
     }
 
+    /**
+     * Generates all combinations of objects valid under the current state and
+     * the GCG.
+     * 
+     * @param gcg
+     *            The greatest common generalization
+     * @param s
+     *            The state the reduce according to the GCG and then explode
+     *            according to the number of combinations
+     * @return A list of combinations of object classes
+     */
     public static List<List<ObjectClass>> generateAllCombinations(
 	    Map<ObjectClass, Integer> gcg, State s) {
 	Map<ObjectClass, List<List<ObjectClass>>> combs = new HashMap<ObjectClass, List<List<ObjectClass>>>();
@@ -146,14 +246,15 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 
     /**
      * Generates every possible arrangement of object classes in s1 with respect
-     * to those in s2. Used in checking for equality in the merge function.
+     * to those in s2. Used in checking for equality in the merge function. Note
+     * that this method will not intersect the attributes belonging to each
+     * object class. That is, it assumes all object instances belong to the same
+     * class schema if the names are equal. This can be performed by matching
+     * the returned states according to the GCG.
      * 
      * @param s1
      * @param s2
-     * @return all possible arrangement of s1 with respect to s2. Note that this
-     *         method will not intersect the attributes belonging to each object
-     *         class. That is, it assumes all object instances belong to the
-     *         same class schema if the names are equal.
+     * @return All possible arrangement of s1 with respect to s2
      */
     public static List<State> generatePossibleStates(State s1, State s2) {
 	List<State> combs = new ArrayList<State>();
@@ -211,13 +312,17 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Creates a state that only contains the objects in object names
+     * Creates a state that only contains the objects provided.
      * 
      * @param s
-     * @param onames
-     * @return a new reduced state
+     *            The state to reduce
+     * @param classes
+     *            The object classes to consider
+     * @return A newly reduced state
      */
     public static State formState(State s, List<ObjectClass> classes) {
+	// The use of a temporary object class here is pretty hacky (the fields
+	// needed are private). Hopefully will be able to fix in BURLAP 2.0.
 	class TempObjectInstance extends ObjectInstance {
 	    public TempObjectInstance(ObjectInstance oi) {
 		super(oi);
@@ -271,7 +376,8 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
      * same name have identical schemas.
      * 
      * @param s
-     * @return mapping of object class -> count
+     *            The state to count
+     * @return A mapping of object classes to counts
      */
     public static Map<ObjectClass, Integer> getObjectCounts(State s) {
 	Map<ObjectClass, Integer> cs = new HashMap<ObjectClass, Integer>();
@@ -285,10 +391,11 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Creates a list initialized to its indices
+     * Creates a list initialized to its indices.
      * 
      * @param size
-     * @return array of [0 .. size-1]
+     *            The number of elements to generate
+     * @return Array of [0 .. size-1]
      */
     public static int[] range(int size) {
 	int[] range = new int[size];
@@ -300,10 +407,11 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Constructs and returns a list of one element
+     * Constructs and returns a list of one element.
      * 
      * @param element
-     * @return a list containing that element
+     *            The element to enclose
+     * @return A list containing that element
      */
     public static <T> List<T> singletonList(T element) {
 	List<T> singleton = new ArrayList<T>(1);
@@ -313,10 +421,12 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Gets the most common element from a list
+     * Gets the most common element from a list. If there exists a tie, a random
+     * number is rolled.
      * 
      * @param l
-     * @return most common element
+     *            The list in question
+     * @return The most common element
      */
     public static <T> T mostCommonElement(List<T> l) {
 	Map<T, Integer> weights = new HashMap<T, Integer>();
@@ -339,11 +449,14 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Creates a list of size * factor through item repetition
+     * Creates a list of size * factor through item repetition. Identical to the
+     * Python operation.
      * 
      * @param l
+     *            The list in question
      * @param factor
-     * @return the multiplied list
+     *            The factor of multiplication
+     * @return The multiplied list
      */
     public static <T> List<T> multiplyList(List<T> l, int factor) {
 	if (factor == 1) {
@@ -362,10 +475,11 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Gets all permutations of a list
+     * Gets all permutations of a list.
      * 
      * @param l
-     * @return list of all permutations of l
+     *            The list in question
+     * @return List of all permutations of l
      */
     public static <T> List<List<T>> permutations(List<T> t) {
 	List<T> l = new ArrayList<T>(t);
@@ -391,16 +505,15 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
     }
 
     /**
-     * Generates all k-subsets from alpha to beta. Runs O(Sum from k=alpha to
-     * beta of n! / (k! * (n - k)!))
+     * Generates all k-subsets from alpha to beta.
      * 
      * @param set
-     *            - the set to be permuted
+     *            the set to be permuted
      * @param alpha
-     *            - lower bound of k
+     *            lower bound of k
      * @param beta
-     *            - upper bound of k
-     * @return a list of all k-subsets from alpha to beta
+     *            upper bound of k
+     * @return A list of all k-subsets from alpha to beta
      */
     public static <T> List<List<T>> getSubsets(List<T> set, int alpha, int beta) {
 	if (set == null || set.size() == 0) {
@@ -436,10 +549,10 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
      * Source: http://stackoverflow.com/questions/4504974/
      * 
      * @param k
-     *            - size of subset tuples
+     *            size of subset tuples
      * @param set
-     *            - the set to be generated from
-     * @return all subsets of size k
+     *            the set to be generated from
+     * @return All subsets of size k
      */
     public static int[][] nexksb(int[] set, int k) {
 	int c = (int) binomial(set.length, k);
@@ -490,6 +603,7 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 	if (k < 0 || k > n) {
 	    return 0;
 	}
+
 	if (k > n - k) {
 	    k = n - k;
 	}
@@ -505,19 +619,19 @@ public abstract class AbstractedPolicyFactory<P extends Policy> {
 
     /**
      * Checks to see if the object combination is valid under the original
-     * policy
+     * policy.
      * 
-     * @param ocomb
-     * @return whether or not the abstraction is possible
+     * @param oComb
+     * @return Whether or not the abstraction is possible
      */
-    public static boolean isProperAbstraction(State s, List<ObjectClass> ocomb) {
+    public static boolean isProperAbstraction(State s, List<ObjectClass> oComb) {
 	Map<String, Boolean> matches = new HashMap<String, Boolean>();
-	for (ObjectClass o : ocomb) {
+	for (ObjectClass o : oComb) {
 	    matches.put(o.name, false);
 	}
 
 	for (ObjectInstance oi : s.getAllObjects()) {
-	    for (ObjectClass oc : ocomb) {
+	    for (ObjectClass oc : oComb) {
 		if (oi.getName().equals(oc)) {
 		    if (oi.getObjectClass().attributeMap.keySet().equals(
 			    oc.attributeMap.keySet())) {

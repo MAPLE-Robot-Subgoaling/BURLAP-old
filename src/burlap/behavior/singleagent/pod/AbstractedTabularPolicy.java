@@ -17,7 +17,6 @@ import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.QValue;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.learning.tdmethods.QLearningStateNode;
-import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.ObjectClass;
@@ -25,8 +24,20 @@ import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
+/**
+ * This class extends AbstractedPolicy to work with tabular policies
+ * (Q-Learning).
+ * 
+ * @author Nicholas Haltmeyer
+ * 
+ */
 public class AbstractedTabularPolicy extends
 	AbstractedPolicy<PolicyBlocksPolicy> {
+    /**
+     * This class extends AbstractedPolicyFactory to apply the methods of POD
+     * and PolicyBlocks to tabular policy representations.
+     * 
+     */
     public class AbstractedTabularPolicyFactory extends
 	    AbstractedPolicyFactory<PolicyBlocksPolicy> {
 	@Override
@@ -58,6 +69,22 @@ public class AbstractedTabularPolicy extends
 		    new Integer[] { depth }).get(depth);
 	}
 
+	/**
+	 * Performs the power merge operation, while caching selected depths.
+	 * Used to compare how optimal one depth selection is over another.
+	 * 
+	 * @param policies
+	 *            The policies to merge over
+	 * @param depth
+	 *            The maximum depth
+	 * @param maxPol
+	 *            The number of policies to generate
+	 * @param greedyMerge
+	 *            Whether or not to use the greedy or naive merge operation
+	 * @param toCache
+	 *            The list of detpths to cache
+	 * @return A mapping of depths to a list of policies and their score
+	 */
 	public Map<Integer, List<Entry<AbstractedPolicy<PolicyBlocksPolicy>, Double>>> powerMergeCache(
 		List<PolicyBlocksPolicy> policies, int depth, int maxPol,
 		boolean greedyMerge, Integer[] toCache) {
@@ -166,6 +193,13 @@ public class AbstractedTabularPolicy extends
 	    return merged;
 	}
 
+	/**
+	 * Performs the greedy step-wise merging procedure as defined by POD.
+	 * 
+	 * @param policies
+	 *            The policies to merge over
+	 * @return The newly abstracted policy
+	 */
 	public AbstractedPolicy<PolicyBlocksPolicy> greedyMerge(
 		List<PolicyBlocksPolicy> policies) {
 	    List<PolicyBlocksPolicy> ps = policies;
@@ -306,6 +340,15 @@ public class AbstractedTabularPolicy extends
 	    return totalMatch;
 	}
 
+	/**
+	 * Provides a means of non-abstraction.
+	 * 
+	 * @param p
+	 *            The policy to wrap
+	 * @param origPs
+	 *            The original policies
+	 * @return The parameters wrapped in a juicy abstracted policy
+	 */
 	private AbstractedPolicy<PolicyBlocksPolicy> naiveAbstraction(
 		PolicyBlocksPolicy p, List<PolicyBlocksPolicy> origPs) {
 	    AbstractedPolicy<PolicyBlocksPolicy> abs = new AbstractedTabularPolicy();
@@ -319,13 +362,13 @@ public class AbstractedTabularPolicy extends
 	}
 
 	/**
-	 * Abstracts all provides policies with respect to themselves
+	 * Abstracts all provided policies with respect to themselves.
 	 * 
 	 * @param hf
-	 *            - state hash factory
+	 *            state hash factory
 	 * @param policies
-	 *            - policies to abstract
-	 * @return list of abstracted policies
+	 *            policies to abstract
+	 * @return A list of abstracted policies
 	 */
 	private List<AbstractedPolicy<PolicyBlocksPolicy>> naiveAbstractAll(
 		List<PolicyBlocksPolicy> policies) {
@@ -498,13 +541,13 @@ public class AbstractedTabularPolicy extends
      * Averages the Q-values and gets the best action
      * 
      * @param ip
-     *            - initial policy (must have a QComputablePlanner present and
+     *            initial policy (must have a QComputablePlanner present and
      *            non-null)
      * @param st
-     *            - abstracted state to sample from
+     *            abstracted state to sample from
      * @param origStates
-     *            - original states from ip that map into st
-     * @return the best fitting action
+     *            original states from ip that map into st
+     * @return The best scoring action
      */
     private static GroundedAction getAction(PolicyBlocksPolicy ip, State st,
 	    List<StateHashTuple> origStates) {
@@ -522,8 +565,8 @@ public class AbstractedTabularPolicy extends
      * Gets the highest ranking action; dice roll if there are multiple
      * 
      * @param av
-     *            - the list of state-action values
-     * @return the best fitting action
+     *            the list of state-action values
+     * @return The best fitting action
      */
     private static GroundedAction getActionFromQs(List<QValue> av) {
 	List<QValue> best = new ArrayList<QValue>();
@@ -548,10 +591,10 @@ public class AbstractedTabularPolicy extends
      * Averages all of the provided Q-values
      * 
      * @param s
-     *            - initial state to sample from
+     *            initial state to sample from
      * @param toAverage
-     *            - list of Q-values to average
-     * @return the list of averages Q-values
+     *            list of Q-values to average
+     * @return The list of averages Q-values
      */
     private static List<QValue> findAverages(State s,
 	    List<List<QValue>> toAverage) {
@@ -629,34 +672,28 @@ public class AbstractedTabularPolicy extends
 	}
 
 	Map<StateHashTuple, GroundedAction> merged = new HashMap<StateHashTuple, GroundedAction>();
-	State withRespectTo = apf.sampleState(otherPolicy).copy();
+	/* State withRespectTo = apf.sampleState(otherPolicy).copy(); */
 
 	for (Entry<StateHashTuple, GroundedAction> e : abstractedPolicy
 		.getPolicy().entrySet()) {
 	    GroundedAction ga;
-	    if (hf instanceof DiscreteStateHashFactory) {
-		ga = otherPolicy.abstractedPolicy.getPolicy().get(e.getKey());
-		if (e.getValue().equals(ga)) {
-		    merged.put(e.getKey(), e.getValue());
-		}
-	    } else {
-		List<State> possibleStates = AbstractedPolicyFactory
-			.generatePossibleStates(e.getKey().s, withRespectTo);
-		// This is done in the event that while two abstractions will
-		// share
-		// the GCG, they may have different object names (e.g. [p1, p2]
-		// versus [p3, p2])
-		// DiscreteStateHashFactory doesn't care about names, but this
-		// is in
-		// here just as a safety measure for other hashing methods.
-		for (State possibleState : possibleStates) {
-		    ga = otherPolicy.abstractedPolicy.getPolicy().get(
-			    hf.hashState(possibleState));
-		    if (e.getValue().equals(ga)) {
-			merged.put(e.getKey(), e.getValue());
-		    }
-		}
+	    /* if (hf instanceof DiscreteStateHashFactory) { */
+	    ga = otherPolicy.abstractedPolicy.getPolicy().get(e.getKey());
+	    if (e.getValue().equals(ga)) {
+		merged.put(e.getKey(), e.getValue());
 	    }
+	    /*
+	     * } else { List<State> possibleStates = AbstractedPolicyFactory
+	     * .generatePossibleStates(e.getKey().s, withRespectTo); // This is
+	     * done in the event that while two abstractions will // share //
+	     * the GCG, they may have different object names (e.g. [p1, p2] //
+	     * versus [p3, p2]) // DiscreteStateHashFactory doesn't care about
+	     * names, but this // is in // here just as a safety measure for
+	     * other hashing methods. for (State possibleState : possibleStates)
+	     * { ga = otherPolicy.abstractedPolicy.getPolicy().get(
+	     * hf.hashState(possibleState)); if (e.getValue().equals(ga)) {
+	     * merged.put(e.getKey(), e.getValue()); } } }
+	     */
 	}
 
 	AbstractedPolicy<PolicyBlocksPolicy> ret = new AbstractedTabularPolicy();
