@@ -58,7 +58,8 @@ public class AttributeTestExperiment {
 	    System.out.println(s);
 	    AttributeTestDomain.printState(s);
 	    eps = Q.runLearningEpisodeFrom(s);
-	    AttributeTestDomain.printState(eps.stateSequence.get(eps.stateSequence.size()-1));
+	    AttributeTestDomain.printState(eps.stateSequence
+		    .get(eps.stateSequence.size() - 1));
 	}
 
 	System.out.println("Finished " + blocks + " block trial for "

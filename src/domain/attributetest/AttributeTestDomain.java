@@ -176,7 +176,7 @@ public class AttributeTestDomain implements DomainGenerator {
 			break;
 		    }
 		}
-		
+
 		if (!flag) {
 		    System.out.print("-");
 		}
@@ -204,7 +204,7 @@ public class AttributeTestDomain implements DomainGenerator {
 	    if (name.equals(ACTIONN)) {
 		if (oldY < y) {
 		    agent.setValue(ATTY, oldY + 1);
-		    for (ObjectInstance block: blocks) {
+		    for (ObjectInstance block : blocks) {
 			int bX = block.getDiscValForAttribute(ATTX);
 			int bY = block.getDiscValForAttribute(ATTY);
 			if (bX == oldX && bY == oldY + 1 && bY < y) {
@@ -215,7 +215,7 @@ public class AttributeTestDomain implements DomainGenerator {
 	    } else if (name.equals(ACTIONS)) {
 		if (oldY > 0) {
 		    agent.setValue(ATTY, oldY - 1);
-		    for (ObjectInstance block: blocks) {
+		    for (ObjectInstance block : blocks) {
 			int bX = block.getDiscValForAttribute(ATTX);
 			int bY = block.getDiscValForAttribute(ATTY);
 			if (bX == oldX && bY == oldY - 1 && bY > 0) {
@@ -226,7 +226,7 @@ public class AttributeTestDomain implements DomainGenerator {
 	    } else if (name.equals(ACTIONE)) {
 		if (oldX < x) {
 		    agent.setValue(ATTX, oldX + 1);
-		    for (ObjectInstance block: blocks) {
+		    for (ObjectInstance block : blocks) {
 			int bX = block.getDiscValForAttribute(ATTX);
 			int bY = block.getDiscValForAttribute(ATTY);
 			if (bX == oldX + 1 && bY == oldY && bX < x) {
@@ -237,7 +237,7 @@ public class AttributeTestDomain implements DomainGenerator {
 	    } else if (name.equals(ACTIONW)) {
 		if (oldX > 0) {
 		    agent.setValue(ATTX, oldX - 1);
-		    for (ObjectInstance block: blocks) {
+		    for (ObjectInstance block : blocks) {
 			int bX = block.getDiscValForAttribute(ATTX);
 			int bY = block.getDiscValForAttribute(ATTY);
 			if (bX == oldX - 1 && bY == oldY && bX > 0) {
@@ -269,10 +269,10 @@ public class AttributeTestDomain implements DomainGenerator {
 	    int gX = goal.getDiscValForAttribute(ATTX);
 	    int gY = goal.getDiscValForAttribute(ATTY);
 
-	    for (ObjectInstance block: blocks) {
+	    for (ObjectInstance block : blocks) {
 		int bX = block.getDiscValForAttribute(ATTX);
 		int bY = block.getDiscValForAttribute(ATTY);
-		
+
 		if (bX == gX && bY == gY) {
 		    return true;
 		}
