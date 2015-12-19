@@ -5,17 +5,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import burlap.behavior.valuefunction.ValueFunctionInitialization;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.behavior.stochasticgames.madynamicprogramming.AgentQSourceMap.HashMapAgentQSourceMap;
-import burlap.oomdp.core.states.State;
+import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.core.TransitionProbability;
-import burlap.oomdp.stochasticgames.SGAgentType;
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.stochasticgames.JointAction;
 import burlap.oomdp.stochasticgames.JointActionModel;
 import burlap.oomdp.stochasticgames.JointReward;
+import burlap.oomdp.stochasticgames.SGAgentType;
 import burlap.oomdp.stochasticgames.SGDomain;
 
 /**
@@ -39,226 +39,6 @@ import burlap.oomdp.stochasticgames.SGDomain;
  * 
  */
 public abstract class MADynamicProgramming implements MultiAgentQSourceProvider {
-
-	/**
-	 * The domain in which planning is to be performed
-	 */
-	protected SGDomain domain;
-
-	/**
-	 * The agent definitions for which planning is performed.
-	 */
-	protected Map<String, SGAgentType> agentDefinitions;
-
-	/**
-	 * The joint action model to use in planning.
-	 */
-	protected JointActionModel jointActionModel;
-
-	/**
-	 * The joint reward function
-	 */
-	protected JointReward jointReward;
-
-	/**
-	 * The state terminal function.
-	 */
-	protected TerminalFunction terminalFunction;
-
-	/**
-	 * The discount factor in [0, 1]
-	 */
-	protected double discount;
-
-	/**
-	 * The state hashing factory used to query the value function for individual
-	 * states
-	 */
-	protected HashableStateFactory hashingFactory;
-
-	/**
-	 * The Q-value initialization function to use.
-	 */
-	protected ValueFunctionInitialization vInit;
-
-	/**
-	 * The backup operating defining the solution concept to use.
-	 */
-	protected SGBackupOperator backupOperator;
-
-	/**
-	 * The Hash map backed multi-agent Q-source in which to store Q-values.
-	 */
-	protected HashMapAgentQSourceMap qSources;
-
-	/**
-	 * Whether planning has begun or not.
-	 */
-	protected boolean planningStarted = false;
-
-	/**
-	 * Initializes all the main datstructres of the value function valueFunction
-	 * 
-	 * @param domain
-	 *            the domain in which to perform planning
-	 * @param agentDefinitions
-	 *            the definitions of the agents involved in the planning
-	 *            problem.
-	 * @param jointReward
-	 *            the joint reward function
-	 * @param terminalFunction
-	 *            the terminal state function
-	 * @param discount
-	 *            the discount factor
-	 * @param hashingFactory
-	 *            the state hashing factorying to use to lookup Q-values for
-	 *            individual states
-	 * @param vInit
-	 *            the value function initialization function to use
-	 * @param backupOperator
-	 *            the solution concept backup operator to use.
-	 */
-	public void initMAVF(SGDomain domain,
-			Map<String, SGAgentType> agentDefinitions, JointReward jointReward,
-			TerminalFunction terminalFunction, double discount,
-			HashableStateFactory hashingFactory,
-			ValueFunctionInitialization vInit, SGBackupOperator backupOperator) {
-
-		this.domain = domain;
-		this.jointActionModel = domain.getJointActionModel();
-		this.jointReward = jointReward;
-		this.terminalFunction = terminalFunction;
-		this.discount = discount;
-		this.hashingFactory = hashingFactory;
-		this.vInit = vInit;
-		this.backupOperator = backupOperator;
-
-		this.setAgentDefinitions(agentDefinitions);
-
-	}
-
-	/**
-	 * Indicates whether planning has begun or not. Once planning has begun, the
-	 * agent defintions cannot be changed or a runtime exception will be thrown.
-	 * 
-	 * @return true is planning has started; false if it has not.
-	 */
-	public boolean hasStartedPlanning() {
-		return this.planningStarted;
-	}
-
-	/**
-	 * Sets/changes the agent definitions to use in planning. This can only be
-	 * change up until planning begins, after which a runtime exception will be
-	 * thrown. To check if the planning has already begun, use the
-	 * {@link #hasStartedPlanning()} method.
-	 * 
-	 * @param agentDefinitions
-	 *            the definitions of agents involve in the planning problem.
-	 */
-	public void setAgentDefinitions(Map<String, SGAgentType> agentDefinitions) {
-
-		if (this.planningStarted) {
-			throw new RuntimeException(
-					"Cannot reset the agent definitions after planning has already started.");
-		}
-
-		if (agentDefinitions == null) {
-			return;
-		}
-
-		if (this.agentDefinitions == agentDefinitions) {
-			return;
-		}
-
-		this.agentDefinitions = agentDefinitions;
-
-		Map<String, QSourceForSingleAgent> hQSources = new HashMap<String, QSourceForSingleAgent>();
-		for (String agent : this.agentDefinitions.keySet()) {
-			QSourceForSingleAgent qs = new BackupBasedQSource(agent);
-			hQSources.put(agent, qs);
-		}
-		this.qSources = new AgentQSourceMap.HashMapAgentQSourceMap(hQSources);
-	}
-
-	/**
-	 * Calling this method causes planning to be performed from State s.
-	 * 
-	 * @param s
-	 *            the state from which planning is to be performed.
-	 */
-	public abstract void planFromState(State s);
-
-	@Override
-	public AgentQSourceMap getQSources() {
-		return qSources;
-	}
-
-	/**
-	 * Backups the state value function for all agent's value functions in state
-	 * s.
-	 * 
-	 * @param s
-	 *            the state in which the value functions should be backed up.
-	 * @return the maximum value-function change from this backup.
-	 */
-	public double backupAllValueFunctions(State s) {
-
-		HashableState sh = this.hashingFactory.hashState(s);
-
-		double maxChange = Double.NEGATIVE_INFINITY;
-		for (String agentName : this.agentDefinitions.keySet()) {
-			BackupBasedQSource qsource = (BackupBasedQSource) this.qSources
-					.agentQSource(agentName);
-			double oldVal = qsource.getValue(sh);
-			double newVal = this.backupOperator.performBackup(s, agentName,
-					this.agentDefinitions, this.qSources);
-			maxChange = Math.max(maxChange, Math.abs(newVal - oldVal));
-			qsource.setValue(sh, newVal);
-		}
-
-		return maxChange;
-
-	}
-
-	/**
-	 * A class for holding all of the transition dynamic information for a given
-	 * joint action in a given state. This includes state transitions as well as
-	 * joint rewards. Information is stored as a triple consisting of the
-	 * {@link JointAction}, the list of state transtitions (
-	 * {@link TransitionProbability} objects), and a list of joint rewards (A
-	 * map from agent names to rewards received).
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public class JointActionTransitions {
-		public JointAction ja;
-		public List<TransitionProbability> tps;
-		public List<Map<String, Double>> jrs;
-
-		/**
-		 * Generates the transition information for the given state and joint
-		 * aciton
-		 * 
-		 * @param s
-		 *            the state in which the joint action is applied
-		 * @param ja
-		 *            the joint action applied to the given state
-		 */
-		public JointActionTransitions(State s, JointAction ja) {
-			this.ja = ja;
-			this.tps = MADynamicProgramming.this.jointActionModel
-					.transitionProbsFor(s, ja);
-			this.jrs = new ArrayList<Map<String, Double>>(this.tps.size());
-			for (TransitionProbability tp : this.tps) {
-				Map<String, Double> jr = MADynamicProgramming.this.jointReward
-						.reward(s, ja, tp.s);
-				this.jrs.add(jr);
-			}
-		}
-
-	}
 
 	/**
 	 * A {@link QSourceForSingleAgent} implementation which stores a value
@@ -358,6 +138,226 @@ public abstract class MADynamicProgramming implements MultiAgentQSourceProvider 
 			this.valueFunction.put(sh, v);
 		}
 
+	}
+
+	/**
+	 * A class for holding all of the transition dynamic information for a given
+	 * joint action in a given state. This includes state transitions as well as
+	 * joint rewards. Information is stored as a triple consisting of the
+	 * {@link JointAction}, the list of state transtitions (
+	 * {@link TransitionProbability} objects), and a list of joint rewards (A
+	 * map from agent names to rewards received).
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class JointActionTransitions {
+		public JointAction ja;
+		public List<TransitionProbability> tps;
+		public List<Map<String, Double>> jrs;
+
+		/**
+		 * Generates the transition information for the given state and joint
+		 * aciton
+		 * 
+		 * @param s
+		 *            the state in which the joint action is applied
+		 * @param ja
+		 *            the joint action applied to the given state
+		 */
+		public JointActionTransitions(State s, JointAction ja) {
+			this.ja = ja;
+			this.tps = MADynamicProgramming.this.jointActionModel
+					.transitionProbsFor(s, ja);
+			this.jrs = new ArrayList<Map<String, Double>>(this.tps.size());
+			for (TransitionProbability tp : this.tps) {
+				Map<String, Double> jr = MADynamicProgramming.this.jointReward
+						.reward(s, ja, tp.s);
+				this.jrs.add(jr);
+			}
+		}
+
+	}
+
+	/**
+	 * The domain in which planning is to be performed
+	 */
+	protected SGDomain domain;
+
+	/**
+	 * The agent definitions for which planning is performed.
+	 */
+	protected Map<String, SGAgentType> agentDefinitions;
+
+	/**
+	 * The joint action model to use in planning.
+	 */
+	protected JointActionModel jointActionModel;
+
+	/**
+	 * The joint reward function
+	 */
+	protected JointReward jointReward;
+
+	/**
+	 * The state terminal function.
+	 */
+	protected TerminalFunction terminalFunction;
+
+	/**
+	 * The discount factor in [0, 1]
+	 */
+	protected double discount;
+
+	/**
+	 * The state hashing factory used to query the value function for individual
+	 * states
+	 */
+	protected HashableStateFactory hashingFactory;
+
+	/**
+	 * The Q-value initialization function to use.
+	 */
+	protected ValueFunctionInitialization vInit;
+
+	/**
+	 * The backup operating defining the solution concept to use.
+	 */
+	protected SGBackupOperator backupOperator;
+
+	/**
+	 * The Hash map backed multi-agent Q-source in which to store Q-values.
+	 */
+	protected HashMapAgentQSourceMap qSources;
+
+	/**
+	 * Whether planning has begun or not.
+	 */
+	protected boolean planningStarted = false;
+
+	/**
+	 * Backups the state value function for all agent's value functions in state
+	 * s.
+	 * 
+	 * @param s
+	 *            the state in which the value functions should be backed up.
+	 * @return the maximum value-function change from this backup.
+	 */
+	public double backupAllValueFunctions(State s) {
+
+		HashableState sh = this.hashingFactory.hashState(s);
+
+		double maxChange = Double.NEGATIVE_INFINITY;
+		for (String agentName : this.agentDefinitions.keySet()) {
+			BackupBasedQSource qsource = (BackupBasedQSource) this.qSources
+					.agentQSource(agentName);
+			double oldVal = qsource.getValue(sh);
+			double newVal = this.backupOperator.performBackup(s, agentName,
+					this.agentDefinitions, this.qSources);
+			maxChange = Math.max(maxChange, Math.abs(newVal - oldVal));
+			qsource.setValue(sh, newVal);
+		}
+
+		return maxChange;
+
+	}
+
+	@Override
+	public AgentQSourceMap getQSources() {
+		return qSources;
+	}
+
+	/**
+	 * Indicates whether planning has begun or not. Once planning has begun, the
+	 * agent defintions cannot be changed or a runtime exception will be thrown.
+	 * 
+	 * @return true is planning has started; false if it has not.
+	 */
+	public boolean hasStartedPlanning() {
+		return this.planningStarted;
+	}
+
+	/**
+	 * Initializes all the main datstructres of the value function valueFunction
+	 * 
+	 * @param domain
+	 *            the domain in which to perform planning
+	 * @param agentDefinitions
+	 *            the definitions of the agents involved in the planning
+	 *            problem.
+	 * @param jointReward
+	 *            the joint reward function
+	 * @param terminalFunction
+	 *            the terminal state function
+	 * @param discount
+	 *            the discount factor
+	 * @param hashingFactory
+	 *            the state hashing factorying to use to lookup Q-values for
+	 *            individual states
+	 * @param vInit
+	 *            the value function initialization function to use
+	 * @param backupOperator
+	 *            the solution concept backup operator to use.
+	 */
+	public void initMAVF(SGDomain domain,
+			Map<String, SGAgentType> agentDefinitions, JointReward jointReward,
+			TerminalFunction terminalFunction, double discount,
+			HashableStateFactory hashingFactory,
+			ValueFunctionInitialization vInit, SGBackupOperator backupOperator) {
+
+		this.domain = domain;
+		this.jointActionModel = domain.getJointActionModel();
+		this.jointReward = jointReward;
+		this.terminalFunction = terminalFunction;
+		this.discount = discount;
+		this.hashingFactory = hashingFactory;
+		this.vInit = vInit;
+		this.backupOperator = backupOperator;
+
+		this.setAgentDefinitions(agentDefinitions);
+
+	}
+
+	/**
+	 * Calling this method causes planning to be performed from State s.
+	 * 
+	 * @param s
+	 *            the state from which planning is to be performed.
+	 */
+	public abstract void planFromState(State s);
+
+	/**
+	 * Sets/changes the agent definitions to use in planning. This can only be
+	 * change up until planning begins, after which a runtime exception will be
+	 * thrown. To check if the planning has already begun, use the
+	 * {@link #hasStartedPlanning()} method.
+	 * 
+	 * @param agentDefinitions
+	 *            the definitions of agents involve in the planning problem.
+	 */
+	public void setAgentDefinitions(Map<String, SGAgentType> agentDefinitions) {
+
+		if (this.planningStarted) {
+			throw new RuntimeException(
+					"Cannot reset the agent definitions after planning has already started.");
+		}
+
+		if (agentDefinitions == null) {
+			return;
+		}
+
+		if (this.agentDefinitions == agentDefinitions) {
+			return;
+		}
+
+		this.agentDefinitions = agentDefinitions;
+
+		Map<String, QSourceForSingleAgent> hQSources = new HashMap<String, QSourceForSingleAgent>();
+		for (String agent : this.agentDefinitions.keySet()) {
+			QSourceForSingleAgent qs = new BackupBasedQSource(agent);
+			hQSources.put(agent, qs);
+		}
+		this.qSources = new AgentQSourceMap.HashMapAgentQSourceMap(hQSources);
 	}
 
 }

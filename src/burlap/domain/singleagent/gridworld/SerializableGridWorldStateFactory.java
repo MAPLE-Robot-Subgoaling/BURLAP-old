@@ -1,13 +1,13 @@
 package burlap.domain.singleagent.gridworld;
 
+import java.util.List;
+
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.legacy.StateParser;
 import burlap.oomdp.stateserialization.SerializableState;
 import burlap.oomdp.stateserialization.SerializableStateFactory;
-
-import java.util.List;
 
 /**
  * A factory for producing a simple
@@ -23,39 +23,6 @@ import java.util.List;
  */
 public class SerializableGridWorldStateFactory implements
 		SerializableStateFactory {
-
-	@Override
-	public SerializableState serialize(State s) {
-		return new SerializableGridWorldState(s);
-	}
-
-	@Override
-	public Class<?> getGeneratedClass() {
-		return SerializableGridWorldState.class;
-	}
-
-	public static class SerializableGridWorldState extends SerializableState {
-
-		public String stringRep;
-
-		public SerializableGridWorldState() {
-		}
-
-		public SerializableGridWorldState(State s) {
-			super(s);
-		}
-
-		@Override
-		public void serialize(State s) {
-			this.stringRep = stateToString(s);
-		}
-
-		@Override
-		public State deserialize(Domain domain) {
-			return stringToState(domain, this.stringRep);
-		}
-
-	}
 
 	/**
 	 * A legacy {@link burlap.oomdp.legacy.StateParser} for
@@ -80,6 +47,29 @@ public class SerializableGridWorldStateFactory implements
 		public State stringToState(String str) {
 			return SerializableGridWorldStateFactory.stringToState(domain, str);
 		}
+	}
+
+	public static class SerializableGridWorldState extends SerializableState {
+
+		public String stringRep;
+
+		public SerializableGridWorldState() {
+		}
+
+		public SerializableGridWorldState(State s) {
+			super(s);
+		}
+
+		@Override
+		public State deserialize(Domain domain) {
+			return stringToState(domain, this.stringRep);
+		}
+
+		@Override
+		public void serialize(State s) {
+			this.stringRep = stateToString(s);
+		}
+
 	}
 
 	public static String stateToString(State s) {
@@ -132,6 +122,16 @@ public class SerializableGridWorldStateFactory implements
 		}
 
 		return s;
+	}
+
+	@Override
+	public Class<?> getGeneratedClass() {
+		return SerializableGridWorldState.class;
+	}
+
+	@Override
+	public SerializableState serialize(State s) {
+		return new SerializableGridWorldState(s);
 	}
 
 }

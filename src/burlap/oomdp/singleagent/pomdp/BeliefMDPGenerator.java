@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import burlap.oomdp.auxiliary.DomainGenerator;
-import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.AbstractObjectParameterizedGroundedAction;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.TransitionProbability;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.singleagent.*;
+import burlap.oomdp.singleagent.Action;
+import burlap.oomdp.singleagent.FullActionModel;
+import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.singleagent.SADomain;
 import burlap.oomdp.singleagent.pomdp.beliefstate.BeliefState;
 import burlap.oomdp.singleagent.pomdp.beliefstate.EnumerableBeliefState;
 
@@ -33,33 +36,6 @@ import burlap.oomdp.singleagent.pomdp.beliefstate.EnumerableBeliefState;
  * 
  */
 public class BeliefMDPGenerator implements DomainGenerator {
-
-	/**
-	 * The input POMDP domain
-	 */
-	protected PODomain podomain;
-
-	/**
-	 * Initializes
-	 * 
-	 * @param podomain
-	 *            the input POMDP domain that will be turned into a Belief MDP.
-	 */
-	public BeliefMDPGenerator(PODomain podomain) {
-		this.podomain = podomain;
-	}
-
-	@Override
-	public Domain generateDomain() {
-
-		SADomain domain = new SADomain();
-
-		for (Action mdpAction : this.podomain.getActions()) {
-			new BeliefAction(podomain, mdpAction, domain);
-		}
-
-		return domain;
-	}
 
 	/**
 	 * A Belief MDP action. (transitions between belief states). This requires
@@ -113,20 +89,33 @@ public class BeliefMDPGenerator implements DomainGenerator {
 			return true;
 		}
 
-		@Override
-		public boolean isParameterized() {
-			return pomdpAction.isParameterized();
-		}
-
-		@Override
-		public GroundedAction getAssociatedGroundedAction() {
-			GroundedAction mga = this.pomdpAction.getAssociatedGroundedAction();
-			if (mga instanceof AbstractObjectParameterizedGroundedAction) {
-				return new ObjectParameterizedGroundedBeliefAction(this, mga);
-			} else {
-				return new GroundedBeliefAction(this, mga);
+		/**
+		 * Finds transitions that go to the same state and collapses them into a
+		 * single {@link burlap.oomdp.core.TransitionProbability} object with
+		 * the sum of their probabilities.
+		 * 
+		 * @param tps
+		 *            the {@link java.util.List} of transitions specified by
+		 *            {@link burlap.oomdp.core.TransitionProbability} objects.
+		 * @return the collapsed list of
+		 *         {@link burlap.oomdp.core.TransitionProbability} with any
+		 *         duplicate transitions aggregated into a single
+		 *         {@link burlap.oomdp.core.TransitionProbability} object.
+		 */
+		protected List<TransitionProbability> collapseTransitionProbabilityDuplicates(
+				List<TransitionProbability> tps) {
+			List<TransitionProbability> collapsed = new ArrayList<TransitionProbability>(
+					tps.size());
+			for (TransitionProbability tp : tps) {
+				TransitionProbability stored = this.matchingStateTP(collapsed,
+						tp.s);
+				if (stored == null) {
+					collapsed.add(tp);
+				} else {
+					stored.p += tp.p;
+				}
 			}
-
+			return collapsed;
 		}
 
 		@Override
@@ -149,35 +138,14 @@ public class BeliefMDPGenerator implements DomainGenerator {
 		}
 
 		@Override
-		protected State performActionHelper(State s, GroundedAction ga) {
-
-			if (!(s instanceof BeliefState)) {
-				throw new RuntimeException(
-						"Belief MDP actions must operate on BeliefState instances, but was requested to be operated on a "
-								+ s.getClass().getName() + " instance.");
+		public GroundedAction getAssociatedGroundedAction() {
+			GroundedAction mga = this.pomdpAction.getAssociatedGroundedAction();
+			if (mga instanceof AbstractObjectParameterizedGroundedAction) {
+				return new ObjectParameterizedGroundedBeliefAction(this, mga);
+			} else {
+				return new GroundedBeliefAction(this, mga);
 			}
 
-			BeliefState bs = (BeliefState) s;
-
-			GroundedAction mdpGA = ((GroundedBeliefAction) ga).pomdpAction;
-
-			// sample a current state
-			State mdpS = bs.sampleStateFromBelief();
-			// sample a next state
-			State mdpSP = mdpGA.executeIn(mdpS);
-			// sample an observations
-			State observation = BeliefMDPGenerator.this.podomain
-					.getObservationFunction().sampleObservation(mdpSP, mdpGA);
-
-			// get next belief state
-			BeliefState nbs = bs.getUpdatedBeliefState(observation, mdpGA);
-
-			return nbs;
-		}
-
-		@Override
-		public boolean isPrimitive() {
-			return this.pomdpAction.isPrimitive();
 		}
 
 		@Override
@@ -224,6 +192,69 @@ public class BeliefMDPGenerator implements DomainGenerator {
 			return collapsed;
 		}
 
+		@Override
+		public boolean isParameterized() {
+			return pomdpAction.isParameterized();
+		}
+
+		@Override
+		public boolean isPrimitive() {
+			return this.pomdpAction.isPrimitive();
+		}
+
+		/**
+		 * Finds a transition in the input list of transitions that matches the
+		 * input state and returns it. If no match is found then null is
+		 * returned.
+		 * 
+		 * @param tps
+		 *            The input {@link java.util.List} of transitions to search.
+		 * @param s
+		 *            the query state for which a matching transition is to be
+		 *            found.
+		 * @return the {@link burlap.oomdp.core.TransitionProbability} in tps
+		 *         that matches state s or null if one does not exist.
+		 */
+		protected TransitionProbability matchingStateTP(
+				List<TransitionProbability> tps, State s) {
+
+			for (TransitionProbability tp : tps) {
+				if (tp.s.equals(s)) {
+					return tp;
+				}
+			}
+
+			return null;
+
+		}
+
+		@Override
+		protected State performActionHelper(State s, GroundedAction ga) {
+
+			if (!(s instanceof BeliefState)) {
+				throw new RuntimeException(
+						"Belief MDP actions must operate on BeliefState instances, but was requested to be operated on a "
+								+ s.getClass().getName() + " instance.");
+			}
+
+			BeliefState bs = (BeliefState) s;
+
+			GroundedAction mdpGA = ((GroundedBeliefAction) ga).pomdpAction;
+
+			// sample a current state
+			State mdpS = bs.sampleStateFromBelief();
+			// sample a next state
+			State mdpSP = mdpGA.executeIn(mdpS);
+			// sample an observations
+			State observation = BeliefMDPGenerator.this.podomain
+					.getObservationFunction().sampleObservation(mdpSP, mdpGA);
+
+			// get next belief state
+			BeliefState nbs = bs.getUpdatedBeliefState(observation, mdpGA);
+
+			return nbs;
+		}
+
 		/**
 		 * Computes and returns the probability of observing an observation in a
 		 * given BeleifState when a specific action is taken.
@@ -258,139 +289,6 @@ public class BeliefMDPGenerator implements DomainGenerator {
 
 		}
 
-		/**
-		 * Finds transitions that go to the same state and collapses them into a
-		 * single {@link burlap.oomdp.core.TransitionProbability} object with
-		 * the sum of their probabilities.
-		 * 
-		 * @param tps
-		 *            the {@link java.util.List} of transitions specified by
-		 *            {@link burlap.oomdp.core.TransitionProbability} objects.
-		 * @return the collapsed list of
-		 *         {@link burlap.oomdp.core.TransitionProbability} with any
-		 *         duplicate transitions aggregated into a single
-		 *         {@link burlap.oomdp.core.TransitionProbability} object.
-		 */
-		protected List<TransitionProbability> collapseTransitionProbabilityDuplicates(
-				List<TransitionProbability> tps) {
-			List<TransitionProbability> collapsed = new ArrayList<TransitionProbability>(
-					tps.size());
-			for (TransitionProbability tp : tps) {
-				TransitionProbability stored = this.matchingStateTP(collapsed,
-						tp.s);
-				if (stored == null) {
-					collapsed.add(tp);
-				} else {
-					stored.p += tp.p;
-				}
-			}
-			return collapsed;
-		}
-
-		/**
-		 * Finds a transition in the input list of transitions that matches the
-		 * input state and returns it. If no match is found then null is
-		 * returned.
-		 * 
-		 * @param tps
-		 *            The input {@link java.util.List} of transitions to search.
-		 * @param s
-		 *            the query state for which a matching transition is to be
-		 *            found.
-		 * @return the {@link burlap.oomdp.core.TransitionProbability} in tps
-		 *         that matches state s or null if one does not exist.
-		 */
-		protected TransitionProbability matchingStateTP(
-				List<TransitionProbability> tps, State s) {
-
-			for (TransitionProbability tp : tps) {
-				if (tp.s.equals(s)) {
-					return tp;
-				}
-			}
-
-			return null;
-
-		}
-
-	}
-
-	/**
-	 * A {@link burlap.oomdp.singleagent.GroundedAction} implementation for a
-	 * Belief MDP that curries the
-	 * {@link burlap.oomdp.singleagent.GroundedAction} for the underlying POMDP.
-	 * The underlying POMDP. {@link burlap.oomdp.singleagent.GroundedAction} and
-	 * its parameters is stored in the {@link #pomdpAction} datamember.
-	 */
-	public static class GroundedBeliefAction extends GroundedAction {
-
-		public GroundedAction pomdpAction;
-
-		public GroundedBeliefAction(Action action, GroundedAction pomdpAction) {
-			super(action);
-			this.pomdpAction = pomdpAction;
-		}
-
-		@Override
-		public void initParamsWithStringRep(String[] params) {
-			pomdpAction.initParamsWithStringRep(params);
-		}
-
-		@Override
-		public String[] getParametersAsString() {
-			return pomdpAction.getParametersAsString();
-		}
-
-		@Override
-		public String toString() {
-			return pomdpAction.toString();
-		}
-
-		@Override
-		public GroundedAction copy() {
-			return new GroundedBeliefAction(this.action,
-					(GroundedAction) pomdpAction.copy());
-		}
-	}
-
-	/**
-	 * A {@link burlap.oomdp.singleagent.GroundedAction} implementation for a
-	 * Belief MDP that curries an
-	 * {@link burlap.oomdp.core.AbstractObjectParameterizedGroundedAction}
-	 * {@link burlap.oomdp.singleagent.GroundedAction} for the underlying POMDP.
-	 */
-	public static class ObjectParameterizedGroundedBeliefAction extends
-			GroundedBeliefAction implements
-			AbstractObjectParameterizedGroundedAction {
-
-		public ObjectParameterizedGroundedBeliefAction(Action action,
-				GroundedAction pomdpAction) {
-			super(action, pomdpAction);
-		}
-
-		@Override
-		public GroundedAction copy() {
-			return new ObjectParameterizedGroundedBeliefAction(this.action,
-					(GroundedAction) pomdpAction.copy());
-		}
-
-		@Override
-		public String[] getObjectParameters() {
-			return ((AbstractObjectParameterizedGroundedAction) pomdpAction)
-					.getObjectParameters();
-		}
-
-		@Override
-		public void setObjectParameters(String[] params) {
-			((AbstractObjectParameterizedGroundedAction) this.pomdpAction)
-					.setObjectParameters(params);
-		}
-
-		@Override
-		public boolean actionDomainIsObjectIdentifierIndependent() {
-			return ((AbstractObjectParameterizedGroundedAction) this.pomdpAction)
-					.actionDomainIsObjectIdentifierIndependent();
-		}
 	}
 
 	/**
@@ -540,6 +438,110 @@ public class BeliefMDPGenerator implements DomainGenerator {
 			return sum;
 		}
 
+	}
+
+	/**
+	 * A {@link burlap.oomdp.singleagent.GroundedAction} implementation for a
+	 * Belief MDP that curries the
+	 * {@link burlap.oomdp.singleagent.GroundedAction} for the underlying POMDP.
+	 * The underlying POMDP. {@link burlap.oomdp.singleagent.GroundedAction} and
+	 * its parameters is stored in the {@link #pomdpAction} datamember.
+	 */
+	public static class GroundedBeliefAction extends GroundedAction {
+
+		public GroundedAction pomdpAction;
+
+		public GroundedBeliefAction(Action action, GroundedAction pomdpAction) {
+			super(action);
+			this.pomdpAction = pomdpAction;
+		}
+
+		@Override
+		public GroundedAction copy() {
+			return new GroundedBeliefAction(this.action, pomdpAction.copy());
+		}
+
+		@Override
+		public String[] getParametersAsString() {
+			return pomdpAction.getParametersAsString();
+		}
+
+		@Override
+		public void initParamsWithStringRep(String[] params) {
+			pomdpAction.initParamsWithStringRep(params);
+		}
+
+		@Override
+		public String toString() {
+			return pomdpAction.toString();
+		}
+	}
+
+	/**
+	 * A {@link burlap.oomdp.singleagent.GroundedAction} implementation for a
+	 * Belief MDP that curries an
+	 * {@link burlap.oomdp.core.AbstractObjectParameterizedGroundedAction}
+	 * {@link burlap.oomdp.singleagent.GroundedAction} for the underlying POMDP.
+	 */
+	public static class ObjectParameterizedGroundedBeliefAction extends
+			GroundedBeliefAction implements
+			AbstractObjectParameterizedGroundedAction {
+
+		public ObjectParameterizedGroundedBeliefAction(Action action,
+				GroundedAction pomdpAction) {
+			super(action, pomdpAction);
+		}
+
+		@Override
+		public boolean actionDomainIsObjectIdentifierIndependent() {
+			return ((AbstractObjectParameterizedGroundedAction) this.pomdpAction)
+					.actionDomainIsObjectIdentifierIndependent();
+		}
+
+		@Override
+		public GroundedAction copy() {
+			return new ObjectParameterizedGroundedBeliefAction(this.action,
+					pomdpAction.copy());
+		}
+
+		@Override
+		public String[] getObjectParameters() {
+			return ((AbstractObjectParameterizedGroundedAction) pomdpAction)
+					.getObjectParameters();
+		}
+
+		@Override
+		public void setObjectParameters(String[] params) {
+			((AbstractObjectParameterizedGroundedAction) this.pomdpAction)
+					.setObjectParameters(params);
+		}
+	}
+
+	/**
+	 * The input POMDP domain
+	 */
+	protected PODomain podomain;
+
+	/**
+	 * Initializes
+	 * 
+	 * @param podomain
+	 *            the input POMDP domain that will be turned into a Belief MDP.
+	 */
+	public BeliefMDPGenerator(PODomain podomain) {
+		this.podomain = podomain;
+	}
+
+	@Override
+	public Domain generateDomain() {
+
+		SADomain domain = new SADomain();
+
+		for (Action mdpAction : this.podomain.getActions()) {
+			new BeliefAction(podomain, mdpAction, domain);
+		}
+
+		return domain;
 	}
 
 }

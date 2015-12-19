@@ -31,14 +31,6 @@ public interface BeliefState extends State {
 	double belief(State s);
 
 	/**
-	 * Samples an MDP state state from this belief distribution.
-	 * 
-	 * @return an MDP state defined by a {@link burlap.oomdp.core.states.State}
-	 *         instance.
-	 */
-	State sampleStateFromBelief();
-
-	/**
 	 * Computes a new belief distribution using this BeliefState as the prior
 	 * and conditioned on the given POMDP observation and action taken.
 	 * 
@@ -51,5 +43,13 @@ public interface BeliefState extends State {
 	 *         {@link BeliefState} instance.
 	 */
 	BeliefState getUpdatedBeliefState(State observation, GroundedAction ga);
+
+	/**
+	 * Samples an MDP state state from this belief distribution.
+	 * 
+	 * @return an MDP state defined by a {@link burlap.oomdp.core.states.State}
+	 *         instance.
+	 */
+	State sampleStateFromBelief();
 
 }

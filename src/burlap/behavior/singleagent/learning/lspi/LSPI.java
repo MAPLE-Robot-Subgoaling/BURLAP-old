@@ -4,34 +4,34 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import burlap.behavior.singleagent.planning.Planner;
-import burlap.oomdp.singleagent.environment.Environment;
 import org.ejml.simple.SimpleMatrix;
 
-import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.policy.EpsilonGreedy;
+import burlap.behavior.policy.GreedyQPolicy;
 import burlap.behavior.policy.Policy;
-import burlap.behavior.valuefunction.QValue;
+import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.MDPSolver;
 import burlap.behavior.singleagent.learning.LearningAgent;
 import burlap.behavior.singleagent.learning.lspi.SARSCollector.UniformRandomSARSCollector;
 import burlap.behavior.singleagent.learning.lspi.SARSData.SARS;
-import burlap.behavior.singleagent.MDPSolver;
-import burlap.behavior.valuefunction.QFunction;
-import burlap.behavior.policy.EpsilonGreedy;
-import burlap.behavior.policy.GreedyQPolicy;
+import burlap.behavior.singleagent.planning.Planner;
 import burlap.behavior.singleagent.vfa.ActionApproximationResult;
 import burlap.behavior.singleagent.vfa.ActionFeaturesQuery;
 import burlap.behavior.singleagent.vfa.FeatureDatabase;
 import burlap.behavior.singleagent.vfa.StateFeature;
 import burlap.behavior.singleagent.vfa.ValueFunctionApproximation;
 import burlap.behavior.singleagent.vfa.common.LinearVFA;
+import burlap.behavior.valuefunction.QFunction;
+import burlap.behavior.valuefunction.QValue;
 import burlap.debugtools.DPrint;
 import burlap.oomdp.auxiliary.common.ConstantStateGenerator;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.singleagent.environment.Environment;
 
 /**
  * This class implements the optimized version of last squares policy iteration
@@ -99,6 +99,40 @@ import burlap.oomdp.singleagent.RewardFunction;
  */
 public class LSPI extends MDPSolver implements QFunction, LearningAgent,
 		Planner {
+
+	/**
+	 * Pair of the the state-action features and the next state-action features.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	protected class SSFeatures {
+
+		/**
+		 * State-action features
+		 */
+		public List<ActionFeaturesQuery> sActionFeatures;
+
+		/**
+		 * Next state-action features.
+		 */
+		public List<ActionFeaturesQuery> sPrimeActionFeatures;
+
+		/**
+		 * Initializes.
+		 * 
+		 * @param sActionFeatures
+		 *            state-action features
+		 * @param sPrimeActionFeatures
+		 *            next state-action features
+		 */
+		public SSFeatures(List<ActionFeaturesQuery> sActionFeatures,
+				List<ActionFeaturesQuery> sPrimeActionFeatures) {
+			this.sActionFeatures = sActionFeatures;
+			this.sPrimeActionFeatures = sPrimeActionFeatures;
+		}
+
+	}
 
 	/**
 	 * The object that performs value function approximation given the weights
@@ -226,6 +260,198 @@ public class LSPI extends MDPSolver implements QFunction, LearningAgent,
 	}
 
 	/**
+	 * Wraps a {@link GroundedAction} in a list of size 1.
+	 * 
+	 * @param ga
+	 *            the {@link GroundedAction} to wrap.
+	 * @return a {@link List} consisting of just the input
+	 *         {@link GroundedAction} object.
+	 */
+	protected List<GroundedAction> gaListWrapper(AbstractGroundedAction ga) {
+		List<GroundedAction> la = new ArrayList<GroundedAction>(1);
+		la.add((GroundedAction) ga);
+		return la;
+	}
+
+	public List<EpisodeAnalysis> getAllStoredLearningEpisodes() {
+		return this.episodeHistory;
+	}
+
+	/**
+	 * Returns the dataset this object uses for LSPI
+	 * 
+	 * @return the dataset this object uses for LSPI
+	 */
+	public SARSData getDataset() {
+		return this.dataset;
+	}
+
+	/**
+	 * Returns the feature database defining state features
+	 * 
+	 * @return the feature database defining state features
+	 */
+	public FeatureDatabase getFeatureDatabase() {
+		return featureDatabase;
+	}
+
+	/**
+	 * Returns the initial LSPI identity matrix scalar used
+	 * 
+	 * @return the initial LSPI identity matrix scalar used
+	 */
+	public double getIdentityScalar() {
+		return identityScalar;
+	}
+
+	public EpisodeAnalysis getLastLearningEpisode() {
+		return this.episodeHistory.getLast();
+	}
+
+	/**
+	 * The learning policy followed by the
+	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
+	 * and
+	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
+	 * methods.
+	 * 
+	 * @return learning policy followed by the
+	 *         {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
+	 *         and
+	 *         {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
+	 *         methods.
+	 */
+	public Policy getLearningPolicy() {
+		return learningPolicy;
+	}
+
+	/**
+	 * The maximum change in weights required to terminate policy iteration when
+	 * called from the {@link #planFromState(State)},
+	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
+	 * or
+	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
+	 * methods.
+	 * 
+	 * @return the maximum change in weights required to terminate policy
+	 *         iteration when called from the {@link #planFromState(State)},
+	 *         {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
+	 *         or
+	 *         {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
+	 *         methods.
+	 */
+	public double getMaxChange() {
+		return maxChange;
+	}
+
+	/**
+	 * The maximum number of learning steps permitted by the
+	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
+	 * method.
+	 * 
+	 * @return maximum number of learning steps permitted by the
+	 *         {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
+	 *         method.
+	 */
+	public int getMaxLearningSteps() {
+		return maxLearningSteps;
+	}
+
+	/**
+	 * The maximum number of policy iterations that will be used by the
+	 * {@link #planFromState(State)} method.
+	 * 
+	 * @return the maximum number of policy iterations that will be used by the
+	 *         {@link #planFromState(State)} method.
+	 */
+	public int getMaxNumPlanningIterations() {
+		return maxNumPlanningIterations;
+	}
+
+	/**
+	 * The minimum number of new learning observations before policy iteration
+	 * is run again.
+	 * 
+	 * @return the minimum number of new learning observations before policy
+	 *         iteration is run again.
+	 */
+	public int getMinNewStepsForLearningPI() {
+		return minNewStepsForLearningPI;
+	}
+
+	/**
+	 * Gets the number of SARS samples that will be gathered by the
+	 * {@link #planFromState(State)} method.
+	 * 
+	 * @return the number of SARS samples that will be gathered by the
+	 *         {@link #planFromState(State)} method.
+	 */
+	public int getNumSamplesForPlanning() {
+		return numSamplesForPlanning;
+	}
+
+	/**
+	 * Gets the {@link SARSCollector} used by the {@link #planFromState(State)}
+	 * method for collecting data.
+	 * 
+	 * @return the {@link SARSCollector} used by the
+	 *         {@link #planFromState(State)} method for collecting data.
+	 */
+	public SARSCollector getPlanningCollector() {
+		return planningCollector;
+	}
+
+	@Override
+	public QValue getQ(State s, AbstractGroundedAction a) {
+
+		List<GroundedAction> gaList = new ArrayList<GroundedAction>(1);
+		gaList.add((GroundedAction) a);
+
+		List<ActionApproximationResult> results = vfa.getStateActionValues(s,
+				gaList);
+
+		return this.getQFromFeaturesFor(results, s, (GroundedAction) a);
+
+	}
+
+	/**
+	 * Creates a Q-value object in which the Q-value is determined from VFA.
+	 * 
+	 * @param results
+	 *            the VFA prediction results for each action.
+	 * @param s
+	 *            the state of the Q-value
+	 * @param ga
+	 *            the action taken
+	 * @return a Q-value object in which the Q-value is determined from VFA.
+	 */
+	protected QValue getQFromFeaturesFor(
+			List<ActionApproximationResult> results, State s, GroundedAction ga) {
+
+		ActionApproximationResult result = ActionApproximationResult
+				.extractApproximationForAction(results, ga);
+		QValue q = new QValue(s, ga, result.approximationResult.predictedValue);
+
+		return q;
+	}
+
+	@Override
+	public List<QValue> getQs(State s) {
+
+		List<GroundedAction> gas = this.getAllGroundedActions(s);
+		List<QValue> qs = new ArrayList<QValue>(gas.size());
+
+		List<ActionApproximationResult> results = vfa.getStateActionValues(s,
+				gas);
+		for (GroundedAction ga : gas) {
+			qs.add(this.getQFromFeaturesFor(results, s, ga));
+		}
+
+		return qs;
+
+	}
+
+	/**
 	 * Sets the {@link burlap.oomdp.singleagent.RewardFunction},
 	 * {@link burlap.oomdp.core.TerminalFunction}, and the number of
 	 * {@link burlap.behavior.singleagent.learning.lspi.SARSData.SARS} samples
@@ -275,256 +501,6 @@ public class LSPI extends MDPSolver implements QFunction, LearningAgent,
 		this.tf = tf;
 		this.numSamplesForPlanning = numSamplesForPlanning;
 		this.planningCollector = planningCollector;
-	}
-
-	/**
-	 * Sets the SARS dataset this object will use for LSPI
-	 * 
-	 * @param dataset
-	 *            the SARSA dataset
-	 */
-	public void setDataset(SARSData dataset) {
-		this.dataset = dataset;
-	}
-
-	/**
-	 * Returns the dataset this object uses for LSPI
-	 * 
-	 * @return the dataset this object uses for LSPI
-	 */
-	public SARSData getDataset() {
-		return this.dataset;
-	}
-
-	/**
-	 * Returns the feature database defining state features
-	 * 
-	 * @return the feature database defining state features
-	 */
-	public FeatureDatabase getFeatureDatabase() {
-		return featureDatabase;
-	}
-
-	/**
-	 * Sets the feature datbase defining state features
-	 * 
-	 * @param featureDatabase
-	 *            the feature database defining state features
-	 */
-	public void setFeatureDatabase(FeatureDatabase featureDatabase) {
-		this.featureDatabase = featureDatabase;
-	}
-
-	/**
-	 * Returns the initial LSPI identity matrix scalar used
-	 * 
-	 * @return the initial LSPI identity matrix scalar used
-	 */
-	public double getIdentityScalar() {
-		return identityScalar;
-	}
-
-	/**
-	 * Sets the initial LSPI identity matrix scalar used.
-	 * 
-	 * @param identityScalar
-	 *            the initial LSPI identity matrix scalar used.
-	 */
-	public void setIdentityScalar(double identityScalar) {
-		this.identityScalar = identityScalar;
-	}
-
-	/**
-	 * Gets the number of SARS samples that will be gathered by the
-	 * {@link #planFromState(State)} method.
-	 * 
-	 * @return the number of SARS samples that will be gathered by the
-	 *         {@link #planFromState(State)} method.
-	 */
-	public int getNumSamplesForPlanning() {
-		return numSamplesForPlanning;
-	}
-
-	/**
-	 * Sets the number of SARS samples that will be gathered by the
-	 * {@link #planFromState(State)} method.
-	 * 
-	 * @param numSamplesForPlanning
-	 *            the number of SARS samples that will be gathered by the
-	 *            {@link #planFromState(State)} method.
-	 */
-	public void setNumSamplesForPlanning(int numSamplesForPlanning) {
-		this.numSamplesForPlanning = numSamplesForPlanning;
-	}
-
-	/**
-	 * Gets the {@link SARSCollector} used by the {@link #planFromState(State)}
-	 * method for collecting data.
-	 * 
-	 * @return the {@link SARSCollector} used by the
-	 *         {@link #planFromState(State)} method for collecting data.
-	 */
-	public SARSCollector getPlanningCollector() {
-		return planningCollector;
-	}
-
-	/**
-	 * Sets the {@link SARSCollector} used by the {@link #planFromState(State)}
-	 * method for collecting data.
-	 * 
-	 * @param planningCollector
-	 *            the {@link SARSCollector} used by the
-	 *            {@link #planFromState(State)} method for collecting data.
-	 */
-	public void setPlanningCollector(SARSCollector planningCollector) {
-		this.planningCollector = planningCollector;
-	}
-
-	/**
-	 * The maximum number of policy iterations that will be used by the
-	 * {@link #planFromState(State)} method.
-	 * 
-	 * @return the maximum number of policy iterations that will be used by the
-	 *         {@link #planFromState(State)} method.
-	 */
-	public int getMaxNumPlanningIterations() {
-		return maxNumPlanningIterations;
-	}
-
-	/**
-	 * Sets the maximum number of policy iterations that will be used by the
-	 * {@link #planFromState(State)} method.
-	 * 
-	 * @param maxNumPlanningIterations
-	 *            the maximum number of policy iterations that will be used by
-	 *            the {@link #planFromState(State)} method.
-	 */
-	public void setMaxNumPlanningIterations(int maxNumPlanningIterations) {
-		this.maxNumPlanningIterations = maxNumPlanningIterations;
-	}
-
-	/**
-	 * The learning policy followed by the
-	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
-	 * and
-	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
-	 * methods.
-	 * 
-	 * @return learning policy followed by the
-	 *         {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
-	 *         and
-	 *         {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
-	 *         methods.
-	 */
-	public Policy getLearningPolicy() {
-		return learningPolicy;
-	}
-
-	/**
-	 * Sets the learning policy followed by the
-	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
-	 * and
-	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
-	 * methods.
-	 * 
-	 * @param learningPolicy
-	 *            the learning policy followed by the
-	 *            {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
-	 *            and
-	 *            {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
-	 *            methods.
-	 */
-	public void setLearningPolicy(Policy learningPolicy) {
-		this.learningPolicy = learningPolicy;
-	}
-
-	/**
-	 * The maximum number of learning steps permitted by the
-	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
-	 * method.
-	 * 
-	 * @return maximum number of learning steps permitted by the
-	 *         {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
-	 *         method.
-	 */
-	public int getMaxLearningSteps() {
-		return maxLearningSteps;
-	}
-
-	/**
-	 * Sets the maximum number of learning steps permitted by the
-	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
-	 * method.
-	 * 
-	 * @param maxLearningSteps
-	 *            the maximum number of learning steps permitted by the
-	 *            {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
-	 *            method.
-	 */
-	public void setMaxLearningSteps(int maxLearningSteps) {
-		this.maxLearningSteps = maxLearningSteps;
-	}
-
-	/**
-	 * The minimum number of new learning observations before policy iteration
-	 * is run again.
-	 * 
-	 * @return the minimum number of new learning observations before policy
-	 *         iteration is run again.
-	 */
-	public int getMinNewStepsForLearningPI() {
-		return minNewStepsForLearningPI;
-	}
-
-	/**
-	 * Sets the minimum number of new learning observations before policy
-	 * iteration is run again.
-	 * 
-	 * @param minNewStepsForLearningPI
-	 *            the minimum number of new learning observations before policy
-	 *            iteration is run again.
-	 */
-	public void setMinNewStepsForLearningPI(int minNewStepsForLearningPI) {
-		this.minNewStepsForLearningPI = minNewStepsForLearningPI;
-	}
-
-	/**
-	 * The maximum change in weights required to terminate policy iteration when
-	 * called from the {@link #planFromState(State)},
-	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
-	 * or
-	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
-	 * methods.
-	 * 
-	 * @return the maximum change in weights required to terminate policy
-	 *         iteration when called from the {@link #planFromState(State)},
-	 *         {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
-	 *         or
-	 *         {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
-	 *         methods.
-	 */
-	public double getMaxChange() {
-		return maxChange;
-	}
-
-	/**
-	 * Sets the maximum change in weights required to terminate policy iteration
-	 * when called from the {@link #planFromState(State)},
-	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
-	 * or
-	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
-	 * methods.
-	 * 
-	 * @param maxChange
-	 *            the maximum change in weights required to terminate policy
-	 *            iteration when called from the
-	 *            {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
-	 *            or
-	 *            {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
-	 *            methods.
-	 */
-	public void setMaxChange(double maxChange) {
-		this.maxChange = maxChange;
 	}
 
 	/**
@@ -589,40 +565,6 @@ public class LSPI extends MDPSolver implements QFunction, LearningAgent,
 	}
 
 	/**
-	 * Runs LSPI for either numIterations or until the change in the weight
-	 * matrix is no greater than maxChange.
-	 * 
-	 * @param numIterations
-	 *            the maximum number of policy iterations.
-	 * @param maxChange
-	 *            when the weight change is smaller than this value, LSPI
-	 *            terminates.
-	 * @return a {@link burlap.behavior.policy.GreedyQPolicy} using this object
-	 *         as the {@link burlap.behavior.valuefunction.QFunction} source.
-	 */
-	public GreedyQPolicy runPolicyIteration(int numIterations, double maxChange) {
-
-		boolean converged = false;
-		for (int i = 0; i < numIterations && !converged; i++) {
-			SimpleMatrix nw = this.LSTDQ();
-			double change = Double.POSITIVE_INFINITY;
-			if (this.lastWeights != null) {
-				change = this.lastWeights.minus(nw).normF();
-				if (change <= maxChange) {
-					converged = true;
-				}
-			}
-			this.lastWeights = nw;
-
-			DPrint.cl(0, "Finished iteration: " + i + ". Weight change: "
-					+ change);
-
-		}
-		DPrint.cl(0, "Finished Policy Iteration.");
-		return new GreedyQPolicy(this);
-	}
-
-	/**
 	 * Constructs the state-action feature vector as a {@link SimpleMatrix}.
 	 * 
 	 * @param features
@@ -643,79 +585,6 @@ public class LSPI extends MDPSolver implements QFunction, LearningAgent,
 		}
 
 		return phi;
-	}
-
-	/**
-	 * Wraps a {@link GroundedAction} in a list of size 1.
-	 * 
-	 * @param ga
-	 *            the {@link GroundedAction} to wrap.
-	 * @return a {@link List} consisting of just the input
-	 *         {@link GroundedAction} object.
-	 */
-	protected List<GroundedAction> gaListWrapper(AbstractGroundedAction ga) {
-		List<GroundedAction> la = new ArrayList<GroundedAction>(1);
-		la.add((GroundedAction) ga);
-		return la;
-	}
-
-	@Override
-	public List<QValue> getQs(State s) {
-
-		List<GroundedAction> gas = this.getAllGroundedActions(s);
-		List<QValue> qs = new ArrayList<QValue>(gas.size());
-
-		List<ActionApproximationResult> results = vfa.getStateActionValues(s,
-				gas);
-		for (GroundedAction ga : gas) {
-			qs.add(this.getQFromFeaturesFor(results, s, ga));
-		}
-
-		return qs;
-
-	}
-
-	@Override
-	public QValue getQ(State s, AbstractGroundedAction a) {
-
-		List<GroundedAction> gaList = new ArrayList<GroundedAction>(1);
-		gaList.add((GroundedAction) a);
-
-		List<ActionApproximationResult> results = vfa.getStateActionValues(s,
-				gaList);
-
-		return this.getQFromFeaturesFor(results, s, (GroundedAction) a);
-
-	}
-
-	@Override
-	public double value(State s) {
-		if (this.tf != null) {
-			return QFunction.QFunctionHelper.getOptimalValue(this, s, this.tf);
-		} else {
-			return QFunction.QFunctionHelper.getOptimalValue(this, s);
-		}
-	}
-
-	/**
-	 * Creates a Q-value object in which the Q-value is determined from VFA.
-	 * 
-	 * @param results
-	 *            the VFA prediction results for each action.
-	 * @param s
-	 *            the state of the Q-value
-	 * @param ga
-	 *            the action taken
-	 * @return a Q-value object in which the Q-value is determined from VFA.
-	 */
-	protected QValue getQFromFeaturesFor(
-			List<ActionApproximationResult> results, State s, GroundedAction ga) {
-
-		ActionApproximationResult result = ActionApproximationResult
-				.extractApproximationForAction(results, ga);
-		QValue q = new QValue(s, ga, result.approximationResult.predictedValue);
-
-		return q;
 	}
 
 	/**
@@ -754,40 +623,6 @@ public class LSPI extends MDPSolver implements QFunction, LearningAgent,
 		this.vfa.resetWeights();
 	}
 
-	/**
-	 * Pair of the the state-action features and the next state-action features.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	protected class SSFeatures {
-
-		/**
-		 * State-action features
-		 */
-		public List<ActionFeaturesQuery> sActionFeatures;
-
-		/**
-		 * Next state-action features.
-		 */
-		public List<ActionFeaturesQuery> sPrimeActionFeatures;
-
-		/**
-		 * Initializes.
-		 * 
-		 * @param sActionFeatures
-		 *            state-action features
-		 * @param sPrimeActionFeatures
-		 *            next state-action features
-		 */
-		public SSFeatures(List<ActionFeaturesQuery> sActionFeatures,
-				List<ActionFeaturesQuery> sPrimeActionFeatures) {
-			this.sActionFeatures = sActionFeatures;
-			this.sPrimeActionFeatures = sPrimeActionFeatures;
-		}
-
-	}
-
 	@Override
 	public EpisodeAnalysis runLearningEpisode(Environment env) {
 		return this.runLearningEpisode(env, -1);
@@ -819,20 +654,171 @@ public class LSPI extends MDPSolver implements QFunction, LearningAgent,
 	}
 
 	/**
-	 * Updates this object's {@link SARSData} to include the results of a
-	 * learning episode.
+	 * Runs LSPI for either numIterations or until the change in the weight
+	 * matrix is no greater than maxChange.
 	 * 
-	 * @param ea
-	 *            the learning episode as an {@link EpisodeAnalysis} object.
+	 * @param numIterations
+	 *            the maximum number of policy iterations.
+	 * @param maxChange
+	 *            when the weight change is smaller than this value, LSPI
+	 *            terminates.
+	 * @return a {@link burlap.behavior.policy.GreedyQPolicy} using this object
+	 *         as the {@link burlap.behavior.valuefunction.QFunction} source.
 	 */
-	protected void updateDatasetWithLearningEpisode(EpisodeAnalysis ea) {
-		if (this.dataset == null) {
-			this.dataset = new SARSData(ea.numTimeSteps() - 1);
+	public GreedyQPolicy runPolicyIteration(int numIterations, double maxChange) {
+
+		boolean converged = false;
+		for (int i = 0; i < numIterations && !converged; i++) {
+			SimpleMatrix nw = this.LSTDQ();
+			double change = Double.POSITIVE_INFINITY;
+			if (this.lastWeights != null) {
+				change = this.lastWeights.minus(nw).normF();
+				if (change <= maxChange) {
+					converged = true;
+				}
+			}
+			this.lastWeights = nw;
+
+			DPrint.cl(0, "Finished iteration: " + i + ". Weight change: "
+					+ change);
+
 		}
-		for (int i = 0; i < ea.numTimeSteps() - 1; i++) {
-			this.dataset.add(ea.getState(i), ea.getAction(i),
-					ea.getReward(i + 1), ea.getState(i + 1));
-		}
+		DPrint.cl(0, "Finished Policy Iteration.");
+		return new GreedyQPolicy(this);
+	}
+
+	/**
+	 * Sets the SARS dataset this object will use for LSPI
+	 * 
+	 * @param dataset
+	 *            the SARSA dataset
+	 */
+	public void setDataset(SARSData dataset) {
+		this.dataset = dataset;
+	}
+
+	/**
+	 * Sets the feature datbase defining state features
+	 * 
+	 * @param featureDatabase
+	 *            the feature database defining state features
+	 */
+	public void setFeatureDatabase(FeatureDatabase featureDatabase) {
+		this.featureDatabase = featureDatabase;
+	}
+
+	/**
+	 * Sets the initial LSPI identity matrix scalar used.
+	 * 
+	 * @param identityScalar
+	 *            the initial LSPI identity matrix scalar used.
+	 */
+	public void setIdentityScalar(double identityScalar) {
+		this.identityScalar = identityScalar;
+	}
+
+	/**
+	 * Sets the learning policy followed by the
+	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
+	 * and
+	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
+	 * methods.
+	 * 
+	 * @param learningPolicy
+	 *            the learning policy followed by the
+	 *            {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
+	 *            and
+	 *            {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
+	 *            methods.
+	 */
+	public void setLearningPolicy(Policy learningPolicy) {
+		this.learningPolicy = learningPolicy;
+	}
+
+	/**
+	 * Sets the maximum change in weights required to terminate policy iteration
+	 * when called from the {@link #planFromState(State)},
+	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
+	 * or
+	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
+	 * methods.
+	 * 
+	 * @param maxChange
+	 *            the maximum change in weights required to terminate policy
+	 *            iteration when called from the
+	 *            {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
+	 *            or
+	 *            {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment, int)}
+	 *            methods.
+	 */
+	public void setMaxChange(double maxChange) {
+		this.maxChange = maxChange;
+	}
+
+	/**
+	 * Sets the maximum number of learning steps permitted by the
+	 * {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
+	 * method.
+	 * 
+	 * @param maxLearningSteps
+	 *            the maximum number of learning steps permitted by the
+	 *            {@link #runLearningEpisode(burlap.oomdp.singleagent.environment.Environment)}
+	 *            method.
+	 */
+	public void setMaxLearningSteps(int maxLearningSteps) {
+		this.maxLearningSteps = maxLearningSteps;
+	}
+
+	/**
+	 * Sets the maximum number of policy iterations that will be used by the
+	 * {@link #planFromState(State)} method.
+	 * 
+	 * @param maxNumPlanningIterations
+	 *            the maximum number of policy iterations that will be used by
+	 *            the {@link #planFromState(State)} method.
+	 */
+	public void setMaxNumPlanningIterations(int maxNumPlanningIterations) {
+		this.maxNumPlanningIterations = maxNumPlanningIterations;
+	}
+
+	/**
+	 * Sets the minimum number of new learning observations before policy
+	 * iteration is run again.
+	 * 
+	 * @param minNewStepsForLearningPI
+	 *            the minimum number of new learning observations before policy
+	 *            iteration is run again.
+	 */
+	public void setMinNewStepsForLearningPI(int minNewStepsForLearningPI) {
+		this.minNewStepsForLearningPI = minNewStepsForLearningPI;
+	}
+
+	public void setNumEpisodesToStore(int numEps) {
+		this.numEpisodesToStore = numEps;
+	}
+
+	/**
+	 * Sets the number of SARS samples that will be gathered by the
+	 * {@link #planFromState(State)} method.
+	 * 
+	 * @param numSamplesForPlanning
+	 *            the number of SARS samples that will be gathered by the
+	 *            {@link #planFromState(State)} method.
+	 */
+	public void setNumSamplesForPlanning(int numSamplesForPlanning) {
+		this.numSamplesForPlanning = numSamplesForPlanning;
+	}
+
+	/**
+	 * Sets the {@link SARSCollector} used by the {@link #planFromState(State)}
+	 * method for collecting data.
+	 * 
+	 * @param planningCollector
+	 *            the {@link SARSCollector} used by the
+	 *            {@link #planFromState(State)} method for collecting data.
+	 */
+	public void setPlanningCollector(SARSCollector planningCollector) {
+		this.planningCollector = planningCollector;
 	}
 
 	/**
@@ -852,16 +838,30 @@ public class LSPI extends MDPSolver implements QFunction, LearningAgent,
 		return false;
 	}
 
-	public EpisodeAnalysis getLastLearningEpisode() {
-		return this.episodeHistory.getLast();
+	/**
+	 * Updates this object's {@link SARSData} to include the results of a
+	 * learning episode.
+	 * 
+	 * @param ea
+	 *            the learning episode as an {@link EpisodeAnalysis} object.
+	 */
+	protected void updateDatasetWithLearningEpisode(EpisodeAnalysis ea) {
+		if (this.dataset == null) {
+			this.dataset = new SARSData(ea.numTimeSteps() - 1);
+		}
+		for (int i = 0; i < ea.numTimeSteps() - 1; i++) {
+			this.dataset.add(ea.getState(i), ea.getAction(i),
+					ea.getReward(i + 1), ea.getState(i + 1));
+		}
 	}
 
-	public void setNumEpisodesToStore(int numEps) {
-		this.numEpisodesToStore = numEps;
-	}
-
-	public List<EpisodeAnalysis> getAllStoredLearningEpisodes() {
-		return this.episodeHistory;
+	@Override
+	public double value(State s) {
+		if (this.tf != null) {
+			return QFunction.QFunctionHelper.getOptimalValue(this, s, this.tf);
+		} else {
+			return QFunction.QFunctionHelper.getOptimalValue(this, s);
+		}
 	}
 
 }

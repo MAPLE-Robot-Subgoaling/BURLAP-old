@@ -1,9 +1,22 @@
 package burlap.oomdp.core;
 
-import burlap.oomdp.core.values.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.management.RuntimeErrorException;
-import java.util.*;
+
+import burlap.oomdp.core.values.DiscreteValue;
+import burlap.oomdp.core.values.DoubleArrayValue;
+import burlap.oomdp.core.values.IntArrayValue;
+import burlap.oomdp.core.values.IntValue;
+import burlap.oomdp.core.values.MultiTargetRelationalValue;
+import burlap.oomdp.core.values.RealValue;
+import burlap.oomdp.core.values.RelationalValue;
+import burlap.oomdp.core.values.StringValue;
+import burlap.oomdp.core.values.Value;
 
 /**
  * The attribute class defines attributes that define OO-MDP object classes.
@@ -53,16 +66,6 @@ public class Attribute {
 		NOTYPE(-1), DISC(0), REAL(1), REALUNBOUND(2), RELATIONAL(3), MULTITARGETRELATIONAL(
 				4), INT(5), BOOLEAN(6), STRING(7), INTARRAY(8), DOUBLEARRAY(9);
 
-		private final int intVal;
-
-		AttributeType(int i) {
-			this.intVal = i;
-		}
-
-		public int toInt() {
-			return intVal;
-		}
-
 		public static AttributeType fromInt(int i) {
 			switch (i) {
 			case 0:
@@ -88,6 +91,16 @@ public class Attribute {
 			default:
 				return NOTYPE;
 			}
+		}
+
+		private final int intVal;
+
+		AttributeType(int i) {
+			this.intVal = i;
+		}
+
+		public int toInt() {
+			return intVal;
 		}
 	}
 
@@ -224,56 +237,20 @@ public class Attribute {
 		return nd;
 	}
 
-	/**
-	 * Sets the upper and lower bound limits for a bounded real attribute.
-	 * 
-	 * @param lower
-	 *            the lower limit
-	 * @param upper
-	 *            the upper limit
-	 */
-	public void setLims(double lower, double upper) {
-		this.lowerLim = lower;
-		this.upperLim = upper;
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		Attribute op = (Attribute) obj;
+		if (op.name.equals(name))
+			return true;
+		return false;
 	}
 
-	/**
-	 * Sets the type for this attribute. If the attribute type is set to
-	 * boolean, the categorical values will automatically be initialized to
-	 * "false" and "true" with a range from 0 to 1. If the attribute type is
-	 * relational, then the domain is automatically set to object identifier
-	 * dependent.
-	 * 
-	 * @param type
-	 *            the attribute type to which this attribute should be set
-	 */
-	public void setType(AttributeType type) {
-		this.type = type;
-
-		if (this.type == AttributeType.BOOLEAN) {
-			this.discValues.add("false");
-			this.discValues.add("true");
-			this.discValuesHash.put("false", 0);
-			this.discValuesHash.put("true", 1);
-
-			this.lowerLim = 0.;
-			this.upperLim = 1.;
-		}
-
-		if (this.type == AttributeType.REALUNBOUND) {
-			this.lowerLim = Double.NEGATIVE_INFINITY;
-			this.upperLim = Double.POSITIVE_INFINITY;
-		}
-
-		if (this.type == AttributeType.INT) {
-			this.lowerLim = Integer.MIN_VALUE;
-			this.upperLim = Integer.MAX_VALUE;
-		}
-
-		if (this.type == AttributeType.RELATIONAL
-				|| this.type == AttributeType.MULTITARGETRELATIONAL) {
-			this.domain.setObjectIdentiferDependence(true);
-		}
+	@Override
+	public int hashCode() {
+		return name.hashCode();
 	}
 
 	/**
@@ -347,6 +324,58 @@ public class Attribute {
 	}
 
 	/**
+	 * Sets the upper and lower bound limits for a bounded real attribute.
+	 * 
+	 * @param lower
+	 *            the lower limit
+	 * @param upper
+	 *            the upper limit
+	 */
+	public void setLims(double lower, double upper) {
+		this.lowerLim = lower;
+		this.upperLim = upper;
+	}
+
+	/**
+	 * Sets the type for this attribute. If the attribute type is set to
+	 * boolean, the categorical values will automatically be initialized to
+	 * "false" and "true" with a range from 0 to 1. If the attribute type is
+	 * relational, then the domain is automatically set to object identifier
+	 * dependent.
+	 * 
+	 * @param type
+	 *            the attribute type to which this attribute should be set
+	 */
+	public void setType(AttributeType type) {
+		this.type = type;
+
+		if (this.type == AttributeType.BOOLEAN) {
+			this.discValues.add("false");
+			this.discValues.add("true");
+			this.discValuesHash.put("false", 0);
+			this.discValuesHash.put("true", 1);
+
+			this.lowerLim = 0.;
+			this.upperLim = 1.;
+		}
+
+		if (this.type == AttributeType.REALUNBOUND) {
+			this.lowerLim = Double.NEGATIVE_INFINITY;
+			this.upperLim = Double.POSITIVE_INFINITY;
+		}
+
+		if (this.type == AttributeType.INT) {
+			this.lowerLim = Integer.MIN_VALUE;
+			this.upperLim = Integer.MAX_VALUE;
+		}
+
+		if (this.type == AttributeType.RELATIONAL
+				|| this.type == AttributeType.MULTITARGETRELATIONAL) {
+			this.domain.setObjectIdentiferDependence(true);
+		}
+	}
+
+	/**
 	 * Returns a Value object compatible with this Attributes type (i.e.,
 	 * discrete or real). This method will not work for NOTYPE attributes.
 	 * 
@@ -377,22 +406,6 @@ public class Attribute {
 		throw new RuntimeErrorException(
 				new Error(
 						"Unknown attribute type; cannot construct a corresponding Value for it."));
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		Attribute op = (Attribute) obj;
-		if (op.name.equals(name))
-			return true;
-		return false;
-	}
-
-	@Override
-	public int hashCode() {
-		return name.hashCode();
 	}
 
 }

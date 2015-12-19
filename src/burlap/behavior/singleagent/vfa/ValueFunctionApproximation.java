@@ -1,9 +1,9 @@
 package burlap.behavior.singleagent.vfa;
 
+import java.util.List;
+
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
-
-import java.util.List;
 
 /**
  * A general interface for defining state value or Q-value function
@@ -15,13 +15,22 @@ import java.util.List;
 public interface ValueFunctionApproximation {
 
 	/**
-	 * Returns a state value approximation for the query state.
+	 * Returns a deep copy of this
+	 * {@link burlap.behavior.singleagent.vfa.ValueFunctionApproximation} such
+	 * that the returned copy can be modified independently.
 	 * 
-	 * @param s
-	 *            the query state whose state value should be approximated
-	 * @return a state value approximation for the query state.
+	 * @return a deep copy of this value function.
 	 */
-	ApproximationResult getStateValue(State s);
+	ValueFunctionApproximation copy();
+
+	/**
+	 * Returns the FunctionWeight for the given function's feature id.
+	 * 
+	 * @param featureId
+	 *            the id of function's feature whose weight is returned.
+	 * @return the FunctionWeight for the given function's feature id.
+	 */
+	FunctionWeight getFunctionWeight(int featureId);
 
 	/**
 	 * Returns a state-value (e.g., Q-value) approximation for the query state.
@@ -36,6 +45,15 @@ public interface ValueFunctionApproximation {
 			List<GroundedAction> gas);
 
 	/**
+	 * Returns a state value approximation for the query state.
+	 * 
+	 * @param s
+	 *            the query state whose state value should be approximated
+	 * @return a state value approximation for the query state.
+	 */
+	ApproximationResult getStateValue(State s);
+
+	/**
 	 * Returns the function weight gradient of the given approximation result.
 	 * 
 	 * @param approximationResult
@@ -44,6 +62,15 @@ public interface ValueFunctionApproximation {
 	 * @return the function weight gradient of the given approximation result.
 	 */
 	WeightGradient getWeightGradient(ApproximationResult approximationResult);
+
+	/**
+	 * Returns the number of features used in this approximator. Note: if
+	 * features are dynamically added with experience, this number may change
+	 * with subsequent calls.
+	 * 
+	 * @return the number of features used in this approximator.
+	 */
+	int numFeatures();
 
 	/**
 	 * Resets the weights as is learning had never been performed.
@@ -59,32 +86,5 @@ public interface ValueFunctionApproximation {
 	 *            the weight value to use
 	 */
 	void setWeight(int featureId, double w);
-
-	/**
-	 * Returns the FunctionWeight for the given function's feature id.
-	 * 
-	 * @param featureId
-	 *            the id of function's feature whose weight is returned.
-	 * @return the FunctionWeight for the given function's feature id.
-	 */
-	FunctionWeight getFunctionWeight(int featureId);
-
-	/**
-	 * Returns the number of features used in this approximator. Note: if
-	 * features are dynamically added with experience, this number may change
-	 * with subsequent calls.
-	 * 
-	 * @return the number of features used in this approximator.
-	 */
-	int numFeatures();
-
-	/**
-	 * Returns a deep copy of this
-	 * {@link burlap.behavior.singleagent.vfa.ValueFunctionApproximation} such
-	 * that the returned copy can be modified independently.
-	 * 
-	 * @return a deep copy of this value function.
-	 */
-	ValueFunctionApproximation copy();
 
 }

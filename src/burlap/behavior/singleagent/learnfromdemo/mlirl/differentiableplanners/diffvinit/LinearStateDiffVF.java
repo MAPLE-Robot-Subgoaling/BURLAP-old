@@ -38,13 +38,18 @@ public class LinearStateDiffVF extends DifferentiableVInit.ParamedDiffVInit {
 	}
 
 	@Override
+	public double[] getQGradient(State s, AbstractGroundedAction ga) {
+		return this.fvgen.generateFeatureVectorFrom(s);
+	}
+
+	@Override
 	public double[] getVGradient(State s) {
 		return this.fvgen.generateFeatureVectorFrom(s);
 	}
 
 	@Override
-	public double[] getQGradient(State s, AbstractGroundedAction ga) {
-		return this.fvgen.generateFeatureVectorFrom(s);
+	public double qValue(State s, AbstractGroundedAction a) {
+		return this.value(s);
 	}
 
 	@Override
@@ -57,11 +62,6 @@ public class LinearStateDiffVF extends DifferentiableVInit.ParamedDiffVInit {
 			sum += features[i] * this.parameters[i];
 		}
 		return sum;
-	}
-
-	@Override
-	public double qValue(State s, AbstractGroundedAction a) {
-		return this.value(s);
 	}
 
 }

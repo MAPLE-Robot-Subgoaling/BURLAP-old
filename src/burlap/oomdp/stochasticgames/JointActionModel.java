@@ -3,8 +3,8 @@ package burlap.oomdp.stochasticgames;
 import java.util.ArrayList;
 import java.util.List;
 
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TransitionProbability;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 
 /**
@@ -21,6 +21,43 @@ import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
  * 
  */
 public abstract class JointActionModel {
+
+	/**
+	 * This method is what determines the state when {@link JointAction} ja is
+	 * executed in {@link burlap.oomdp.core.states.State} s. The input state
+	 * should be directly modified.
+	 * 
+	 * @param s
+	 *            the state in which the joint action is performed.
+	 * @param ja
+	 *            the joint action to be performed.
+	 * @return the resulting state of applying this action.
+	 */
+	protected abstract State actionHelper(State s, JointAction ja);
+
+	/**
+	 * A helper method for deterministic transition dynamics. This method will
+	 * return a list containing one
+	 * {@link burlap.oomdp.core.TransitionProbability} object which is assigned
+	 * probability 1 and whose state is determined by querying the
+	 * {@link #performJointAction(State, JointAction)} method.
+	 * 
+	 * @param s
+	 *            the state in which the joint action would be executed
+	 * @param ja
+	 *            the joint action to be performed in the state.
+	 * @return a list containing one
+	 *         {@link burlap.oomdp.core.TransitionProbability} object which is
+	 *         assigned probability 1
+	 */
+	protected List<TransitionProbability> deterministicTransitionProbsFor(
+			State s, JointAction ja) {
+		List<TransitionProbability> res = new ArrayList<TransitionProbability>();
+		State sp = performJointAction(s, ja);
+		TransitionProbability tp = new TransitionProbability(sp, 1.);
+		res.add(tp);
+		return res;
+	}
 
 	/**
 	 * Performs {@link JointAction} ja in {@link burlap.oomdp.core.states.State}
@@ -65,42 +102,5 @@ public abstract class JointActionModel {
 	 */
 	public abstract List<TransitionProbability> transitionProbsFor(State s,
 			JointAction ja);
-
-	/**
-	 * This method is what determines the state when {@link JointAction} ja is
-	 * executed in {@link burlap.oomdp.core.states.State} s. The input state
-	 * should be directly modified.
-	 * 
-	 * @param s
-	 *            the state in which the joint action is performed.
-	 * @param ja
-	 *            the joint action to be performed.
-	 * @return the resulting state of applying this action.
-	 */
-	protected abstract State actionHelper(State s, JointAction ja);
-
-	/**
-	 * A helper method for deterministic transition dynamics. This method will
-	 * return a list containing one
-	 * {@link burlap.oomdp.core.TransitionProbability} object which is assigned
-	 * probability 1 and whose state is determined by querying the
-	 * {@link #performJointAction(State, JointAction)} method.
-	 * 
-	 * @param s
-	 *            the state in which the joint action would be executed
-	 * @param ja
-	 *            the joint action to be performed in the state.
-	 * @return a list containing one
-	 *         {@link burlap.oomdp.core.TransitionProbability} object which is
-	 *         assigned probability 1
-	 */
-	protected List<TransitionProbability> deterministicTransitionProbsFor(
-			State s, JointAction ja) {
-		List<TransitionProbability> res = new ArrayList<TransitionProbability>();
-		State sp = performJointAction(s, ja);
-		TransitionProbability tp = new TransitionProbability(sp, 1.);
-		res.add(tp);
-		return res;
-	}
 
 }

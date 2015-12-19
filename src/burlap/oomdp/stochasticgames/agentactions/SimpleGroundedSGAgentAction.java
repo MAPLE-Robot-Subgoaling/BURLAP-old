@@ -18,12 +18,12 @@ public class SimpleGroundedSGAgentAction extends GroundedSGAgentAction {
 	}
 
 	@Override
-	public void initParamsWithStringRep(String[] params) {
-		// do nothing
+	public String[] getParametersAsString() {
+		return new String[0];
 	}
 
 	@Override
-	public String[] getParametersAsString() {
-		return new String[0];
+	public void initParamsWithStringRep(String[] params) {
+		// do nothing
 	}
 }

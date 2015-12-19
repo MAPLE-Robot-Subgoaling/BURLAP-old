@@ -1,12 +1,12 @@
 package burlap.datastructures;
 
-import burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator;
-import burlap.oomdp.core.states.State;
 import weka.classifiers.Classifier;
 import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
+import burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator;
+import burlap.oomdp.core.states.State;
 
 /**
  * Class that includes general methods for interfacing BURLAP with Weka, in
@@ -16,6 +16,47 @@ import weka.core.Instances;
  * @author James MacGlashan.
  */
 public class WekaInterfaces {
+
+	public static interface WekaClassifierGenerator {
+
+		public Classifier generateClassifier();
+
+	}
+
+	/**
+	 * Creates a Weka {@link weka.core.Instance} from the provided feature
+	 * vector and target supervised output value and adds it to the provided
+	 * dataset. If the dataset is null, then it is created first.
+	 * 
+	 * @param fv
+	 *            the input feature vector.
+	 * @param targetValue
+	 *            the target supervised output value
+	 * @param dataset
+	 *            the dataset ({@link weka.core.Instances}) to which the created
+	 *            {@link weka.core.Instance} will be added.
+	 * @return the created {@link weka.core.Instance}.
+	 */
+	public static Instance getInstance(double[] fv, double targetValue,
+			Instances dataset) {
+
+		double[] labeled = new double[fv.length + 1];
+		for (int i = 0; i < fv.length; i++) {
+			labeled[i] = fv[i];
+		}
+		labeled[fv.length] = targetValue;
+		Instance inst = new Instance(1., labeled);
+
+		if (dataset == null) {
+			dataset = getInstancesShell(fv, 1);
+		}
+
+		dataset.add(inst);
+		inst.setDataset(dataset);
+
+		return inst;
+
+	}
 
 	/**
 	 * Creates a Weka {@link Instance} for a state by first converting the state
@@ -62,6 +103,33 @@ public class WekaInterfaces {
 
 	/**
 	 * Creates an empty Weka dataset ({@link Instances}) that can accommodate
+	 * the provided feature vector.
+	 * 
+	 * @param exfv
+	 *            the input feature vector for which the dataset is to be
+	 *            modeled.
+	 * @param capacity
+	 *            the reserved capacity for the dataset.
+	 * @return the created {@link Instances} Weka dataset.
+	 */
+	public static Instances getInstancesShell(double[] exfv, int capacity) {
+		FastVector attInfo = new FastVector(exfv.length + 1);
+		for (int i = 0; i < exfv.length; i++) {
+			Attribute att = new Attribute("f" + i);
+			attInfo.addElement(att);
+		}
+
+		Attribute classAtt = new Attribute("v");
+		attInfo.addElement(classAtt);
+
+		Instances dataset = new Instances("burlap_data", attInfo, capacity);
+		dataset.setClassIndex(exfv.length);
+
+		return dataset;
+	}
+
+	/**
+	 * Creates an empty Weka dataset ({@link Instances}) that can accommodate
 	 * the feature set necessary for the input state.
 	 * 
 	 * @param s
@@ -91,74 +159,6 @@ public class WekaInterfaces {
 		dataset.setClassIndex(exfv.length);
 
 		return dataset;
-	}
-
-	/**
-	 * Creates a Weka {@link weka.core.Instance} from the provided feature
-	 * vector and target supervised output value and adds it to the provided
-	 * dataset. If the dataset is null, then it is created first.
-	 * 
-	 * @param fv
-	 *            the input feature vector.
-	 * @param targetValue
-	 *            the target supervised output value
-	 * @param dataset
-	 *            the dataset ({@link weka.core.Instances}) to which the created
-	 *            {@link weka.core.Instance} will be added.
-	 * @return the created {@link weka.core.Instance}.
-	 */
-	public static Instance getInstance(double[] fv, double targetValue,
-			Instances dataset) {
-
-		double[] labeled = new double[fv.length + 1];
-		for (int i = 0; i < fv.length; i++) {
-			labeled[i] = fv[i];
-		}
-		labeled[fv.length] = targetValue;
-		Instance inst = new Instance(1., labeled);
-
-		if (dataset == null) {
-			dataset = getInstancesShell(fv, 1);
-		}
-
-		dataset.add(inst);
-		inst.setDataset(dataset);
-
-		return inst;
-
-	}
-
-	/**
-	 * Creates an empty Weka dataset ({@link Instances}) that can accommodate
-	 * the provided feature vector.
-	 * 
-	 * @param exfv
-	 *            the input feature vector for which the dataset is to be
-	 *            modeled.
-	 * @param capacity
-	 *            the reserved capacity for the dataset.
-	 * @return the created {@link Instances} Weka dataset.
-	 */
-	public static Instances getInstancesShell(double[] exfv, int capacity) {
-		FastVector attInfo = new FastVector(exfv.length + 1);
-		for (int i = 0; i < exfv.length; i++) {
-			Attribute att = new Attribute("f" + i);
-			attInfo.addElement(att);
-		}
-
-		Attribute classAtt = new Attribute("v");
-		attInfo.addElement(classAtt);
-
-		Instances dataset = new Instances("burlap_data", attInfo, capacity);
-		dataset.setClassIndex(exfv.length);
-
-		return dataset;
-	}
-
-	public static interface WekaClassifierGenerator {
-
-		public Classifier generateClassifier();
-
 	}
 
 }

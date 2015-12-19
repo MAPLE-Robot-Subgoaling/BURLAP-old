@@ -1,13 +1,11 @@
 package burlap.oomdp.stochasticgames.agentactions;
 
-import burlap.oomdp.core.states.State;
-import burlap.oomdp.stochasticgames.SGDomain;
-import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
-import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.stochasticgames.SGDomain;
 
 /**
  * This {@link burlap.oomdp.stochasticgames.agentactions.SGAgentAction}
@@ -38,8 +36,12 @@ public class SimpleSGAgentAction extends SGAgentAction {
 	}
 
 	@Override
-	public boolean isParameterized() {
-		return false;
+	public List<GroundedSGAgentAction> getAllApplicableGroundedActions(State s,
+			String actingAgent) {
+		GroundedSGAgentAction gaa = this
+				.getAssociatedGroundedAction(actingAgent);
+		return this.applicableInState(s, gaa) ? Arrays.asList(gaa)
+				: new ArrayList<GroundedSGAgentAction>(0);
 	}
 
 	@Override
@@ -48,11 +50,7 @@ public class SimpleSGAgentAction extends SGAgentAction {
 	}
 
 	@Override
-	public List<GroundedSGAgentAction> getAllApplicableGroundedActions(State s,
-			String actingAgent) {
-		GroundedSGAgentAction gaa = this
-				.getAssociatedGroundedAction(actingAgent);
-		return this.applicableInState(s, gaa) ? Arrays.asList(gaa)
-				: new ArrayList<GroundedSGAgentAction>(0);
+	public boolean isParameterized() {
+		return false;
 	}
 }

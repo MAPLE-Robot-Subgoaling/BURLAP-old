@@ -6,10 +6,10 @@ import burlap.debugtools.RandomFactory;
 import burlap.oomdp.auxiliary.StateGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.objects.ObjectInstance;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.objects.MutableObjectInstance;
+import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.MutableState;
+import burlap.oomdp.core.states.State;
 
 /**
  * Generates {@link MountainCar} states with the x-position between some
@@ -77,127 +77,6 @@ public class MCRandomStateGenerator implements StateGenerator {
 		this.vmax = vmax;
 	}
 
-	/**
-	 * Returns the minimum x-value that a generated state can have.
-	 * 
-	 * @return the minimum x-value that a generated state can have.
-	 */
-	public double getXmin() {
-		return xmin;
-	}
-
-	/**
-	 * Sets the minimum x-value that a generated state can have.
-	 * 
-	 * @param xmin
-	 *            the minimum x-value that a generated state can have.
-	 */
-	public void setXmin(double xmin) {
-		this.xmin = xmin;
-	}
-
-	/**
-	 * Returns the maximum x-value that a generated state can have.
-	 * 
-	 * @return the maximum x-value that a generated state can have.
-	 */
-	public double getXmax() {
-		return xmax;
-	}
-
-	/**
-	 * Sets the maximum x-value that a generated state can have.
-	 * 
-	 * @param xmax
-	 *            the maximum x-value that a generated state can have.
-	 */
-	public void setXmax(double xmax) {
-		this.xmax = xmax;
-	}
-
-	/**
-	 * Returns the minimum velocity that a generated state can have.
-	 * 
-	 * @return the minimum velocity that a generated state can have.
-	 */
-	public double getVmin() {
-		return vmin;
-	}
-
-	/**
-	 * Sets the minimum velocity that a generated state can have.
-	 * 
-	 * @param vmin
-	 *            the minimum velocity that a generated state can have.
-	 */
-	public void setVmin(double vmin) {
-		this.vmin = vmin;
-	}
-
-	/**
-	 * Returns the maximum velocity that a generated state can have.
-	 * 
-	 * @return the maximium velocity tht a generated state can have.
-	 */
-	public double getVmax() {
-		return vmax;
-	}
-
-	/**
-	 * Sets the maximum velocity that a generated state can have.
-	 * 
-	 * @param vmax
-	 *            the maximum velocity that a generated state can have.
-	 */
-	public void setVmax(double vmax) {
-		this.vmax = vmax;
-	}
-
-	/**
-	 * Sets the random x-value range that a generated state can have.
-	 * 
-	 * @param xmin
-	 *            the miniimum x-value
-	 * @param xmax
-	 *            the maximum x-value
-	 */
-	public void setXRange(double xmin, double xmax) {
-		this.xmin = xmin;
-		this.xmax = xmax;
-	}
-
-	/**
-	 * Sets the random velocity range that a generated state can have.
-	 * 
-	 * @param vmin
-	 *            the minimum velocity
-	 * @param vmax
-	 *            the maximum velocity
-	 */
-	public void setVRange(double vmin, double vmax) {
-		this.vmin = vmin;
-		this.vmax = vmax;
-	}
-
-	/**
-	 * Returns the random object used for generating states
-	 * 
-	 * @return the random object used for generating states
-	 */
-	public Random getRandomObject() {
-		return this.rand;
-	}
-
-	/**
-	 * Sets the random object used for generating states
-	 * 
-	 * @param rand
-	 *            the random object used for generating states
-	 */
-	public void setRandomObject(Random rand) {
-		this.rand = rand;
-	}
-
 	@Override
 	public State generateState() {
 
@@ -216,6 +95,127 @@ public class MCRandomStateGenerator implements StateGenerator {
 		agent.setValue(MountainCar.ATTV, rv);
 
 		return s;
+	}
+
+	/**
+	 * Returns the random object used for generating states
+	 * 
+	 * @return the random object used for generating states
+	 */
+	public Random getRandomObject() {
+		return this.rand;
+	}
+
+	/**
+	 * Returns the maximum velocity that a generated state can have.
+	 * 
+	 * @return the maximium velocity tht a generated state can have.
+	 */
+	public double getVmax() {
+		return vmax;
+	}
+
+	/**
+	 * Returns the minimum velocity that a generated state can have.
+	 * 
+	 * @return the minimum velocity that a generated state can have.
+	 */
+	public double getVmin() {
+		return vmin;
+	}
+
+	/**
+	 * Returns the maximum x-value that a generated state can have.
+	 * 
+	 * @return the maximum x-value that a generated state can have.
+	 */
+	public double getXmax() {
+		return xmax;
+	}
+
+	/**
+	 * Returns the minimum x-value that a generated state can have.
+	 * 
+	 * @return the minimum x-value that a generated state can have.
+	 */
+	public double getXmin() {
+		return xmin;
+	}
+
+	/**
+	 * Sets the random object used for generating states
+	 * 
+	 * @param rand
+	 *            the random object used for generating states
+	 */
+	public void setRandomObject(Random rand) {
+		this.rand = rand;
+	}
+
+	/**
+	 * Sets the maximum velocity that a generated state can have.
+	 * 
+	 * @param vmax
+	 *            the maximum velocity that a generated state can have.
+	 */
+	public void setVmax(double vmax) {
+		this.vmax = vmax;
+	}
+
+	/**
+	 * Sets the minimum velocity that a generated state can have.
+	 * 
+	 * @param vmin
+	 *            the minimum velocity that a generated state can have.
+	 */
+	public void setVmin(double vmin) {
+		this.vmin = vmin;
+	}
+
+	/**
+	 * Sets the random velocity range that a generated state can have.
+	 * 
+	 * @param vmin
+	 *            the minimum velocity
+	 * @param vmax
+	 *            the maximum velocity
+	 */
+	public void setVRange(double vmin, double vmax) {
+		this.vmin = vmin;
+		this.vmax = vmax;
+	}
+
+	/**
+	 * Sets the maximum x-value that a generated state can have.
+	 * 
+	 * @param xmax
+	 *            the maximum x-value that a generated state can have.
+	 */
+	public void setXmax(double xmax) {
+		this.xmax = xmax;
+	}
+
+	/**
+	 * Sets the minimum x-value that a generated state can have.
+	 * 
+	 * @param xmin
+	 *            the minimum x-value that a generated state can have.
+	 */
+	public void setXmin(double xmin) {
+		this.xmin = xmin;
+	}
+
+	/**
+	 * Sets the random x-value range that a generated state can have.
+	 * 
+	 * @param xmin
+	 *            the miniimum x-value
+	 * @param xmax
+	 *            the maximum x-value
+	 */
+	public void setXRange(double xmin, double xmax) {
+		this.xmin = xmin;
+		this.xmax = xmax;
 	}
 
 }

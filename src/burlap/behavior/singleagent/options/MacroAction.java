@@ -29,28 +29,6 @@ public class MacroAction extends Option {
 	 */
 	protected int curIndex;
 
-	@Override
-	public boolean applicableInState(State s, GroundedAction groundedAction) {
-		return this.actionSequence.get(0).applicableInState(s);
-	}
-
-	@Override
-	public boolean isParameterized() {
-		return false;
-	}
-
-	@Override
-	public GroundedAction getAssociatedGroundedAction() {
-		return new SimpleGroundedAction(this);
-	}
-
-	@Override
-	public List<GroundedAction> getAllApplicableGroundedActions(State s) {
-		GroundedAction ga = new SimpleGroundedAction(this);
-		return this.applicableInState(s, ga) ? Arrays.asList(ga)
-				: new ArrayList<GroundedAction>(0);
-	}
-
 	/**
 	 * Instantiates a macro action with a given name and action sequence. The
 	 * name of the macro action should be unique from any other action name.
@@ -66,32 +44,41 @@ public class MacroAction extends Option {
 	}
 
 	@Override
-	public boolean isMarkov() {
-		return false;
+	public boolean applicableInState(State s, GroundedAction groundedAction) {
+		return this.actionSequence.get(0).applicableInState(s);
 	}
 
 	@Override
-	public boolean usesDeterministicTermination() {
-		return true;
-	}
-
-	@Override
-	public boolean usesDeterministicPolicy() {
-		return true;
-	}
-
-	@Override
-	public double probabilityOfTermination(State s,
+	public List<ActionProb> getActionDistributionForState(State s,
 			GroundedAction groundedAction) {
-		if (curIndex >= actionSequence.size()) {
-			return 1.;
-		}
-		return 0.;
+		return this.getDeterministicPolicy(s, groundedAction);
+	}
+
+	@Override
+	public List<GroundedAction> getAllApplicableGroundedActions(State s) {
+		GroundedAction ga = new SimpleGroundedAction(this);
+		return this.applicableInState(s, ga) ? Arrays.asList(ga)
+				: new ArrayList<GroundedAction>(0);
+	}
+
+	@Override
+	public GroundedAction getAssociatedGroundedAction() {
+		return new SimpleGroundedAction(this);
 	}
 
 	@Override
 	public void initiateInStateHelper(State s, GroundedAction groundedAction) {
 		curIndex = 0;
+	}
+
+	@Override
+	public boolean isMarkov() {
+		return false;
+	}
+
+	@Override
+	public boolean isParameterized() {
+		return false;
 	}
 
 	@Override
@@ -105,9 +92,22 @@ public class MacroAction extends Option {
 	}
 
 	@Override
-	public List<ActionProb> getActionDistributionForState(State s,
+	public double probabilityOfTermination(State s,
 			GroundedAction groundedAction) {
-		return this.getDeterministicPolicy(s, groundedAction);
+		if (curIndex >= actionSequence.size()) {
+			return 1.;
+		}
+		return 0.;
+	}
+
+	@Override
+	public boolean usesDeterministicPolicy() {
+		return true;
+	}
+
+	@Override
+	public boolean usesDeterministicTermination() {
+		return true;
 	}
 
 }

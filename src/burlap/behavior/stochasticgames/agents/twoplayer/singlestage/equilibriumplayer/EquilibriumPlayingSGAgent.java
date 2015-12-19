@@ -7,11 +7,11 @@ import java.util.Random;
 import burlap.behavior.stochasticgames.agents.twoplayer.singlestage.equilibriumplayer.equilibriumsolvers.MaxMax;
 import burlap.debugtools.RandomFactory;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.stochasticgames.SGAgent;
-import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 import burlap.oomdp.stochasticgames.JointAction;
 import burlap.oomdp.stochasticgames.JointActionModel;
 import burlap.oomdp.stochasticgames.JointReward;
+import burlap.oomdp.stochasticgames.SGAgent;
+import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
 
 /**
@@ -26,6 +26,94 @@ import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
  * 
  */
 public class EquilibriumPlayingSGAgent extends SGAgent {
+
+	/**
+	 * A Bimatrix tuple. It consists of a 2D double array for the row player's
+	 * payoffs and a 2D douuble array for the column player's payoffs.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	protected class BimatrixTuple {
+
+		/**
+		 * The row player's payoffs.
+		 */
+		public double[][] rowPayoffs;
+
+		/**
+		 * The column player's payoffs.
+		 */
+		public double[][] colPayoffs;
+
+		/**
+		 * Initializes with a given row and column player payoffs.
+		 * 
+		 * @param rowPayoffs
+		 *            the row player payoffs.
+		 * @param colPayoffs
+		 *            the column player payoffs.
+		 */
+		public BimatrixTuple(double[][] rowPayoffs, double[][] colPayoffs) {
+			if (rowPayoffs.length != colPayoffs.length
+					|| rowPayoffs[0].length != colPayoffs[0].length) {
+				throw new RuntimeException(
+						"Payoff matrices are not of equal dimension.");
+			}
+			this.rowPayoffs = rowPayoffs;
+			this.colPayoffs = colPayoffs;
+		}
+
+		/**
+		 * Initializes the payoff matrices for a bimatrix of the given row and
+		 * column dimensionality
+		 * 
+		 * @param nRows
+		 *            the number of rows
+		 * @param nCols
+		 *            the number of columns
+		 */
+		public BimatrixTuple(int nRows, int nCols) {
+			this.rowPayoffs = new double[nRows][nCols];
+			this.colPayoffs = new double[nRows][nCols];
+		}
+
+		/**
+		 * Returns the number of columns
+		 * 
+		 * @return the number of columns
+		 */
+		public int nCols() {
+			return rowPayoffs[0].length;
+		}
+
+		/**
+		 * Returns the number of rows
+		 * 
+		 * @return the number of rows
+		 */
+		public int nRows() {
+			return rowPayoffs.length;
+		}
+
+		/**
+		 * Sets the payoffs for a given row and column.
+		 * 
+		 * @param row
+		 *            the row index (player 1's action).
+		 * @param col
+		 *            the column index (player'2 action).
+		 * @param rowPayoff
+		 *            the payoff the row player receives.
+		 * @param colPayoff
+		 *            the payoff the column player receives.
+		 */
+		public void setPayoff(int row, int col, double rowPayoff,
+				double colPayoff) {
+			this.rowPayoffs[row][col] = rowPayoff;
+			this.colPayoffs[row][col] = colPayoff;
+		}
+	}
 
 	/**
 	 * The solution concept to be solved for the immediate rewards.
@@ -53,37 +141,6 @@ public class EquilibriumPlayingSGAgent extends SGAgent {
 	 */
 	public EquilibriumPlayingSGAgent(BimatrixEquilibriumSolver solver) {
 		this.solver = solver;
-	}
-
-	@Override
-	public void gameStarting() {
-		// do nothing
-	}
-
-	@Override
-	public GroundedSGAgentAction getAction(State s) {
-
-		List<GroundedSGAgentAction> myActions = SGAgentAction
-				.getAllApplicableGroundedActionsFromActionList(s,
-						this.worldAgentName, this.agentType.actions);
-		BimatrixTuple bimatrix = this.constructBimatrix(s, myActions);
-		solver.solve(bimatrix.rowPayoffs, bimatrix.colPayoffs);
-		double[] strategy = solver.getLastComputedRowStrategy();
-		GroundedSGAgentAction selection = myActions.get(this
-				.sampleStrategy(strategy));
-
-		return selection;
-	}
-
-	@Override
-	public void observeOutcome(State s, JointAction jointAction,
-			Map<String, Double> jointReward, State sprime, boolean isTerminal) {
-		// do nothing
-	}
-
-	@Override
-	public void gameTerminated() {
-		// do nothing
 	}
 
 	/**
@@ -137,27 +194,29 @@ public class EquilibriumPlayingSGAgent extends SGAgent {
 		return bimatrix;
 	}
 
-	/**
-	 * Samples an action from a strategy, where a strategy is defined as
-	 * probability distribution over actions.
-	 * 
-	 * @param strategy
-	 *            a double array where strategy[i] is the probability of action
-	 *            i being selected
-	 * @return a sampled action
-	 */
-	protected int sampleStrategy(double[] strategy) {
-		double roll = this.rand.nextDouble();
-		double sum = 0.;
-		for (int i = 0; i < strategy.length; i++) {
-			sum += strategy[i];
-			if (roll < sum) {
-				return i;
-			}
-		}
-		throw new RuntimeException(
-				"Strategy probability distribution does not sum to 1; it sums to: "
-						+ sum);
+	@Override
+	public void gameStarting() {
+		// do nothing
+	}
+
+	@Override
+	public void gameTerminated() {
+		// do nothing
+	}
+
+	@Override
+	public GroundedSGAgentAction getAction(State s) {
+
+		List<GroundedSGAgentAction> myActions = SGAgentAction
+				.getAllApplicableGroundedActionsFromActionList(s,
+						this.worldAgentName, this.agentType.actions);
+		BimatrixTuple bimatrix = this.constructBimatrix(s, myActions);
+		solver.solve(bimatrix.rowPayoffs, bimatrix.colPayoffs);
+		double[] strategy = solver.getLastComputedRowStrategy();
+		GroundedSGAgentAction selection = myActions.get(this
+				.sampleStrategy(strategy));
+
+		return selection;
 	}
 
 	/**
@@ -180,92 +239,33 @@ public class EquilibriumPlayingSGAgent extends SGAgent {
 		return agents.get(0);
 	}
 
+	@Override
+	public void observeOutcome(State s, JointAction jointAction,
+			Map<String, Double> jointReward, State sprime, boolean isTerminal) {
+		// do nothing
+	}
+
 	/**
-	 * A Bimatrix tuple. It consists of a 2D double array for the row player's
-	 * payoffs and a 2D douuble array for the column player's payoffs.
+	 * Samples an action from a strategy, where a strategy is defined as
+	 * probability distribution over actions.
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @param strategy
+	 *            a double array where strategy[i] is the probability of action
+	 *            i being selected
+	 * @return a sampled action
 	 */
-	protected class BimatrixTuple {
-
-		/**
-		 * The row player's payoffs.
-		 */
-		public double[][] rowPayoffs;
-
-		/**
-		 * The column player's payoffs.
-		 */
-		public double[][] colPayoffs;
-
-		/**
-		 * Initializes the payoff matrices for a bimatrix of the given row and
-		 * column dimensionality
-		 * 
-		 * @param nRows
-		 *            the number of rows
-		 * @param nCols
-		 *            the number of columns
-		 */
-		public BimatrixTuple(int nRows, int nCols) {
-			this.rowPayoffs = new double[nRows][nCols];
-			this.colPayoffs = new double[nRows][nCols];
-		}
-
-		/**
-		 * Initializes with a given row and column player payoffs.
-		 * 
-		 * @param rowPayoffs
-		 *            the row player payoffs.
-		 * @param colPayoffs
-		 *            the column player payoffs.
-		 */
-		public BimatrixTuple(double[][] rowPayoffs, double[][] colPayoffs) {
-			if (rowPayoffs.length != colPayoffs.length
-					|| rowPayoffs[0].length != colPayoffs[0].length) {
-				throw new RuntimeException(
-						"Payoff matrices are not of equal dimension.");
+	protected int sampleStrategy(double[] strategy) {
+		double roll = this.rand.nextDouble();
+		double sum = 0.;
+		for (int i = 0; i < strategy.length; i++) {
+			sum += strategy[i];
+			if (roll < sum) {
+				return i;
 			}
-			this.rowPayoffs = rowPayoffs;
-			this.colPayoffs = colPayoffs;
 		}
-
-		/**
-		 * Returns the number of rows
-		 * 
-		 * @return the number of rows
-		 */
-		public int nRows() {
-			return rowPayoffs.length;
-		}
-
-		/**
-		 * Returns the number of columns
-		 * 
-		 * @return the number of columns
-		 */
-		public int nCols() {
-			return rowPayoffs[0].length;
-		}
-
-		/**
-		 * Sets the payoffs for a given row and column.
-		 * 
-		 * @param row
-		 *            the row index (player 1's action).
-		 * @param col
-		 *            the column index (player'2 action).
-		 * @param rowPayoff
-		 *            the payoff the row player receives.
-		 * @param colPayoff
-		 *            the payoff the column player receives.
-		 */
-		public void setPayoff(int row, int col, double rowPayoff,
-				double colPayoff) {
-			this.rowPayoffs[row][col] = rowPayoff;
-			this.colPayoffs[row][col] = colPayoff;
-		}
+		throw new RuntimeException(
+				"Strategy probability distribution does not sum to 1; it sums to: "
+						+ sum);
 	}
 
 }

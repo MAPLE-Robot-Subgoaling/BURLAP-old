@@ -8,8 +8,8 @@ import burlap.behavior.policy.Policy;
 import burlap.datastructures.HashedAggregator;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 import burlap.oomdp.stochasticgames.JointAction;
+import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 
 /**
  * This class defines a single agent's policy that is derived from a joint
@@ -111,46 +111,16 @@ public class PolicyFromJointPolicy extends Policy {
 	}
 
 	/**
-	 * Sets the underlying joint policy
+	 * Returns a copy of this policy, which entails of first making a copy of
+	 * the joint policy.
 	 * 
-	 * @param jointPolicy
-	 *            the underlying joint polciy
+	 * @return a copy of this policy.
 	 */
-	public void setJointPolicy(JointPolicy jointPolicy) {
-		this.jointPolicy = jointPolicy;
-	}
-
-	/**
-	 * Returns the underlying joint policy
-	 * 
-	 * @return the underlying joint policy
-	 */
-	public JointPolicy getJointPolicy() {
-		return this.jointPolicy;
-	}
-
-	/**
-	 * Sets the acting agents name
-	 * 
-	 * @param agentName
-	 *            the acting agent's name
-	 */
-	public void setActingAgentName(String agentName) {
-		this.actingAgentName = agentName;
-		this.jointPolicy.setTargetAgent(agentName);
-	}
-
-	/**
-	 * Sets whether actions selection of this agent's policy should be
-	 * synchronized with the action selection of other agents following the same
-	 * underlying joint policy.
-	 * 
-	 * @param synchronizeJointActionSelectionAmongAgents
-	 *            whether agent actions should be synchronized or not.
-	 */
-	public void setSynchronizeJointActionSelectionAmongAgents(
-			boolean synchronizeJointActionSelectionAmongAgents) {
-		this.synchronizeJointActionSelectionAmongAgents = synchronizeJointActionSelectionAmongAgents;
+	public PolicyFromJointPolicy copy() {
+		PolicyFromJointPolicy np = new PolicyFromJointPolicy(
+				this.jointPolicy.copy());
+		np.setActingAgentName(this.actingAgentName);
+		return np;
 	}
 
 	/**
@@ -197,9 +167,13 @@ public class PolicyFromJointPolicy extends Policy {
 		return finalProbs;
 	}
 
-	@Override
-	public boolean isStochastic() {
-		return this.jointPolicy.isStochastic();
+	/**
+	 * Returns the underlying joint policy
+	 * 
+	 * @return the underlying joint policy
+	 */
+	public JointPolicy getJointPolicy() {
+		return this.jointPolicy;
 	}
 
 	@Override
@@ -207,17 +181,43 @@ public class PolicyFromJointPolicy extends Policy {
 		return this.jointPolicy.isDefinedFor(s);
 	}
 
+	@Override
+	public boolean isStochastic() {
+		return this.jointPolicy.isStochastic();
+	}
+
 	/**
-	 * Returns a copy of this policy, which entails of first making a copy of
-	 * the joint policy.
+	 * Sets the acting agents name
 	 * 
-	 * @return a copy of this policy.
+	 * @param agentName
+	 *            the acting agent's name
 	 */
-	public PolicyFromJointPolicy copy() {
-		PolicyFromJointPolicy np = new PolicyFromJointPolicy(
-				this.jointPolicy.copy());
-		np.setActingAgentName(this.actingAgentName);
-		return np;
+	public void setActingAgentName(String agentName) {
+		this.actingAgentName = agentName;
+		this.jointPolicy.setTargetAgent(agentName);
+	}
+
+	/**
+	 * Sets the underlying joint policy
+	 * 
+	 * @param jointPolicy
+	 *            the underlying joint polciy
+	 */
+	public void setJointPolicy(JointPolicy jointPolicy) {
+		this.jointPolicy = jointPolicy;
+	}
+
+	/**
+	 * Sets whether actions selection of this agent's policy should be
+	 * synchronized with the action selection of other agents following the same
+	 * underlying joint policy.
+	 * 
+	 * @param synchronizeJointActionSelectionAmongAgents
+	 *            whether agent actions should be synchronized or not.
+	 */
+	public void setSynchronizeJointActionSelectionAmongAgents(
+			boolean synchronizeJointActionSelectionAmongAgents) {
+		this.synchronizeJointActionSelectionAmongAgents = synchronizeJointActionSelectionAmongAgents;
 	}
 
 }

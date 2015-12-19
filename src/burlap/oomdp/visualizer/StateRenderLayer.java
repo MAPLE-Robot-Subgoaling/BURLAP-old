@@ -29,6 +29,17 @@ import burlap.oomdp.core.states.State;
  */
 public class StateRenderLayer implements RenderLayer {
 
+	static class ObjectPainterAndClassNamePair {
+		String className;
+		ObjectPainter painter;
+
+		public ObjectPainterAndClassNamePair(String className,
+				ObjectPainter painter) {
+			this.className = className;
+			this.painter = painter;
+		}
+	}
+
 	/**
 	 * the current state to be painted next
 	 */
@@ -61,16 +72,6 @@ public class StateRenderLayer implements RenderLayer {
 	}
 
 	/**
-	 * Adds a static painter for the domain.
-	 * 
-	 * @param sp
-	 *            the static painter to add.
-	 */
-	public void addStaticPainter(StaticPainter sp) {
-		staticPainters.add(sp);
-	}
-
-	/**
 	 * Adds a class that will paint objects that belong to a given OO-MDPclass.
 	 * 
 	 * @param className
@@ -96,13 +97,13 @@ public class StateRenderLayer implements RenderLayer {
 	}
 
 	/**
-	 * Updates the state that needs to be painted
+	 * Adds a static painter for the domain.
 	 * 
-	 * @param s
-	 *            the state to paint
+	 * @param sp
+	 *            the static painter to add.
 	 */
-	public void updateState(State s) {
-		curState = s;
+	public void addStaticPainter(StaticPainter sp) {
+		staticPainters.add(sp);
 	}
 
 	@Override
@@ -165,15 +166,14 @@ public class StateRenderLayer implements RenderLayer {
 
 	}
 
-	static class ObjectPainterAndClassNamePair {
-		String className;
-		ObjectPainter painter;
-
-		public ObjectPainterAndClassNamePair(String className,
-				ObjectPainter painter) {
-			this.className = className;
-			this.painter = painter;
-		}
+	/**
+	 * Updates the state that needs to be painted
+	 * 
+	 * @param s
+	 *            the state to paint
+	 */
+	public void updateState(State s) {
+		curState = s;
 	}
 
 }

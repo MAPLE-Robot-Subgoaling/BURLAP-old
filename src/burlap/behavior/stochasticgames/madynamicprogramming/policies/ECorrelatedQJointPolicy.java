@@ -12,8 +12,8 @@ import burlap.behavior.stochasticgames.solvers.CorrelatedEquilibriumSolver;
 import burlap.behavior.stochasticgames.solvers.CorrelatedEquilibriumSolver.CorrelatedEquilibriumObjective;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 import burlap.oomdp.stochasticgames.JointAction;
+import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
 
 /**
@@ -45,16 +45,6 @@ public class ECorrelatedQJointPolicy extends MAQSourcePolicy {
 	protected CorrelatedEquilibriumObjective objectiveType = CorrelatedEquilibriumObjective.UTILITARIAN;
 
 	/**
-	 * Initializes with the epislon probability of a random joint action.
-	 * 
-	 * @param epsilon
-	 *            the probability that a random joint action is returned.
-	 */
-	public ECorrelatedQJointPolicy(double epsilon) {
-		this.epsilon = epsilon;
-	}
-
-	/**
 	 * Initializes with the correlated equilibrium objective and the epsilon
 	 * probability of a random joint action.
 	 * 
@@ -70,19 +60,13 @@ public class ECorrelatedQJointPolicy extends MAQSourcePolicy {
 	}
 
 	/**
-	 * Sets the correlated equilibrium objective to be solved.
+	 * Initializes with the epislon probability of a random joint action.
 	 * 
-	 * @param objectiveType
-	 *            the correlated equilibrium objective to be solved.
+	 * @param epsilon
+	 *            the probability that a random joint action is returned.
 	 */
-	public void setCorrelatedQObjective(
-			CorrelatedEquilibriumObjective objectiveType) {
-		this.objectiveType = objectiveType;
-	}
-
-	@Override
-	public void setTargetAgent(String agentName) {
-		// do nothing
+	public ECorrelatedQJointPolicy(double epsilon) {
+		this.epsilon = epsilon;
 	}
 
 	@Override
@@ -165,18 +149,34 @@ public class ECorrelatedQJointPolicy extends MAQSourcePolicy {
 	}
 
 	@Override
-	public boolean isStochastic() {
-		return true;
-	}
-
-	@Override
 	public boolean isDefinedFor(State s) {
 		return true;
 	}
 
 	@Override
+	public boolean isStochastic() {
+		return true;
+	}
+
+	/**
+	 * Sets the correlated equilibrium objective to be solved.
+	 * 
+	 * @param objectiveType
+	 *            the correlated equilibrium objective to be solved.
+	 */
+	public void setCorrelatedQObjective(
+			CorrelatedEquilibriumObjective objectiveType) {
+		this.objectiveType = objectiveType;
+	}
+
+	@Override
 	public void setQSourceProvider(MultiAgentQSourceProvider provider) {
 		this.qSourceProvider = provider;
+	}
+
+	@Override
+	public void setTargetAgent(String agentName) {
+		// do nothing
 	}
 
 }

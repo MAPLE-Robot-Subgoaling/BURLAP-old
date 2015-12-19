@@ -5,8 +5,8 @@ import java.util.List;
 import javax.management.RuntimeErrorException;
 
 import burlap.behavior.singleagent.MDPSolverInterface;
-import burlap.behavior.valuefunction.QValue;
 import burlap.behavior.valuefunction.QFunction;
+import burlap.behavior.valuefunction.QValue;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
@@ -38,17 +38,6 @@ public class GreedyDeterministicQPolicy extends Policy implements
 	}
 
 	@Override
-	public void setSolver(MDPSolverInterface solver) {
-
-		if (!(solver instanceof QFunction)) {
-			throw new RuntimeErrorException(new Error(
-					"Planner is not a QComputablePlanner"));
-		}
-
-		this.qplanner = (QFunction) solver;
-	}
-
-	@Override
 	public AbstractGroundedAction getAction(State s) {
 
 		List<QValue> qValues = this.qplanner.getQs(s);
@@ -70,13 +59,24 @@ public class GreedyDeterministicQPolicy extends Policy implements
 	}
 
 	@Override
+	public boolean isDefinedFor(State s) {
+		return true; // can always find q-values with default value
+	}
+
+	@Override
 	public boolean isStochastic() {
 		return false;
 	}
 
 	@Override
-	public boolean isDefinedFor(State s) {
-		return true; // can always find q-values with default value
+	public void setSolver(MDPSolverInterface solver) {
+
+		if (!(solver instanceof QFunction)) {
+			throw new RuntimeErrorException(new Error(
+					"Planner is not a QComputablePlanner"));
+		}
+
+		this.qplanner = (QFunction) solver;
 	}
 
 }

@@ -61,315 +61,6 @@ public class CorrelatedEquilibriumSolver {
 		UTILITARIAN, EGALITARIAN, REPUBLICAN, LIBERTARIAN
 	}
 
-	public static void main(String[] args) {
-
-		double[][] chickenRow = new double[][] { { 6, 2 }, { 7, 0 } };
-
-		double[][] chickenCol = new double[][] { { 6, 7 }, { 2, 0 } };
-
-		double[][] jointActionProbs = getCorrelatedEQJointStrategy(
-				CorrelatedEquilibriumObjective.UTILITARIAN, chickenRow,
-				chickenCol);
-		// double [][] jointActionProbs =
-		// getCorrelatedEQJointStrategy(CorrelatedEquilibriumObjective.EGALITARIAN,
-		// chickenRow, chickenCol);
-		double[] rowStrategy = GeneralBimatrixSolverTools
-				.marginalizeRowPlayerStrategy(jointActionProbs);
-		double[] colStrategy = GeneralBimatrixSolverTools
-				.marginalizeColPlayerStrategy(jointActionProbs);
-
-		for (int i = 0; i < jointActionProbs.length; i++) {
-			for (int j = 0; j < jointActionProbs[i].length; j++) {
-				System.out.print(jointActionProbs[i][j] + " ");
-			}
-			System.out.println("");
-		}
-
-		System.out.println("------");
-
-		for (int i = 0; i < rowStrategy.length; i++) {
-			System.out.print(rowStrategy[i] + " ");
-		}
-		System.out.println("");
-		for (int i = 0; i < colStrategy.length; i++) {
-			System.out.print(colStrategy[i] + " ");
-		}
-		System.out.println("");
-
-	}
-
-	/**
-	 * Returns the correlated equilibrium joint strategy in a 2D double matrix,
-	 * which represents the probability of each joint actino (where rows are
-	 * player 1s actions and columns are player 2's actions). If the @{linke
-	 * {@link CorrelatedEquilibriumObjective#LIBERTARIAN} objective is selected,
-	 * it will maximize with respect to the row player's payoffs and return the
-	 * strategy from their perspecitve. Therefore for a combined joint strategy
-	 * for each player in libertrain, this method should then be called for each
-	 * player and then combined as necessary to get a final joint strategy that
-	 * will be followed by the players.
-	 * 
-	 * @param objectiveType
-	 *            the maximizing objective for the correlated equilibrium being
-	 *            solved.
-	 * @param payoffRow
-	 *            the payoff for the player whose actions correspond to the rows
-	 *            of the matrix
-	 * @param payoffCol
-	 *            the payoff for the player whose actions correspond to the
-	 *            columns of the matrix
-	 * @return the correlated equilibrium joint strategy as a 2D double matrix.
-	 */
-	public static double[][] getCorrelatedEQJointStrategy(
-			CorrelatedEquilibriumObjective objectiveType, double[][] payoffRow,
-			double[][] payoffCol) {
-
-		if (objectiveType.equals(CorrelatedEquilibriumObjective.UTILITARIAN)) {
-			return getCorrelatedEQJointStrategyUtilitarian(payoffRow, payoffCol);
-		}
-		if (objectiveType.equals(CorrelatedEquilibriumObjective.EGALITARIAN)) {
-			return getCorrelatedEQJointStrategyEgalitarian(payoffRow, payoffCol);
-		} else if (objectiveType
-				.equals(CorrelatedEquilibriumObjective.REPUBLICAN)) {
-			return getCorrelatedEQJointStrategyRepublican(payoffRow, payoffCol);
-		} else if (objectiveType
-				.equals(CorrelatedEquilibriumObjective.LIBERTARIAN)) {
-			return getCorrelatedEQJointStrategyLibertarianForRow(payoffRow,
-					payoffCol);
-		}
-
-		throw new RuntimeException("Unknown objective type");
-
-	}
-
-	/**
-	 * Returns the correlated equilibrium joint strategy in a 2D double matrix
-	 * for the Utilitarian objective.
-	 * 
-	 * @param payoffRow
-	 *            the payoff for the player whose actions correspond to the rows
-	 *            of the matrix
-	 * @param payoffCol
-	 *            the payoff for the player whose actions correspond to the
-	 *            columns of the matrix
-	 * @return the correlated equilibrium joint strategy as a 2D double matrix.
-	 */
-	public static double[][] getCorrelatedEQJointStrategyUtilitarian(
-			double[][] payoffRow, double[][] payoffCol) {
-
-		int nRows = payoffRow.length;
-		int nCols = payoffRow[0].length;
-		int n = nRows * nCols;
-
-		double[] c = getUtilitarianObjective(payoffRow, payoffCol);
-		LinearProgram lp = new LinearProgram(c);
-
-		int cCount = 0;
-		cCount = addCorrelatedEquilibriumMainConstraints(lp, payoffRow,
-				payoffCol, n, cCount);
-
-		return runLPAndGetJointActionProbs(lp, nRows, nCols);
-
-	}
-
-	/**
-	 * Returns the correlated equilibrium joint strategy in a 2D double matrix
-	 * for the Egalitarian objective.
-	 * 
-	 * @param payoffRow
-	 *            the payoff for the player whose actions correspond to the rows
-	 *            of the matrix
-	 * @param payoffCol
-	 *            the payoff for the player whose actions correspond to the
-	 *            columns of the matrix
-	 * @return the correlated equilibrium joint strategy as a 2D double matrix.
-	 */
-	public static double[][] getCorrelatedEQJointStrategyEgalitarian(
-			double[][] payoffRow, double[][] payoffCol) {
-
-		int nRows = payoffRow.length;
-		int nCols = payoffRow[0].length;
-		int n = (nRows * nCols) + 1; // 1 auxiliary variable
-
-		double[] c = getEgalitarianObjective(payoffRow, payoffCol);
-		LinearProgram lp = new LinearProgram(c);
-
-		int cCount = 0;
-		cCount = addCorrelatedEquilibriumMainConstraints(lp, payoffRow,
-				payoffCol, n, cCount);
-
-		// also need to add constraint that the aux value variable is less than
-		// or equal to any specific agents
-		// value. This means we need to sum up their value, place a negative on
-		// the aux, and be >= 0
-		double[] rowPlayerConstraint = new double[n];
-		double[] colPlayerConstraint = new double[n];
-		for (int i = 0; i < n - 1; i++) {
-			int[] rc = rowCol(i, nCols);
-			rowPlayerConstraint[i] = payoffRow[rc[0]][rc[1]];
-			colPlayerConstraint[i] = payoffCol[rc[0]][rc[1]];
-		}
-		rowPlayerConstraint[n - 1] = -1;
-		colPlayerConstraint[n - 1] = -1;
-
-		lp.addConstraint(new LinearBiggerThanEqualsConstraint(
-				rowPlayerConstraint, 0.0, "c" + cCount));
-		cCount++;
-		lp.addConstraint(new LinearBiggerThanEqualsConstraint(
-				colPlayerConstraint, 0.0, "c" + cCount));
-
-		return runLPAndGetJointActionProbs(lp, nRows, nCols);
-
-	}
-
-	/**
-	 * Returns the correlated equilibrium joint strategy in a 2D double matrix
-	 * for the Republican objective.
-	 * 
-	 * @param payoffRow
-	 *            the payoff for the player whose actions correspond to the rows
-	 *            of the matrix
-	 * @param payoffCol
-	 *            the payoff for the player whose actions correspond to the
-	 *            columns of the matrix
-	 * @return the correlated equilibrium joint strategy as a 2D double matrix.
-	 */
-	public static double[][] getCorrelatedEQJointStrategyRepublican(
-			double[][] payoffRow, double[][] payoffCol) {
-
-		int nRows = payoffRow.length;
-		int nCols = payoffRow[0].length;
-		int n = nRows * nCols;
-
-		// check row player solution value
-		double[] cRow = getRepublicanObjective(payoffRow);
-		LinearProgram lpRow = new LinearProgram(cRow);
-
-		int cCount = 0;
-		cCount = addCorrelatedEquilibriumMainConstraints(lpRow, payoffRow,
-				payoffCol, n, cCount);
-
-		double[][] rowSol = runLPAndGetJointActionProbs(lpRow, nRows, nCols);
-		double rowSolVal = GeneralBimatrixSolverTools.expectedPayoffs(
-				payoffRow, payoffCol, rowSol)[0];
-
-		// check col player solution value
-		double[] cCol = getRepublicanObjective(payoffCol);
-		LinearProgram lpCol = new LinearProgram(cCol);
-
-		cCount = 0;
-		cCount = addCorrelatedEquilibriumMainConstraints(lpCol, payoffRow,
-				payoffCol, n, cCount);
-
-		double[][] colSol = runLPAndGetJointActionProbs(lpCol, nRows, nCols);
-		double colSolVal = GeneralBimatrixSolverTools.expectedPayoffs(
-				payoffRow, payoffCol, colSol)[0];
-
-		if (rowSolVal > colSolVal) {
-			return rowSol;
-		}
-
-		return colSol;
-	}
-
-	/**
-	 * Returns the correlated equilibrium joint strategy in a 2D double matrix
-	 * for the Libertarian objective. The player payoff being used for
-	 * maximization is the row player.
-	 * 
-	 * @param payoffRow
-	 *            the payoff for the player whose actions correspond to the rows
-	 *            of the matrix
-	 * @param payoffCol
-	 *            the payoff for the player whose actions correspond to the
-	 *            columns of the matrix
-	 * @return the correlated equilibrium joint strategy as a 2D double matrix.
-	 */
-	public static double[][] getCorrelatedEQJointStrategyLibertarianForRow(
-			double[][] payoffRow, double[][] payoffCol) {
-
-		int nRows = payoffRow.length;
-		int nCols = payoffRow[0].length;
-		int n = nRows * nCols;
-
-		// check row player solution value
-		double[] cRow = getRepublicanObjective(payoffRow);
-		LinearProgram lpRow = new LinearProgram(cRow);
-
-		int cCount = 0;
-		cCount = addCorrelatedEquilibriumMainConstraints(lpRow, payoffRow,
-				payoffCol, n, cCount);
-
-		return runLPAndGetJointActionProbs(lpRow, nRows, nCols);
-
-	}
-
-	/**
-	 * Returns the correlated equilibrium joint strategy in a 2D double matrix
-	 * for the Libertarian objective. The player payoff being used for
-	 * maximization is the column player.
-	 * 
-	 * @param payoffRow
-	 *            the payoff for the player whose actions correspond to the rows
-	 *            of the matrix
-	 * @param payoffCol
-	 *            the payoff for the player whose actions correspond to the
-	 *            columns of the matrix
-	 * @return the correlated equilibrium joint strategy as a 2D double matrix.
-	 */
-	public static double[][] getCorrelatedEQJointStrategyLibertarianForCol(
-			double[][] payoffRow, double[][] payoffCol) {
-
-		int nRows = payoffRow.length;
-		int nCols = payoffRow[0].length;
-		int n = nRows * nCols;
-
-		// check row player solution value
-		double[] cRow = getRepublicanObjective(payoffCol);
-		LinearProgram lpRow = new LinearProgram(cRow);
-
-		int cCount = 0;
-		cCount = addCorrelatedEquilibriumMainConstraints(lpRow, payoffRow,
-				payoffCol, n, cCount);
-
-		return runLPAndGetJointActionProbs(lpRow, nRows, nCols);
-
-	}
-
-	/**
-	 * Helper method for running the linear program optimization (after its
-	 * constraints have already been set) and returning the result in the form
-	 * of the 2D double matrix joint strategy.
-	 * 
-	 * @param lp
-	 *            the linear program to be optimized
-	 * @param nRows
-	 *            the number of rows in the bimatrix (number of player 1
-	 *            actions)
-	 * @param nCols
-	 *            the number of columns in the bimatrix (number of player 2
-	 *            actions)
-	 * @return a 2D double representing the joint strategy for the given linear
-	 *         program correlated equilibrium problem.
-	 */
-	protected static double[][] runLPAndGetJointActionProbs(LinearProgram lp,
-			int nRows, int nCols) {
-
-		int nn = nRows * nCols;
-
-		lp.setMinProblem(false);
-		LinearProgramSolver solver = SolverFactory.newDefault();
-		double[] sol = solver.solve(lp);
-
-		double[][] jointActionProbs = new double[nRows][nCols];
-		for (int i = 0; i < nn; i++) {
-			int[] rc = rowCol(i, nCols);
-			jointActionProbs[rc[0]][rc[1]] = sol[i];
-		}
-
-		return jointActionProbs;
-	}
-
 	/**
 	 * Adds the common LP constraints for the correlated equilribum problem:
 	 * rationalaity constraits (no agent has a motivation to diverge from a
@@ -472,6 +163,214 @@ public class CorrelatedEquilibriumSolver {
 
 		return cCount;
 
+	}
+
+	/**
+	 * Returns the correlated equilibrium joint strategy in a 2D double matrix,
+	 * which represents the probability of each joint actino (where rows are
+	 * player 1s actions and columns are player 2's actions). If the @{linke
+	 * {@link CorrelatedEquilibriumObjective#LIBERTARIAN} objective is selected,
+	 * it will maximize with respect to the row player's payoffs and return the
+	 * strategy from their perspecitve. Therefore for a combined joint strategy
+	 * for each player in libertrain, this method should then be called for each
+	 * player and then combined as necessary to get a final joint strategy that
+	 * will be followed by the players.
+	 * 
+	 * @param objectiveType
+	 *            the maximizing objective for the correlated equilibrium being
+	 *            solved.
+	 * @param payoffRow
+	 *            the payoff for the player whose actions correspond to the rows
+	 *            of the matrix
+	 * @param payoffCol
+	 *            the payoff for the player whose actions correspond to the
+	 *            columns of the matrix
+	 * @return the correlated equilibrium joint strategy as a 2D double matrix.
+	 */
+	public static double[][] getCorrelatedEQJointStrategy(
+			CorrelatedEquilibriumObjective objectiveType, double[][] payoffRow,
+			double[][] payoffCol) {
+
+		if (objectiveType.equals(CorrelatedEquilibriumObjective.UTILITARIAN)) {
+			return getCorrelatedEQJointStrategyUtilitarian(payoffRow, payoffCol);
+		}
+		if (objectiveType.equals(CorrelatedEquilibriumObjective.EGALITARIAN)) {
+			return getCorrelatedEQJointStrategyEgalitarian(payoffRow, payoffCol);
+		} else if (objectiveType
+				.equals(CorrelatedEquilibriumObjective.REPUBLICAN)) {
+			return getCorrelatedEQJointStrategyRepublican(payoffRow, payoffCol);
+		} else if (objectiveType
+				.equals(CorrelatedEquilibriumObjective.LIBERTARIAN)) {
+			return getCorrelatedEQJointStrategyLibertarianForRow(payoffRow,
+					payoffCol);
+		}
+
+		throw new RuntimeException("Unknown objective type");
+
+	}
+
+	/**
+	 * Returns the correlated equilibrium joint strategy in a 2D double matrix
+	 * for the Egalitarian objective.
+	 * 
+	 * @param payoffRow
+	 *            the payoff for the player whose actions correspond to the rows
+	 *            of the matrix
+	 * @param payoffCol
+	 *            the payoff for the player whose actions correspond to the
+	 *            columns of the matrix
+	 * @return the correlated equilibrium joint strategy as a 2D double matrix.
+	 */
+	public static double[][] getCorrelatedEQJointStrategyEgalitarian(
+			double[][] payoffRow, double[][] payoffCol) {
+
+		int nRows = payoffRow.length;
+		int nCols = payoffRow[0].length;
+		int n = (nRows * nCols) + 1; // 1 auxiliary variable
+
+		double[] c = getEgalitarianObjective(payoffRow, payoffCol);
+		LinearProgram lp = new LinearProgram(c);
+
+		int cCount = 0;
+		cCount = addCorrelatedEquilibriumMainConstraints(lp, payoffRow,
+				payoffCol, n, cCount);
+
+		// also need to add constraint that the aux value variable is less than
+		// or equal to any specific agents
+		// value. This means we need to sum up their value, place a negative on
+		// the aux, and be >= 0
+		double[] rowPlayerConstraint = new double[n];
+		double[] colPlayerConstraint = new double[n];
+		for (int i = 0; i < n - 1; i++) {
+			int[] rc = rowCol(i, nCols);
+			rowPlayerConstraint[i] = payoffRow[rc[0]][rc[1]];
+			colPlayerConstraint[i] = payoffCol[rc[0]][rc[1]];
+		}
+		rowPlayerConstraint[n - 1] = -1;
+		colPlayerConstraint[n - 1] = -1;
+
+		lp.addConstraint(new LinearBiggerThanEqualsConstraint(
+				rowPlayerConstraint, 0.0, "c" + cCount));
+		cCount++;
+		lp.addConstraint(new LinearBiggerThanEqualsConstraint(
+				colPlayerConstraint, 0.0, "c" + cCount));
+
+		return runLPAndGetJointActionProbs(lp, nRows, nCols);
+
+	}
+
+	/**
+	 * Returns the correlated equilibrium joint strategy in a 2D double matrix
+	 * for the Libertarian objective. The player payoff being used for
+	 * maximization is the column player.
+	 * 
+	 * @param payoffRow
+	 *            the payoff for the player whose actions correspond to the rows
+	 *            of the matrix
+	 * @param payoffCol
+	 *            the payoff for the player whose actions correspond to the
+	 *            columns of the matrix
+	 * @return the correlated equilibrium joint strategy as a 2D double matrix.
+	 */
+	public static double[][] getCorrelatedEQJointStrategyLibertarianForCol(
+			double[][] payoffRow, double[][] payoffCol) {
+
+		int nRows = payoffRow.length;
+		int nCols = payoffRow[0].length;
+		int n = nRows * nCols;
+
+		// check row player solution value
+		double[] cRow = getRepublicanObjective(payoffCol);
+		LinearProgram lpRow = new LinearProgram(cRow);
+
+		int cCount = 0;
+		cCount = addCorrelatedEquilibriumMainConstraints(lpRow, payoffRow,
+				payoffCol, n, cCount);
+
+		return runLPAndGetJointActionProbs(lpRow, nRows, nCols);
+
+	}
+
+	/**
+	 * Returns the correlated equilibrium joint strategy in a 2D double matrix
+	 * for the Libertarian objective. The player payoff being used for
+	 * maximization is the row player.
+	 * 
+	 * @param payoffRow
+	 *            the payoff for the player whose actions correspond to the rows
+	 *            of the matrix
+	 * @param payoffCol
+	 *            the payoff for the player whose actions correspond to the
+	 *            columns of the matrix
+	 * @return the correlated equilibrium joint strategy as a 2D double matrix.
+	 */
+	public static double[][] getCorrelatedEQJointStrategyLibertarianForRow(
+			double[][] payoffRow, double[][] payoffCol) {
+
+		int nRows = payoffRow.length;
+		int nCols = payoffRow[0].length;
+		int n = nRows * nCols;
+
+		// check row player solution value
+		double[] cRow = getRepublicanObjective(payoffRow);
+		LinearProgram lpRow = new LinearProgram(cRow);
+
+		int cCount = 0;
+		cCount = addCorrelatedEquilibriumMainConstraints(lpRow, payoffRow,
+				payoffCol, n, cCount);
+
+		return runLPAndGetJointActionProbs(lpRow, nRows, nCols);
+
+	}
+
+	/**
+	 * Returns the correlated equilibrium joint strategy in a 2D double matrix
+	 * for the Republican objective.
+	 * 
+	 * @param payoffRow
+	 *            the payoff for the player whose actions correspond to the rows
+	 *            of the matrix
+	 * @param payoffCol
+	 *            the payoff for the player whose actions correspond to the
+	 *            columns of the matrix
+	 * @return the correlated equilibrium joint strategy as a 2D double matrix.
+	 */
+	public static double[][] getCorrelatedEQJointStrategyRepublican(
+			double[][] payoffRow, double[][] payoffCol) {
+
+		int nRows = payoffRow.length;
+		int nCols = payoffRow[0].length;
+		int n = nRows * nCols;
+
+		// check row player solution value
+		double[] cRow = getRepublicanObjective(payoffRow);
+		LinearProgram lpRow = new LinearProgram(cRow);
+
+		int cCount = 0;
+		cCount = addCorrelatedEquilibriumMainConstraints(lpRow, payoffRow,
+				payoffCol, n, cCount);
+
+		double[][] rowSol = runLPAndGetJointActionProbs(lpRow, nRows, nCols);
+		double rowSolVal = GeneralBimatrixSolverTools.expectedPayoffs(
+				payoffRow, payoffCol, rowSol)[0];
+
+		// check col player solution value
+		double[] cCol = getRepublicanObjective(payoffCol);
+		LinearProgram lpCol = new LinearProgram(cCol);
+
+		cCount = 0;
+		cCount = addCorrelatedEquilibriumMainConstraints(lpCol, payoffRow,
+				payoffCol, n, cCount);
+
+		double[][] colSol = runLPAndGetJointActionProbs(lpCol, nRows, nCols);
+		double colSolVal = GeneralBimatrixSolverTools.expectedPayoffs(
+				payoffRow, payoffCol, colSol)[0];
+
+		if (rowSolVal > colSolVal) {
+			return rowSol;
+		}
+
+		return colSol;
 	}
 
 	/**
@@ -605,33 +504,32 @@ public class CorrelatedEquilibriumSolver {
 	}
 
 	/**
-	 * Returns the utilitarian objective for the given payoffs for the row and
-	 * column player.
+	 * Returns the correlated equilibrium joint strategy in a 2D double matrix
+	 * for the Utilitarian objective.
 	 * 
 	 * @param payoffRow
-	 *            the row player's payoffs
+	 *            the payoff for the player whose actions correspond to the rows
+	 *            of the matrix
 	 * @param payoffCol
-	 *            the column player's payoffs
-	 * @return the objective function as a double array of the LP variable
-	 *         coeffecients.
+	 *            the payoff for the player whose actions correspond to the
+	 *            columns of the matrix
+	 * @return the correlated equilibrium joint strategy as a 2D double matrix.
 	 */
-	public static double[] getUtilitarianObjective(double[][] payoffRow,
-			double[][] payoffCol) {
+	public static double[][] getCorrelatedEQJointStrategyUtilitarian(
+			double[][] payoffRow, double[][] payoffCol) {
 
 		int nRows = payoffRow.length;
 		int nCols = payoffRow[0].length;
 		int n = nRows * nCols;
 
-		double[] objective = new double[n];
-		for (int i = 0; i < n; i++) {
-			int[] rc = rowCol(i, nCols);
-			int r = rc[0];
-			int c = rc[1];
+		double[] c = getUtilitarianObjective(payoffRow, payoffCol);
+		LinearProgram lp = new LinearProgram(c);
 
-			objective[i] = (payoffRow[r][c] + payoffCol[r][c]);
-		}
+		int cCount = 0;
+		cCount = addCorrelatedEquilibriumMainConstraints(lp, payoffRow,
+				payoffCol, n, cCount);
 
-		return objective;
+		return runLPAndGetJointActionProbs(lp, nRows, nCols);
 
 	}
 
@@ -691,6 +589,53 @@ public class CorrelatedEquilibriumSolver {
 	}
 
 	/**
+	 * Returns the utilitarian objective for the given payoffs for the row and
+	 * column player.
+	 * 
+	 * @param payoffRow
+	 *            the row player's payoffs
+	 * @param payoffCol
+	 *            the column player's payoffs
+	 * @return the objective function as a double array of the LP variable
+	 *         coeffecients.
+	 */
+	public static double[] getUtilitarianObjective(double[][] payoffRow,
+			double[][] payoffCol) {
+
+		int nRows = payoffRow.length;
+		int nCols = payoffRow[0].length;
+		int n = nRows * nCols;
+
+		double[] objective = new double[n];
+		for (int i = 0; i < n; i++) {
+			int[] rc = rowCol(i, nCols);
+			int r = rc[0];
+			int c = rc[1];
+
+			objective[i] = (payoffRow[r][c] + payoffCol[r][c]);
+		}
+
+		return objective;
+
+	}
+
+	/**
+	 * Returns true if a if the input array is all zeros.
+	 * 
+	 * @param a
+	 *            the input array
+	 * @return true if a if the input array is all zeros; false otherwise
+	 */
+	protected static boolean isZeroArray(double[] a) {
+		for (double d : a) {
+			if (d != 0.) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * Returns the 1D array index for a given row and column of a matrix with
 	 * the given number of columns. Computed as r * nCols + c;
 	 * 
@@ -706,20 +651,41 @@ public class CorrelatedEquilibriumSolver {
 		return r * nCols + c;
 	}
 
-	/**
-	 * Returns the 2D row column index in a matrix of a given number of columns
-	 * for a given 1D array index. The row is computed as i / nCols; the column
-	 * is computed as i mod nCols.
-	 * 
-	 * @param i
-	 *            the 1D array index
-	 * @param nCols
-	 *            the number of columns in the matrix
-	 * @return an int array of length 2, with a[0] = rowIndex and a[1] =
-	 *         columnIndex.
-	 */
-	protected static int[] rowCol(int i, int nCols) {
-		return new int[] { i / nCols, i % nCols };
+	public static void main(String[] args) {
+
+		double[][] chickenRow = new double[][] { { 6, 2 }, { 7, 0 } };
+
+		double[][] chickenCol = new double[][] { { 6, 7 }, { 2, 0 } };
+
+		double[][] jointActionProbs = getCorrelatedEQJointStrategy(
+				CorrelatedEquilibriumObjective.UTILITARIAN, chickenRow,
+				chickenCol);
+		// double [][] jointActionProbs =
+		// getCorrelatedEQJointStrategy(CorrelatedEquilibriumObjective.EGALITARIAN,
+		// chickenRow, chickenCol);
+		double[] rowStrategy = GeneralBimatrixSolverTools
+				.marginalizeRowPlayerStrategy(jointActionProbs);
+		double[] colStrategy = GeneralBimatrixSolverTools
+				.marginalizeColPlayerStrategy(jointActionProbs);
+
+		for (int i = 0; i < jointActionProbs.length; i++) {
+			for (int j = 0; j < jointActionProbs[i].length; j++) {
+				System.out.print(jointActionProbs[i][j] + " ");
+			}
+			System.out.println("");
+		}
+
+		System.out.println("------");
+
+		for (int i = 0; i < rowStrategy.length; i++) {
+			System.out.print(rowStrategy[i] + " ");
+		}
+		System.out.println("");
+		for (int i = 0; i < colStrategy.length; i++) {
+			System.out.print(colStrategy[i] + " ");
+		}
+		System.out.println("");
+
 	}
 
 	/**
@@ -760,22 +726,6 @@ public class CorrelatedEquilibriumSolver {
 	}
 
 	/**
-	 * Returns true if a if the input array is all zeros.
-	 * 
-	 * @param a
-	 *            the input array
-	 * @return true if a if the input array is all zeros; false otherwise
-	 */
-	protected static boolean isZeroArray(double[] a) {
-		for (double d : a) {
-			if (d != 0.) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	/**
 	 * Creates a new 1D double array with all negative values rounded to 0.
 	 * 
 	 * @param a
@@ -792,6 +742,56 @@ public class CorrelatedEquilibriumSolver {
 			}
 		}
 		return b;
+	}
+
+	/**
+	 * Returns the 2D row column index in a matrix of a given number of columns
+	 * for a given 1D array index. The row is computed as i / nCols; the column
+	 * is computed as i mod nCols.
+	 * 
+	 * @param i
+	 *            the 1D array index
+	 * @param nCols
+	 *            the number of columns in the matrix
+	 * @return an int array of length 2, with a[0] = rowIndex and a[1] =
+	 *         columnIndex.
+	 */
+	protected static int[] rowCol(int i, int nCols) {
+		return new int[] { i / nCols, i % nCols };
+	}
+
+	/**
+	 * Helper method for running the linear program optimization (after its
+	 * constraints have already been set) and returning the result in the form
+	 * of the 2D double matrix joint strategy.
+	 * 
+	 * @param lp
+	 *            the linear program to be optimized
+	 * @param nRows
+	 *            the number of rows in the bimatrix (number of player 1
+	 *            actions)
+	 * @param nCols
+	 *            the number of columns in the bimatrix (number of player 2
+	 *            actions)
+	 * @return a 2D double representing the joint strategy for the given linear
+	 *         program correlated equilibrium problem.
+	 */
+	protected static double[][] runLPAndGetJointActionProbs(LinearProgram lp,
+			int nRows, int nCols) {
+
+		int nn = nRows * nCols;
+
+		lp.setMinProblem(false);
+		LinearProgramSolver solver = SolverFactory.newDefault();
+		double[] sol = solver.solve(lp);
+
+		double[][] jointActionProbs = new double[nRows][nCols];
+		for (int i = 0; i < nn; i++) {
+			int[] rc = rowCol(i, nCols);
+			jointActionProbs[rc[0]][rc[1]] = sol[i];
+		}
+
+		return jointActionProbs;
 	}
 
 }

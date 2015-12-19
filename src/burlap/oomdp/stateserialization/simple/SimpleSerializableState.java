@@ -1,13 +1,13 @@
 package burlap.oomdp.stateserialization.simple;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.MutableState;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.stateserialization.SerializableState;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A {@link burlap.oomdp.stateserialization.SerializableState} representation
@@ -34,6 +34,15 @@ public class SimpleSerializableState extends SerializableState {
 	}
 
 	@Override
+	public State deserialize(Domain domain) {
+		State s = new MutableState();
+		for (SimpleSerializedObjectInstance o : this.objects) {
+			s.addObject(o.deserialize(domain));
+		}
+		return s;
+	}
+
+	@Override
 	public void serialize(State s) {
 		List<ObjectInstance> objects = s.getAllObjects();
 		this.objects = new ArrayList<SimpleSerializedObjectInstance>(
@@ -41,15 +50,6 @@ public class SimpleSerializableState extends SerializableState {
 		for (ObjectInstance o : objects) {
 			this.objects.add(new SimpleSerializedObjectInstance(o));
 		}
-	}
-
-	@Override
-	public State deserialize(Domain domain) {
-		State s = new MutableState();
-		for (SimpleSerializedObjectInstance o : this.objects) {
-			s.addObject(o.deserialize(domain));
-		}
-		return s;
 	}
 
 }

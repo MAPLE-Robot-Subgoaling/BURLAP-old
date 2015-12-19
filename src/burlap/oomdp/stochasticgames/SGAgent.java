@@ -28,46 +28,25 @@ public abstract class SGAgent {
 	protected String worldAgentName;
 	protected World world;
 
-	protected void init(SGDomain d) {
-		this.domain = d;
-		internalRewardFunction = null;
-	}
+	/**
+	 * This method is called by the world when a new game is starting.
+	 */
+	public abstract void gameStarting();
 
 	/**
-	 * Internal reward functions are optional, but can be useful for purposes
-	 * like reward shaping.
-	 * 
-	 * @param jr
-	 *            the internal reward function the agent should use for
-	 *            reasoning and learning
+	 * This method is called by the world when a game has ended.
 	 */
-	public void setInternalRewardFunction(JointReward jr) {
-		this.internalRewardFunction = jr;
-	}
+	public abstract void gameTerminated();
 
 	/**
-	 * Returns the internal reward function used by the agent.
+	 * This method is called by the world when it needs the agent to choose an
+	 * action
 	 * 
-	 * @return the internal reward function used by the agent; null if the agent
-	 *         is not using an internal reward function.
+	 * @param s
+	 *            the current state of the world
+	 * @return the action this agent wishes to take
 	 */
-	public JointReward getInternalRewardFunction() {
-		return this.internalRewardFunction;
-	}
-
-	/**
-	 * Causes this agent instance to join a world.
-	 * 
-	 * @param w
-	 *            the world for the agent to join
-	 * @param as
-	 *            the agent type the agent will be joining as
-	 */
-	public void joinWorld(World w, SGAgentType as) {
-		agentType = as;
-		world = w;
-		worldAgentName = world.registerAgent(this, as);
-	}
+	public abstract GroundedSGAgentAction getAction(State s);
 
 	/**
 	 * Returns this agent's name
@@ -88,19 +67,33 @@ public abstract class SGAgent {
 	}
 
 	/**
-	 * This method is called by the world when a new game is starting.
+	 * Returns the internal reward function used by the agent.
+	 * 
+	 * @return the internal reward function used by the agent; null if the agent
+	 *         is not using an internal reward function.
 	 */
-	public abstract void gameStarting();
+	public JointReward getInternalRewardFunction() {
+		return this.internalRewardFunction;
+	}
+
+	protected void init(SGDomain d) {
+		this.domain = d;
+		internalRewardFunction = null;
+	}
 
 	/**
-	 * This method is called by the world when it needs the agent to choose an
-	 * action
+	 * Causes this agent instance to join a world.
 	 * 
-	 * @param s
-	 *            the current state of the world
-	 * @return the action this agent wishes to take
+	 * @param w
+	 *            the world for the agent to join
+	 * @param as
+	 *            the agent type the agent will be joining as
 	 */
-	public abstract GroundedSGAgentAction getAction(State s);
+	public void joinWorld(World w, SGAgentType as) {
+		agentType = as;
+		world = w;
+		worldAgentName = world.registerAgent(this, as);
+	}
 
 	/**
 	 * This method is called by the world when every agent in the world has
@@ -121,8 +114,15 @@ public abstract class SGAgent {
 			Map<String, Double> jointReward, State sprime, boolean isTerminal);
 
 	/**
-	 * This method is called by the world when a game has ended.
+	 * Internal reward functions are optional, but can be useful for purposes
+	 * like reward shaping.
+	 * 
+	 * @param jr
+	 *            the internal reward function the agent should use for
+	 *            reasoning and learning
 	 */
-	public abstract void gameTerminated();
+	public void setInternalRewardFunction(JointReward jr) {
+		this.internalRewardFunction = jr;
+	}
 
 }

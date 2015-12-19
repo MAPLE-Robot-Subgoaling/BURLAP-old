@@ -25,6 +25,11 @@ public class StringValue extends OOMDPValue implements Value {
 		this.stringVal = UNSET;
 	}
 
+	public StringValue(Attribute attribute, String stringVal) {
+		super(attribute);
+		this.stringVal = stringVal;
+	}
+
 	/**
 	 * Initializes from an existing value.
 	 * 
@@ -33,42 +38,17 @@ public class StringValue extends OOMDPValue implements Value {
 	 */
 	public StringValue(StringValue v) {
 		super(v);
-		this.stringVal = ((StringValue) v).stringVal;
-	}
-
-	public StringValue(Attribute attribute, String stringVal) {
-		super(attribute);
-		this.stringVal = stringVal;
-	}
-
-	@Override
-	public Value copy() {
-		return new StringValue(this);
-	}
-
-	@Override
-	public boolean valueHasBeenSet() {
-		return true;
-	}
-
-	@Override
-	public Value setValue(int v) {
-		return new StringValue(this.attribute, Integer.toString(v));
-	}
-
-	@Override
-	public Value setValue(double v) {
-		return new StringValue(this.attribute, Double.toString(v));
-	}
-
-	@Override
-	public Value setValue(String v) {
-		return new StringValue(this.attribute, v);
+		this.stringVal = v.stringVal;
 	}
 
 	@Override
 	public StringBuilder buildStringVal(StringBuilder builder) {
 		return builder.append(this.stringVal);
+	}
+
+	@Override
+	public Value copy() {
+		return new StringValue(this);
 	}
 
 	@Override
@@ -88,5 +68,25 @@ public class StringValue extends OOMDPValue implements Value {
 
 		return this.stringVal.equals(o.stringVal);
 
+	}
+
+	@Override
+	public Value setValue(double v) {
+		return new StringValue(this.attribute, Double.toString(v));
+	}
+
+	@Override
+	public Value setValue(int v) {
+		return new StringValue(this.attribute, Integer.toString(v));
+	}
+
+	@Override
+	public Value setValue(String v) {
+		return new StringValue(this.attribute, v);
+	}
+
+	@Override
+	public boolean valueHasBeenSet() {
+		return true;
 	}
 }

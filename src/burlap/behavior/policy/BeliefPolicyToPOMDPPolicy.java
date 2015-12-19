@@ -1,11 +1,11 @@
 package burlap.behavior.policy;
 
+import java.util.List;
+
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.pomdp.BeliefMDPGenerator;
-
-import java.util.List;
 
 /**
  * This policy takes as input a policy for a belief MDP generated with
@@ -54,13 +54,13 @@ public class BeliefPolicyToPOMDPPolicy extends Policy {
 	}
 
 	@Override
-	public boolean isStochastic() {
-		return this.beliefPolicy.isStochastic();
+	public boolean isDefinedFor(State s) {
+		return this.beliefPolicy.isDefinedFor(s);
 	}
 
 	@Override
-	public boolean isDefinedFor(State s) {
-		return this.beliefPolicy.isDefinedFor(s);
+	public boolean isStochastic() {
+		return this.beliefPolicy.isStochastic();
 	}
 
 	/**

@@ -1,13 +1,13 @@
 package burlap.oomdp.stateserialization.simple;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.objects.MutableObjectInstance;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.values.Value;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A serializable representation of

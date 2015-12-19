@@ -3,10 +3,10 @@ package burlap.behavior.singleagent.planning.stochastic;
 import java.util.ArrayList;
 import java.util.List;
 
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TransitionProbability;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * This class is used as a wrapper for specifying the possible state transitions
@@ -64,6 +64,15 @@ public class ActionTransitions {
 				hashingFactory);
 	}
 
+	private List<HashedTransitionProbability> getHashedTransitions(
+			List<TransitionProbability> tps, HashableStateFactory hashingFactory) {
+		List<HashedTransitionProbability> htps = new ArrayList<HashedTransitionProbability>();
+		for (TransitionProbability tp : tps) {
+			htps.add(new HashedTransitionProbability(tp, hashingFactory));
+		}
+		return htps;
+	}
+
 	/**
 	 * Returns whether these action transitions are for the specified
 	 * {@link burlap.oomdp.singleagent.GroundedAction}
@@ -77,15 +86,6 @@ public class ActionTransitions {
 	 */
 	public boolean matchingTransitions(GroundedAction oga) {
 		return ga.equals(oga);
-	}
-
-	private List<HashedTransitionProbability> getHashedTransitions(
-			List<TransitionProbability> tps, HashableStateFactory hashingFactory) {
-		List<HashedTransitionProbability> htps = new ArrayList<HashedTransitionProbability>();
-		for (TransitionProbability tp : tps) {
-			htps.add(new HashedTransitionProbability(tp, hashingFactory));
-		}
-		return htps;
 	}
 
 }

@@ -1,7 +1,7 @@
 package burlap.oomdp.auxiliary.stateconditiontest;
 
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 
 /**
  * A simple StateConditionTest wrapper of TerminalFunciton. Deterministic
@@ -39,6 +39,11 @@ public class TFGoalCondition implements StateConditionTest {
 		return tf;
 	}
 
+	@Override
+	public boolean satisfies(State s) {
+		return tf.isTerminal(s);
+	}
+
 	/**
 	 * Sets the {@link burlap.oomdp.core.TerminalFunction} used to specify the
 	 * goal condition.
@@ -49,11 +54,6 @@ public class TFGoalCondition implements StateConditionTest {
 	 */
 	public void setTf(TerminalFunction tf) {
 		this.tf = tf;
-	}
-
-	@Override
-	public boolean satisfies(State s) {
-		return tf.isTerminal(s);
 	}
 
 }

@@ -14,30 +14,6 @@ import burlap.oomdp.singleagent.GroundedAction;
 public class ActionApproximationResult {
 
 	/**
-	 * The grounded action this approximation was for
-	 */
-	public GroundedAction ga;
-
-	/**
-	 * The actual approximation result
-	 */
-	public ApproximationResult approximationResult;
-
-	/**
-	 * Initializes with a given action and approximation result
-	 * 
-	 * @param ga
-	 *            the grounded action that this approximation is for
-	 * @param approximationResult
-	 *            the approximation result
-	 */
-	public ActionApproximationResult(GroundedAction ga,
-			ApproximationResult approximationResult) {
-		this.ga = ga;
-		this.approximationResult = approximationResult;
-	}
-
-	/**
 	 * Given a list of {@link ActionApproximationResult} objects, this method
 	 * will return the corresponding {@link ActionApproximationResult} for the
 	 * given action.
@@ -59,6 +35,30 @@ public class ActionApproximationResult {
 		}
 
 		return null;
+	}
+
+	/**
+	 * The grounded action this approximation was for
+	 */
+	public GroundedAction ga;
+
+	/**
+	 * The actual approximation result
+	 */
+	public ApproximationResult approximationResult;
+
+	/**
+	 * Initializes with a given action and approximation result
+	 * 
+	 * @param ga
+	 *            the grounded action that this approximation is for
+	 * @param approximationResult
+	 *            the approximation result
+	 */
+	public ActionApproximationResult(GroundedAction ga,
+			ApproximationResult approximationResult) {
+		this.ga = ga;
+		this.approximationResult = approximationResult;
 	}
 
 }

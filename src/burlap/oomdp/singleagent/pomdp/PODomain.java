@@ -29,18 +29,6 @@ public class PODomain extends SADomain {
 	protected StateEnumerator stateEnumerator;
 
 	/**
-	 * Sets the {@link burlap.oomdp.singleagent.pomdp.ObservationFunction} used
-	 * by the domain.
-	 * 
-	 * @param observationFunction
-	 *            the {@link burlap.oomdp.singleagent.pomdp.ObservationFunction}
-	 *            to be used by the domain.
-	 */
-	public void setObservationFunction(ObservationFunction observationFunction) {
-		this.obsevationFunction = observationFunction;
-	}
-
-	/**
 	 * Returns the {@link burlap.oomdp.singleagent.pomdp.ObservationFunction}
 	 * used by this domain.
 	 * 
@@ -49,6 +37,26 @@ public class PODomain extends SADomain {
 	 */
 	public ObservationFunction getObservationFunction() {
 		return this.obsevationFunction;
+	}
+
+	/**
+	 * Gets the {@link burlap.behavior.singleagent.auxiliary.StateEnumerator}
+	 * used by this domain to enumerate all underlying MDP states. If no
+	 * {@link burlap.behavior.singleagent.auxiliary.StateEnumerator} is provided
+	 * by this domain, then a runtime exception will be thrown. To check if a
+	 * {@link burlap.behavior.singleagent.auxiliary.StateEnumerator} is
+	 * provided, use the {@link #providesStateEnumerator()} method.
+	 * 
+	 * @return the {@link burlap.behavior.singleagent.auxiliary.StateEnumerator}
+	 *         used by this domain to enumerate all underlying MDP states.
+	 */
+	public StateEnumerator getStateEnumerator() {
+		if (this.stateEnumerator == null) {
+			throw new RuntimeException(
+					"This domain cannot return a StateEnumerator because one is not defined for it. "
+							+ "Use the providesStateEnumerator() method to check if one is provided in advance.");
+		}
+		return stateEnumerator;
 	}
 
 	/**
@@ -71,23 +79,15 @@ public class PODomain extends SADomain {
 	}
 
 	/**
-	 * Gets the {@link burlap.behavior.singleagent.auxiliary.StateEnumerator}
-	 * used by this domain to enumerate all underlying MDP states. If no
-	 * {@link burlap.behavior.singleagent.auxiliary.StateEnumerator} is provided
-	 * by this domain, then a runtime exception will be thrown. To check if a
-	 * {@link burlap.behavior.singleagent.auxiliary.StateEnumerator} is
-	 * provided, use the {@link #providesStateEnumerator()} method.
+	 * Sets the {@link burlap.oomdp.singleagent.pomdp.ObservationFunction} used
+	 * by the domain.
 	 * 
-	 * @return the {@link burlap.behavior.singleagent.auxiliary.StateEnumerator}
-	 *         used by this domain to enumerate all underlying MDP states.
+	 * @param observationFunction
+	 *            the {@link burlap.oomdp.singleagent.pomdp.ObservationFunction}
+	 *            to be used by the domain.
 	 */
-	public StateEnumerator getStateEnumerator() {
-		if (this.stateEnumerator == null) {
-			throw new RuntimeException(
-					"This domain cannot return a StateEnumerator because one is not defined for it. "
-							+ "Use the providesStateEnumerator() method to check if one is provided in advance.");
-		}
-		return stateEnumerator;
+	public void setObservationFunction(ObservationFunction observationFunction) {
+		this.obsevationFunction = observationFunction;
 	}
 
 	/**

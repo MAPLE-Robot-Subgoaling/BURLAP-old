@@ -3,20 +3,20 @@ package burlap.behavior.singleagent.planning.stochastic.rtdp;
 import java.util.LinkedList;
 import java.util.List;
 
-import burlap.behavior.singleagent.EpisodeAnalysis;
-import burlap.behavior.policy.Policy;
-import burlap.behavior.singleagent.planning.Planner;
-import burlap.behavior.valuefunction.ValueFunctionInitialization;
-import burlap.behavior.singleagent.planning.stochastic.DynamicProgramming;
 import burlap.behavior.policy.GreedyQPolicy;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
+import burlap.behavior.policy.Policy;
+import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.planning.Planner;
+import burlap.behavior.singleagent.planning.stochastic.DynamicProgramming;
+import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.debugtools.DPrint;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * Implementation of Real-time dynamic programming [1]. The planning algorithm
@@ -182,68 +182,41 @@ public class RTDP extends DynamicProgramming implements Planner {
 	}
 
 	/**
-	 * Sets the number of rollouts to perform when planning is started (unless
-	 * the value function delta is small enough).
+	 * Performs Bellman updates only after a rollout is complete and in reverse
+	 * order
 	 * 
-	 * @param p
-	 *            the number of passes
+	 * @param initialState
+	 *            the initial state from which to plan
 	 */
-	public void setNumPasses(int p) {
-		this.numRollouts = p;
-	}
+	protected void batchRTDP(State initialState) {
 
-	/**
-	 * Sets the maximum delta state value update in a rollout that will cause
-	 * planning to terminate
-	 * 
-	 * @param delta
-	 *            the max delta
-	 */
-	public void setMaxDelta(double delta) {
-		this.maxDelta = delta;
-	}
+		int totalStates = 0;
 
-	/**
-	 * Sets the rollout policy to use.
-	 * 
-	 * @param p
-	 *            the rollout policy to use
-	 */
-	public void setRollOutPolicy(Policy p) {
-		this.rollOutPolicy = p;
-	}
+		int consecutiveSmallDeltas = 0;
+		for (int i = 0; i < numRollouts; i++) {
 
-	/**
-	 * Sets the maximum depth of a rollout to use until it is prematurely
-	 * temrinated to update the value function.
-	 * 
-	 * @param d
-	 *            the maximum depth of a rollout.
-	 */
-	public void setMaxDynamicDepth(int d) {
-		this.maxDepth = d;
-	}
+			EpisodeAnalysis ea = this.rollOutPolicy.evaluateBehavior(
+					initialState, rf, tf, maxDepth);
+			LinkedList<HashableState> orderedStates = new LinkedList<HashableState>();
+			for (State s : ea.stateSequence) {
+				orderedStates.addFirst(this.stateHash(s));
+			}
 
-	/**
-	 * Sets the minimum number of consecutive rollsouts with a value function
-	 * change less than the maxDelta value that will cause RTDP to stop.
-	 * 
-	 * @param nRollsouts
-	 *            the minimum number of consecutive rollouts required.
-	 */
-	public void setMinNumRolloutsWithSmallValueChange(int nRollsouts) {
-		this.minNumRolloutsWithSmallValueChange = nRollsouts;
-	}
+			double delta = this.performOrderedBellmanUpdates(orderedStates);
+			totalStates += orderedStates.size();
+			DPrint.cl(debugCode, "Pass: " + i + "; Num states: "
+					+ orderedStates.size() + " (total: " + totalStates + ")");
 
-	/**
-	 * When batch mode is set, Bellman updates will be stalled until a roll out
-	 * is complete and then run in reverse.
-	 * 
-	 * @param useBatch
-	 *            whether to use batchmode RTDP or not.
-	 */
-	public void toggleBatchMode(boolean useBatch) {
-		this.useBatch = useBatch;
+			if (delta < this.maxDelta) {
+				consecutiveSmallDeltas++;
+				if (consecutiveSmallDeltas >= this.minNumRolloutsWithSmallValueChange) {
+					break;
+				}
+			} else {
+				consecutiveSmallDeltas = 0;
+			}
+		}
+
 	}
 
 	/**
@@ -253,28 +226,6 @@ public class RTDP extends DynamicProgramming implements Planner {
 	 */
 	public int getNumberOfBellmanUpdates() {
 		return this.numberOfBellmanUpdates;
-	}
-
-	/**
-	 * Plans from the input state and then returns a
-	 * {@link burlap.behavior.policy.GreedyQPolicy} that greedily selects the
-	 * action with the highest Q-value and breaks ties uniformly randomly.
-	 * 
-	 * @param initialState
-	 *            the initial state of the planning problem
-	 * @return a {@link burlap.behavior.policy.GreedyQPolicy}.
-	 */
-	@Override
-	public GreedyQPolicy planFromState(State initialState) {
-
-		if (!useBatch) {
-			this.normalRTDP(initialState);
-		} else {
-			this.batchRTDP(initialState);
-		}
-
-		return new GreedyQPolicy(this);
-
 	}
 
 	/**
@@ -331,44 +282,6 @@ public class RTDP extends DynamicProgramming implements Planner {
 	}
 
 	/**
-	 * Performs Bellman updates only after a rollout is complete and in reverse
-	 * order
-	 * 
-	 * @param initialState
-	 *            the initial state from which to plan
-	 */
-	protected void batchRTDP(State initialState) {
-
-		int totalStates = 0;
-
-		int consecutiveSmallDeltas = 0;
-		for (int i = 0; i < numRollouts; i++) {
-
-			EpisodeAnalysis ea = this.rollOutPolicy.evaluateBehavior(
-					initialState, rf, tf, maxDepth);
-			LinkedList<HashableState> orderedStates = new LinkedList<HashableState>();
-			for (State s : ea.stateSequence) {
-				orderedStates.addFirst(this.stateHash(s));
-			}
-
-			double delta = this.performOrderedBellmanUpdates(orderedStates);
-			totalStates += orderedStates.size();
-			DPrint.cl(debugCode, "Pass: " + i + "; Num states: "
-					+ orderedStates.size() + " (total: " + totalStates + ")");
-
-			if (delta < this.maxDelta) {
-				consecutiveSmallDeltas++;
-				if (consecutiveSmallDeltas >= this.minNumRolloutsWithSmallValueChange) {
-					break;
-				}
-			} else {
-				consecutiveSmallDeltas = 0;
-			}
-		}
-
-	}
-
-	/**
 	 * Performs ordered Bellman updates on the list of (hashed) states provided
 	 * to it.
 	 * 
@@ -392,6 +305,93 @@ public class RTDP extends DynamicProgramming implements Planner {
 
 		return delta;
 
+	}
+
+	/**
+	 * Plans from the input state and then returns a
+	 * {@link burlap.behavior.policy.GreedyQPolicy} that greedily selects the
+	 * action with the highest Q-value and breaks ties uniformly randomly.
+	 * 
+	 * @param initialState
+	 *            the initial state of the planning problem
+	 * @return a {@link burlap.behavior.policy.GreedyQPolicy}.
+	 */
+	@Override
+	public GreedyQPolicy planFromState(State initialState) {
+
+		if (!useBatch) {
+			this.normalRTDP(initialState);
+		} else {
+			this.batchRTDP(initialState);
+		}
+
+		return new GreedyQPolicy(this);
+
+	}
+
+	/**
+	 * Sets the maximum delta state value update in a rollout that will cause
+	 * planning to terminate
+	 * 
+	 * @param delta
+	 *            the max delta
+	 */
+	public void setMaxDelta(double delta) {
+		this.maxDelta = delta;
+	}
+
+	/**
+	 * Sets the maximum depth of a rollout to use until it is prematurely
+	 * temrinated to update the value function.
+	 * 
+	 * @param d
+	 *            the maximum depth of a rollout.
+	 */
+	public void setMaxDynamicDepth(int d) {
+		this.maxDepth = d;
+	}
+
+	/**
+	 * Sets the minimum number of consecutive rollsouts with a value function
+	 * change less than the maxDelta value that will cause RTDP to stop.
+	 * 
+	 * @param nRollsouts
+	 *            the minimum number of consecutive rollouts required.
+	 */
+	public void setMinNumRolloutsWithSmallValueChange(int nRollsouts) {
+		this.minNumRolloutsWithSmallValueChange = nRollsouts;
+	}
+
+	/**
+	 * Sets the number of rollouts to perform when planning is started (unless
+	 * the value function delta is small enough).
+	 * 
+	 * @param p
+	 *            the number of passes
+	 */
+	public void setNumPasses(int p) {
+		this.numRollouts = p;
+	}
+
+	/**
+	 * Sets the rollout policy to use.
+	 * 
+	 * @param p
+	 *            the rollout policy to use
+	 */
+	public void setRollOutPolicy(Policy p) {
+		this.rollOutPolicy = p;
+	}
+
+	/**
+	 * When batch mode is set, Bellman updates will be stalled until a roll out
+	 * is complete and then run in reverse.
+	 * 
+	 * @param useBatch
+	 *            whether to use batchmode RTDP or not.
+	 */
+	public void toggleBatchMode(boolean useBatch) {
+		this.useBatch = useBatch;
 	}
 
 }

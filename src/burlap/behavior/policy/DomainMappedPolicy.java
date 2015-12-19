@@ -62,13 +62,13 @@ public class DomainMappedPolicy extends Policy {
 	}
 
 	@Override
-	public boolean isStochastic() {
-		return this.sourcePolicy.isStochastic();
+	public boolean isDefinedFor(State s) {
+		return this.sourcePolicy.isDefinedFor(s);
 	}
 
 	@Override
-	public boolean isDefinedFor(State s) {
-		return this.sourcePolicy.isDefinedFor(s);
+	public boolean isStochastic() {
+		return this.sourcePolicy.isStochastic();
 	}
 
 	/**

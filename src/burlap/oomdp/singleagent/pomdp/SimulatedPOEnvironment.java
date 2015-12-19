@@ -47,51 +47,10 @@ public class SimulatedPOEnvironment extends SimulatedEnvironment {
 		super(domain, rf, tf, hiddenStateGenerator);
 	}
 
-	public PODomain getPODomain() {
-		return (PODomain) this.domain;
-	}
-
-	@Override
-	public void setDomain(Domain domain) {
-		if (!(domain instanceof PODomain)) {
-			throw new RuntimeException(
-					"Cannot set the POSimulatedEnvironment domain to a domain that is not a PODomain instance");
-		}
-		super.setDomain(domain);
-	}
-
-	/**
-	 * Overrides the current observation of this environment to the specified
-	 * value
-	 * 
-	 * @param observation
-	 *            the current observation of this environment to the specified
-	 *            value
-	 */
-	public void setCurObservationTo(State observation) {
-		this.curObservation = observation;
-	}
-
-	@Override
-	public State getCurrentObservation() {
-		return this.curObservation;
-	}
-
-	/**
-	 * Returns the current hidden state of this
-	 * {@link burlap.oomdp.singleagent.environment.Environment}.
-	 * 
-	 * @return a {@link burlap.oomdp.core.states.State} representing the current
-	 *         hidden state of the environment.
-	 */
-	public State getCurrentHiddenState() {
-		return this.curState;
-	}
-
 	@Override
 	public EnvironmentOutcome executeAction(GroundedAction ga) {
 
-		GroundedAction simGA = (GroundedAction) ga.copy();
+		GroundedAction simGA = ga.copy();
 		simGA.action = this.domain.getAction(ga.actionName());
 		if (simGA.action == null) {
 			throw new RuntimeException(
@@ -121,9 +80,50 @@ public class SimulatedPOEnvironment extends SimulatedEnvironment {
 
 	}
 
+	/**
+	 * Returns the current hidden state of this
+	 * {@link burlap.oomdp.singleagent.environment.Environment}.
+	 * 
+	 * @return a {@link burlap.oomdp.core.states.State} representing the current
+	 *         hidden state of the environment.
+	 */
+	public State getCurrentHiddenState() {
+		return this.curState;
+	}
+
+	@Override
+	public State getCurrentObservation() {
+		return this.curObservation;
+	}
+
+	public PODomain getPODomain() {
+		return (PODomain) this.domain;
+	}
+
 	@Override
 	public void resetEnvironment() {
 		super.resetEnvironment();
 		this.curObservation = new MutableState();
+	}
+
+	/**
+	 * Overrides the current observation of this environment to the specified
+	 * value
+	 * 
+	 * @param observation
+	 *            the current observation of this environment to the specified
+	 *            value
+	 */
+	public void setCurObservationTo(State observation) {
+		this.curObservation = observation;
+	}
+
+	@Override
+	public void setDomain(Domain domain) {
+		if (!(domain instanceof PODomain)) {
+			throw new RuntimeException(
+					"Cannot set the POSimulatedEnvironment domain to a domain that is not a PODomain instance");
+		}
+		super.setDomain(domain);
 	}
 }

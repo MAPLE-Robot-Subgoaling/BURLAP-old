@@ -3,10 +3,10 @@ package burlap.behavior.learningrate;
 import java.util.HashMap;
 import java.util.Map;
 
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.states.State;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * This class provides a learning rate that decays exponentially with time
@@ -28,6 +28,61 @@ import burlap.oomdp.core.states.State;
  * 
  */
 public class ExponentialDecayLR implements LearningRate {
+
+	/**
+	 * A class for storing a mutable double value object
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	protected class MutableDouble {
+		double md;
+		int lastPollTime = -1;
+
+		public MutableDouble(double md) {
+			this.md = md;
+		}
+	}
+
+	/**
+	 * A class for storing a learning rate for a state, or a learning rate for
+	 * each action for a given state
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	protected class StateWiseLearningRate {
+		double learningRate;
+		Map<String, MutableDouble> actionLearningRates = null;
+		int lastPollTime = -1;
+
+		public StateWiseLearningRate() {
+			this.learningRate = initialLearningRate;
+			if (useStateActionWise) {
+				this.actionLearningRates = new HashMap<String, MutableDouble>();
+			}
+		}
+
+		/**
+		 * Returns the mutable double entry for the learning rate for the action
+		 * for the state with which this object is associated.
+		 * 
+		 * @param ga
+		 *            the input action for which the learning rate is returned.
+		 * @return the mutable double entry for the learning rate for the action
+		 *         for the state with which this object is associated.
+		 */
+		public MutableDouble getActionLearningRateEntry(
+				AbstractGroundedAction ga) {
+			MutableDouble entry = this.actionLearningRates.get(ga);
+			if (entry == null) {
+				entry = new MutableDouble(initialLearningRate);
+				this.actionLearningRates.put(ga.actionName(), entry);
+			}
+			return entry;
+		}
+
+	}
 
 	/**
 	 * The initial learning rate value
@@ -124,40 +179,6 @@ public class ExponentialDecayLR implements LearningRate {
 
 	/**
 	 * Initializes with an initial learning rate and decay rate for a state or
-	 * state-action (or state feature-action) dependent learning rate. Minimum
-	 * learning rate that can be returned will be Double.MIN_NORMAL. If this
-	 * learning rate function is to be used for state state features, rather
-	 * than states, then the hashing factory can be null;
-	 * 
-	 * @param initialLearningRate
-	 *            the initial learning rate for each state or state-action
-	 * @param decayRate
-	 *            the exponential base by which the learning rate is decayed
-	 * @param hashingFactory
-	 *            how to hash and compare states
-	 * @param useSeparateLRPerStateAction
-	 *            whether to have an independent learning rate for each
-	 *            state-action pair, rather than just each state
-	 */
-	public ExponentialDecayLR(double initialLearningRate, double decayRate,
-			HashableStateFactory hashingFactory,
-			boolean useSeparateLRPerStateAction) {
-		if (decayRate > 1 || decayRate < 0) {
-			throw new RuntimeException("Decay rate must be <= 1 and >= 0");
-		}
-		this.initialLearningRate = initialLearningRate;
-		this.decayRate = decayRate;
-
-		this.useStateWise = true;
-		this.useStateActionWise = useSeparateLRPerStateAction;
-		this.hashingFactory = hashingFactory;
-		this.stateWiseMap = new HashMap<HashableState, ExponentialDecayLR.StateWiseLearningRate>();
-		this.featureWiseMap = new HashMap<Integer, ExponentialDecayLR.StateWiseLearningRate>();
-
-	}
-
-	/**
-	 * Initializes with an initial learning rate and decay rate for a state or
 	 * state-action (or state feature-action) dependent learning rate that will
 	 * decay to a value no smaller than minimumLearningRate If this learning
 	 * rate function is to be used for state state features, rather than states,
@@ -193,6 +214,100 @@ public class ExponentialDecayLR implements LearningRate {
 
 	}
 
+	/**
+	 * Initializes with an initial learning rate and decay rate for a state or
+	 * state-action (or state feature-action) dependent learning rate. Minimum
+	 * learning rate that can be returned will be Double.MIN_NORMAL. If this
+	 * learning rate function is to be used for state state features, rather
+	 * than states, then the hashing factory can be null;
+	 * 
+	 * @param initialLearningRate
+	 *            the initial learning rate for each state or state-action
+	 * @param decayRate
+	 *            the exponential base by which the learning rate is decayed
+	 * @param hashingFactory
+	 *            how to hash and compare states
+	 * @param useSeparateLRPerStateAction
+	 *            whether to have an independent learning rate for each
+	 *            state-action pair, rather than just each state
+	 */
+	public ExponentialDecayLR(double initialLearningRate, double decayRate,
+			HashableStateFactory hashingFactory,
+			boolean useSeparateLRPerStateAction) {
+		if (decayRate > 1 || decayRate < 0) {
+			throw new RuntimeException("Decay rate must be <= 1 and >= 0");
+		}
+		this.initialLearningRate = initialLearningRate;
+		this.decayRate = decayRate;
+
+		this.useStateWise = true;
+		this.useStateActionWise = useSeparateLRPerStateAction;
+		this.hashingFactory = hashingFactory;
+		this.stateWiseMap = new HashMap<HashableState, ExponentialDecayLR.StateWiseLearningRate>();
+		this.featureWiseMap = new HashMap<Integer, ExponentialDecayLR.StateWiseLearningRate>();
+
+	}
+
+	/**
+	 * Returns the learning rate data structure for the given state feature. An
+	 * entry will be created if it does not already exist.
+	 * 
+	 * @param feature
+	 *            the state feature id to get a learning rate for
+	 * @return the learning rate data structure for the given state feature
+	 */
+	protected StateWiseLearningRate getFeatureWiseLearningRate(int feature) {
+		StateWiseLearningRate slr = this.featureWiseMap.get(feature);
+		if (slr == null) {
+			slr = new StateWiseLearningRate();
+			this.featureWiseMap.put(feature, slr);
+		}
+		return slr;
+	}
+
+	/**
+	 * Returns the learning rate data structure for the given state. An entry
+	 * will be created if it does not already exist.
+	 * 
+	 * @param s
+	 *            the state to get a learning rate for
+	 * @return the learning rate data structure for the given state
+	 */
+	protected StateWiseLearningRate getStateWiseLearningRate(State s) {
+		HashableState sh = this.hashingFactory.hashState(s);
+		StateWiseLearningRate slr = this.stateWiseMap.get(sh);
+		if (slr == null) {
+			slr = new StateWiseLearningRate();
+			this.stateWiseMap.put(sh, slr);
+		}
+		return slr;
+	}
+
+	/**
+	 * Returns the value of an input current learning rate after it has been
+	 * decayed by one time step.
+	 * 
+	 * @param cur
+	 *            the currently learning rate to be decayed by one time step.
+	 * @return the value of an input current learning rate after it has been
+	 *         decayed by one time step.
+	 */
+	protected double nextLRVal(double cur) {
+		return Math.max(cur * decayRate, this.minimumLR);
+	}
+
+	@Override
+	public double peekAtLearningRate(int featureId) {
+
+		if (!useStateWise) {
+			return this.universalLR;
+		}
+
+		StateWiseLearningRate slr = this.getFeatureWiseLearningRate(featureId);
+		return slr.learningRate;
+
+	}
+
 	@Override
 	public double peekAtLearningRate(State s, AbstractGroundedAction ga) {
 
@@ -206,6 +321,28 @@ public class ExponentialDecayLR implements LearningRate {
 		}
 
 		return slr.getActionLearningRateEntry(ga).md;
+	}
+
+	@Override
+	public double pollLearningRate(int agentTime, int featureId) {
+
+		if (!useStateWise) {
+			double oldVal = this.universalLR;
+			if (agentTime > this.lastPollTime) {
+				this.universalLR = this.nextLRVal(oldVal);
+				this.lastPollTime = agentTime;
+			}
+			return oldVal;
+		}
+
+		StateWiseLearningRate slr = this.getFeatureWiseLearningRate(featureId);
+		double oldVal = slr.learningRate;
+		if (agentTime > slr.lastPollTime) {
+			slr.learningRate = this.nextLRVal(oldVal);
+			slr.lastPollTime = agentTime;
+		}
+		return oldVal;
+
 	}
 
 	@Override
@@ -246,147 +383,10 @@ public class ExponentialDecayLR implements LearningRate {
 	}
 
 	@Override
-	public double peekAtLearningRate(int featureId) {
-
-		if (!useStateWise) {
-			return this.universalLR;
-		}
-
-		StateWiseLearningRate slr = this.getFeatureWiseLearningRate(featureId);
-		return slr.learningRate;
-
-	}
-
-	@Override
-	public double pollLearningRate(int agentTime, int featureId) {
-
-		if (!useStateWise) {
-			double oldVal = this.universalLR;
-			if (agentTime > this.lastPollTime) {
-				this.universalLR = this.nextLRVal(oldVal);
-				this.lastPollTime = agentTime;
-			}
-			return oldVal;
-		}
-
-		StateWiseLearningRate slr = this.getFeatureWiseLearningRate(featureId);
-		double oldVal = slr.learningRate;
-		if (agentTime > slr.lastPollTime) {
-			slr.learningRate = this.nextLRVal(oldVal);
-			slr.lastPollTime = agentTime;
-		}
-		return oldVal;
-
-	}
-
-	@Override
 	public void resetDecay() {
 		this.universalLR = this.initialLearningRate;
 		this.stateWiseMap.clear();
 		this.featureWiseMap.clear();
-	}
-
-	/**
-	 * Returns the learning rate data structure for the given state. An entry
-	 * will be created if it does not already exist.
-	 * 
-	 * @param s
-	 *            the state to get a learning rate for
-	 * @return the learning rate data structure for the given state
-	 */
-	protected StateWiseLearningRate getStateWiseLearningRate(State s) {
-		HashableState sh = this.hashingFactory.hashState(s);
-		StateWiseLearningRate slr = this.stateWiseMap.get(sh);
-		if (slr == null) {
-			slr = new StateWiseLearningRate();
-			this.stateWiseMap.put(sh, slr);
-		}
-		return slr;
-	}
-
-	/**
-	 * Returns the learning rate data structure for the given state feature. An
-	 * entry will be created if it does not already exist.
-	 * 
-	 * @param feature
-	 *            the state feature id to get a learning rate for
-	 * @return the learning rate data structure for the given state feature
-	 */
-	protected StateWiseLearningRate getFeatureWiseLearningRate(int feature) {
-		StateWiseLearningRate slr = this.featureWiseMap.get(feature);
-		if (slr == null) {
-			slr = new StateWiseLearningRate();
-			this.featureWiseMap.put(feature, slr);
-		}
-		return slr;
-	}
-
-	/**
-	 * Returns the value of an input current learning rate after it has been
-	 * decayed by one time step.
-	 * 
-	 * @param cur
-	 *            the currently learning rate to be decayed by one time step.
-	 * @return the value of an input current learning rate after it has been
-	 *         decayed by one time step.
-	 */
-	protected double nextLRVal(double cur) {
-		return Math.max(cur * decayRate, this.minimumLR);
-	}
-
-	/**
-	 * A class for storing a learning rate for a state, or a learning rate for
-	 * each action for a given state
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	protected class StateWiseLearningRate {
-		double learningRate;
-		Map<String, MutableDouble> actionLearningRates = null;
-		int lastPollTime = -1;
-
-		public StateWiseLearningRate() {
-			this.learningRate = initialLearningRate;
-			if (useStateActionWise) {
-				this.actionLearningRates = new HashMap<String, MutableDouble>();
-			}
-		}
-
-		/**
-		 * Returns the mutable double entry for the learning rate for the action
-		 * for the state with which this object is associated.
-		 * 
-		 * @param ga
-		 *            the input action for which the learning rate is returned.
-		 * @return the mutable double entry for the learning rate for the action
-		 *         for the state with which this object is associated.
-		 */
-		public MutableDouble getActionLearningRateEntry(
-				AbstractGroundedAction ga) {
-			MutableDouble entry = this.actionLearningRates.get(ga);
-			if (entry == null) {
-				entry = new MutableDouble(initialLearningRate);
-				this.actionLearningRates.put(ga.actionName(), entry);
-			}
-			return entry;
-		}
-
-	}
-
-	/**
-	 * A class for storing a mutable double value object
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	protected class MutableDouble {
-		double md;
-		int lastPollTime = -1;
-
-		public MutableDouble(double md) {
-			this.md = md;
-		}
 	}
 
 }

@@ -1,5 +1,24 @@
 package burlap.oomdp.singleagent.explorer;
 
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.TextArea;
+import java.awt.TextField;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
+
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.oomdp.auxiliary.StateGenerator;
 import burlap.oomdp.auxiliary.common.NullTermination;
@@ -19,17 +38,6 @@ import burlap.oomdp.singleagent.environment.StateSettableEnvironment;
 import burlap.oomdp.stateserialization.SerializableStateFactory;
 import burlap.oomdp.stateserialization.simple.SimpleSerializableStateFactory;
 import burlap.oomdp.visualizer.Visualizer;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * This class allows you act as the agent by choosing actions in an
@@ -55,56 +63,93 @@ import java.util.Map;
  */
 public class VisualExplorer extends JFrame {
 
-	private static final long serialVersionUID = 1L;
+	/**
+	 * Class for receiving key presses from a
+	 * {@link burlap.oomdp.singleagent.explorer.VisualExplorer} that handles it
+	 * as ending episode recoding and saving all recorded episodes to disk.
+	 */
+	protected class SaveEpisodeAction implements SpecialExplorerAction {
 
+		/**
+		 * The directory in which the episodes will be recorded.
+		 */
+		protected String directory;
+
+		/**
+		 * The {@link burlap.oomdp.stateserialization.SerializableStateFactory}
+		 * used to serialize states.
+		 */
+		protected SerializableStateFactory serializableStateFactory;
+
+		/**
+		 * Initializes
+		 * 
+		 * @param directory
+		 *            the directory path in which episodes will be recorded
+		 * @param serializableStateFactory
+		 *            the
+		 *            {@link burlap.oomdp.stateserialization.SerializableStateFactory}
+		 *            to use for serializing states.
+		 */
+		public SaveEpisodeAction(String directory,
+				SerializableStateFactory serializableStateFactory) {
+			this.directory = directory;
+			this.serializableStateFactory = serializableStateFactory;
+
+			if (!this.directory.endsWith("/")) {
+				this.directory = this.directory + "/";
+			}
+
+		}
+
+		@Override
+		public State applySpecialAction(State curState) {
+
+			synchronized (VisualExplorer.this) {
+				VisualExplorer.this.isRecording = false;
+				List<EpisodeAnalysis> episodes = VisualExplorer.this
+						.getRecordedEpisodes();
+				EpisodeAnalysis.writeEpisodesToDisk(episodes, this.directory,
+						"episode", this.serializableStateFactory);
+				System.out.println("Recorded "
+						+ VisualExplorer.this.recordedEpisodes.size()
+						+ " episodes to directory " + this.directory);
+			}
+
+			return curState;
+
+		}
+	}
+
+	private static final long serialVersionUID = 1L;
 	protected Environment env;
 	protected Domain domain;
 	protected Map<String, GroundedAction> keyActionMap;
-	protected Map<String, SpecialExplorerAction> keySpecialMap;
 
+	protected Map<String, SpecialExplorerAction> keySpecialMap;
 	protected Visualizer painter;
 	protected TextArea propViewer;
 	protected TextField actionField;
 	protected JButton actionButton;
 	protected int cWidth;
+
 	protected int cHeight;
 
 	protected int numSteps;
-
 	protected JFrame consoleFrame;
-	protected TextArea stateConsole;
 
+	protected TextArea stateConsole;
 	// recording data members
 	protected EpisodeAnalysis currentEpisode = null;
-	protected List<EpisodeAnalysis> recordedEpisodes = null;
 
+	protected List<EpisodeAnalysis> recordedEpisodes = null;
 	protected double lastReward;
+
 	protected String warningMessage = "";
 
 	protected boolean isRecording = false;
 
 	protected boolean runLivePolling = false;
-
-	/**
-	 * Initializes with a domain and initial state, automatically creating a
-	 * {@link burlap.oomdp.singleagent.environment.SimulatedEnvironment} as the
-	 * environment with which to interact. The created
-	 * {@link burlap.oomdp.singleagent.environment.SimulatedEnvironment} will
-	 * have a {@link burlap.oomdp.singleagent.common.NullRewardFunction} and
-	 * {@link burlap.oomdp.auxiliary.common.NullTermination} functions set.
-	 * 
-	 * @param domain
-	 *            the domain to explore
-	 * @param painter
-	 *            the 2D state visualizer
-	 * @param baseState
-	 *            the initial state from which to explore
-	 */
-	public VisualExplorer(Domain domain, Visualizer painter, State baseState) {
-		Environment env = new SimulatedEnvironment(domain,
-				new NullRewardFunction(), new NullTermination(), baseState);
-		this.init(domain, env, painter, 800, 800);
-	}
 
 	/**
 	 * Initializes with a visualization canvas size set to 800x800.
@@ -141,48 +186,38 @@ public class VisualExplorer extends JFrame {
 		this.init(domain, env, painter, w, h);
 	}
 
-	protected void init(Domain domain, Environment env, Visualizer painter,
-			int w, int h) {
-
-		this.domain = domain;
-		this.env = env;
-		this.painter = painter;
-		this.keyActionMap = new HashMap<String, GroundedAction>();
-		this.keySpecialMap = new HashMap<String, SpecialExplorerAction>();
-
-		StateResetSpecialAction reset = new StateResetSpecialAction(this.env);
-		this.addSpecialAction("`", reset);
-
-		this.cWidth = w;
-		this.cHeight = h;
-
-		this.propViewer = new TextArea();
-		this.propViewer.setEditable(false);
-
-		this.numSteps = 0;
-
+	/**
+	 * Initializes with a domain and initial state, automatically creating a
+	 * {@link burlap.oomdp.singleagent.environment.SimulatedEnvironment} as the
+	 * environment with which to interact. The created
+	 * {@link burlap.oomdp.singleagent.environment.SimulatedEnvironment} will
+	 * have a {@link burlap.oomdp.singleagent.common.NullRewardFunction} and
+	 * {@link burlap.oomdp.auxiliary.common.NullTermination} functions set.
+	 * 
+	 * @param domain
+	 *            the domain to explore
+	 * @param painter
+	 *            the 2D state visualizer
+	 * @param baseState
+	 *            the initial state from which to explore
+	 */
+	public VisualExplorer(Domain domain, Visualizer painter, State baseState) {
+		Environment env = new SimulatedEnvironment(domain,
+				new NullRewardFunction(), new NullTermination(), baseState);
+		this.init(domain, env, painter, 800, 800);
 	}
 
 	/**
-	 * Returns the {@link burlap.oomdp.visualizer.Visualizer} used by this
-	 * explorer.
+	 * Specifies which action to execute for a given key press
 	 * 
-	 * @return the {@link burlap.oomdp.visualizer.Visualizer} used by this
-	 *         explorer.
+	 * @param key
+	 *            the key that is pressed by the user
+	 * @param action
+	 *            the {@link burlap.oomdp.singleagent.GroundedAction} to take
+	 *            when the key is pressed
 	 */
-	public Visualizer getVisualizer() {
-		return this.painter;
-	}
-
-	/**
-	 * Returns a special action that causes the state to reset to the initial
-	 * state.
-	 * 
-	 * @return a special action that causes the state to reset to the initial
-	 *         state.
-	 */
-	public StateResetSpecialAction getResetSpecialAction() {
-		return (StateResetSpecialAction) keySpecialMap.get("`");
+	public void addKeyAction(String key, GroundedAction action) {
+		keyActionMap.put(key, action);
 	}
 
 	/**
@@ -210,19 +245,6 @@ public class VisualExplorer extends JFrame {
 		} else {
 			this.keyActionMap.put(key, ga);
 		}
-	}
-
-	/**
-	 * Specifies which action to execute for a given key press
-	 * 
-	 * @param key
-	 *            the key that is pressed by the user
-	 * @param action
-	 *            the {@link burlap.oomdp.singleagent.GroundedAction} to take
-	 *            when the key is pressed
-	 */
-	public void addKeyAction(String key, GroundedAction action) {
-		keyActionMap.put(key, action);
 	}
 
 	/**
@@ -398,12 +420,143 @@ public class VisualExplorer extends JFrame {
 	}
 
 	/**
-	 * Returns whether episodes are still be recorded by a user.
+	 * Executes the provided {@link burlap.oomdp.singleagent.GroundedAction} in
+	 * the explorer's environment and records the result if episodes are being
+	 * recorded.
 	 * 
-	 * @return true is the user is still recording episode; false otherwise.
+	 * @param ga
+	 *            the {@link burlap.oomdp.singleagent.GroundedAction} to
+	 *            execute.
 	 */
-	public boolean isRecording() {
-		return this.isRecording;
+	protected void executeAction(GroundedAction ga) {
+		if (ga.applicableInState(env.getCurrentObservation())) {
+
+			EnvironmentOutcome eo = ga.executeIn(env);
+			if (this.currentEpisode != null) {
+				this.currentEpisode.recordTransitionTo(ga, eo.op, eo.r);
+			}
+
+			this.lastReward = eo.r;
+
+			numSteps++;
+			this.updateState(this.env.getCurrentObservation());
+		} else {
+			this.warningMessage = ga.toString()
+					+ " is not applicable in the current state; nothing changed";
+			System.out.println(warningMessage);
+			this.updateState(this.env.getCurrentObservation());
+		}
+	}
+
+	/**
+	 * Executes the action defined in string array with the first component
+	 * being the action name and the rest the parameters.
+	 * 
+	 * @param comps
+	 *            the string array defining hte action to be executed.
+	 */
+	protected void executeAction(String[] comps) {
+		String actionName = comps[0];
+
+		// construct parameter list as all that remains
+		String params[];
+		if (comps.length > 1) {
+			params = new String[comps.length - 1];
+			for (int i = 1; i < comps.length; i++) {
+				params[i - 1] = comps[i];
+			}
+		} else {
+			params = new String[0];
+		}
+
+		Action action = domain.getAction(actionName);
+		if (action == null) {
+			this.warningMessage = "Unknown action: " + actionName
+					+ "; nothing changed";
+			System.out.println(warningMessage);
+			this.updateState(env.getCurrentObservation());
+		} else {
+			GroundedAction ga = action.getAssociatedGroundedAction();
+			ga.initParamsWithStringRep(params);
+			executeAction(ga);
+
+		}
+	}
+
+	/**
+	 * Returns the text that will be printed to the console for the given input
+	 * state.
+	 * 
+	 * @param s
+	 *            the state for which the current console text will be
+	 *            generated.
+	 * @return the text that will be printed to the console for the given input
+	 *         state.
+	 */
+	protected String getConsoleText(State s) {
+		StringBuilder sb = new StringBuilder(256);
+		sb.append(s.getCompleteStateDescriptionWithUnsetAttributesAsNull());
+		if (this.env.isInTerminalState()) {
+			sb.append("State IS terminal\n");
+		} else {
+			sb.append("State is NOT terminal\n");
+		}
+
+		sb.append("Reward: " + this.lastReward + "\n");
+
+		if (this.warningMessage.length() > 0) {
+			sb.append("WARNING: " + this.warningMessage + "\n");
+			this.warningMessage = "";
+		}
+		sb.append("\n------------------------------\n\n");
+
+		if (s.getAllUnsetAttributes().size() == 0) {
+			sb.append("Applicable Actions:\n");
+			List<GroundedAction> gas = Action
+					.getAllApplicableGroundedActionsFromActionList(
+							this.domain.getActions(), s);
+			for (GroundedAction ga : gas) {
+				sb.append(ga.toString()).append("\n");
+			}
+		} else {
+			sb.append("State has unset values; set them them to see applicable action list.");
+		}
+
+		return sb.toString();
+	}
+
+	/**
+	 * Gets the {@link burlap.oomdp.singleagent.GroundedAction} described by the
+	 * String components where the first component is the action name and the
+	 * rest are the string representations of the parameters.
+	 * 
+	 * @param comps
+	 *            the string components that define the
+	 *            {@link burlap.oomdp.singleagent.GroundedAction}
+	 * @return the associated {@link burlap.oomdp.singleagent.GroundedAction} or
+	 *         null if it cannot be constructed.
+	 */
+	protected GroundedAction getGroundedActionFromStringComps(String[] comps) {
+		String actionName = comps[0];
+
+		// construct parameter list as all that remains
+		String params[];
+		if (comps.length > 1) {
+			params = new String[comps.length - 1];
+			for (int i = 1; i < comps.length; i++) {
+				params[i - 1] = comps[i];
+			}
+		} else {
+			params = new String[0];
+		}
+
+		Action action = domain.getAction(actionName);
+		if (action == null) {
+			return null;
+		}
+		GroundedAction ga = action.getAssociatedGroundedAction();
+		ga.initParamsWithStringRep(params);
+		return ga;
 	}
 
 	/**
@@ -416,44 +569,98 @@ public class VisualExplorer extends JFrame {
 	}
 
 	/**
-	 * Starts a thread that polls this explorer's
-	 * {@link burlap.oomdp.singleagent.environment.Environment} every
-	 * msPollDelay milliseconds for its current state and updates the visualizer
-	 * to that state. Polling can be stopped with the {@link #stopLivePolling()}
-	 * .
+	 * Returns a special action that causes the state to reset to the initial
+	 * state.
 	 * 
-	 * @param msPollDelay
-	 *            the number of milliseconds between environment polls and state
-	 *            updates.
+	 * @return a special action that causes the state to reset to the initial
+	 *         state.
 	 */
-	public void startLiveStatePolling(final long msPollDelay) {
-		this.runLivePolling = true;
-		Thread pollingThread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while (runLivePolling) {
-					State s = env.getCurrentObservation();
-					if (s != null) {
-						updateState(s);
-					}
-					try {
-						Thread.sleep(msPollDelay);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		});
-
-		pollingThread.start();
+	public StateResetSpecialAction getResetSpecialAction() {
+		return (StateResetSpecialAction) keySpecialMap.get("`");
 	}
 
 	/**
-	 * Stops this class from live polling this explorer's
-	 * {@link burlap.oomdp.singleagent.environment.Environment}.
+	 * Returns the {@link burlap.oomdp.visualizer.Visualizer} used by this
+	 * explorer.
+	 * 
+	 * @return the {@link burlap.oomdp.visualizer.Visualizer} used by this
+	 *         explorer.
 	 */
-	public void stopLivePolling() {
-		this.runLivePolling = false;
+	public Visualizer getVisualizer() {
+		return this.painter;
+	}
+
+	/**
+	 * Handles action execute button.
+	 */
+	protected void handleExecute() {
+
+		String actionCommand = this.actionField.getText();
+
+		if (actionCommand.length() == 0) {
+			return;
+		}
+
+		String[] comps = actionCommand.split(" ");
+		this.executeAction(comps);
+	}
+
+	/**
+	 * Handles key presses
+	 * 
+	 * @param e
+	 *            the key event
+	 */
+	protected void handleKeyPressed(KeyEvent e) {
+
+		String key = String.valueOf(e.getKeyChar());
+
+		// otherwise this could be an action, see if there is an action mapping
+		GroundedAction mappedAction = keyActionMap.get(key);
+		if (mappedAction != null) {
+
+			this.executeAction(mappedAction);
+
+		} else {
+
+			SpecialExplorerAction sea = keySpecialMap.get(key);
+			if (sea != null) {
+				sea.applySpecialAction(this.env.getCurrentObservation());
+			}
+			if (sea instanceof StateResetSpecialAction) {
+				System.out.println("Number of steps before reset: " + numSteps);
+				numSteps = 0;
+				this.lastReward = 0.;
+				if (this.currentEpisode != null) {
+					this.currentEpisode = new EpisodeAnalysis(
+							this.env.getCurrentObservation());
+				}
+			}
+			this.updateState(this.env.getCurrentObservation());
+		}
+
+	}
+
+	protected void init(Domain domain, Environment env, Visualizer painter,
+			int w, int h) {
+
+		this.domain = domain;
+		this.env = env;
+		this.painter = painter;
+		this.keyActionMap = new HashMap<String, GroundedAction>();
+		this.keySpecialMap = new HashMap<String, SpecialExplorerAction>();
+
+		StateResetSpecialAction reset = new StateResetSpecialAction(this.env);
+		this.addSpecialAction("`", reset);
+
+		this.cWidth = w;
+		this.cHeight = h;
+
+		this.propViewer = new TextArea();
+		this.propViewer.setEditable(false);
+
+		this.numSteps = 0;
+
 	}
 
 	/**
@@ -473,12 +680,15 @@ public class VisualExplorer extends JFrame {
 		getContentPane().add(painter, BorderLayout.CENTER);
 
 		addKeyListener(new KeyListener() {
+			@Override
 			public void keyPressed(KeyEvent e) {
 			}
 
+			@Override
 			public void keyReleased(KeyEvent e) {
 			}
 
+			@Override
 			public void keyTyped(KeyEvent e) {
 				handleKeyPressed(e);
 			}
@@ -487,12 +697,15 @@ public class VisualExplorer extends JFrame {
 
 		// also add key listener to the painter in case the focus is changed
 		painter.addKeyListener(new KeyListener() {
+			@Override
 			public void keyPressed(KeyEvent e) {
 			}
 
+			@Override
 			public void keyReleased(KeyEvent e) {
 			}
 
+			@Override
 			public void keyTyped(KeyEvent e) {
 				handleKeyPressed(e);
 			}
@@ -500,12 +713,15 @@ public class VisualExplorer extends JFrame {
 		});
 
 		propViewer.addKeyListener(new KeyListener() {
+			@Override
 			public void keyPressed(KeyEvent e) {
 			}
 
+			@Override
 			public void keyReleased(KeyEvent e) {
 			}
 
+			@Override
 			public void keyTyped(KeyEvent e) {
 				handleKeyPressed(e);
 			}
@@ -667,207 +883,53 @@ public class VisualExplorer extends JFrame {
 	}
 
 	/**
-	 * Updates the currently visualized state to the input state.
+	 * Returns whether episodes are still be recorded by a user.
 	 * 
-	 * @param s
-	 *            the state to visualize.
+	 * @return true is the user is still recording episode; false otherwise.
 	 */
-	synchronized public void updateState(State s) {
-		this.stateConsole.setText(this.getConsoleText(s));
-		this.painter.updateState(s);
-		this.updatePropTextArea(s);
-
+	public boolean isRecording() {
+		return this.isRecording;
 	}
 
 	/**
-	 * Returns the text that will be printed to the console for the given input
-	 * state.
+	 * Starts a thread that polls this explorer's
+	 * {@link burlap.oomdp.singleagent.environment.Environment} every
+	 * msPollDelay milliseconds for its current state and updates the visualizer
+	 * to that state. Polling can be stopped with the {@link #stopLivePolling()}
+	 * .
 	 * 
-	 * @param s
-	 *            the state for which the current console text will be
-	 *            generated.
-	 * @return the text that will be printed to the console for the given input
-	 *         state.
+	 * @param msPollDelay
+	 *            the number of milliseconds between environment polls and state
+	 *            updates.
 	 */
-	protected String getConsoleText(State s) {
-		StringBuilder sb = new StringBuilder(256);
-		sb.append(s.getCompleteStateDescriptionWithUnsetAttributesAsNull());
-		if (this.env.isInTerminalState()) {
-			sb.append("State IS terminal\n");
-		} else {
-			sb.append("State is NOT terminal\n");
-		}
-
-		sb.append("Reward: " + this.lastReward + "\n");
-
-		if (this.warningMessage.length() > 0) {
-			sb.append("WARNING: " + this.warningMessage + "\n");
-			this.warningMessage = "";
-		}
-		sb.append("\n------------------------------\n\n");
-
-		if (s.getAllUnsetAttributes().size() == 0) {
-			sb.append("Applicable Actions:\n");
-			List<GroundedAction> gas = Action
-					.getAllApplicableGroundedActionsFromActionList(
-							this.domain.getActions(), s);
-			for (GroundedAction ga : gas) {
-				sb.append(ga.toString()).append("\n");
-			}
-		} else {
-			sb.append("State has unset values; set them them to see applicable action list.");
-		}
-
-		return sb.toString();
-	}
-
-	/**
-	 * Handles action execute button.
-	 */
-	protected void handleExecute() {
-
-		String actionCommand = this.actionField.getText();
-
-		if (actionCommand.length() == 0) {
-			return;
-		}
-
-		String[] comps = actionCommand.split(" ");
-		this.executeAction(comps);
-	}
-
-	/**
-	 * Handles key presses
-	 * 
-	 * @param e
-	 *            the key event
-	 */
-	protected void handleKeyPressed(KeyEvent e) {
-
-		String key = String.valueOf(e.getKeyChar());
-
-		// otherwise this could be an action, see if there is an action mapping
-		GroundedAction mappedAction = keyActionMap.get(key);
-		if (mappedAction != null) {
-
-			this.executeAction(mappedAction);
-
-		} else {
-
-			SpecialExplorerAction sea = keySpecialMap.get(key);
-			if (sea != null) {
-				sea.applySpecialAction(this.env.getCurrentObservation());
-			}
-			if (sea instanceof StateResetSpecialAction) {
-				System.out.println("Number of steps before reset: " + numSteps);
-				numSteps = 0;
-				this.lastReward = 0.;
-				if (this.currentEpisode != null) {
-					this.currentEpisode = new EpisodeAnalysis(
-							this.env.getCurrentObservation());
+	public void startLiveStatePolling(final long msPollDelay) {
+		this.runLivePolling = true;
+		Thread pollingThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while (runLivePolling) {
+					State s = env.getCurrentObservation();
+					if (s != null) {
+						updateState(s);
+					}
+					try {
+						Thread.sleep(msPollDelay);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
 			}
-			this.updateState(this.env.getCurrentObservation());
-		}
+		});
 
+		pollingThread.start();
 	}
 
 	/**
-	 * Executes the action defined in string array with the first component
-	 * being the action name and the rest the parameters.
-	 * 
-	 * @param comps
-	 *            the string array defining hte action to be executed.
+	 * Stops this class from live polling this explorer's
+	 * {@link burlap.oomdp.singleagent.environment.Environment}.
 	 */
-	protected void executeAction(String[] comps) {
-		String actionName = comps[0];
-
-		// construct parameter list as all that remains
-		String params[];
-		if (comps.length > 1) {
-			params = new String[comps.length - 1];
-			for (int i = 1; i < comps.length; i++) {
-				params[i - 1] = comps[i];
-			}
-		} else {
-			params = new String[0];
-		}
-
-		Action action = domain.getAction(actionName);
-		if (action == null) {
-			this.warningMessage = "Unknown action: " + actionName
-					+ "; nothing changed";
-			System.out.println(warningMessage);
-			this.updateState(env.getCurrentObservation());
-		} else {
-			GroundedAction ga = action.getAssociatedGroundedAction();
-			ga.initParamsWithStringRep(params);
-			executeAction(ga);
-
-		}
-	}
-
-	/**
-	 * Gets the {@link burlap.oomdp.singleagent.GroundedAction} described by the
-	 * String components where the first component is the action name and the
-	 * rest are the string representations of the parameters.
-	 * 
-	 * @param comps
-	 *            the string components that define the
-	 *            {@link burlap.oomdp.singleagent.GroundedAction}
-	 * @return the associated {@link burlap.oomdp.singleagent.GroundedAction} or
-	 *         null if it cannot be constructed.
-	 */
-	protected GroundedAction getGroundedActionFromStringComps(String[] comps) {
-		String actionName = comps[0];
-
-		// construct parameter list as all that remains
-		String params[];
-		if (comps.length > 1) {
-			params = new String[comps.length - 1];
-			for (int i = 1; i < comps.length; i++) {
-				params[i - 1] = comps[i];
-			}
-		} else {
-			params = new String[0];
-		}
-
-		Action action = domain.getAction(actionName);
-		if (action == null) {
-			return null;
-		}
-		GroundedAction ga = action.getAssociatedGroundedAction();
-		ga.initParamsWithStringRep(params);
-		return ga;
-	}
-
-	/**
-	 * Executes the provided {@link burlap.oomdp.singleagent.GroundedAction} in
-	 * the explorer's environment and records the result if episodes are being
-	 * recorded.
-	 * 
-	 * @param ga
-	 *            the {@link burlap.oomdp.singleagent.GroundedAction} to
-	 *            execute.
-	 */
-	protected void executeAction(GroundedAction ga) {
-		if (ga.applicableInState(env.getCurrentObservation())) {
-
-			EnvironmentOutcome eo = ga.executeIn(env);
-			if (this.currentEpisode != null) {
-				this.currentEpisode.recordTransitionTo(ga, eo.op, eo.r);
-			}
-
-			this.lastReward = eo.r;
-
-			numSteps++;
-			this.updateState(this.env.getCurrentObservation());
-		} else {
-			this.warningMessage = ga.toString()
-					+ " is not applicable in the current state; nothing changed";
-			System.out.println(warningMessage);
-			this.updateState(this.env.getCurrentObservation());
-		}
+	public void stopLivePolling() {
+		this.runLivePolling = false;
 	}
 
 	/**
@@ -907,61 +969,16 @@ public class VisualExplorer extends JFrame {
 	}
 
 	/**
-	 * Class for receiving key presses from a
-	 * {@link burlap.oomdp.singleagent.explorer.VisualExplorer} that handles it
-	 * as ending episode recoding and saving all recorded episodes to disk.
+	 * Updates the currently visualized state to the input state.
+	 * 
+	 * @param s
+	 *            the state to visualize.
 	 */
-	protected class SaveEpisodeAction implements SpecialExplorerAction {
+	synchronized public void updateState(State s) {
+		this.stateConsole.setText(this.getConsoleText(s));
+		this.painter.updateState(s);
+		this.updatePropTextArea(s);
 
-		/**
-		 * The directory in which the episodes will be recorded.
-		 */
-		protected String directory;
-
-		/**
-		 * The {@link burlap.oomdp.stateserialization.SerializableStateFactory}
-		 * used to serialize states.
-		 */
-		protected SerializableStateFactory serializableStateFactory;
-
-		/**
-		 * Initializes
-		 * 
-		 * @param directory
-		 *            the directory path in which episodes will be recorded
-		 * @param serializableStateFactory
-		 *            the
-		 *            {@link burlap.oomdp.stateserialization.SerializableStateFactory}
-		 *            to use for serializing states.
-		 */
-		public SaveEpisodeAction(String directory,
-				SerializableStateFactory serializableStateFactory) {
-			this.directory = directory;
-			this.serializableStateFactory = serializableStateFactory;
-
-			if (!this.directory.endsWith("/")) {
-				this.directory = this.directory + "/";
-			}
-
-		}
-
-		@Override
-		public State applySpecialAction(State curState) {
-
-			synchronized (VisualExplorer.this) {
-				VisualExplorer.this.isRecording = false;
-				List<EpisodeAnalysis> episodes = VisualExplorer.this
-						.getRecordedEpisodes();
-				EpisodeAnalysis.writeEpisodesToDisk(episodes, this.directory,
-						"episode", this.serializableStateFactory);
-				System.out.println("Recorded "
-						+ VisualExplorer.this.recordedEpisodes.size()
-						+ " episodes to directory " + this.directory);
-			}
-
-			return curState;
-
-		}
 	}
 
 }

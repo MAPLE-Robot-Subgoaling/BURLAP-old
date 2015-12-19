@@ -3,15 +3,15 @@ package burlap.behavior.stochasticgames.agents.madp;
 import java.util.Map;
 
 import burlap.behavior.stochasticgames.PolicyFromJointPolicy;
-import burlap.behavior.stochasticgames.madynamicprogramming.MAQSourcePolicy;
 import burlap.behavior.stochasticgames.madynamicprogramming.MADynamicProgramming;
+import burlap.behavior.stochasticgames.madynamicprogramming.MAQSourcePolicy;
 import burlap.oomdp.core.states.State;
+import burlap.oomdp.stochasticgames.JointAction;
 import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.SGAgentType;
-import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
-import burlap.oomdp.stochasticgames.JointAction;
 import burlap.oomdp.stochasticgames.SGDomain;
 import burlap.oomdp.stochasticgames.World;
+import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 
 /**
  * A agent that using a
@@ -80,6 +80,41 @@ public class MultiAgentDPPlanningAgent extends SGAgent {
 				.setQSourceProvider(planner);
 	}
 
+	@Override
+	public void gameStarting() {
+		if (!this.setAgentDefinitions) {
+			this.planner.setAgentDefinitions(this.world.getAgentDefinitions());
+			this.policy.getJointPolicy().setAgentsInJointPolicy(
+					this.world.getAgentDefinitions());
+			this.setAgentDefinitions = true;
+		}
+	}
+
+	@Override
+	public void gameTerminated() {
+		// nothing to do
+	}
+
+	@Override
+	public GroundedSGAgentAction getAction(State s) {
+		this.planner.planFromState(s);
+		return (GroundedSGAgentAction) this.policy.getAction(s);
+	}
+
+	@Override
+	public void joinWorld(World w, SGAgentType as) {
+		super.joinWorld(w, as);
+		this.policy.setActingAgentName(this.worldAgentName);
+	}
+
+	@Override
+	public void observeOutcome(State s, JointAction jointAction,
+			Map<String, Double> jointReward, State sprime, boolean isTerminal) {
+
+		// nothing to do
+
+	}
+
 	/**
 	 * Sets the policy derived from this agents valueFunction to follow. he
 	 * underlining joint policy of the policy must be an instance of
@@ -101,41 +136,6 @@ public class MultiAgentDPPlanningAgent extends SGAgent {
 				.setQSourceProvider(planner);
 		this.policy.setActingAgentName(this.worldAgentName);
 
-	}
-
-	@Override
-	public void joinWorld(World w, SGAgentType as) {
-		super.joinWorld(w, as);
-		this.policy.setActingAgentName(this.worldAgentName);
-	}
-
-	@Override
-	public void gameStarting() {
-		if (!this.setAgentDefinitions) {
-			this.planner.setAgentDefinitions(this.world.getAgentDefinitions());
-			this.policy.getJointPolicy().setAgentsInJointPolicy(
-					this.world.getAgentDefinitions());
-			this.setAgentDefinitions = true;
-		}
-	}
-
-	@Override
-	public GroundedSGAgentAction getAction(State s) {
-		this.planner.planFromState(s);
-		return (GroundedSGAgentAction) this.policy.getAction(s);
-	}
-
-	@Override
-	public void observeOutcome(State s, JointAction jointAction,
-			Map<String, Double> jointReward, State sprime, boolean isTerminal) {
-
-		// nothing to do
-
-	}
-
-	@Override
-	public void gameTerminated() {
-		// nothing to do
 	}
 
 }

@@ -32,6 +32,11 @@ public class HardStateResetSpecialAction implements SpecialExplorerAction {
 		this.stateGenerator = stateGenerator;
 	}
 
+	@Override
+	public State applySpecialAction(State curState) {
+		return this.stateGenerator.generateState();
+	}
+
 	/**
 	 * Sets the base state to reset to
 	 * 
@@ -50,10 +55,5 @@ public class HardStateResetSpecialAction implements SpecialExplorerAction {
 	 */
 	public void setBaseStateGenerator(StateGenerator stateGenerator) {
 		this.stateGenerator = stateGenerator;
-	}
-
-	@Override
-	public State applySpecialAction(State curState) {
-		return this.stateGenerator.generateState();
 	}
 }

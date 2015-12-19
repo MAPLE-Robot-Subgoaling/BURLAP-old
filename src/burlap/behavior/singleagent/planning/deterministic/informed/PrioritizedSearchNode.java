@@ -3,8 +3,8 @@ package burlap.behavior.singleagent.planning.deterministic.informed;
 import java.util.Comparator;
 
 import burlap.behavior.singleagent.planning.deterministic.SearchNode;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.statehashing.HashableState;
 
 /**
  * An extension of the
@@ -18,6 +18,29 @@ import burlap.oomdp.singleagent.GroundedAction;
  * 
  */
 public class PrioritizedSearchNode extends SearchNode {
+
+	/**
+	 * A class for comparing the priority of two PrioritizedSearchNodes. Nodes
+	 * are considered "less than" nodes with higher priority.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class PSNComparator implements
+			Comparator<PrioritizedSearchNode> {
+
+		@Override
+		public int compare(PrioritizedSearchNode a, PrioritizedSearchNode b) {
+			if (a.priority < b.priority) {
+				return -1;
+			}
+			if (a.priority > b.priority) {
+				return 1;
+			}
+			return 0;
+		}
+
+	}
 
 	/**
 	 * The priority of the node used to order it for expansion.
@@ -59,6 +82,17 @@ public class PrioritizedSearchNode extends SearchNode {
 		priority = p;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		PrioritizedSearchNode po = (PrioritizedSearchNode) o;
+		return s.equals(po.s);
+	}
+
+	@Override
+	public int hashCode() {
+		return s.hashCode();
+	}
+
 	/**
 	 * This method rewires the generating node information and priority to that
 	 * specified in a different PrioritizedSearchNode. This method is useful
@@ -72,40 +106,6 @@ public class PrioritizedSearchNode extends SearchNode {
 		this.priority = o.priority;
 		this.generatingAction = o.generatingAction;
 		this.backPointer = o.backPointer;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		PrioritizedSearchNode po = (PrioritizedSearchNode) o;
-		return s.equals(po.s);
-	}
-
-	@Override
-	public int hashCode() {
-		return s.hashCode();
-	}
-
-	/**
-	 * A class for comparing the priority of two PrioritizedSearchNodes. Nodes
-	 * are considered "less than" nodes with higher priority.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class PSNComparator implements
-			Comparator<PrioritizedSearchNode> {
-
-		@Override
-		public int compare(PrioritizedSearchNode a, PrioritizedSearchNode b) {
-			if (a.priority < b.priority) {
-				return -1;
-			}
-			if (a.priority > b.priority) {
-				return 1;
-			}
-			return 0;
-		}
-
 	}
 
 }

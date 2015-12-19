@@ -1,18 +1,23 @@
 package burlap.behavior.singleagent.learnfromdemo.mlirl.differentiableplanners;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import burlap.behavior.policy.BoltzmannQPolicy;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF;
+import burlap.behavior.singleagent.planning.Planner;
 import burlap.behavior.singleagent.planning.stochastic.ActionTransitions;
 import burlap.behavior.singleagent.planning.stochastic.HashedTransitionProbability;
-import burlap.behavior.singleagent.planning.Planner;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.debugtools.DPrint;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
-
-import java.util.*;
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * Performs Differentiable Value Iteration using the Boltzmann backup operator
@@ -94,103 +99,15 @@ public class DifferentiableVI extends DifferentiableDP implements Planner {
 	}
 
 	/**
-	 * Calling this method will force the valueFunction to recompute the
-	 * reachable states when the
-	 * {@link #planFromState(burlap.oomdp.core.states.State)} method is called
-	 * next. This may be useful if the transition dynamics from the last
-	 * planning call have changed and if planning needs to be restarted as a
-	 * result.
-	 */
-	public void recomputeReachableStates() {
-		this.foundReachableStates = false;
-		this.transitionDynamics = new HashMap<HashableState, List<ActionTransitions>>();
-	}
-
-	/**
-	 * Sets whether the state reachability search to generate the state space
-	 * will be prune the search from terminal states. The default is not to
-	 * prune.
+	 * Adds a {@link java.util.Collection} of states over which VI will iterate.
 	 * 
-	 * @param toggle
-	 *            true if the search should prune the search at terminal states;
-	 *            false if the search should find all reachable states
-	 *            regardless of terminal states.
+	 * @param states
+	 *            the collection of states.
 	 */
-	public void toggleReachabiltiyTerminalStatePruning(boolean toggle) {
-		this.stopReachabilityFromTerminalStates = toggle;
-	}
-
-	/**
-	 * Plans from the input state and returns a
-	 * {@link burlap.behavior.policy.BoltzmannQPolicy} following the Boltzmann
-	 * parameter used for value Botlzmann value backups in this planner.
-	 * 
-	 * @param initialState
-	 *            the initial state of the planning problem
-	 * @return a {@link burlap.behavior.policy.BoltzmannQPolicy}
-	 */
-	@Override
-	public BoltzmannQPolicy planFromState(State initialState) {
-		this.initializeOptionsForExpectationComputations();
-		if (!this.valueFunction.containsKey(this.hashingFactory
-				.hashState(initialState))) {
-			this.performReachabilityFrom(initialState);
-			this.runVI();
+	public void addStatesToStateSpace(Collection<State> states) {
+		for (State s : states) {
+			this.addStateToStateSpace(s);
 		}
-
-		return new BoltzmannQPolicy(this, 1. / this.boltzBeta);
-
-	}
-
-	@Override
-	public void resetSolver() {
-		super.resetSolver();
-		this.foundReachableStates = false;
-		this.hasRunVI = false;
-	}
-
-	/**
-	 * Runs VI until the specified termination conditions are met. In general,
-	 * this method should only be called indirectly through the
-	 * {@link #planFromState(State)} method. The
-	 * {@link #performReachabilityFrom(State)} must have been performed at least
-	 * once in the past or a runtime exception will be thrown. The
-	 * {@link #planFromState(State)} method will automatically call the
-	 * {@link #performReachabilityFrom(State)} method first and then this if it
-	 * hasn't been run.
-	 */
-	public void runVI() {
-
-		if (!this.foundReachableStates) {
-			throw new RuntimeException(
-					"Cannot run VI until the reachable states have been found. Use the planFromState, performReachabilityFrom, addStateToStateSpace or addStatesToStateSpace methods at least once before calling runVI.");
-		}
-
-		Set<HashableState> states = mapToStateIndex.keySet();
-
-		int i = 0;
-		for (i = 0; i < this.maxIterations; i++) {
-
-			double delta = 0.;
-			for (HashableState sh : states) {
-
-				double v = this.value(sh);
-				double newV = this.performBellmanUpdateOn(sh);
-				double[] ng = this.performDPValueGradientUpdateOn(sh);
-				delta = Math.max(Math.abs(newV - v), delta);
-
-			}
-
-			if (delta < this.maxDelta) {
-				break; // approximated well enough; stop iterating
-			}
-
-		}
-
-		DPrint.cl(this.debugCode, "Passes: " + i);
-
-		this.hasRunVI = true;
-
 	}
 
 	/**
@@ -203,18 +120,6 @@ public class DifferentiableVI extends DifferentiableDP implements Planner {
 		HashableState sh = this.hashingFactory.hashState(s);
 		this.mapToStateIndex.put(sh, sh);
 		this.foundReachableStates = true;
-	}
-
-	/**
-	 * Adds a {@link java.util.Collection} of states over which VI will iterate.
-	 * 
-	 * @param states
-	 *            the collection of states.
-	 */
-	public void addStatesToStateSpace(Collection<State> states) {
-		for (State s : states) {
-			this.addStateToStateSpace(s);
-		}
 	}
 
 	/**
@@ -279,6 +184,106 @@ public class DifferentiableVI extends DifferentiableDP implements Planner {
 
 		return true;
 
+	}
+
+	/**
+	 * Plans from the input state and returns a
+	 * {@link burlap.behavior.policy.BoltzmannQPolicy} following the Boltzmann
+	 * parameter used for value Botlzmann value backups in this planner.
+	 * 
+	 * @param initialState
+	 *            the initial state of the planning problem
+	 * @return a {@link burlap.behavior.policy.BoltzmannQPolicy}
+	 */
+	@Override
+	public BoltzmannQPolicy planFromState(State initialState) {
+		this.initializeOptionsForExpectationComputations();
+		if (!this.valueFunction.containsKey(this.hashingFactory
+				.hashState(initialState))) {
+			this.performReachabilityFrom(initialState);
+			this.runVI();
+		}
+
+		return new BoltzmannQPolicy(this, 1. / this.boltzBeta);
+
+	}
+
+	/**
+	 * Calling this method will force the valueFunction to recompute the
+	 * reachable states when the
+	 * {@link #planFromState(burlap.oomdp.core.states.State)} method is called
+	 * next. This may be useful if the transition dynamics from the last
+	 * planning call have changed and if planning needs to be restarted as a
+	 * result.
+	 */
+	public void recomputeReachableStates() {
+		this.foundReachableStates = false;
+		this.transitionDynamics = new HashMap<HashableState, List<ActionTransitions>>();
+	}
+
+	@Override
+	public void resetSolver() {
+		super.resetSolver();
+		this.foundReachableStates = false;
+		this.hasRunVI = false;
+	}
+
+	/**
+	 * Runs VI until the specified termination conditions are met. In general,
+	 * this method should only be called indirectly through the
+	 * {@link #planFromState(State)} method. The
+	 * {@link #performReachabilityFrom(State)} must have been performed at least
+	 * once in the past or a runtime exception will be thrown. The
+	 * {@link #planFromState(State)} method will automatically call the
+	 * {@link #performReachabilityFrom(State)} method first and then this if it
+	 * hasn't been run.
+	 */
+	public void runVI() {
+
+		if (!this.foundReachableStates) {
+			throw new RuntimeException(
+					"Cannot run VI until the reachable states have been found. Use the planFromState, performReachabilityFrom, addStateToStateSpace or addStatesToStateSpace methods at least once before calling runVI.");
+		}
+
+		Set<HashableState> states = mapToStateIndex.keySet();
+
+		int i = 0;
+		for (i = 0; i < this.maxIterations; i++) {
+
+			double delta = 0.;
+			for (HashableState sh : states) {
+
+				double v = this.value(sh);
+				double newV = this.performBellmanUpdateOn(sh);
+				double[] ng = this.performDPValueGradientUpdateOn(sh);
+				delta = Math.max(Math.abs(newV - v), delta);
+
+			}
+
+			if (delta < this.maxDelta) {
+				break; // approximated well enough; stop iterating
+			}
+
+		}
+
+		DPrint.cl(this.debugCode, "Passes: " + i);
+
+		this.hasRunVI = true;
+
+	}
+
+	/**
+	 * Sets whether the state reachability search to generate the state space
+	 * will be prune the search from terminal states. The default is not to
+	 * prune.
+	 * 
+	 * @param toggle
+	 *            true if the search should prune the search at terminal states;
+	 *            false if the search should find all reachable states
+	 *            regardless of terminal states.
+	 */
+	public void toggleReachabiltiyTerminalStatePruning(boolean toggle) {
+		this.stopReachabilityFromTerminalStates = toggle;
 	}
 
 }

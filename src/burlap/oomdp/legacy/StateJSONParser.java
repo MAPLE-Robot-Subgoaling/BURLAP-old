@@ -7,14 +7,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import burlap.oomdp.legacy.StateParser;
 import burlap.oomdp.core.Attribute;
-import burlap.oomdp.core.objects.ObjectInstance;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.Attribute.AttributeType;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.objects.MutableObjectInstance;
+import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.MutableState;
+import burlap.oomdp.core.states.State;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerationException;
@@ -97,47 +96,6 @@ public class StateJSONParser implements StateParser {
 		return jsonData;
 	}
 
-	@Override
-	public String stateToString(State s) {
-		JsonFactory jsonFactory = new JsonFactory();
-		StringWriter writer = new StringWriter();
-		JsonGenerator jsonGenerator;
-		ObjectMapper objectMapper = new ObjectMapper();
-
-		List<Map<String, Object>> data = this.getJSONPrepared(s);
-		try {
-			jsonGenerator = jsonFactory.createGenerator(writer);
-			objectMapper.writeValue(jsonGenerator, data);
-		} catch (JsonGenerationException e) {
-			e.printStackTrace();
-		} catch (JsonMappingException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return writer.toString();
-	}
-
-	@Override
-	public State stringToState(String str) {
-
-		JsonFactory jsonFactory = new JsonFactory();
-		List<Map<String, Object>> objects = new ArrayList<Map<String, Object>>();
-		try {
-			ObjectMapper objectMapper = new ObjectMapper(jsonFactory);
-			TypeReference<List<Map<String, Object>>> listTypeRef = new TypeReference<List<Map<String, Object>>>() {
-			};
-			objects = objectMapper.readValue(str, listTypeRef);
-		} catch (JsonParseException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return this.JSONPreparedToState(objects);
-	}
-
 	/**
 	 * Takes a JSON prepared datastructure representation of a state and turns
 	 * it into an actual state object. The JSON prepared version is a list of
@@ -181,6 +139,47 @@ public class StateJSONParser implements StateParser {
 		}
 
 		return s;
+	}
+
+	@Override
+	public String stateToString(State s) {
+		JsonFactory jsonFactory = new JsonFactory();
+		StringWriter writer = new StringWriter();
+		JsonGenerator jsonGenerator;
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		List<Map<String, Object>> data = this.getJSONPrepared(s);
+		try {
+			jsonGenerator = jsonFactory.createGenerator(writer);
+			objectMapper.writeValue(jsonGenerator, data);
+		} catch (JsonGenerationException e) {
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return writer.toString();
+	}
+
+	@Override
+	public State stringToState(String str) {
+
+		JsonFactory jsonFactory = new JsonFactory();
+		List<Map<String, Object>> objects = new ArrayList<Map<String, Object>>();
+		try {
+			ObjectMapper objectMapper = new ObjectMapper(jsonFactory);
+			TypeReference<List<Map<String, Object>>> listTypeRef = new TypeReference<List<Map<String, Object>>>() {
+			};
+			objects = objectMapper.readValue(str, listTypeRef);
+		} catch (JsonParseException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return this.JSONPreparedToState(objects);
 	}
 
 }

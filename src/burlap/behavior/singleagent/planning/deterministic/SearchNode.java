@@ -1,7 +1,7 @@
 package burlap.behavior.singleagent.planning.deterministic;
 
-import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.statehashing.HashableState;
 
 /**
  * The SearchNode class is used for classic deterministic forward search

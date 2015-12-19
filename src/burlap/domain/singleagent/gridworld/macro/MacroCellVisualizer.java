@@ -25,57 +25,6 @@ import burlap.oomdp.visualizer.Visualizer;
 public class MacroCellVisualizer extends GridWorldVisualizer {
 
 	/**
-	 * Returns a {@link Visualizer} for the Macro-Cell GridWorld Visualizer and
-	 * reward weights associated with a set of MacroCell Propositional
-	 * functions.
-	 * 
-	 * @param map
-	 *            a map of the grid world
-	 * @param propFunctions
-	 *            the macro cell propositional functions
-	 * @param rewardMap
-	 *            the reward weights associated with the propositional function
-	 *            names
-	 * @return a {@link Visualizer}
-	 */
-	public static Visualizer getVisualizer(int[][] map,
-			MacroCellGridWorld.InMacroCellPF[] propFunctions,
-			Map<String, Double> rewardMap) {
-
-		StateRenderLayer r = getStateRenderLayer(map, propFunctions, rewardMap);
-		Visualizer v = new Visualizer(r);
-		return v;
-	}
-
-	/**
-	 * Returns a {@link StateRenderLayer} for the Macro-Cell GridWorld
-	 * Visualizer and reward weights associated with a set of MacroCell
-	 * Propositional functions.
-	 * 
-	 * @param map
-	 *            a map of the grid world
-	 * @param propFunctions
-	 *            the macro cell propositional functions
-	 * @param rewardMap
-	 *            the reward weights associated with the propositional function
-	 *            names
-	 * @return a {@link StateRenderLayer}
-	 */
-	public static StateRenderLayer getStateRenderLayer(int[][] map,
-			MacroCellGridWorld.InMacroCellPF[] propFunctions,
-			Map<String, Double> rewardMap) {
-		StateRenderLayer r = new StateRenderLayer();
-
-		r.addStaticPainter(new GridWorldVisualizer.MapPainter(map));
-		r.addStaticPainter(new MacroCellRewardWeightPainter(map, propFunctions,
-				rewardMap));
-		r.addObjectClassPainter(GridWorldDomain.CLASSAGENT,
-				new GridWorldVisualizer.CellPainter(1, Color.gray, map));
-
-		return r;
-	}
-
-	/**
 	 * Class for painting the macro cells a color between white and blue, where
 	 * strong blue indicates strong reward weights.
 	 * 
@@ -148,6 +97,57 @@ public class MacroCellVisualizer extends GridWorldVisualizer {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Returns a {@link StateRenderLayer} for the Macro-Cell GridWorld
+	 * Visualizer and reward weights associated with a set of MacroCell
+	 * Propositional functions.
+	 * 
+	 * @param map
+	 *            a map of the grid world
+	 * @param propFunctions
+	 *            the macro cell propositional functions
+	 * @param rewardMap
+	 *            the reward weights associated with the propositional function
+	 *            names
+	 * @return a {@link StateRenderLayer}
+	 */
+	public static StateRenderLayer getStateRenderLayer(int[][] map,
+			MacroCellGridWorld.InMacroCellPF[] propFunctions,
+			Map<String, Double> rewardMap) {
+		StateRenderLayer r = new StateRenderLayer();
+
+		r.addStaticPainter(new GridWorldVisualizer.MapPainter(map));
+		r.addStaticPainter(new MacroCellRewardWeightPainter(map, propFunctions,
+				rewardMap));
+		r.addObjectClassPainter(GridWorldDomain.CLASSAGENT,
+				new GridWorldVisualizer.CellPainter(1, Color.gray, map));
+
+		return r;
+	}
+
+	/**
+	 * Returns a {@link Visualizer} for the Macro-Cell GridWorld Visualizer and
+	 * reward weights associated with a set of MacroCell Propositional
+	 * functions.
+	 * 
+	 * @param map
+	 *            a map of the grid world
+	 * @param propFunctions
+	 *            the macro cell propositional functions
+	 * @param rewardMap
+	 *            the reward weights associated with the propositional function
+	 *            names
+	 * @return a {@link Visualizer}
+	 */
+	public static Visualizer getVisualizer(int[][] map,
+			MacroCellGridWorld.InMacroCellPF[] propFunctions,
+			Map<String, Double> rewardMap) {
+
+		StateRenderLayer r = getStateRenderLayer(map, propFunctions, rewardMap);
+		Visualizer v = new Visualizer(r);
+		return v;
 	}
 
 }

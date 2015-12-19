@@ -4,11 +4,11 @@ import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectClass;
-import burlap.oomdp.core.objects.ObjectInstance;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.core.objects.MutableObjectInstance;
+import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.MutableState;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.FullActionModel;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.SADomain;
@@ -38,39 +38,55 @@ import burlap.oomdp.visualizer.Visualizer;
 public class MountainCar implements DomainGenerator {
 
 	/**
-	 * A constant for the name of the x attribute
+	 * A Terminal Function for the Mountain Car domain that terminates when the
+	 * agent's position is >= the max position in the world. Alternatively, a
+	 * different threshold can be specified in the constructor.
+	 * 
+	 * @author James MacGlashan
+	 * 
 	 */
-	public static final String ATTX = "xAtt";
+	public static class ClassicMCTF implements TerminalFunction {
 
-	/**
-	 * A constant for the name of the velocity attribute
-	 */
-	public static final String ATTV = "vAtt";
+		public double threshold;
+		protected boolean useThreshold = false;
 
-	/**
-	 * A constant for the name of the agent class
-	 */
-	public static final String CLASSAGENT = "agent";
+		/**
+		 * Sets terminal states to be those that are >= the maximum position in
+		 * the world.
+		 */
+		public ClassicMCTF() {
 
-	/**
-	 * A constant for the name of the forward action
-	 */
-	public static final String ACTIONFORWARD = "forward";
+		}
 
-	/**
-	 * A constant for the name of the backwards action
-	 */
-	public static final String ACTIONBACKWARDS = "backwards";
+		/**
+		 * Sets terminal states to be those >= the given threshold.
+		 * 
+		 * @param threshold
+		 *            position >= this will be terminal states
+		 */
+		public ClassicMCTF(double threshold) {
+			this.threshold = threshold;
+			this.useThreshold = true;
+		}
 
-	/**
-	 * A constant for the name of the coast action
-	 */
-	public static final String ACTIONCOAST = "coast";
+		@Override
+		public boolean isTerminal(State s) {
 
-	/**
-	 * The physics parameters for mountain car.
-	 */
-	public MCPhysicsParams physParams = new MCPhysicsParams();
+			ObjectInstance agent = s.getFirstObjectOfClass(CLASSAGENT);
+			double x = agent.getRealValForAttribute(ATTX);
+
+			double threshold = this.threshold;
+			if (!this.useThreshold) {
+				threshold = agent.getObjectClass().domain.getAttribute(ATTX).upperLim;
+			}
+
+			if (x >= threshold) {
+				return true;
+			}
+			return false;
+		}
+
+	}
 
 	public static class MCPhysicsParams {
 
@@ -132,32 +148,138 @@ public class MountainCar implements DomainGenerator {
 
 	}
 
-	@Override
-	public Domain generateDomain() {
+	/**
+	 * An action for moving in a given direction. The action should be passed a
+	 * direction parameter indicating the direction of acceleration. +1 for
+	 * forward acceleration, -1 for backwards acceleration, 0 for no
+	 * acceleration (coast).
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	class MovementAction extends SimpleAction.SimpleDeterministicAction
+			implements FullActionModel {
 
-		SADomain domain = new SADomain();
+		int dir;
+		MCPhysicsParams physParams;
 
-		// add attributes
-		Attribute xatt = new Attribute(domain, ATTX,
-				Attribute.AttributeType.REAL);
-		xatt.setLims(physParams.xmin, physParams.xmax);
+		/**
+		 * Initializes with the given name, domain, and direction of
+		 * acceleration.
+		 * 
+		 * @param name
+		 *            the name of this action
+		 * @param domain
+		 *            the domain of this action
+		 * @param dir
+		 *            the direction of acceleration; +1 for forward
+		 *            acceleration, -1 for backwards acceleration, 0 for no
+		 *            acceleration (coast).
+		 */
+		public MovementAction(String name, Domain domain, int dir,
+				MCPhysicsParams physParams) {
+			super(name, domain);
+			this.dir = dir;
+			this.physParams = physParams;
+		}
 
-		Attribute vatt = new Attribute(domain, ATTV,
-				Attribute.AttributeType.REAL);
-		vatt.setLims(physParams.vmin, physParams.vmax);
+		public int getDir() {
+			return dir;
+		}
 
-		// add classes
-		ObjectClass agentClass = new ObjectClass(domain, CLASSAGENT);
-		agentClass.addAttribute(xatt);
-		agentClass.addAttribute(vatt);
+		public MCPhysicsParams getPhysParams() {
+			return physParams;
+		}
 
-		MCPhysicsParams cphys = this.physParams.copy();
+		@Override
+		protected State performActionHelper(State s,
+				GroundedAction groundedAction) {
+			return MountainCar.move(s, dir, this.physParams);
+		}
 
-		new MovementAction(ACTIONFORWARD, domain, 1, cphys);
-		new MovementAction(ACTIONBACKWARDS, domain, -1, cphys);
-		new MovementAction(ACTIONCOAST, domain, 0, cphys);
+		public void setDir(int dir) {
+			this.dir = dir;
+		}
 
-		return domain;
+		public void setPhysParams(MCPhysicsParams physParams) {
+			this.physParams = physParams;
+		}
+	}
+
+	/**
+	 * A constant for the name of the x attribute
+	 */
+	public static final String ATTX = "xAtt";
+
+	/**
+	 * A constant for the name of the velocity attribute
+	 */
+	public static final String ATTV = "vAtt";
+
+	/**
+	 * A constant for the name of the agent class
+	 */
+	public static final String CLASSAGENT = "agent";
+
+	/**
+	 * A constant for the name of the forward action
+	 */
+	public static final String ACTIONFORWARD = "forward";
+
+	/**
+	 * A constant for the name of the backwards action
+	 */
+	public static final String ACTIONBACKWARDS = "backwards";
+
+	/**
+	 * A constant for the name of the coast action
+	 */
+	public static final String ACTIONCOAST = "coast";
+
+	/**
+	 * Returns a new state with the agent in the bottom of the hill valley not
+	 * moving according to the hill design specified in the provided
+	 * {@link burlap.domain.singleagent.mountaincar.MountainCar.MCPhysicsParams}
+	 * 
+	 * @param domain
+	 *            the domain object in which the state is associated
+	 * @param physParms
+	 *            object specifying the physics and hill design, which indicates
+	 *            where the valley is.
+	 * @return a new state with the agent in the bottom of the hill valley not
+	 *         moving.
+	 */
+	public static State getCleanState(Domain domain, MCPhysicsParams physParms) {
+		State s = new MutableState();
+		ObjectInstance a = new MutableObjectInstance(
+				domain.getObjectClass(CLASSAGENT), CLASSAGENT);
+		s.addObject(a);
+		setAgent(s, -(Math.PI / 2) / physParms.cosScale, 0.);
+		return s;
+	}
+
+	/**
+	 * Will launch a visual explorer for the mountain car domain that is
+	 * controlled with the a-s-d keys.
+	 * 
+	 * @param args
+	 *            empty arguments.
+	 */
+	public static void main(String[] args) {
+
+		MountainCar mcGen = new MountainCar();
+		Domain domain = mcGen.generateDomain();
+		State s = mcGen.getCleanState(domain);
+
+		Visualizer vis = MountainCarVisualizer.getVisualizer(mcGen);
+		VisualExplorer exp = new VisualExplorer(domain, vis, s);
+
+		exp.addKeyAction("d", ACTIONFORWARD);
+		exp.addKeyAction("s", ACTIONCOAST);
+		exp.addKeyAction("a", ACTIONBACKWARDS);
+
+		exp.initGUI();
+
 	}
 
 	/**
@@ -209,6 +331,56 @@ public class MountainCar implements DomainGenerator {
 	}
 
 	/**
+	 * Sets the agent position in the provided state to the given position and
+	 * with the given velocity.
+	 * 
+	 * @param s
+	 *            the state in which the agent should be set.
+	 * @param x
+	 *            the position of the agent.
+	 * @param v
+	 *            the velocity of the agent.
+	 */
+	public static void setAgent(State s, double x, double v) {
+		ObjectInstance agent = s.getFirstObjectOfClass(CLASSAGENT);
+		agent.setValue(ATTX, x);
+		agent.setValue(ATTV, v);
+	}
+
+	/**
+	 * The physics parameters for mountain car.
+	 */
+	public MCPhysicsParams physParams = new MCPhysicsParams();
+
+	@Override
+	public Domain generateDomain() {
+
+		SADomain domain = new SADomain();
+
+		// add attributes
+		Attribute xatt = new Attribute(domain, ATTX,
+				Attribute.AttributeType.REAL);
+		xatt.setLims(physParams.xmin, physParams.xmax);
+
+		Attribute vatt = new Attribute(domain, ATTV,
+				Attribute.AttributeType.REAL);
+		vatt.setLims(physParams.vmin, physParams.vmax);
+
+		// add classes
+		ObjectClass agentClass = new ObjectClass(domain, CLASSAGENT);
+		agentClass.addAttribute(xatt);
+		agentClass.addAttribute(vatt);
+
+		MCPhysicsParams cphys = this.physParams.copy();
+
+		new MovementAction(ACTIONFORWARD, domain, 1, cphys);
+		new MovementAction(ACTIONBACKWARDS, domain, -1, cphys);
+		new MovementAction(ACTIONCOAST, domain, 0, cphys);
+
+		return domain;
+	}
+
+	/**
 	 * Returns a new state with the agent in the bottom of the hill valley not
 	 * moving.
 	 * 
@@ -219,28 +391,6 @@ public class MountainCar implements DomainGenerator {
 	 */
 	public State getCleanState(Domain domain) {
 		return getCleanState(domain, this.physParams);
-	}
-
-	/**
-	 * Returns a new state with the agent in the bottom of the hill valley not
-	 * moving according to the hill design specified in the provided
-	 * {@link burlap.domain.singleagent.mountaincar.MountainCar.MCPhysicsParams}
-	 * 
-	 * @param domain
-	 *            the domain object in which the state is associated
-	 * @param physParms
-	 *            object specifying the physics and hill design, which indicates
-	 *            where the valley is.
-	 * @return a new state with the agent in the bottom of the hill valley not
-	 *         moving.
-	 */
-	public static State getCleanState(Domain domain, MCPhysicsParams physParms) {
-		State s = new MutableState();
-		ObjectInstance a = new MutableObjectInstance(
-				domain.getObjectClass(CLASSAGENT), CLASSAGENT);
-		s.addObject(a);
-		setAgent(s, -(Math.PI / 2) / physParms.cosScale, 0.);
-		return s;
 	}
 
 	/**
@@ -259,156 +409,6 @@ public class MountainCar implements DomainGenerator {
 		State s = this.getCleanState(domain);
 		setAgent(s, x, v);
 		return s;
-	}
-
-	/**
-	 * Sets the agent position in the provided state to the given position and
-	 * with the given velocity.
-	 * 
-	 * @param s
-	 *            the state in which the agent should be set.
-	 * @param x
-	 *            the position of the agent.
-	 * @param v
-	 *            the velocity of the agent.
-	 */
-	public static void setAgent(State s, double x, double v) {
-		ObjectInstance agent = s.getFirstObjectOfClass(CLASSAGENT);
-		agent.setValue(ATTX, x);
-		agent.setValue(ATTV, v);
-	}
-
-	/**
-	 * An action for moving in a given direction. The action should be passed a
-	 * direction parameter indicating the direction of acceleration. +1 for
-	 * forward acceleration, -1 for backwards acceleration, 0 for no
-	 * acceleration (coast).
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	class MovementAction extends SimpleAction.SimpleDeterministicAction
-			implements FullActionModel {
-
-		int dir;
-		MCPhysicsParams physParams;
-
-		/**
-		 * Initializes with the given name, domain, and direction of
-		 * acceleration.
-		 * 
-		 * @param name
-		 *            the name of this action
-		 * @param domain
-		 *            the domain of this action
-		 * @param dir
-		 *            the direction of acceleration; +1 for forward
-		 *            acceleration, -1 for backwards acceleration, 0 for no
-		 *            acceleration (coast).
-		 */
-		public MovementAction(String name, Domain domain, int dir,
-				MCPhysicsParams physParams) {
-			super(name, domain);
-			this.dir = dir;
-			this.physParams = physParams;
-		}
-
-		@Override
-		protected State performActionHelper(State s,
-				GroundedAction groundedAction) {
-			return MountainCar.move(s, dir, this.physParams);
-		}
-
-		public MCPhysicsParams getPhysParams() {
-			return physParams;
-		}
-
-		public void setPhysParams(MCPhysicsParams physParams) {
-			this.physParams = physParams;
-		}
-
-		public int getDir() {
-			return dir;
-		}
-
-		public void setDir(int dir) {
-			this.dir = dir;
-		}
-	}
-
-	/**
-	 * A Terminal Function for the Mountain Car domain that terminates when the
-	 * agent's position is >= the max position in the world. Alternatively, a
-	 * different threshold can be specified in the constructor.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class ClassicMCTF implements TerminalFunction {
-
-		public double threshold;
-		protected boolean useThreshold = false;
-
-		/**
-		 * Sets terminal states to be those that are >= the maximum position in
-		 * the world.
-		 */
-		public ClassicMCTF() {
-
-		}
-
-		/**
-		 * Sets terminal states to be those >= the given threshold.
-		 * 
-		 * @param threshold
-		 *            position >= this will be terminal states
-		 */
-		public ClassicMCTF(double threshold) {
-			this.threshold = threshold;
-			this.useThreshold = true;
-		}
-
-		@Override
-		public boolean isTerminal(State s) {
-
-			ObjectInstance agent = s.getFirstObjectOfClass(CLASSAGENT);
-			double x = agent.getRealValForAttribute(ATTX);
-
-			double threshold = this.threshold;
-			if (!this.useThreshold) {
-				threshold = agent.getObjectClass().domain.getAttribute(ATTX).upperLim;
-			}
-
-			if (x >= threshold) {
-				return true;
-			}
-			return false;
-		}
-
-	}
-
-	/**
-	 * Will launch a visual explorer for the mountain car domain that is
-	 * controlled with the a-s-d keys.
-	 * 
-	 * @param args
-	 *            empty arguments.
-	 */
-	public static void main(String[] args) {
-
-		MountainCar mcGen = new MountainCar();
-		Domain domain = mcGen.generateDomain();
-		State s = mcGen.getCleanState(domain);
-
-		Visualizer vis = MountainCarVisualizer.getVisualizer(mcGen);
-		VisualExplorer exp = new VisualExplorer(domain, vis, s);
-
-		exp.addKeyAction("d", ACTIONFORWARD);
-		exp.addKeyAction("s", ACTIONCOAST);
-		exp.addKeyAction("a", ACTIONBACKWARDS);
-
-		exp.initGUI();
-
 	}
 
 }

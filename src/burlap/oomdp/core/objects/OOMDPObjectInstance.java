@@ -12,6 +12,7 @@ public abstract class OOMDPObjectInstance implements ObjectInstance {
 	 * @return a string representation of this object including its name and
 	 *         value attribute value assignment.
 	 */
+	@Override
 	public String getObjectDescription() {
 		return this.buildObjectDescription(new StringBuilder()).toString();
 	}
@@ -19,6 +20,7 @@ public abstract class OOMDPObjectInstance implements ObjectInstance {
 	/**
 	 * Sets an object's value based on it's java.lang type.
 	 */
+	@Override
 	public <T> ObjectInstance setValue(String attName, T value) {
 		String valueClass = value.getClass().getName();
 		if (valueClass.equals("boolean")

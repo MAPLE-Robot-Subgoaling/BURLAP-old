@@ -12,25 +12,35 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.AbstractConstruct;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.nodes.MappingNode;
+import org.yaml.snakeyaml.nodes.Node;
+import org.yaml.snakeyaml.nodes.NodeId;
+import org.yaml.snakeyaml.nodes.ScalarNode;
+import org.yaml.snakeyaml.nodes.Tag;
+import org.yaml.snakeyaml.representer.Represent;
+import org.yaml.snakeyaml.representer.Representer;
+
 import burlap.behavior.stochasticgames.agents.RandomSGAgent;
 import burlap.debugtools.DPrint;
 import burlap.domain.stochasticgames.gridgame.GridGame;
 import burlap.oomdp.core.TerminalFunction;
-import burlap.oomdp.legacy.StateParser;
 import burlap.oomdp.core.states.State;
+import burlap.oomdp.legacy.StateParser;
 import burlap.oomdp.stateserialization.SerializableState;
 import burlap.oomdp.stateserialization.SerializableStateFactory;
 import burlap.oomdp.stateserialization.simple.SimpleSerializableStateFactory;
-import burlap.oomdp.stochasticgames.*;
+import burlap.oomdp.stochasticgames.JointAction;
+import burlap.oomdp.stochasticgames.JointReward;
+import burlap.oomdp.stochasticgames.SGAgent;
+import burlap.oomdp.stochasticgames.SGAgentType;
+import burlap.oomdp.stochasticgames.SGDomain;
+import burlap.oomdp.stochasticgames.World;
 import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
 import burlap.oomdp.stochasticgames.common.ConstantSGStateGenerator;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.AbstractConstruct;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.nodes.*;
-import org.yaml.snakeyaml.representer.Represent;
-import org.yaml.snakeyaml.representer.Representer;
 
 /**
  * This class provides a means to record all the interactions in a stochastic
@@ -67,330 +77,16 @@ import org.yaml.snakeyaml.representer.Representer;
  */
 public class GameAnalysis {
 
-	/**
-	 * The sequence of states
-	 */
-	public List<State> states;
-
-	/**
-	 * The sequence of joint actions
-	 */
-	public List<JointAction> jointActions;
-
-	/**
-	 * The sequence of joint rewards
-	 */
-	public List<Map<String, Double>> jointRewards;
-
-	/**
-	 * The set of agents involved in this game
-	 */
-	protected Set<String> agentsInvolvedInGame;
-
-	/**
-	 * Initialzes the datastructures. Note that the method
-	 * {@link #initializeGameWithInitialState(State)} should be called to set
-	 * the initial state of the game before any transitions are recorded.
-	 */
-	public GameAnalysis() {
-		this.initializeDatastructures();
-	}
-
-	/**
-	 * Initializes with an initial state of the game.
-	 * 
-	 * @param initialState
-	 *            the initial state of the game.
-	 */
-	public GameAnalysis(State initialState) {
-		this.initializeGameWithInitialState(initialState);
-	}
-
-	/**
-	 * Clears out any already recorded states, joint actions, and rewards, and
-	 * sets the initial state of the game.
-	 * 
-	 * @param initialState
-	 *            the initial state of the game.
-	 */
-	public void initializeGameWithInitialState(State initialState) {
-		this.initializeDatastructures();
-		this.states.add(initialState);
-	}
-
-	/**
-	 * Instantiates the datastructures of this object.
-	 */
-	protected void initializeDatastructures() {
-		this.states = new ArrayList<State>();
-		this.jointActions = new ArrayList<JointAction>();
-		this.jointRewards = new ArrayList<Map<String, Double>>();
-		this.agentsInvolvedInGame = new HashSet<String>();
-	}
-
-	/**
-	 * Returns the state stored at time step t where t=0 refers to the initial
-	 * state
-	 * 
-	 * @param t
-	 *            the time step
-	 * @return the state at time step t
-	 */
-	public State getState(int t) {
-		if (t >= this.states.size()) {
-			throw new RuntimeException("This game only has "
-					+ this.states.size()
-					+ " states recorded; cannot return state at time step " + t);
-		}
-		return this.states.get(t);
-	}
-
-	/**
-	 * Returns the joint action taken in time step t where t=0 refers to the
-	 * joint action taken in the initial state.
-	 * 
-	 * @param t
-	 *            the time step
-	 * @return the joint action taken in time step t
-	 */
-	public JointAction getJointAction(int t) {
-		if (t >= this.states.size()) {
-			throw new RuntimeException(
-					"This game only has "
-							+ this.jointActions.size()
-							+ " joint actions recoreded; cannot return joint action at time step "
-							+ t);
-		}
-		return this.jointActions.get(t);
-	}
-
-	/**
-	 * Returns the joint reward received in time step t. Note that rewards are
-	 * always returned in the time step after the joint action that generated
-	 * them; therefore, this method is undefined for t = 0. Instead, the first
-	 * time step with a reward is t=1 which refers to the joint reward received
-	 * after the first joint action is taken in the initial state.
-	 * 
-	 * @param t
-	 *            the time step
-	 * @return the joint reward received at time step t
-	 */
-	public Map<String, Double> getJointReward(int t) {
-		if (t >= this.states.size()) {
-			throw new RuntimeException(
-					"This game only has "
-							+ this.jointRewards.size()
-							+ " joint rewards recoreded; cannot return joint reward at time step "
-							+ t);
-		}
-		return this.jointRewards.get(t - 1);
-	}
-
-	/**
-	 * Returns the action taken for the given agent at the given time step where
-	 * t=0 refers to the joint action taken in the initial state. if there is no
-	 * action taken by the agent with the given name, then a runtime exception
-	 * is thrown.
-	 * 
-	 * @param t
-	 *            the time step
-	 * @param agentName
-	 *            the name of the agent
-	 * @return the action taken by the specified agent in the given time step
-	 */
-	public GroundedSGAgentAction getActionForAgent(int t, String agentName) {
-		JointAction ja = this.getJointAction(t);
-		GroundedSGAgentAction gsa = ja.action(agentName);
-		if (gsa == null) {
-			throw new RuntimeException("Agent " + agentName
-					+ " did not take an action in joint action " + t);
-		}
-		return gsa;
-	}
-
-	/**
-	 * Returns the reward received for the agent with the given name at the
-	 * given step. Note that rewards are always returned in the time step after
-	 * the joint action that generated them; therefore, this method is undefined
-	 * for t = 0. Instead, the first time step with a reward is t=1 which refers
-	 * to the reward received after the first joint action is taken in the
-	 * initial state.
-	 * 
-	 * @param t
-	 *            the time step
-	 * @param agentName
-	 *            the name of the agent
-	 * @return the reward received by the agent
-	 */
-	public double getRewardForAgent(int t, String agentName) {
-		Map<String, Double> jr = this.getJointReward(t);
-		Double r = jr.get(agentName);
-		if (r == null) {
-			throw new RuntimeException("Agent " + agentName
-					+ " did not receive a reward in joint reward " + t);
-		}
-		return r;
-	}
-
-	/**
-	 * Returns true if an agent with the given name took any actions in the
-	 * course of this game.
-	 * 
-	 * @param agentName
-	 *            the name of the agent
-	 * @return true if the agent took an action in this game; false otherwise.
-	 */
-	public boolean agentIsInvolvedInGame(String agentName) {
-		return this.agentsInvolvedInGame.contains(agentName);
-	}
-
-	/**
-	 * Returns the number of time steps recorded which is equal to the number of
-	 * states observed.
-	 * 
-	 * @return the number of time steps recorded.
-	 */
-	public int numTimeSteps() {
-		return this.states.size();
-	}
-
-	/**
-	 * Returns the max time step index in this game which equals
-	 * {@link #numTimeSteps()}-1.
-	 * 
-	 * @return the max time step index in this game
-	 */
-	public int maxTimeStep() {
-		return this.states.size() - 1;
-	}
-
-	/**
-	 * Records a transition from the last recorded state in this object using
-	 * the specififed joint action to the specified next state and with the
-	 * specified joint reward being recieved as a result.
-	 * 
-	 * @param jointAction
-	 *            the joint action taken in the last recorded state in this
-	 *            object
-	 * @param nextState
-	 *            the next state to which the agents transition
-	 * @param jointReward
-	 *            the joint reward received for the transiton
-	 */
-	public void recordTransitionTo(JointAction jointAction, State nextState,
-			Map<String, Double> jointReward) {
-		this.states.add(nextState);
-		this.jointActions.add(jointAction);
-		this.jointRewards.add(jointReward);
-		for (String agent : jointAction.getAgentNames()) {
-			this.agentsInvolvedInGame.add(agent);
-		}
-	}
-
-	/**
-	 * Returns the state sequence list object
-	 * 
-	 * @return the state sequence list object
-	 */
-	public List<State> getStates() {
-		return states;
-	}
-
-	/**
-	 * Returns the joint action sequence list object
-	 * 
-	 * @return the joint action sequence list object
-	 */
-	public List<JointAction> getJointActions() {
-		return jointActions;
-	}
-
-	/**
-	 * Returns the joint reward sequence list object
-	 * 
-	 * @return the joint reward sequence list object
-	 */
-	public List<Map<String, Double>> getJointRewards() {
-		return jointRewards;
-	}
-
-	/**
-	 * Returns the set of agents involved in this game
-	 * 
-	 * @return the set of agents involved in this game
-	 */
-	public Set<String> getAgentsInvolvedInGame() {
-		return agentsInvolvedInGame;
-	}
-
-	public String serialize() {
-		return serialize(new SimpleSerializableStateFactory());
-	}
-
-	public String serialize(SerializableStateFactory serializableStateFactory) {
-
-		Yaml yaml = new Yaml(new GameAnalysisYamlRepresenter(
-				serializableStateFactory));
-		String yamlOut = yaml.dump(this);
-		return yamlOut;
-	}
-
-	private class GameAnalysisYamlRepresenter extends Representer {
-		SerializableStateFactory serializableStateFactory;
-
-		public GameAnalysisYamlRepresenter(
-				SerializableStateFactory serializableStateFactory) {
-			super();
-			this.serializableStateFactory = serializableStateFactory;
-			for (State s : states) {
-				this.representers.put(s.getClass(), new StateYamlRepresent());
-			}
-			this.representers.put(JointAction.class,
-					new JointActionYamlRepresent());
-		}
-
-		private class StateYamlRepresent implements Represent {
-
-			@Override
-			public Node representData(Object o) {
-				try {
-					return representJavaBean(
-							getProperties(serializableStateFactory
-									.getGeneratedClass()),
-							serializableStateFactory.serialize((State) o));
-				} catch (IntrospectionException e) {
-					throw new RuntimeException(
-							"GameAnalysis could not serialize one of the states. Got this error:\n"
-									+ e.getMessage());
-				}
-			}
-		}
-
-		private class JointActionYamlRepresent implements Represent {
-			@Override
-			public Node representData(Object o) {
-				return representScalar(new Tag("!action"),
-						((JointAction) o).toString());
-			}
-		}
-	}
-
-	public static GameAnalysis parseGame(SGDomain domain, String episodeString) {
-
-		Yaml yaml = new Yaml(new GameAnalysisConstructor(domain));
-		GameAnalysis ga = (GameAnalysis) yaml.load(episodeString);
-		return ga;
-	}
-
 	private static class GameAnalysisConstructor extends Constructor {
 
-		SGDomain domain;
+		private class ActionConstruct extends AbstractConstruct {
 
-		public GameAnalysisConstructor(SGDomain domain) {
-			this.domain = domain;
-			yamlConstructors.put(new Tag("!action"), new ActionConstruct());
-			yamlClassConstructors.put(NodeId.mapping,
-					new EpisodeAnalysisConstruct());
+			@Override
+			public Object construct(Node node) {
+				String val = (String) constructScalar((ScalarNode) node);
+				JointAction ja = parseStringIntoJointAction(val, domain);
+				return ja;
+			}
 		}
 
 		private class EpisodeAnalysisConstruct extends
@@ -421,79 +117,94 @@ public class GameAnalysis {
 			}
 		}
 
-		private class ActionConstruct extends AbstractConstruct {
+		SGDomain domain;
 
+		public GameAnalysisConstructor(SGDomain domain) {
+			this.domain = domain;
+			yamlConstructors.put(new Tag("!action"), new ActionConstruct());
+			yamlClassConstructors.put(NodeId.mapping,
+					new EpisodeAnalysisConstruct());
+		}
+	}
+
+	private class GameAnalysisYamlRepresenter extends Representer {
+		private class JointActionYamlRepresent implements Represent {
 			@Override
-			public Object construct(Node node) {
-				String val = (String) constructScalar((ScalarNode) node);
-				JointAction ja = parseStringIntoJointAction(val, domain);
-				return ja;
+			public Node representData(Object o) {
+				return representScalar(new Tag("!action"),
+						((JointAction) o).toString());
 			}
 		}
+
+		private class StateYamlRepresent implements Represent {
+
+			@Override
+			public Node representData(Object o) {
+				try {
+					return representJavaBean(
+							getProperties(serializableStateFactory
+									.getGeneratedClass()),
+							serializableStateFactory.serialize((State) o));
+				} catch (IntrospectionException e) {
+					throw new RuntimeException(
+							"GameAnalysis could not serialize one of the states. Got this error:\n"
+									+ e.getMessage());
+				}
+			}
+		}
+
+		SerializableStateFactory serializableStateFactory;
+
+		public GameAnalysisYamlRepresenter(
+				SerializableStateFactory serializableStateFactory) {
+			super();
+			this.serializableStateFactory = serializableStateFactory;
+			for (State s : states) {
+				this.representers.put(s.getClass(), new StateYamlRepresent());
+			}
+			this.representers.put(JointAction.class,
+					new JointActionYamlRepresent());
+		}
 	}
 
 	/**
-	 * Writes this game to a file. If the the directory for the specified file
-	 * path do not exist, then they will be created. If the file extension is
-	 * not ".game" will automatically be added. States will be serialized with
-	 * {@link burlap.oomdp.stateserialization.SerializableStateFactory}
+	 * returns a string representation of a joint reward in the form: <br/>
+	 * agent1:r1;agent2:r2
 	 * 
-	 * @param path
-	 *            the path to the file in which to write this game.
+	 * @param jointReward
+	 *            the joint reward
+	 * @return a string representation of the joint reward
 	 */
-	public void writeToFile(String path) {
-		writeToFile(path, new SimpleSerializableStateFactory());
+	private static String jointRewardStringRep(Map<String, Double> jointReward) {
+		StringBuffer buf = new StringBuffer();
+		boolean doneFirst = false;
+		for (Map.Entry<String, Double> e : jointReward.entrySet()) {
+			if (doneFirst) {
+				buf.append(";");
+			}
+			buf.append(e.getKey()).append(":").append(e.getValue().toString());
+			doneFirst = true;
+		}
+
+		return buf.toString();
 	}
 
 	/**
-	 * Writes this game to a file. If the the directory for the specified file
-	 * path do not exist, then they will be created. If the file extension is
-	 * not ".game" will automatically be added.
-	 * 
-	 * @param path
-	 *            the path to the file in which to write this game.
-	 * @param serializableStateFactory
-	 *            the
-	 *            {@link burlap.oomdp.stateserialization.SerializableStateFactory}
-	 *            used to serialize states.
-	 */
-	public void writeToFile(String path,
-			SerializableStateFactory serializableStateFactory) {
-
-		if (!path.endsWith(".game")) {
-			path = path + ".game";
-		}
-
-		File f = (new File(path)).getParentFile();
-		if (f != null) {
-			f.mkdirs();
-		}
-
-		try {
-
-			String str = this.serialize(serializableStateFactory);
-			BufferedWriter out = new BufferedWriter(new FileWriter(path));
-			out.write(str);
-			out.close();
-
-		} catch (Exception e) {
-			System.out.println(e);
-		}
-
-	}
-
-	/**
-	 * Reads a game that was written to a file and turns into a
-	 * {@link GameAnalysis} object.
+	 * Using the legacy BURLAP 1.0 format, reads a game that was written to a
+	 * file and turns into a {@link GameAnalysis} object.
 	 * 
 	 * @param path
 	 *            the path to the game file.
 	 * @param domain
 	 *            the stochastic games domain to which the states and actions
 	 *            belong
+	 * @param sp
+	 *            a state parser that can parse the state string representation
+	 *            in the file
 	 * @return an {@link GameAnalysis} object.
 	 */
-	public static GameAnalysis parseFileIntoGA(String path, SGDomain domain) {
+	public static GameAnalysis legacyParseFileIntoGA(String path,
+			SGDomain domain, StateParser sp) {
 
 		// read whole file into string first
 		String fcont = null;
@@ -503,7 +214,7 @@ public class GameAnalysis {
 			System.out.println(E);
 		}
 
-		return parseGame(domain, fcont);
+		return legacyParseStringIntoGameAnalysis(fcont, domain, sp);
 	}
 
 	/**
@@ -549,22 +260,51 @@ public class GameAnalysis {
 		return ga;
 	}
 
+	public static void main(String[] args) {
+
+		GridGame gg = new GridGame();
+		SGDomain domain = (SGDomain) gg.generateDomain();
+		State s = GridGame.getTurkeyInitialState(domain);
+
+		JointReward jr = new GridGame.GGJointRewardFunction(domain);
+		TerminalFunction tf = new GridGame.GGTerminalFunction(domain);
+		World world = new World(domain, jr, tf, new ConstantSGStateGenerator(s));
+		DPrint.toggleCode(world.getDebugId(), false);
+
+		SGAgent ragent1 = new RandomSGAgent();
+		SGAgent ragent2 = new RandomSGAgent();
+
+		SGAgentType type = new SGAgentType("agent",
+				domain.getObjectClass(GridGame.CLASSAGENT),
+				domain.getAgentActions());
+
+		ragent1.joinWorld(world, type);
+		ragent2.joinWorld(world, type);
+
+		GameAnalysis ga = world.runGame(20);
+		System.out.println(ga.maxTimeStep());
+
+		String serialized = ga.serialize();
+		System.out.println(serialized);
+
+		GameAnalysis read = GameAnalysis.parseGame(domain, serialized);
+		System.out.println(read.maxTimeStep());
+		System.out.println(read.getState(0).toString());
+
+	}
+
 	/**
-	 * Using the legacy BURLAP 1.0 format, reads a game that was written to a
-	 * file and turns into a {@link GameAnalysis} object.
+	 * Reads a game that was written to a file and turns into a
+	 * {@link GameAnalysis} object.
 	 * 
 	 * @param path
 	 *            the path to the game file.
 	 * @param domain
 	 *            the stochastic games domain to which the states and actions
 	 *            belong
-	 * @param sp
-	 *            a state parser that can parse the state string representation
-	 *            in the file
 	 * @return an {@link GameAnalysis} object.
 	 */
-	public static GameAnalysis legacyParseFileIntoGA(String path,
-			SGDomain domain, StateParser sp) {
+	public static GameAnalysis parseFileIntoGA(String path, SGDomain domain) {
 
 		// read whole file into string first
 		String fcont = null;
@@ -574,29 +314,14 @@ public class GameAnalysis {
 			System.out.println(E);
 		}
 
-		return legacyParseStringIntoGameAnalysis(fcont, domain, sp);
+		return parseGame(domain, fcont);
 	}
 
-	/**
-	 * returns a string representation of a joint reward in the form: <br/>
-	 * agent1:r1;agent2:r2
-	 * 
-	 * @param jointReward
-	 *            the joint reward
-	 * @return a string representation of the joint reward
-	 */
-	private static String jointRewardStringRep(Map<String, Double> jointReward) {
-		StringBuffer buf = new StringBuffer();
-		boolean doneFirst = false;
-		for (Map.Entry<String, Double> e : jointReward.entrySet()) {
-			if (doneFirst) {
-				buf.append(";");
-			}
-			buf.append(e.getKey()).append(":").append(e.getValue().toString());
-			doneFirst = true;
-		}
+	public static GameAnalysis parseGame(SGDomain domain, String episodeString) {
 
-		return buf.toString();
+		Yaml yaml = new Yaml(new GameAnalysisConstructor(domain));
+		GameAnalysis ga = (GameAnalysis) yaml.load(episodeString);
+		return ga;
 	}
 
 	/**
@@ -652,36 +377,321 @@ public class GameAnalysis {
 		return jointReward;
 	}
 
-	public static void main(String[] args) {
+	/**
+	 * The sequence of states
+	 */
+	public List<State> states;
 
-		GridGame gg = new GridGame();
-		SGDomain domain = (SGDomain) gg.generateDomain();
-		State s = GridGame.getTurkeyInitialState(domain);
+	/**
+	 * The sequence of joint actions
+	 */
+	public List<JointAction> jointActions;
 
-		JointReward jr = new GridGame.GGJointRewardFunction(domain);
-		TerminalFunction tf = new GridGame.GGTerminalFunction(domain);
-		World world = new World(domain, jr, tf, new ConstantSGStateGenerator(s));
-		DPrint.toggleCode(world.getDebugId(), false);
+	/**
+	 * The sequence of joint rewards
+	 */
+	public List<Map<String, Double>> jointRewards;
 
-		SGAgent ragent1 = new RandomSGAgent();
-		SGAgent ragent2 = new RandomSGAgent();
+	/**
+	 * The set of agents involved in this game
+	 */
+	protected Set<String> agentsInvolvedInGame;
 
-		SGAgentType type = new SGAgentType("agent",
-				domain.getObjectClass(GridGame.CLASSAGENT),
-				domain.getAgentActions());
+	/**
+	 * Initialzes the datastructures. Note that the method
+	 * {@link #initializeGameWithInitialState(State)} should be called to set
+	 * the initial state of the game before any transitions are recorded.
+	 */
+	public GameAnalysis() {
+		this.initializeDatastructures();
+	}
 
-		ragent1.joinWorld(world, type);
-		ragent2.joinWorld(world, type);
+	/**
+	 * Initializes with an initial state of the game.
+	 * 
+	 * @param initialState
+	 *            the initial state of the game.
+	 */
+	public GameAnalysis(State initialState) {
+		this.initializeGameWithInitialState(initialState);
+	}
 
-		GameAnalysis ga = world.runGame(20);
-		System.out.println(ga.maxTimeStep());
+	/**
+	 * Returns true if an agent with the given name took any actions in the
+	 * course of this game.
+	 * 
+	 * @param agentName
+	 *            the name of the agent
+	 * @return true if the agent took an action in this game; false otherwise.
+	 */
+	public boolean agentIsInvolvedInGame(String agentName) {
+		return this.agentsInvolvedInGame.contains(agentName);
+	}
 
-		String serialized = ga.serialize();
-		System.out.println(serialized);
+	/**
+	 * Returns the action taken for the given agent at the given time step where
+	 * t=0 refers to the joint action taken in the initial state. if there is no
+	 * action taken by the agent with the given name, then a runtime exception
+	 * is thrown.
+	 * 
+	 * @param t
+	 *            the time step
+	 * @param agentName
+	 *            the name of the agent
+	 * @return the action taken by the specified agent in the given time step
+	 */
+	public GroundedSGAgentAction getActionForAgent(int t, String agentName) {
+		JointAction ja = this.getJointAction(t);
+		GroundedSGAgentAction gsa = ja.action(agentName);
+		if (gsa == null) {
+			throw new RuntimeException("Agent " + agentName
+					+ " did not take an action in joint action " + t);
+		}
+		return gsa;
+	}
 
-		GameAnalysis read = GameAnalysis.parseGame(domain, serialized);
-		System.out.println(read.maxTimeStep());
-		System.out.println(read.getState(0).toString());
+	/**
+	 * Returns the set of agents involved in this game
+	 * 
+	 * @return the set of agents involved in this game
+	 */
+	public Set<String> getAgentsInvolvedInGame() {
+		return agentsInvolvedInGame;
+	}
+
+	/**
+	 * Returns the joint action taken in time step t where t=0 refers to the
+	 * joint action taken in the initial state.
+	 * 
+	 * @param t
+	 *            the time step
+	 * @return the joint action taken in time step t
+	 */
+	public JointAction getJointAction(int t) {
+		if (t >= this.states.size()) {
+			throw new RuntimeException(
+					"This game only has "
+							+ this.jointActions.size()
+							+ " joint actions recoreded; cannot return joint action at time step "
+							+ t);
+		}
+		return this.jointActions.get(t);
+	}
+
+	/**
+	 * Returns the joint action sequence list object
+	 * 
+	 * @return the joint action sequence list object
+	 */
+	public List<JointAction> getJointActions() {
+		return jointActions;
+	}
+
+	/**
+	 * Returns the joint reward received in time step t. Note that rewards are
+	 * always returned in the time step after the joint action that generated
+	 * them; therefore, this method is undefined for t = 0. Instead, the first
+	 * time step with a reward is t=1 which refers to the joint reward received
+	 * after the first joint action is taken in the initial state.
+	 * 
+	 * @param t
+	 *            the time step
+	 * @return the joint reward received at time step t
+	 */
+	public Map<String, Double> getJointReward(int t) {
+		if (t >= this.states.size()) {
+			throw new RuntimeException(
+					"This game only has "
+							+ this.jointRewards.size()
+							+ " joint rewards recoreded; cannot return joint reward at time step "
+							+ t);
+		}
+		return this.jointRewards.get(t - 1);
+	}
+
+	/**
+	 * Returns the joint reward sequence list object
+	 * 
+	 * @return the joint reward sequence list object
+	 */
+	public List<Map<String, Double>> getJointRewards() {
+		return jointRewards;
+	}
+
+	/**
+	 * Returns the reward received for the agent with the given name at the
+	 * given step. Note that rewards are always returned in the time step after
+	 * the joint action that generated them; therefore, this method is undefined
+	 * for t = 0. Instead, the first time step with a reward is t=1 which refers
+	 * to the reward received after the first joint action is taken in the
+	 * initial state.
+	 * 
+	 * @param t
+	 *            the time step
+	 * @param agentName
+	 *            the name of the agent
+	 * @return the reward received by the agent
+	 */
+	public double getRewardForAgent(int t, String agentName) {
+		Map<String, Double> jr = this.getJointReward(t);
+		Double r = jr.get(agentName);
+		if (r == null) {
+			throw new RuntimeException("Agent " + agentName
+					+ " did not receive a reward in joint reward " + t);
+		}
+		return r;
+	}
+
+	/**
+	 * Returns the state stored at time step t where t=0 refers to the initial
+	 * state
+	 * 
+	 * @param t
+	 *            the time step
+	 * @return the state at time step t
+	 */
+	public State getState(int t) {
+		if (t >= this.states.size()) {
+			throw new RuntimeException("This game only has "
+					+ this.states.size()
+					+ " states recorded; cannot return state at time step " + t);
+		}
+		return this.states.get(t);
+	}
+
+	/**
+	 * Returns the state sequence list object
+	 * 
+	 * @return the state sequence list object
+	 */
+	public List<State> getStates() {
+		return states;
+	}
+
+	/**
+	 * Instantiates the datastructures of this object.
+	 */
+	protected void initializeDatastructures() {
+		this.states = new ArrayList<State>();
+		this.jointActions = new ArrayList<JointAction>();
+		this.jointRewards = new ArrayList<Map<String, Double>>();
+		this.agentsInvolvedInGame = new HashSet<String>();
+	}
+
+	/**
+	 * Clears out any already recorded states, joint actions, and rewards, and
+	 * sets the initial state of the game.
+	 * 
+	 * @param initialState
+	 *            the initial state of the game.
+	 */
+	public void initializeGameWithInitialState(State initialState) {
+		this.initializeDatastructures();
+		this.states.add(initialState);
+	}
+
+	/**
+	 * Returns the max time step index in this game which equals
+	 * {@link #numTimeSteps()}-1.
+	 * 
+	 * @return the max time step index in this game
+	 */
+	public int maxTimeStep() {
+		return this.states.size() - 1;
+	}
+
+	/**
+	 * Returns the number of time steps recorded which is equal to the number of
+	 * states observed.
+	 * 
+	 * @return the number of time steps recorded.
+	 */
+	public int numTimeSteps() {
+		return this.states.size();
+	}
+
+	/**
+	 * Records a transition from the last recorded state in this object using
+	 * the specififed joint action to the specified next state and with the
+	 * specified joint reward being recieved as a result.
+	 * 
+	 * @param jointAction
+	 *            the joint action taken in the last recorded state in this
+	 *            object
+	 * @param nextState
+	 *            the next state to which the agents transition
+	 * @param jointReward
+	 *            the joint reward received for the transiton
+	 */
+	public void recordTransitionTo(JointAction jointAction, State nextState,
+			Map<String, Double> jointReward) {
+		this.states.add(nextState);
+		this.jointActions.add(jointAction);
+		this.jointRewards.add(jointReward);
+		for (String agent : jointAction.getAgentNames()) {
+			this.agentsInvolvedInGame.add(agent);
+		}
+	}
+
+	public String serialize() {
+		return serialize(new SimpleSerializableStateFactory());
+	}
+
+	public String serialize(SerializableStateFactory serializableStateFactory) {
+
+		Yaml yaml = new Yaml(new GameAnalysisYamlRepresenter(
+				serializableStateFactory));
+		String yamlOut = yaml.dump(this);
+		return yamlOut;
+	}
+
+	/**
+	 * Writes this game to a file. If the the directory for the specified file
+	 * path do not exist, then they will be created. If the file extension is
+	 * not ".game" will automatically be added. States will be serialized with
+	 * {@link burlap.oomdp.stateserialization.SerializableStateFactory}
+	 * 
+	 * @param path
+	 *            the path to the file in which to write this game.
+	 */
+	public void writeToFile(String path) {
+		writeToFile(path, new SimpleSerializableStateFactory());
+	}
+
+	/**
+	 * Writes this game to a file. If the the directory for the specified file
+	 * path do not exist, then they will be created. If the file extension is
+	 * not ".game" will automatically be added.
+	 * 
+	 * @param path
+	 *            the path to the file in which to write this game.
+	 * @param serializableStateFactory
+	 *            the
+	 *            {@link burlap.oomdp.stateserialization.SerializableStateFactory}
+	 *            used to serialize states.
+	 */
+	public void writeToFile(String path,
+			SerializableStateFactory serializableStateFactory) {
+
+		if (!path.endsWith(".game")) {
+			path = path + ".game";
+		}
+
+		File f = (new File(path)).getParentFile();
+		if (f != null) {
+			f.mkdirs();
+		}
+
+		try {
+
+			String str = this.serialize(serializableStateFactory);
+			BufferedWriter out = new BufferedWriter(new FileWriter(path));
+			out.write(str);
+			out.close();
+
+		} catch (Exception e) {
+			System.out.println(e);
+		}
 
 	}
 

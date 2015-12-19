@@ -6,19 +6,19 @@ import java.util.Map;
 
 import burlap.behavior.learningrate.ConstantLR;
 import burlap.behavior.learningrate.LearningRate;
-import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.behavior.singleagent.learning.actorcritic.Critic;
 import burlap.behavior.singleagent.learning.actorcritic.CritiqueResult;
 import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.singleagent.options.support.OptionEvaluatingRF;
 import burlap.behavior.valuefunction.ValueFunction;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
-import burlap.oomdp.core.states.State;
+import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * An implementation of TDLambda that can be used as a critic for
@@ -34,6 +34,75 @@ import burlap.oomdp.singleagent.RewardFunction;
  * 
  */
 public class TDLambda implements Critic, ValueFunction {
+
+	/**
+	 * A data structure for storing the elements of an eligibility trace.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class StateEligibilityTrace {
+
+		/**
+		 * The eligibility value
+		 */
+		public double eligibility;
+
+		/**
+		 * The hashed state with which the eligibility value is associated.
+		 */
+		public HashableState sh;
+
+		/**
+		 * The value associated with the state.
+		 */
+		public VValue v;
+
+		/**
+		 * Initializes with hashed state, eligibility value and the value
+		 * function value associated with the state.
+		 * 
+		 * @param sh
+		 *            the hashed input state for this eligibility
+		 * @param eligibility
+		 *            the eligibility of the state
+		 * @param v
+		 *            the value function value for the state.
+		 */
+		public StateEligibilityTrace(HashableState sh, double eligibility,
+				VValue v) {
+			this.sh = sh;
+			this.eligibility = eligibility;
+			this.v = v;
+		}
+
+	}
+
+	/**
+	 * A class for storing the value of a state. This is effectively a mutable
+	 * double value wrapper.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	class VValue {
+
+		/**
+		 * The value to store
+		 */
+		public double v;
+
+		/**
+		 * Initializes with a given value
+		 * 
+		 * @param v
+		 *            the value to store
+		 */
+		public VValue(double v) {
+			this.v = v;
+		}
+
+	}
 
 	/**
 	 * The reward function used for learning.
@@ -172,35 +241,6 @@ public class TDLambda implements Critic, ValueFunction {
 
 	}
 
-	/**
-	 * Sets the reward function to use.
-	 * 
-	 * @param rf
-	 */
-	public void setRewardFunction(RewardFunction rf) {
-		this.rf = rf;
-	}
-
-	@Override
-	public void initializeEpisode(State s) {
-		this.traces = new LinkedList<TDLambda.StateEligibilityTrace>();
-	}
-
-	@Override
-	public void endEpisode() {
-		this.traces.clear();
-	}
-
-	/**
-	 * Sets the learning rate function to use.
-	 * 
-	 * @param lr
-	 *            the learning rate function to use.
-	 */
-	public void setLearningRate(LearningRate lr) {
-		this.learningRate = lr;
-	}
-
 	@Override
 	public CritiqueResult critiqueAndUpdate(State s, GroundedAction ga,
 			State sprime) {
@@ -257,15 +297,8 @@ public class TDLambda implements Critic, ValueFunction {
 	}
 
 	@Override
-	public double value(State s) {
-		return this.getV(this.hashingFactory.hashState(s)).v;
-	}
-
-	@Override
-	public void resetData() {
-		this.vIndex.clear();
+	public void endEpisode() {
 		this.traces.clear();
-		this.learningRate.resetDecay();
 	}
 
 	/**
@@ -286,73 +319,40 @@ public class TDLambda implements Critic, ValueFunction {
 		return v;
 	}
 
-	/**
-	 * A class for storing the value of a state. This is effectively a mutable
-	 * double value wrapper.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	class VValue {
+	@Override
+	public void initializeEpisode(State s) {
+		this.traces = new LinkedList<TDLambda.StateEligibilityTrace>();
+	}
 
-		/**
-		 * The value to store
-		 */
-		public double v;
-
-		/**
-		 * Initializes with a given value
-		 * 
-		 * @param v
-		 *            the value to store
-		 */
-		public VValue(double v) {
-			this.v = v;
-		}
-
+	@Override
+	public void resetData() {
+		this.vIndex.clear();
+		this.traces.clear();
+		this.learningRate.resetDecay();
 	}
 
 	/**
-	 * A data structure for storing the elements of an eligibility trace.
+	 * Sets the learning rate function to use.
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @param lr
+	 *            the learning rate function to use.
 	 */
-	public static class StateEligibilityTrace {
+	public void setLearningRate(LearningRate lr) {
+		this.learningRate = lr;
+	}
 
-		/**
-		 * The eligibility value
-		 */
-		public double eligibility;
+	/**
+	 * Sets the reward function to use.
+	 * 
+	 * @param rf
+	 */
+	public void setRewardFunction(RewardFunction rf) {
+		this.rf = rf;
+	}
 
-		/**
-		 * The hashed state with which the eligibility value is associated.
-		 */
-		public HashableState sh;
-
-		/**
-		 * The value associated with the state.
-		 */
-		public VValue v;
-
-		/**
-		 * Initializes with hashed state, eligibility value and the value
-		 * function value associated with the state.
-		 * 
-		 * @param sh
-		 *            the hashed input state for this eligibility
-		 * @param eligibility
-		 *            the eligibility of the state
-		 * @param v
-		 *            the value function value for the state.
-		 */
-		public StateEligibilityTrace(HashableState sh, double eligibility,
-				VValue v) {
-			this.sh = sh;
-			this.eligibility = eligibility;
-			this.v = v;
-		}
-
+	@Override
+	public double value(State s) {
+		return this.getV(this.hashingFactory.hashState(s)).v;
 	}
 
 }

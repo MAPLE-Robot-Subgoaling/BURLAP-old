@@ -38,19 +38,6 @@ public class WeightGradient {
 	}
 
 	/**
-	 * Adds the partial derivative for a given weight
-	 * 
-	 * @param weightId
-	 *            the weight identifier for which the partial derivative is to
-	 *            be stored is to be stored
-	 * @param partialDerivative
-	 *            the partial derivative value for the weight
-	 */
-	public void put(int weightId, double partialDerivative) {
-		this.gradient.put(weightId, partialDerivative);
-	}
-
-	/**
 	 * Returns the partial derivative for the given weight
 	 * 
 	 * @param weightId
@@ -63,6 +50,19 @@ public class WeightGradient {
 			return 0.;
 		}
 		return stored;
+	}
+
+	/**
+	 * Adds the partial derivative for a given weight
+	 * 
+	 * @param weightId
+	 *            the weight identifier for which the partial derivative is to
+	 *            be stored is to be stored
+	 * @param partialDerivative
+	 *            the partial derivative value for the weight
+	 */
+	public void put(int weightId, double partialDerivative) {
+		this.gradient.put(weightId, partialDerivative);
 	}
 
 }

@@ -1,10 +1,16 @@
 package burlap.behavior.singleagent.auxiliary;
 
-import burlap.oomdp.core.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import burlap.oomdp.core.Attribute;
+import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.State;
-
-import java.util.*;
 
 /**
  * 
@@ -72,24 +78,112 @@ import java.util.*;
 public class StateGridder {
 
 	/**
+	 * Class for specifying the grid along a single attribute. It contains the
+	 * name of the attribute, the lower value on the grid, the upper value on
+	 * the grid, and the number of grid points along that space. The grid points
+	 * will always include the lower grid value and upper grid value, unless the
+	 * number of grid points is 1.
+	 */
+	public static class AttributeSpecification {
+
+		/**
+		 * The name of the attribute.
+		 */
+		public String attName;
+
+		/**
+		 * The lower value of the attribute on the gird
+		 */
+		public double lowerVal;
+
+		/**
+		 * The upper value of the attribute on the grid
+		 */
+		public double upperVal;
+
+		/**
+		 * The number of grid points along this attribute
+		 */
+		public int numGridPoints;
+
+		/**
+		 * Initializes with the lower and upper values of the grid being set to
+		 * the {@link burlap.oomdp.core.Attribute} objects' full domain (i.e.,
+		 * its {@link burlap.oomdp.core.Attribute#lowerLim} and
+		 * {@link burlap.oomdp.core.Attribute#upperLim} data members. The grid
+		 * points will always include the lower grid value and upper grid value,
+		 * unless the number of grid points is 1.
+		 * 
+		 * @param att
+		 *            the attribute to grid.
+		 * @param numGridPoints
+		 *            the number of grid poitns along this attribute.
+		 */
+		public AttributeSpecification(Attribute att, int numGridPoints) {
+			this.attName = att.name;
+			this.lowerVal = att.lowerLim;
+			this.upperVal = att.upperLim;
+			this.numGridPoints = numGridPoints;
+		}
+
+		/**
+		 * Initializes. The grid points will always include the lower grid value
+		 * and upper grid value, unless the number of grid points is 1.
+		 * 
+		 * @param attName
+		 *            The name of the attribute.
+		 * @param lowerVal
+		 *            The lower value of the attribute on the gird
+		 * @param upperVal
+		 *            The upper value of the attribute on the grid
+		 * @param numGridPoints
+		 *            The number of grid points along this attribute
+		 */
+		public AttributeSpecification(String attName, double lowerVal,
+				double upperVal, int numGridPoints) {
+			this.attName = attName;
+			this.lowerVal = lowerVal;
+			this.upperVal = upperVal;
+			this.numGridPoints = numGridPoints;
+		}
+
+		/**
+		 * Returns the width of a grid cell along this attribute. Returns 0 if
+		 * the number of grid points is 1. This value is defined as (upperVal -
+		 * lowerVal) / (numGridPoints - 1)
+		 * 
+		 * @return the width of a grid cell along this attribute
+		 */
+		public double cellWidth() {
+			if (numGridPoints == 1) {
+				return 0.;
+			}
+			return (this.upperVal - this.lowerVal) / (this.numGridPoints - 1);
+		}
+
+	}
+
+	/**
 	 * The attribtue grid specifications for each object class
 	 */
 	Map<String, AttributeSpecification[]> objectClassAttriutes = new HashMap<String, AttributeSpecification[]>();
 
 	/**
-	 * Sets the attribute specifications to use for a single
-	 * {@link burlap.oomdp.core.ObjectClass}
+	 * Grids an entire domain; that is each
+	 * {@link burlap.oomdp.core.ObjectClass} associated with the domain will
+	 * have each of its associated Attributes gridded (each spanning the
+	 * specified number of grid points).
 	 * 
-	 * @param objectClassName
-	 *            the name of the {@link burlap.oomdp.core.ObjectClass}
-	 * @param attSpecs
-	 *            the
-	 *            {@link burlap.behavior.singleagent.auxiliary.StateGridder.AttributeSpecification}
-	 *            objects defining how each attribute is gridded.
+	 * @param domain
+	 *            the {@link burlap.oomdp.core.Domain} to grid.
+	 * @param numGridPointsPerAttribute
+	 *            the number of grid points per attribute
 	 */
-	public void setObjectClassAttributesToTile(String objectClassName,
-			AttributeSpecification... attSpecs) {
-		this.objectClassAttriutes.put(objectClassName, attSpecs);
+	public void gridEntireDomainSpace(Domain domain,
+			int numGridPointsPerAttribute) {
+		for (ObjectClass oc : domain.getObjectClasses()) {
+			this.gridEntireObjectClass(oc, numGridPointsPerAttribute);
+		}
 	}
 
 	/**
@@ -112,24 +206,6 @@ public class StateGridder {
 					numGridPointsPerAttribute);
 		}
 		this.objectClassAttriutes.put(obClass.name, specs);
-	}
-
-	/**
-	 * Grids an entire domain; that is each
-	 * {@link burlap.oomdp.core.ObjectClass} associated with the domain will
-	 * have each of its associated Attributes gridded (each spanning the
-	 * specified number of grid points).
-	 * 
-	 * @param domain
-	 *            the {@link burlap.oomdp.core.Domain} to grid.
-	 * @param numGridPointsPerAttribute
-	 *            the number of grid points per attribute
-	 */
-	public void gridEntireDomainSpace(Domain domain,
-			int numGridPointsPerAttribute) {
-		for (ObjectClass oc : domain.getObjectClasses()) {
-			this.gridEntireObjectClass(oc, numGridPointsPerAttribute);
-		}
 	}
 
 	/**
@@ -198,6 +274,38 @@ public class StateGridder {
 		return new ArrayList<State>(states);
 	}
 
+	private void objectGridder(ObjectInstance o,
+			AttributeSpecification[] specs, int index,
+			List<ObjectInstance> objects) {
+		if (index == specs.length) {
+			// done
+			objects.add(o.copy());
+		} else {
+			AttributeSpecification spec = specs[index];
+			double cellWidth = spec.cellWidth();
+			for (int i = 0; i < spec.numGridPoints; i++) {
+				o.setValue(spec.attName, i * cellWidth + spec.lowerVal);
+				this.objectGridder(o, specs, index + 1, objects);
+			}
+		}
+	}
+
+	/**
+	 * Sets the attribute specifications to use for a single
+	 * {@link burlap.oomdp.core.ObjectClass}
+	 * 
+	 * @param objectClassName
+	 *            the name of the {@link burlap.oomdp.core.ObjectClass}
+	 * @param attSpecs
+	 *            the
+	 *            {@link burlap.behavior.singleagent.auxiliary.StateGridder.AttributeSpecification}
+	 *            objects defining how each attribute is gridded.
+	 */
+	public void setObjectClassAttributesToTile(String objectClassName,
+			AttributeSpecification... attSpecs) {
+		this.objectClassAttriutes.put(objectClassName, attSpecs);
+	}
+
 	private void stateGridder(State cleanState,
 			List<List<ObjectInstance>> possibleGridVals, int index,
 			int[] choices, List<State> states) {
@@ -218,109 +326,6 @@ public class StateGridder {
 						choices, states);
 			}
 		}
-	}
-
-	private void objectGridder(ObjectInstance o,
-			AttributeSpecification[] specs, int index,
-			List<ObjectInstance> objects) {
-		if (index == specs.length) {
-			// done
-			objects.add(o.copy());
-		} else {
-			AttributeSpecification spec = specs[index];
-			double cellWidth = spec.cellWidth();
-			for (int i = 0; i < spec.numGridPoints; i++) {
-				o.setValue(spec.attName, i * cellWidth + spec.lowerVal);
-				this.objectGridder(o, specs, index + 1, objects);
-			}
-		}
-	}
-
-	/**
-	 * Class for specifying the grid along a single attribute. It contains the
-	 * name of the attribute, the lower value on the grid, the upper value on
-	 * the grid, and the number of grid points along that space. The grid points
-	 * will always include the lower grid value and upper grid value, unless the
-	 * number of grid points is 1.
-	 */
-	public static class AttributeSpecification {
-
-		/**
-		 * The name of the attribute.
-		 */
-		public String attName;
-
-		/**
-		 * The lower value of the attribute on the gird
-		 */
-		public double lowerVal;
-
-		/**
-		 * The upper value of the attribute on the grid
-		 */
-		public double upperVal;
-
-		/**
-		 * The number of grid points along this attribute
-		 */
-		public int numGridPoints;
-
-		/**
-		 * Initializes. The grid points will always include the lower grid value
-		 * and upper grid value, unless the number of grid points is 1.
-		 * 
-		 * @param attName
-		 *            The name of the attribute.
-		 * @param lowerVal
-		 *            The lower value of the attribute on the gird
-		 * @param upperVal
-		 *            The upper value of the attribute on the grid
-		 * @param numGridPoints
-		 *            The number of grid points along this attribute
-		 */
-		public AttributeSpecification(String attName, double lowerVal,
-				double upperVal, int numGridPoints) {
-			this.attName = attName;
-			this.lowerVal = lowerVal;
-			this.upperVal = upperVal;
-			this.numGridPoints = numGridPoints;
-		}
-
-		/**
-		 * Initializes with the lower and upper values of the grid being set to
-		 * the {@link burlap.oomdp.core.Attribute} objects' full domain (i.e.,
-		 * its {@link burlap.oomdp.core.Attribute#lowerLim} and
-		 * {@link burlap.oomdp.core.Attribute#upperLim} data members. The grid
-		 * points will always include the lower grid value and upper grid value,
-		 * unless the number of grid points is 1.
-		 * 
-		 * @param att
-		 *            the attribute to grid.
-		 * @param numGridPoints
-		 *            the number of grid poitns along this attribute.
-		 */
-		public AttributeSpecification(Attribute att, int numGridPoints) {
-			this.attName = att.name;
-			this.lowerVal = att.lowerLim;
-			this.upperVal = att.upperLim;
-			this.numGridPoints = numGridPoints;
-		}
-
-		/**
-		 * Returns the width of a grid cell along this attribute. Returns 0 if
-		 * the number of grid points is 1. This value is defined as (upperVal -
-		 * lowerVal) / (numGridPoints - 1)
-		 * 
-		 * @return the width of a grid cell along this attribute
-		 */
-		public double cellWidth() {
-			if (numGridPoints == 1) {
-				return 0.;
-			}
-			return (this.upperVal - this.lowerVal)
-					/ (double) (this.numGridPoints - 1);
-		}
-
 	}
 
 }

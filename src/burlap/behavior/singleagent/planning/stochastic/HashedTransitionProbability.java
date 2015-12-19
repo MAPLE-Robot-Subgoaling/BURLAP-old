@@ -1,9 +1,9 @@
 package burlap.behavior.singleagent.planning.stochastic;
 
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TransitionProbability;
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * An analog to the {@link burlap.oomdp.core.TransitionProbability}, except it

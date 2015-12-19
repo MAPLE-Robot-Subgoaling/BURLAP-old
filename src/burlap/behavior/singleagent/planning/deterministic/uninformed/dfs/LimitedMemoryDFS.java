@@ -7,13 +7,13 @@ import java.util.Map;
 import java.util.Set;
 
 import burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy;
-import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
 import burlap.behavior.singleagent.planning.deterministic.SearchNode;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * This is a modified version of DFS that maintains a memory of the last n
@@ -84,34 +84,6 @@ public class LimitedMemoryDFS extends DFS {
 	}
 
 	/**
-	 * Plans and returns a
-	 * {@link burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy}
-	 * . If a {@link burlap.oomdp.core.states.State} is not in the solution path
-	 * of this planner, then the
-	 * {@link burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy}
-	 * will throw a runtime exception. If you want a policy that will
-	 * dynamically replan for unknown states, you should create your own
-	 * {@link burlap.behavior.singleagent.planning.deterministic.DDPlannerPolicy}
-	 * .
-	 * 
-	 * @param initialState
-	 *            the initial state of the planning problem
-	 * @return a
-	 *         {@link burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy}
-	 *         .
-	 */
-
-	@Override
-	public SDPlannerPolicy planFromState(State initialState) {
-
-		memoryQueue = new LinkedList<HashableState>();
-		memoryStateDepth = new HashMap<HashableState, Integer>();
-
-		return super.planFromState(initialState);
-
-	}
-
-	/**
 	 * Runs DFS from a given search node, keeping track of its current depth.
 	 * This method is recursive. The memory of the memorySize most recently
 	 * expanded nodes will be stored.
@@ -125,6 +97,7 @@ public class LimitedMemoryDFS extends DFS {
 	 * @return the SearchNode with a goal, or null if it cannot be found from
 	 *         this state.
 	 */
+	@Override
 	protected SearchNode dfs(SearchNode n, int depth,
 			Set<HashableState> statesOnPath) {
 
@@ -192,6 +165,34 @@ public class LimitedMemoryDFS extends DFS {
 			statesOnPath.remove(n.s);
 		}
 		return null;
+	}
+
+	/**
+	 * Plans and returns a
+	 * {@link burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy}
+	 * . If a {@link burlap.oomdp.core.states.State} is not in the solution path
+	 * of this planner, then the
+	 * {@link burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy}
+	 * will throw a runtime exception. If you want a policy that will
+	 * dynamically replan for unknown states, you should create your own
+	 * {@link burlap.behavior.singleagent.planning.deterministic.DDPlannerPolicy}
+	 * .
+	 * 
+	 * @param initialState
+	 *            the initial state of the planning problem
+	 * @return a
+	 *         {@link burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy}
+	 *         .
+	 */
+
+	@Override
+	public SDPlannerPolicy planFromState(State initialState) {
+
+		memoryQueue = new LinkedList<HashableState>();
+		memoryStateDepth = new HashMap<HashableState, Integer>();
+
+		return super.planFromState(initialState);
+
 	}
 
 }

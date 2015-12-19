@@ -1,13 +1,13 @@
 package burlap.oomdp.singleagent;
 
+import java.util.List;
+
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.AbstractObjectParameterizedGroundedAction;
 import burlap.oomdp.core.TransitionProbability;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.environment.Environment;
 import burlap.oomdp.singleagent.environment.EnvironmentOutcome;
-
-import java.util.List;
 
 /**
  * A {@link burlap.oomdp.singleagent.GroundedAction} is a high-level abstract
@@ -91,29 +91,9 @@ public abstract class GroundedAction implements AbstractGroundedAction {
 	 * 
 	 * @return the action name for this grounded action.
 	 */
+	@Override
 	public String actionName() {
 		return this.action.getName();
-	}
-
-	@Override
-	public boolean isParameterized() {
-		return this.action.isParameterized();
-	}
-
-	@Override
-	public String toString() {
-		String[] strParams = this.getParametersAsString();
-		if (strParams == null || strParams.length == 0) {
-			return this.actionName();
-		} else {
-			StringBuilder builder = new StringBuilder();
-			builder.append(this.actionName());
-			for (String param : strParams) {
-				builder.append(" ").append(param);
-			}
-			String rep = builder.toString();
-			return rep;
-		}
 	}
 
 	public boolean applicableInState(State s) {
@@ -122,6 +102,23 @@ public abstract class GroundedAction implements AbstractGroundedAction {
 
 	@Override
 	public abstract GroundedAction copy();
+
+	@Override
+	public boolean equals(Object other) {
+
+		if (this == other) {
+			return true;
+		}
+
+		if (!(other instanceof GroundedAction)) {
+			return false;
+		}
+
+		GroundedAction go = (GroundedAction) other;
+
+		return this.actionName().equals(((GroundedAction) other).actionName());
+
+	}
 
 	/**
 	 * Executes this grounded action in the specified
@@ -175,6 +172,32 @@ public abstract class GroundedAction implements AbstractGroundedAction {
 		return ((FullActionModel) this.action).getTransitions(s, this);
 	}
 
+	@Override
+	public int hashCode() {
+		return this.action.getName().hashCode();
+	}
+
+	@Override
+	public boolean isParameterized() {
+		return this.action.isParameterized();
+	}
+
+	@Override
+	public String toString() {
+		String[] strParams = this.getParametersAsString();
+		if (strParams == null || strParams.length == 0) {
+			return this.actionName();
+		} else {
+			StringBuilder builder = new StringBuilder();
+			builder.append(this.actionName());
+			for (String param : strParams) {
+				builder.append(" ").append(param);
+			}
+			String rep = builder.toString();
+			return rep;
+		}
+	}
+
 	/**
 	 * A helper method that handles action translate in case this
 	 * {@link burlap.oomdp.singleagent.GroundedAction} implements
@@ -203,28 +226,6 @@ public abstract class GroundedAction implements AbstractGroundedAction {
 	public GroundedAction translateParameters(State source, State target) {
 		return (GroundedAction) AbstractObjectParameterizedGroundedAction.Helper
 				.translateParameters(this, source, target);
-	}
-
-	@Override
-	public int hashCode() {
-		return this.action.getName().hashCode();
-	}
-
-	@Override
-	public boolean equals(Object other) {
-
-		if (this == other) {
-			return true;
-		}
-
-		if (!(other instanceof GroundedAction)) {
-			return false;
-		}
-
-		GroundedAction go = (GroundedAction) other;
-
-		return this.actionName().equals(((GroundedAction) other).actionName());
-
 	}
 
 }

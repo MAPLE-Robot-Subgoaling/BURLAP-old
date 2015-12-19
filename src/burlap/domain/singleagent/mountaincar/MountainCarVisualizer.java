@@ -24,71 +24,6 @@ import burlap.oomdp.visualizer.Visualizer;
 public class MountainCarVisualizer {
 
 	/**
-	 * Returns a {@link burlap.oomdp.visualizer.Visualizer} for a
-	 * {@link burlap.domain.singleagent.mountaincar.MountainCar}
-	 * {@link burlap.oomdp.core.Domain} using the hill design/physics defined in
-	 * the {@link burlap.oomdp.auxiliary.DomainGenerator} for visualization
-	 * 
-	 * @param mcGen
-	 *            the generator for a given mountain car domain that is to be
-	 *            visualized.
-	 * @return a {@link burlap.oomdp.visualizer.Visualizer} for the mountain car
-	 *         domain.
-	 */
-	public static Visualizer getVisualizer(MountainCar mcGen) {
-
-		Visualizer v = new Visualizer(getStateRenderLayer(mcGen.physParams));
-		return v;
-
-	}
-
-	/**
-	 * Returns a {@link burlap.oomdp.visualizer.Visualizer} for a
-	 * {@link burlap.domain.singleagent.mountaincar.MountainCar}
-	 * {@link burlap.oomdp.core.Domain} using the hill design/physics defined in
-	 * the
-	 * {@link burlap.domain.singleagent.mountaincar.MountainCar.MCPhysicsParams}
-	 * for visualization
-	 * 
-	 * @param physParams
-	 *            the physics/hill design to be visualized
-	 * @return a {@link burlap.oomdp.visualizer.Visualizer} for a
-	 *         {@link burlap.domain.singleagent.mountaincar.MountainCar}
-	 *         {@link burlap.oomdp.core.Domain}
-	 */
-	public static Visualizer getVisualizer(
-			MountainCar.MCPhysicsParams physParams) {
-		Visualizer v = new Visualizer(getStateRenderLayer(physParams));
-		return v;
-	}
-
-	/**
-	 * Returns a {@link burlap.oomdp.visualizer.StateRenderLayer} for a
-	 * {@link burlap.domain.singleagent.mountaincar.MountainCar}
-	 * {@link burlap.oomdp.core.Domain} using the hill design/physics defined in
-	 * the
-	 * {@link burlap.domain.singleagent.mountaincar.MountainCar.MCPhysicsParams}
-	 * for visualization
-	 * 
-	 * @param physParams
-	 *            the physics/hill design to be visualized
-	 * @return a {@link burlap.oomdp.visualizer.StateRenderLayer} for a
-	 *         {@link burlap.domain.singleagent.mountaincar.MountainCar}
-	 *         {@link burlap.oomdp.core.Domain}
-	 */
-	public static StateRenderLayer getStateRenderLayer(
-			MountainCar.MCPhysicsParams physParams) {
-
-		StateRenderLayer slr = new StateRenderLayer();
-		slr.addStaticPainter(new HillPainter(physParams));
-		slr.addObjectClassPainter(MountainCar.CLASSAGENT, new AgentPainter(
-				physParams));
-
-		return slr;
-
-	}
-
-	/**
 	 * Class for paining the agent in the mountain car domain. The car will be
 	 * rendered as a red square.
 	 * 
@@ -145,6 +80,22 @@ public class MountainCarVisualizer {
 	 */
 	public static class HillPainter implements StaticPainter {
 
+		/**
+		 * Class for storing an x-y tuple.
+		 * 
+		 * @author James MacGlashan
+		 * 
+		 */
+		private class MyPoint {
+			public double x;
+			public double y;
+
+			public MyPoint(double x, double y) {
+				this.x = x;
+				this.y = y;
+			}
+		}
+
 		MountainCar.MCPhysicsParams physParams;
 
 		/**
@@ -198,22 +149,71 @@ public class MountainCarVisualizer {
 
 		}
 
-		/**
-		 * Class for storing an x-y tuple.
-		 * 
-		 * @author James MacGlashan
-		 * 
-		 */
-		private class MyPoint {
-			public double x;
-			public double y;
+	}
 
-			public MyPoint(double x, double y) {
-				this.x = x;
-				this.y = y;
-			}
-		}
+	/**
+	 * Returns a {@link burlap.oomdp.visualizer.StateRenderLayer} for a
+	 * {@link burlap.domain.singleagent.mountaincar.MountainCar}
+	 * {@link burlap.oomdp.core.Domain} using the hill design/physics defined in
+	 * the
+	 * {@link burlap.domain.singleagent.mountaincar.MountainCar.MCPhysicsParams}
+	 * for visualization
+	 * 
+	 * @param physParams
+	 *            the physics/hill design to be visualized
+	 * @return a {@link burlap.oomdp.visualizer.StateRenderLayer} for a
+	 *         {@link burlap.domain.singleagent.mountaincar.MountainCar}
+	 *         {@link burlap.oomdp.core.Domain}
+	 */
+	public static StateRenderLayer getStateRenderLayer(
+			MountainCar.MCPhysicsParams physParams) {
 
+		StateRenderLayer slr = new StateRenderLayer();
+		slr.addStaticPainter(new HillPainter(physParams));
+		slr.addObjectClassPainter(MountainCar.CLASSAGENT, new AgentPainter(
+				physParams));
+
+		return slr;
+
+	}
+
+	/**
+	 * Returns a {@link burlap.oomdp.visualizer.Visualizer} for a
+	 * {@link burlap.domain.singleagent.mountaincar.MountainCar}
+	 * {@link burlap.oomdp.core.Domain} using the hill design/physics defined in
+	 * the {@link burlap.oomdp.auxiliary.DomainGenerator} for visualization
+	 * 
+	 * @param mcGen
+	 *            the generator for a given mountain car domain that is to be
+	 *            visualized.
+	 * @return a {@link burlap.oomdp.visualizer.Visualizer} for the mountain car
+	 *         domain.
+	 */
+	public static Visualizer getVisualizer(MountainCar mcGen) {
+
+		Visualizer v = new Visualizer(getStateRenderLayer(mcGen.physParams));
+		return v;
+
+	}
+
+	/**
+	 * Returns a {@link burlap.oomdp.visualizer.Visualizer} for a
+	 * {@link burlap.domain.singleagent.mountaincar.MountainCar}
+	 * {@link burlap.oomdp.core.Domain} using the hill design/physics defined in
+	 * the
+	 * {@link burlap.domain.singleagent.mountaincar.MountainCar.MCPhysicsParams}
+	 * for visualization
+	 * 
+	 * @param physParams
+	 *            the physics/hill design to be visualized
+	 * @return a {@link burlap.oomdp.visualizer.Visualizer} for a
+	 *         {@link burlap.domain.singleagent.mountaincar.MountainCar}
+	 *         {@link burlap.oomdp.core.Domain}
+	 */
+	public static Visualizer getVisualizer(
+			MountainCar.MCPhysicsParams physParams) {
+		Visualizer v = new Visualizer(getStateRenderLayer(physParams));
+		return v;
 	}
 
 }

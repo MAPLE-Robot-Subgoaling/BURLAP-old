@@ -5,8 +5,6 @@ import java.util.Map;
 
 import burlap.behavior.learningrate.ConstantLR;
 import burlap.behavior.learningrate.LearningRate;
-import burlap.behavior.valuefunction.ValueFunctionInitialization;
-import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.behavior.stochasticgames.PolicyFromJointPolicy;
 import burlap.behavior.stochasticgames.madynamicprogramming.AgentQSourceMap;
 import burlap.behavior.stochasticgames.madynamicprogramming.AgentQSourceMap.HashMapAgentQSourceMap;
@@ -18,13 +16,15 @@ import burlap.behavior.stochasticgames.madynamicprogramming.QSourceForSingleAgen
 import burlap.behavior.stochasticgames.madynamicprogramming.QSourceForSingleAgent.HashBackedQSource;
 import burlap.behavior.stochasticgames.madynamicprogramming.SGBackupOperator;
 import burlap.behavior.stochasticgames.madynamicprogramming.policies.EGreedyMaxWellfare;
+import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.oomdp.core.states.State;
+import burlap.oomdp.statehashing.HashableStateFactory;
+import burlap.oomdp.stochasticgames.JointAction;
 import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.SGAgentType;
-import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
-import burlap.oomdp.stochasticgames.JointAction;
 import burlap.oomdp.stochasticgames.SGDomain;
 import burlap.oomdp.stochasticgames.World;
+import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 
 /**
  * A class for performing multi-agent Q-learning in which different Q-value
@@ -228,45 +228,6 @@ public class MultiAgentQLearning extends SGAgent implements
 	}
 
 	@Override
-	public void joinWorld(World w, SGAgentType as) {
-		super.joinWorld(w, as);
-		this.learningPolicy.setActingAgentName(this.worldAgentName);
-	}
-
-	/**
-	 * Returns this agent's individual Q-value source
-	 * 
-	 * @return this agent's individual Q-value source
-	 */
-	public QSourceForSingleAgent getMyQSource() {
-		return myQSource;
-	}
-
-	@Override
-	public AgentQSourceMap getQSources() {
-		return this.qSourceMap;
-	}
-
-	/**
-	 * Sets the learning policy to be followed by the agent. The underlining
-	 * joint policy of the learning policy be an instance of
-	 * {@link MultiAgentQLearning} or a runtime exception will be thrown.
-	 * 
-	 * @param p
-	 *            the learning policy to follow
-	 */
-	public void setLearningPolicy(PolicyFromJointPolicy p) {
-		if (!(p.getJointPolicy() instanceof MAQSourcePolicy)) {
-			throw new RuntimeException(
-					"The underlining joint policy must be of type MAQSourcePolicy for the MultiAgentQLearning agent");
-		}
-		this.learningPolicy = p;
-		this.learningPolicy.setActingAgentName(this.worldAgentName);
-		((MAQSourcePolicy) this.learningPolicy.getJointPolicy())
-				.setQSourceProvider(this);
-	}
-
-	@Override
 	public void gameStarting() {
 		if (this.qSourceMap == null) {
 			if (this.queryOtherAgentsQSource) {
@@ -292,11 +253,37 @@ public class MultiAgentQLearning extends SGAgent implements
 	}
 
 	@Override
+	public void gameTerminated() {
+		this.updateLatestQValue();
+
+	}
+
+	@Override
 	public GroundedSGAgentAction getAction(State s) {
 		this.updateLatestQValue();
 		this.learningPolicy.getJointPolicy().setAgentsInJointPolicyFromWorld(
 				this.world);
 		return (GroundedSGAgentAction) this.learningPolicy.getAction(s);
+	}
+
+	/**
+	 * Returns this agent's individual Q-value source
+	 * 
+	 * @return this agent's individual Q-value source
+	 */
+	public QSourceForSingleAgent getMyQSource() {
+		return myQSource;
+	}
+
+	@Override
+	public AgentQSourceMap getQSources() {
+		return this.qSourceMap;
+	}
+
+	@Override
+	public void joinWorld(World w, SGAgentType as) {
+		super.joinWorld(w, as);
+		this.learningPolicy.setActingAgentName(this.worldAgentName);
 	}
 
 	@Override
@@ -332,10 +319,23 @@ public class MultiAgentQLearning extends SGAgent implements
 
 	}
 
-	@Override
-	public void gameTerminated() {
-		this.updateLatestQValue();
-
+	/**
+	 * Sets the learning policy to be followed by the agent. The underlining
+	 * joint policy of the learning policy be an instance of
+	 * {@link MultiAgentQLearning} or a runtime exception will be thrown.
+	 * 
+	 * @param p
+	 *            the learning policy to follow
+	 */
+	public void setLearningPolicy(PolicyFromJointPolicy p) {
+		if (!(p.getJointPolicy() instanceof MAQSourcePolicy)) {
+			throw new RuntimeException(
+					"The underlining joint policy must be of type MAQSourcePolicy for the MultiAgentQLearning agent");
+		}
+		this.learningPolicy = p;
+		this.learningPolicy.setActingAgentName(this.worldAgentName);
+		((MAQSourcePolicy) this.learningPolicy.getJointPolicy())
+				.setQSourceProvider(this);
 	}
 
 	/**

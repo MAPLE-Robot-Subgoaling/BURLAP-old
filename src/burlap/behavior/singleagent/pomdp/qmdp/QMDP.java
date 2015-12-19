@@ -7,7 +7,6 @@ import burlap.behavior.policy.GreedyQPolicy;
 import burlap.behavior.policy.Policy;
 import burlap.behavior.singleagent.MDPSolver;
 import burlap.behavior.singleagent.auxiliary.StateEnumerator;
-
 import burlap.behavior.singleagent.planning.Planner;
 import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
 import burlap.behavior.valuefunction.QFunction;
@@ -18,8 +17,8 @@ import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
-import burlap.oomdp.singleagent.pomdp.beliefstate.BeliefState;
 import burlap.oomdp.singleagent.pomdp.PODomain;
+import burlap.oomdp.singleagent.pomdp.beliefstate.BeliefState;
 import burlap.oomdp.singleagent.pomdp.beliefstate.EnumerableBeliefState;
 import burlap.oomdp.statehashing.HashableStateFactory;
 
@@ -122,6 +121,23 @@ public class QMDP extends MDPSolver implements Planner, QFunction {
 	}
 
 	@Override
+	public QValue getQ(State s, AbstractGroundedAction a) {
+
+		if (!(s instanceof BeliefState)
+				|| !(s instanceof EnumerableBeliefState)) {
+			throw new RuntimeException(
+					"QMDP cannot return the Q-values for the given state, because the given state is not a EnumerableBeliefState instance. It is a "
+							+ s.getClass().getName());
+		}
+
+		EnumerableBeliefState bs = (EnumerableBeliefState) s;
+
+		QValue q = new QValue(s, a, this.qForBelief(bs, (GroundedAction) a));
+
+		return q;
+	}
+
+	@Override
 	public List<QValue> getQs(State s) {
 
 		if (!(s instanceof BeliefState)
@@ -152,25 +168,9 @@ public class QMDP extends MDPSolver implements Planner, QFunction {
 	}
 
 	@Override
-	public QValue getQ(State s, AbstractGroundedAction a) {
-
-		if (!(s instanceof BeliefState)
-				|| !(s instanceof EnumerableBeliefState)) {
-			throw new RuntimeException(
-					"QMDP cannot return the Q-values for the given state, because the given state is not a EnumerableBeliefState instance. It is a "
-							+ s.getClass().getName());
-		}
-
-		EnumerableBeliefState bs = (EnumerableBeliefState) s;
-
-		QValue q = new QValue(s, a, this.qForBelief(bs, (GroundedAction) a));
-
-		return q;
-	}
-
-	@Override
-	public double value(State s) {
-		return QFunction.QFunctionHelper.getOptimalValue(this, s);
+	public Policy planFromState(State initialState) {
+		this.forceMDPPlanningFromAllStates();
+		return new GreedyQPolicy(this);
 	}
 
 	/**
@@ -213,14 +213,13 @@ public class QMDP extends MDPSolver implements Planner, QFunction {
 	}
 
 	@Override
-	public Policy planFromState(State initialState) {
-		this.forceMDPPlanningFromAllStates();
-		return new GreedyQPolicy(this);
+	public void resetSolver() {
+		((Planner) this.mdpQSource).resetSolver();
 	}
 
 	@Override
-	public void resetSolver() {
-		((Planner) this.mdpQSource).resetSolver();
+	public double value(State s) {
+		return QFunction.QFunctionHelper.getOptimalValue(this, s);
 	}
 
 }

@@ -1,8 +1,8 @@
 package burlap.oomdp.stochasticgames.common;
 
-import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.AgentFactory;
 import burlap.oomdp.stochasticgames.JointReward;
+import burlap.oomdp.stochasticgames.SGAgent;
 
 /**
  * An agent generating factory that will produce an agent that uses an internal

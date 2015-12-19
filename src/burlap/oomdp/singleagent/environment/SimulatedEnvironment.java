@@ -3,8 +3,8 @@ package burlap.oomdp.singleagent.environment;
 import burlap.oomdp.auxiliary.StateGenerator;
 import burlap.oomdp.auxiliary.common.ConstantStateGenerator;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
@@ -118,36 +118,72 @@ public class SimulatedEnvironment implements StateSettableEnvironment,
 		this.curState = stateGenerator.generateState();
 	}
 
+	@Override
+	public EnvironmentOutcome executeAction(GroundedAction ga) {
+
+		GroundedAction simGA = ga.copy();
+		simGA.action = this.domain.getAction(ga.actionName());
+		if (simGA.action == null) {
+			throw new RuntimeException(
+					"Cannot execute action "
+							+ ga.toString()
+							+ " in this SimulatedEnvironment because the action is to known in this Environment's domain");
+		}
+		State nextState;
+		if (this.allowActionFromTerminalStates || !this.isInTerminalState()) {
+			nextState = simGA.executeIn(this.curState);
+			this.lastReward = this.rf.reward(this.curState, simGA, nextState);
+		} else {
+			nextState = this.curState;
+			this.lastReward = 0.;
+		}
+
+		EnvironmentOutcome eo = new EnvironmentOutcome(this.curState.copy(),
+				simGA, nextState.copy(), this.lastReward,
+				this.tf.isTerminal(nextState));
+
+		this.curState = nextState;
+
+		return eo;
+	}
+
+	@Override
+	public State getCurrentObservation() {
+		return this.curState.copy();
+	}
+
 	public Domain getDomain() {
 		return domain;
 	}
 
-	public void setDomain(Domain domain) {
-		this.domain = domain;
+	@Override
+	public double getLastReward() {
+		return this.lastReward;
 	}
 
+	@Override
 	public RewardFunction getRf() {
 		return rf;
-	}
-
-	public void setRf(RewardFunction rf) {
-		this.rf = rf;
-	}
-
-	public TerminalFunction getTf() {
-		return tf;
-	}
-
-	public void setTf(TerminalFunction tf) {
-		this.tf = tf;
 	}
 
 	public StateGenerator getStateGenerator() {
 		return stateGenerator;
 	}
 
-	public void setStateGenerator(StateGenerator stateGenerator) {
-		this.stateGenerator = stateGenerator;
+	@Override
+	public TerminalFunction getTf() {
+		return tf;
+	}
+
+	@Override
+	public boolean isInTerminalState() {
+		return this.tf.isTerminal(this.curState);
+	}
+
+	@Override
+	public void resetEnvironment() {
+		this.lastReward = 0.;
+		this.curState = stateGenerator.generateState();
 	}
 
 	/**
@@ -179,53 +215,21 @@ public class SimulatedEnvironment implements StateSettableEnvironment,
 		this.curState = s;
 	}
 
-	@Override
-	public State getCurrentObservation() {
-		return this.curState.copy();
+	public void setDomain(Domain domain) {
+		this.domain = domain;
 	}
 
 	@Override
-	public EnvironmentOutcome executeAction(GroundedAction ga) {
+	public void setRf(RewardFunction rf) {
+		this.rf = rf;
+	}
 
-		GroundedAction simGA = (GroundedAction) ga.copy();
-		simGA.action = this.domain.getAction(ga.actionName());
-		if (simGA.action == null) {
-			throw new RuntimeException(
-					"Cannot execute action "
-							+ ga.toString()
-							+ " in this SimulatedEnvironment because the action is to known in this Environment's domain");
-		}
-		State nextState;
-		if (this.allowActionFromTerminalStates || !this.isInTerminalState()) {
-			nextState = simGA.executeIn(this.curState);
-			this.lastReward = this.rf.reward(this.curState, simGA, nextState);
-		} else {
-			nextState = this.curState;
-			this.lastReward = 0.;
-		}
-
-		EnvironmentOutcome eo = new EnvironmentOutcome(this.curState.copy(),
-				simGA, nextState.copy(), this.lastReward,
-				this.tf.isTerminal(nextState));
-
-		this.curState = nextState;
-
-		return eo;
+	public void setStateGenerator(StateGenerator stateGenerator) {
+		this.stateGenerator = stateGenerator;
 	}
 
 	@Override
-	public double getLastReward() {
-		return this.lastReward;
-	}
-
-	@Override
-	public boolean isInTerminalState() {
-		return this.tf.isTerminal(this.curState);
-	}
-
-	@Override
-	public void resetEnvironment() {
-		this.lastReward = 0.;
-		this.curState = stateGenerator.generateState();
+	public void setTf(TerminalFunction tf) {
+		this.tf = tf;
 	}
 }

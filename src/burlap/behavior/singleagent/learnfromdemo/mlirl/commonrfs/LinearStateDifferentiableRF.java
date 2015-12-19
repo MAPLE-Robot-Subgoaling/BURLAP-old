@@ -70,19 +70,6 @@ public class LinearStateDifferentiableRF extends DifferentiableRF {
 		this.fvGen = fvGen;
 	}
 
-	/**
-	 * Sets whether features for the reward function are generated from the next
-	 * state or previous state.
-	 * 
-	 * @param featuresAreForNextState
-	 *            If true, then the features will be generated from the next
-	 *            state in the (s, a, s') transition. If false, then the
-	 *            previous state.
-	 */
-	public void setFeaturesAreForNextState(boolean featuresAreForNextState) {
-		this.featuresAreForNextState = featuresAreForNextState;
-	}
-
 	@Override
 	protected DifferentiableRF copyHelper() {
 		LinearStateDifferentiableRF rf = new LinearStateDifferentiableRF(
@@ -90,6 +77,7 @@ public class LinearStateDifferentiableRF extends DifferentiableRF {
 		return rf;
 	}
 
+	@Override
 	public double[] getGradient(State s, GroundedAction ga, State sp) {
 		if (featuresAreForNextState) {
 			return fvGen.generateFeatureVectorFrom(sp);
@@ -111,6 +99,19 @@ public class LinearStateDifferentiableRF extends DifferentiableRF {
 			sum += features[i] * this.parameters[i];
 		}
 		return sum;
+	}
+
+	/**
+	 * Sets whether features for the reward function are generated from the next
+	 * state or previous state.
+	 * 
+	 * @param featuresAreForNextState
+	 *            If true, then the features will be generated from the next
+	 *            state in the (s, a, s') transition. If false, then the
+	 *            previous state.
+	 */
+	public void setFeaturesAreForNextState(boolean featuresAreForNextState) {
+		this.featuresAreForNextState = featuresAreForNextState;
 	}
 
 }

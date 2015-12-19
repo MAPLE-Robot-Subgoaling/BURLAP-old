@@ -47,21 +47,6 @@ public class ParameterNaiveActionIdMap implements ActionIdMap {
 	}
 
 	@Override
-	public int getActionId(GroundedSGAgentAction gsa) {
-		return map.get(gsa.action.actionName);
-	}
-
-	@Override
-	public int getActionId(String actionName, String[] params) {
-		return map.get(actionName);
-	}
-
-	@Override
-	public int maxValue() {
-		return map.size();
-	}
-
-	@Override
 	public GroundedSGAgentAction getActionForId(int id) {
 
 		for (String key : map.keySet()) {
@@ -75,6 +60,21 @@ public class ParameterNaiveActionIdMap implements ActionIdMap {
 		}
 
 		return null;
+	}
+
+	@Override
+	public int getActionId(GroundedSGAgentAction gsa) {
+		return map.get(gsa.action.actionName);
+	}
+
+	@Override
+	public int getActionId(String actionName, String[] params) {
+		return map.get(actionName);
+	}
+
+	@Override
+	public int maxValue() {
+		return map.size();
 	}
 
 }

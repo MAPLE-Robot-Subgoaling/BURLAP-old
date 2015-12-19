@@ -1,5 +1,9 @@
 package burlap.tutorials.scd;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import burlap.behavior.policy.GreedyQPolicy;
 import burlap.behavior.policy.Policy;
 import burlap.behavior.singleagent.EpisodeAnalysis;
@@ -39,92 +43,7 @@ import burlap.oomdp.singleagent.environment.SimulatedEnvironment;
 import burlap.oomdp.statehashing.SimpleHashableStateFactory;
 import burlap.oomdp.visualizer.Visualizer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 public class ContinuousDomainTutorial {
-
-	public static void MCLSPIFB() {
-
-		MountainCar mcGen = new MountainCar();
-		Domain domain = mcGen.generateDomain();
-		TerminalFunction tf = new MountainCar.ClassicMCTF();
-		RewardFunction rf = new GoalBasedRF(tf, 100);
-
-		StateGenerator rStateGen = new MCRandomStateGenerator(domain);
-		SARSCollector collector = new SARSCollector.UniformRandomSARSCollector(
-				domain);
-		SARSData dataset = collector.collectNInstances(rStateGen, rf, 5000, 20,
-				tf, null);
-
-		ConcatenatedObjectFeatureVectorGenerator featureVectorGenerator = new ConcatenatedObjectFeatureVectorGenerator(
-				true, MountainCar.CLASSAGENT);
-		FourierBasis fb = new FourierBasis(featureVectorGenerator, 4);
-
-		LSPI lspi = new LSPI(domain, 0.99, fb, dataset);
-		Policy p = lspi.runPolicyIteration(30, 1e-6);
-
-		Visualizer v = MountainCarVisualizer.getVisualizer(mcGen);
-		VisualActionObserver vob = new VisualActionObserver(domain, v);
-		vob.initGUI();
-
-		SimulatedEnvironment env = new SimulatedEnvironment(domain, rf, tf,
-				MountainCar.getCleanState(domain, mcGen.physParams));
-		EnvironmentServer envServ = new EnvironmentServer(env, vob);
-
-		for (int i = 0; i < 5; i++) {
-			p.evaluateBehavior(envServ);
-			envServ.resetEnvironment();
-		}
-
-		System.out.println("Finished");
-
-	}
-
-	public static void MCLSPIRBF() {
-
-		MountainCar mcGen = new MountainCar();
-		Domain domain = mcGen.generateDomain();
-		TerminalFunction tf = new MountainCar.ClassicMCTF();
-		RewardFunction rf = new GoalBasedRF(tf, 100);
-		State s = MountainCar.getCleanState(domain, mcGen.physParams);
-
-		StateGenerator rStateGen = new MCRandomStateGenerator(domain);
-		SARSCollector collector = new SARSCollector.UniformRandomSARSCollector(
-				domain);
-		SARSData dataset = collector.collectNInstances(rStateGen, rf, 5000, 20,
-				tf, null);
-
-		RBFFeatureDatabase rbf = new RBFFeatureDatabase(true);
-		StateGridder gridder = new StateGridder();
-		gridder.gridEntireDomainSpace(domain, 5);
-		List<State> griddedStates = gridder.gridInputState(s);
-		DistanceMetric metric = new EuclideanDistance(
-				new ConcatenatedObjectFeatureVectorGenerator(true,
-						MountainCar.CLASSAGENT));
-		for (State g : griddedStates) {
-			rbf.addRBF(new GaussianRBF(g, metric, .2));
-		}
-
-		LSPI lspi = new LSPI(domain, 0.99, rbf, dataset);
-		Policy p = lspi.runPolicyIteration(30, 1e-6);
-
-		Visualizer v = MountainCarVisualizer.getVisualizer(mcGen);
-		VisualActionObserver vob = new VisualActionObserver(domain, v);
-		vob.initGUI();
-
-		SimulatedEnvironment env = new SimulatedEnvironment(domain, rf, tf, s);
-		EnvironmentServer envServ = new EnvironmentServer(env, vob);
-
-		for (int i = 0; i < 5; i++) {
-			p.evaluateBehavior(envServ);
-			envServ.resetEnvironment();
-		}
-
-		System.out.println("Finished");
-
-	}
 
 	public static void IPSS() {
 
@@ -207,6 +126,87 @@ public class ContinuousDomainTutorial {
 		// MCLSPIRBF();
 		// IPSS();
 		LLSARSA();
+	}
+
+	public static void MCLSPIFB() {
+
+		MountainCar mcGen = new MountainCar();
+		Domain domain = mcGen.generateDomain();
+		TerminalFunction tf = new MountainCar.ClassicMCTF();
+		RewardFunction rf = new GoalBasedRF(tf, 100);
+
+		StateGenerator rStateGen = new MCRandomStateGenerator(domain);
+		SARSCollector collector = new SARSCollector.UniformRandomSARSCollector(
+				domain);
+		SARSData dataset = collector.collectNInstances(rStateGen, rf, 5000, 20,
+				tf, null);
+
+		ConcatenatedObjectFeatureVectorGenerator featureVectorGenerator = new ConcatenatedObjectFeatureVectorGenerator(
+				true, MountainCar.CLASSAGENT);
+		FourierBasis fb = new FourierBasis(featureVectorGenerator, 4);
+
+		LSPI lspi = new LSPI(domain, 0.99, fb, dataset);
+		Policy p = lspi.runPolicyIteration(30, 1e-6);
+
+		Visualizer v = MountainCarVisualizer.getVisualizer(mcGen);
+		VisualActionObserver vob = new VisualActionObserver(domain, v);
+		vob.initGUI();
+
+		SimulatedEnvironment env = new SimulatedEnvironment(domain, rf, tf,
+				MountainCar.getCleanState(domain, mcGen.physParams));
+		EnvironmentServer envServ = new EnvironmentServer(env, vob);
+
+		for (int i = 0; i < 5; i++) {
+			p.evaluateBehavior(envServ);
+			envServ.resetEnvironment();
+		}
+
+		System.out.println("Finished");
+
+	}
+
+	public static void MCLSPIRBF() {
+
+		MountainCar mcGen = new MountainCar();
+		Domain domain = mcGen.generateDomain();
+		TerminalFunction tf = new MountainCar.ClassicMCTF();
+		RewardFunction rf = new GoalBasedRF(tf, 100);
+		State s = MountainCar.getCleanState(domain, mcGen.physParams);
+
+		StateGenerator rStateGen = new MCRandomStateGenerator(domain);
+		SARSCollector collector = new SARSCollector.UniformRandomSARSCollector(
+				domain);
+		SARSData dataset = collector.collectNInstances(rStateGen, rf, 5000, 20,
+				tf, null);
+
+		RBFFeatureDatabase rbf = new RBFFeatureDatabase(true);
+		StateGridder gridder = new StateGridder();
+		gridder.gridEntireDomainSpace(domain, 5);
+		List<State> griddedStates = gridder.gridInputState(s);
+		DistanceMetric metric = new EuclideanDistance(
+				new ConcatenatedObjectFeatureVectorGenerator(true,
+						MountainCar.CLASSAGENT));
+		for (State g : griddedStates) {
+			rbf.addRBF(new GaussianRBF(g, metric, .2));
+		}
+
+		LSPI lspi = new LSPI(domain, 0.99, rbf, dataset);
+		Policy p = lspi.runPolicyIteration(30, 1e-6);
+
+		Visualizer v = MountainCarVisualizer.getVisualizer(mcGen);
+		VisualActionObserver vob = new VisualActionObserver(domain, v);
+		vob.initGUI();
+
+		SimulatedEnvironment env = new SimulatedEnvironment(domain, rf, tf, s);
+		EnvironmentServer envServ = new EnvironmentServer(env, vob);
+
+		for (int i = 0; i < 5; i++) {
+			p.evaluateBehavior(envServ);
+			envServ.resetEnvironment();
+		}
+
+		System.out.println("Finished");
+
 	}
 
 }

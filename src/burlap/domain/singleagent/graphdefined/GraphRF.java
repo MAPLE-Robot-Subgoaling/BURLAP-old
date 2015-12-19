@@ -20,14 +20,6 @@ import burlap.oomdp.singleagent.RewardFunction;
  */
 public abstract class GraphRF implements RewardFunction {
 
-	@Override
-	public double reward(State s, GroundedAction a, State sprime) {
-		int actionId = Integer.parseInt(a.toString().replaceAll(
-				GraphDefinedDomain.BASEACTIONNAME, ""));
-		return this.reward(GraphDefinedDomain.getNodeId(s), actionId,
-				GraphDefinedDomain.getNodeId(sprime));
-	}
-
 	/**
 	 * Returns the reward for taking action a in state node s and transition to
 	 * state node sprime.
@@ -41,4 +33,12 @@ public abstract class GraphRF implements RewardFunction {
 	 * @return the received reward for the transition in the graph
 	 */
 	public abstract double reward(int s, int a, int sprime);
+
+	@Override
+	public double reward(State s, GroundedAction a, State sprime) {
+		int actionId = Integer.parseInt(a.toString().replaceAll(
+				GraphDefinedDomain.BASEACTIONNAME, ""));
+		return this.reward(GraphDefinedDomain.getNodeId(s), actionId,
+				GraphDefinedDomain.getNodeId(sprime));
+	}
 }

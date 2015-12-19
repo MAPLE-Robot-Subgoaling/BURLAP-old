@@ -1,14 +1,9 @@
 package burlap.oomdp.singleagent.interfaces.rlglue;
 
-import burlap.oomdp.auxiliary.StateGenerator;
-import burlap.oomdp.core.Attribute;
-import burlap.oomdp.core.Attribute.AttributeType;
-import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.TerminalFunction;
-import burlap.oomdp.core.objects.ObjectInstance;
-import burlap.oomdp.core.states.State;
-import burlap.oomdp.singleagent.GroundedAction;
-import burlap.oomdp.singleagent.RewardFunction;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.rlcommunity.rlglue.codec.EnvironmentInterface;
 import org.rlcommunity.rlglue.codec.taskspec.TaskSpecVRLGLUE3;
 import org.rlcommunity.rlglue.codec.taskspec.ranges.DoubleRange;
@@ -18,9 +13,15 @@ import org.rlcommunity.rlglue.codec.types.Observation;
 import org.rlcommunity.rlglue.codec.types.Reward_observation_terminal;
 import org.rlcommunity.rlglue.codec.util.EnvironmentLoader;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import burlap.oomdp.auxiliary.StateGenerator;
+import burlap.oomdp.core.Attribute;
+import burlap.oomdp.core.Attribute.AttributeType;
+import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.objects.ObjectInstance;
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.singleagent.RewardFunction;
 
 /**
  * This class can be used to take a BURLAP domain and task with discrete actions
@@ -207,64 +208,6 @@ public class RLGlueEnvironment implements EnvironmentInterface {
 	}
 
 	/**
-	 * Loads this environment into RLGlue
-	 */
-	public void load() {
-		EnvironmentLoader loader = new EnvironmentLoader(this);
-		loader.run();
-	}
-
-	/**
-	 * Loads this environment into RLGLue with the specified host address and
-	 * port
-	 * 
-	 * @param hostAddress
-	 *            the RLGlue host address
-	 * @param port
-	 *            the RLGlue port
-	 */
-	public void load(String hostAddress, String port) {
-		EnvironmentLoader loader = new EnvironmentLoader(hostAddress, port,
-				this);
-		loader.run();
-	}
-
-	@Override
-	public void env_cleanup() {
-		// nothing to do
-	}
-
-	@Override
-	public String env_init() {
-
-		TaskSpecVRLGLUE3 theTaskSpecObject = new TaskSpecVRLGLUE3();
-
-		if (this.isEpisodic) {
-			theTaskSpecObject.setEpisodic();
-		} else {
-			theTaskSpecObject.setContinuing();
-		}
-
-		theTaskSpecObject.setDiscountFactor(this.discount);
-		theTaskSpecObject.setRewardRange(this.rewardRange);
-		theTaskSpecObject.addDiscreteAction(new IntRange(0, this.actionMap
-				.size() - 1));
-
-		for (Map.Entry<String, Integer> e : this.numObjectsOfEachClass
-				.entrySet()) {
-			int n = e.getValue();
-			List<Attribute> atts = this.domain.getObjectClass(e.getKey()).attributeList;
-			for (int i = 0; i < n; i++) {
-				for (Attribute att : atts) {
-					this.addAttribute(theTaskSpecObject, att);
-				}
-			}
-		}
-
-		return theTaskSpecObject.toTaskSpec();
-	}
-
-	/**
 	 * Adss a BURLAP attribute to the RLGlue task specification. BURLAP
 	 * multi-target relational attributes are not supported and will cause a
 	 * runtime exception to be thrown.
@@ -297,47 +240,6 @@ public class RLGlueEnvironment implements EnvironmentInterface {
 							+ type);
 		}
 
-	}
-
-	@Override
-	public String env_message(String arg0) {
-		return "Messages not supportd by default BURLAP RLGlueEnvironment";
-	}
-
-	@Override
-	public Observation env_start() {
-		this.terminalVisits = 0;
-		if (usedConstructorState) {
-			this.curState = this.stateGenerator.generateState();
-		} else {
-			this.usedConstructorState = true;
-		}
-
-		return this.convertIntoObservation(this.curState);
-	}
-
-	@Override
-	public Reward_observation_terminal env_step(Action arg0) {
-		GroundedAction burlapAction = this.actionMap.get(arg0.getInt(0));
-		State nextState;
-		boolean curStateTerminal = this.tf.isTerminal(this.curState);
-		if (!curStateTerminal) {
-			nextState = burlapAction.executeIn(this.curState);
-		} else {
-			nextState = this.curState;
-			this.terminalVisits++;
-		}
-		Observation o = this.convertIntoObservation(nextState);
-		double r = curStateTerminal ? 0 : this.rf.reward(curState,
-				burlapAction, nextState);
-
-		boolean flagTerminal = this.terminalVisits > 1;
-		this.curState = nextState;
-
-		Reward_observation_terminal toRet = new Reward_observation_terminal(r,
-				o, flagTerminal);
-
-		return toRet;
 	}
 
 	/**
@@ -382,6 +284,105 @@ public class RLGlueEnvironment implements EnvironmentInterface {
 		}
 
 		return o;
+	}
+
+	@Override
+	public void env_cleanup() {
+		// nothing to do
+	}
+
+	@Override
+	public String env_init() {
+
+		TaskSpecVRLGLUE3 theTaskSpecObject = new TaskSpecVRLGLUE3();
+
+		if (this.isEpisodic) {
+			theTaskSpecObject.setEpisodic();
+		} else {
+			theTaskSpecObject.setContinuing();
+		}
+
+		theTaskSpecObject.setDiscountFactor(this.discount);
+		theTaskSpecObject.setRewardRange(this.rewardRange);
+		theTaskSpecObject.addDiscreteAction(new IntRange(0, this.actionMap
+				.size() - 1));
+
+		for (Map.Entry<String, Integer> e : this.numObjectsOfEachClass
+				.entrySet()) {
+			int n = e.getValue();
+			List<Attribute> atts = this.domain.getObjectClass(e.getKey()).attributeList;
+			for (int i = 0; i < n; i++) {
+				for (Attribute att : atts) {
+					this.addAttribute(theTaskSpecObject, att);
+				}
+			}
+		}
+
+		return theTaskSpecObject.toTaskSpec();
+	}
+
+	@Override
+	public String env_message(String arg0) {
+		return "Messages not supportd by default BURLAP RLGlueEnvironment";
+	}
+
+	@Override
+	public Observation env_start() {
+		this.terminalVisits = 0;
+		if (usedConstructorState) {
+			this.curState = this.stateGenerator.generateState();
+		} else {
+			this.usedConstructorState = true;
+		}
+
+		return this.convertIntoObservation(this.curState);
+	}
+
+	@Override
+	public Reward_observation_terminal env_step(Action arg0) {
+		GroundedAction burlapAction = this.actionMap.get(arg0.getInt(0));
+		State nextState;
+		boolean curStateTerminal = this.tf.isTerminal(this.curState);
+		if (!curStateTerminal) {
+			nextState = burlapAction.executeIn(this.curState);
+		} else {
+			nextState = this.curState;
+			this.terminalVisits++;
+		}
+		Observation o = this.convertIntoObservation(nextState);
+		double r = curStateTerminal ? 0 : this.rf.reward(curState,
+				burlapAction, nextState);
+
+		boolean flagTerminal = this.terminalVisits > 1;
+		this.curState = nextState;
+
+		Reward_observation_terminal toRet = new Reward_observation_terminal(r,
+				o, flagTerminal);
+
+		return toRet;
+	}
+
+	/**
+	 * Loads this environment into RLGlue
+	 */
+	public void load() {
+		EnvironmentLoader loader = new EnvironmentLoader(this);
+		loader.run();
+	}
+
+	/**
+	 * Loads this environment into RLGLue with the specified host address and
+	 * port
+	 * 
+	 * @param hostAddress
+	 *            the RLGlue host address
+	 * @param port
+	 *            the RLGlue port
+	 */
+	public void load(String hostAddress, String port) {
+		EnvironmentLoader loader = new EnvironmentLoader(hostAddress, port,
+				this);
+		loader.run();
 	}
 
 	/**

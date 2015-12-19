@@ -1,12 +1,11 @@
 package burlap.oomdp.singleagent;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TransitionProbability;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.environment.Environment;
 import burlap.oomdp.singleagent.environment.EnvironmentOutcome;
 
@@ -154,6 +153,31 @@ import burlap.oomdp.singleagent.environment.EnvironmentOutcome;
 public abstract class Action {
 
 	/**
+	 * Returns all {@link GroundedAction}s that are applicable in the given
+	 * {@link State} for all {@link Action} objects in the provided list. This
+	 * method operates by calling the
+	 * {@link #getAllApplicableGroundedActions(State)} method on each action and
+	 * adding all the results to a list that is then returned.
+	 * 
+	 * @param actions
+	 *            The list of all actions for which grounded actions should be
+	 *            returned.
+	 * @param s
+	 *            the state
+	 * @return a {@link List} of all the {@link GroundedAction}s for all
+	 *         {@link Action} in the list that are applicable in the given
+	 *         {@link State}
+	 */
+	public static List<GroundedAction> getAllApplicableGroundedActionsFromActionList(
+			List<Action> actions, State s) {
+		List<GroundedAction> res = new ArrayList<GroundedAction>();
+		for (Action a : actions) {
+			res.addAll(a.getAllApplicableGroundedActions(s));
+		}
+		return res;
+	}
+
+	/**
 	 * The name of the action that can uniquely identify it
 	 */
 	protected String name;
@@ -181,24 +205,6 @@ public abstract class Action {
 	}
 
 	/**
-	 * Returns the name of the action
-	 * 
-	 * @return the name of the action
-	 */
-	public final String getName() {
-		return name;
-	}
-
-	/**
-	 * Returns the domain to which this action belongs.
-	 * 
-	 * @return the domain to which this action belongs.
-	 */
-	public final Domain getDomain() {
-		return domain;
-	}
-
-	/**
 	 * Sets an action observer for this action. Set to null to specify no
 	 * observer or to disable observaiton.
 	 * 
@@ -208,13 +214,6 @@ public abstract class Action {
 	 */
 	public void addActionObserver(ActionObserver observer) {
 		this.actionObservers.add(observer);
-	}
-
-	/**
-	 * Clears all action observers associated with this action
-	 */
-	public void clearAllActionsObservers() {
-		this.actionObservers.clear();
 	}
 
 	/**
@@ -236,23 +235,116 @@ public abstract class Action {
 			GroundedAction groundedAction);
 
 	/**
-	 * Executes this action with the specified parameters in the provided
-	 * environment and returns the
-	 * {@link burlap.oomdp.singleagent.environment.EnvironmentOutcome} result.
+	 * Clears all action observers associated with this action
+	 */
+	public void clearAllActionsObservers() {
+		this.actionObservers.clear();
+	}
+
+	/**
+	 * Returns the transition dynamics by assuming the action to be
+	 * deterministic and wrapping the result of a
+	 * {@link #performAction(burlap.oomdp.core.states.State, burlap.oomdp.singleagent.GroundedAction)}
+	 * method with a 1.0 probable {@link TransitionProbability} object and
+	 * inserting it in the returned list.
 	 * 
-	 * @param env
-	 *            the environment in which the action should be performed.
+	 * @param s
+	 *            the state from which the transition probabilities when
+	 *            applying this action will be returned.
 	 * @param groundedAction
 	 *            the {@link burlap.oomdp.singleagent.GroundedAction} specifying
 	 *            the parameters to use
-	 * @return an
-	 *         {@link burlap.oomdp.singleagent.environment.EnvironmentOutcome}
-	 *         specifying the result of the action execution in the environment
+	 * @return a List of one element of type
+	 *         {@link burlap.oomdp.core.TransitionProbability} whose state is
+	 *         the outcome of the
+	 *         {@link #performAction(burlap.oomdp.core.states.State, burlap.oomdp.singleagent.GroundedAction)}
+	 *         method.
 	 */
-	public EnvironmentOutcome performInEnvironment(Environment env,
+	protected List<TransitionProbability> deterministicTransition(State s,
 			GroundedAction groundedAction) {
-		return env.executeAction(groundedAction);
+		List<TransitionProbability> transition = new ArrayList<TransitionProbability>();
+		State res = this.performAction(s, groundedAction);
+		transition.add(new TransitionProbability(res, 1.0));
+
+		return transition;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		Action op = (Action) obj;
+		if (op.name.equals(name))
+			return true;
+		return false;
+	}
+
+	/**
+	 * Returns all possible groundings of this action that can be applied in the
+	 * provided {@link State}. To check if a grounded action is applicable in
+	 * the state, the
+	 * {@link #applicableInState(State, burlap.oomdp.singleagent.GroundedAction)}
+	 * method is checked. The default behavior of this method is to treat the
+	 * parameters as possible object bindings, finding all bindings that satisfy
+	 * the object class typing specified and then checking them against the
+	 * {@link #applicableInState(State, burlap.oomdp.singleagent.GroundedAction)}
+	 * method. However, this class can also be overridden to provide custom
+	 * grounding behavior or non-object based parametrization.
+	 * 
+	 * @param s
+	 *            the {@link State} in which all applicable grounded actions of
+	 *            this {@link Action} object should be returned.
+	 * @return a list of all applicable {@link GroundedAction}s of this
+	 *         {@link Action} object in in the given {@link State}
+	 */
+	public abstract List<GroundedAction> getAllApplicableGroundedActions(State s);
+
+	/**
+	 * Returns a {@link burlap.oomdp.singleagent.GroundedAction} instance that
+	 * points to this {@link burlap.oomdp.singleagent.Action}, but does not have
+	 * any parameters--if any--set.
+	 * 
+	 * @return a {@link burlap.oomdp.singleagent.GroundedAction} instance.
+	 */
+	public abstract GroundedAction getAssociatedGroundedAction();
+
+	/**
+	 * Returns the domain to which this action belongs.
+	 * 
+	 * @return the domain to which this action belongs.
+	 */
+	public final Domain getDomain() {
+		return domain;
+	}
+
+	/**
+	 * Returns the name of the action
+	 * 
+	 * @return the name of the action
+	 */
+	public final String getName() {
+		return name;
+	}
+
+	@Override
+	public int hashCode() {
+		return name.hashCode();
+	}
+
+	/**
+	 * Returns true if this action is parameterized; false otherwise.
+	 * 
+	 * @return true if this {@link burlap.oomdp.singleagent.Action} is
+	 *         parameterized; false if it is not.
+	 */
+	public abstract boolean isParameterized();
+
+	/**
+	 * Returns whether this action is a primitive action of the domain or not. A
+	 * primitive action is defined to be an action that always takes one time
+	 * step.
+	 * 
+	 * @return true if the action is primitive; false otherwise.
+	 */
+	public abstract boolean isPrimitive();
 
 	/**
 	 * Performs this action in the specified state using the specified
@@ -292,105 +384,6 @@ public abstract class Action {
 	}
 
 	/**
-	 * Returns whether this action is a primitive action of the domain or not. A
-	 * primitive action is defined to be an action that always takes one time
-	 * step.
-	 * 
-	 * @return true if the action is primitive; false otherwise.
-	 */
-	public abstract boolean isPrimitive();
-
-	/**
-	 * Returns true if this action is parameterized; false otherwise.
-	 * 
-	 * @return true if this {@link burlap.oomdp.singleagent.Action} is
-	 *         parameterized; false if it is not.
-	 */
-	public abstract boolean isParameterized();
-
-	/**
-	 * Returns the transition dynamics by assuming the action to be
-	 * deterministic and wrapping the result of a
-	 * {@link #performAction(burlap.oomdp.core.states.State, burlap.oomdp.singleagent.GroundedAction)}
-	 * method with a 1.0 probable {@link TransitionProbability} object and
-	 * inserting it in the returned list.
-	 * 
-	 * @param s
-	 *            the state from which the transition probabilities when
-	 *            applying this action will be returned.
-	 * @param groundedAction
-	 *            the {@link burlap.oomdp.singleagent.GroundedAction} specifying
-	 *            the parameters to use
-	 * @return a List of one element of type
-	 *         {@link burlap.oomdp.core.TransitionProbability} whose state is
-	 *         the outcome of the
-	 *         {@link #performAction(burlap.oomdp.core.states.State, burlap.oomdp.singleagent.GroundedAction)}
-	 *         method.
-	 */
-	protected List<TransitionProbability> deterministicTransition(State s,
-			GroundedAction groundedAction) {
-		List<TransitionProbability> transition = new ArrayList<TransitionProbability>();
-		State res = this.performAction(s, groundedAction);
-		transition.add(new TransitionProbability(res, 1.0));
-
-		return transition;
-	}
-
-	/**
-	 * Returns a {@link burlap.oomdp.singleagent.GroundedAction} instance that
-	 * points to this {@link burlap.oomdp.singleagent.Action}, but does not have
-	 * any parameters--if any--set.
-	 * 
-	 * @return a {@link burlap.oomdp.singleagent.GroundedAction} instance.
-	 */
-	public abstract GroundedAction getAssociatedGroundedAction();
-
-	/**
-	 * Returns all possible groundings of this action that can be applied in the
-	 * provided {@link State}. To check if a grounded action is applicable in
-	 * the state, the
-	 * {@link #applicableInState(State, burlap.oomdp.singleagent.GroundedAction)}
-	 * method is checked. The default behavior of this method is to treat the
-	 * parameters as possible object bindings, finding all bindings that satisfy
-	 * the object class typing specified and then checking them against the
-	 * {@link #applicableInState(State, burlap.oomdp.singleagent.GroundedAction)}
-	 * method. However, this class can also be overridden to provide custom
-	 * grounding behavior or non-object based parametrization.
-	 * 
-	 * @param s
-	 *            the {@link State} in which all applicable grounded actions of
-	 *            this {@link Action} object should be returned.
-	 * @return a list of all applicable {@link GroundedAction}s of this
-	 *         {@link Action} object in in the given {@link State}
-	 */
-	public abstract List<GroundedAction> getAllApplicableGroundedActions(State s);
-
-	/**
-	 * Returns all {@link GroundedAction}s that are applicable in the given
-	 * {@link State} for all {@link Action} objects in the provided list. This
-	 * method operates by calling the
-	 * {@link #getAllApplicableGroundedActions(State)} method on each action and
-	 * adding all the results to a list that is then returned.
-	 * 
-	 * @param actions
-	 *            The list of all actions for which grounded actions should be
-	 *            returned.
-	 * @param s
-	 *            the state
-	 * @return a {@link List} of all the {@link GroundedAction}s for all
-	 *         {@link Action} in the list that are applicable in the given
-	 *         {@link State}
-	 */
-	public static List<GroundedAction> getAllApplicableGroundedActionsFromActionList(
-			List<Action> actions, State s) {
-		List<GroundedAction> res = new ArrayList<GroundedAction>();
-		for (Action a : actions) {
-			res.addAll(a.getAllApplicableGroundedActions(s));
-		}
-		return res;
-	}
-
-	/**
 	 * This method determines what happens when an action is applied in the
 	 * given state with the given parameters. The State object s may be directly
 	 * modified in this method since the parent method (
@@ -408,17 +401,23 @@ public abstract class Action {
 	protected abstract State performActionHelper(State s,
 			GroundedAction groundedAction);
 
-	@Override
-	public boolean equals(Object obj) {
-		Action op = (Action) obj;
-		if (op.name.equals(name))
-			return true;
-		return false;
-	}
-
-	@Override
-	public int hashCode() {
-		return name.hashCode();
+	/**
+	 * Executes this action with the specified parameters in the provided
+	 * environment and returns the
+	 * {@link burlap.oomdp.singleagent.environment.EnvironmentOutcome} result.
+	 * 
+	 * @param env
+	 *            the environment in which the action should be performed.
+	 * @param groundedAction
+	 *            the {@link burlap.oomdp.singleagent.GroundedAction} specifying
+	 *            the parameters to use
+	 * @return an
+	 *         {@link burlap.oomdp.singleagent.environment.EnvironmentOutcome}
+	 *         specifying the result of the action execution in the environment
+	 */
+	public EnvironmentOutcome performInEnvironment(Environment env,
+			GroundedAction groundedAction) {
+		return env.executeAction(groundedAction);
 	}
 
 }

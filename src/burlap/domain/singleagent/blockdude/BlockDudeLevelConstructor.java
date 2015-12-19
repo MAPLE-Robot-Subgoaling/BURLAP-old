@@ -13,6 +13,18 @@ import burlap.oomdp.core.states.State;
  */
 public class BlockDudeLevelConstructor {
 
+	public static void addFloor(int[][] map) {
+		for (int i = 0; i < map.length; i++) {
+			map[i][0] = 1;
+		}
+	}
+
+	public static void floorSegment(int[][] map, int x0, int xf, int y) {
+		for (int i = x0; i <= xf; i++) {
+			map[i][y] = 1;
+		}
+	}
+
 	/**
 	 * Returns the initial {@link burlap.oomdp.core.states.State} of the first
 	 * level.
@@ -124,18 +136,6 @@ public class BlockDudeLevelConstructor {
 		BlockDude.setBrickMap(s, map);
 
 		return s;
-	}
-
-	public static void addFloor(int[][] map) {
-		for (int i = 0; i < map.length; i++) {
-			map[i][0] = 1;
-		}
-	}
-
-	public static void floorSegment(int[][] map, int x0, int xf, int y) {
-		for (int i = x0; i <= xf; i++) {
-			map[i][y] = 1;
-		}
 	}
 
 	public static void wallSegment(int[][] map, int y0, int yf, int x) {

@@ -1,18 +1,21 @@
 package burlap.oomdp.stochasticgames.explorers;
 
-import burlap.oomdp.core.objects.ObjectInstance;
-import burlap.oomdp.core.states.State;
-import burlap.oomdp.core.TerminalFunction;
-import burlap.oomdp.core.objects.MutableObjectInstance;
-import burlap.oomdp.stochasticgames.*;
-import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
-import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.objects.MutableObjectInstance;
+import burlap.oomdp.core.objects.ObjectInstance;
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.stochasticgames.JointAction;
+import burlap.oomdp.stochasticgames.JointActionModel;
+import burlap.oomdp.stochasticgames.JointReward;
+import burlap.oomdp.stochasticgames.SGDomain;
+import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
+import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
 
 /**
  * This class allows you act as all of the agents in a domain by choosing
@@ -51,6 +54,19 @@ public class SGTerminalExplorer {
 	protected TerminalFunction terminalFunction;
 
 	/**
+	 * Initializes the explorer with a domain and action model
+	 * 
+	 * @param domain
+	 *            the domain which will be explored
+	 */
+	public SGTerminalExplorer(SGDomain domain) {
+		this.domain = domain;
+		this.jam = domain.getJointActionModel();
+		this.setActionShortHand(new HashMap<String, String>());
+		this.rewardFunction = null;
+	}
+
+	/**
 	 * This constructor is deprecated, because
 	 * {@link burlap.oomdp.stochasticgames.SGDomain} objects are now expected to
 	 * have a {@link burlap.oomdp.stochasticgames.JointActionModel} associated
@@ -67,19 +83,6 @@ public class SGTerminalExplorer {
 	public SGTerminalExplorer(SGDomain domain, JointActionModel jam) {
 		this.domain = domain;
 		this.jam = jam;
-		this.setActionShortHand(new HashMap<String, String>());
-		this.rewardFunction = null;
-	}
-
-	/**
-	 * Initializes the explorer with a domain and action model
-	 * 
-	 * @param domain
-	 *            the domain which will be explored
-	 */
-	public SGTerminalExplorer(SGDomain domain) {
-		this.domain = domain;
-		this.jam = domain.getJointActionModel();
 		this.setActionShortHand(new HashMap<String, String>());
 		this.rewardFunction = null;
 	}
@@ -125,43 +128,6 @@ public class SGTerminalExplorer {
 		this.jam = domain.getJointActionModel();
 		this.setActionShortHand(ash);
 		this.rewardFunction = null;
-	}
-
-	/**
-	 * Allows the explorer to keep track of the reward received that will be
-	 * printed to the output.
-	 * 
-	 * @param rf
-	 *            the reward function to use.
-	 */
-	public void setRewardFunction(JointReward rf) {
-		this.rewardFunction = rf;
-	}
-
-	public JointReward getRewardFunction() {
-		return rewardFunction;
-	}
-
-	public TerminalFunction getTerminalFunction() {
-		return terminalFunction;
-	}
-
-	public void setTerminalFunction(TerminalFunction terminalFunction) {
-		this.terminalFunction = terminalFunction;
-	}
-
-	/**
-	 * Sets the action shorthands to use
-	 * 
-	 * @param ash
-	 *            a map from action shorthands to full action names
-	 */
-	public void setActionShortHand(Map<String, String> ash) {
-		this.actionShortHand = ash;
-		List<SGAgentAction> actionList = domain.getAgentActions();
-		for (SGAgentAction a : actionList) {
-			this.addActionShortHand(a.actionName, a.actionName);
-		}
 	}
 
 	/**
@@ -337,6 +303,14 @@ public class SGTerminalExplorer {
 
 	}
 
+	public JointReward getRewardFunction() {
+		return rewardFunction;
+	}
+
+	public TerminalFunction getTerminalFunction() {
+		return terminalFunction;
+	}
+
 	/**
 	 * Parses a command and returns the resulted modified state
 	 * 
@@ -414,6 +388,35 @@ public class SGTerminalExplorer {
 		System.out.println(s
 				.getCompleteStateDescriptionWithUnsetAttributesAsNull());
 
+	}
+
+	/**
+	 * Sets the action shorthands to use
+	 * 
+	 * @param ash
+	 *            a map from action shorthands to full action names
+	 */
+	public void setActionShortHand(Map<String, String> ash) {
+		this.actionShortHand = ash;
+		List<SGAgentAction> actionList = domain.getAgentActions();
+		for (SGAgentAction a : actionList) {
+			this.addActionShortHand(a.actionName, a.actionName);
+		}
+	}
+
+	/**
+	 * Allows the explorer to keep track of the reward received that will be
+	 * printed to the output.
+	 * 
+	 * @param rf
+	 *            the reward function to use.
+	 */
+	public void setRewardFunction(JointReward rf) {
+		this.rewardFunction = rf;
+	}
+
+	public void setTerminalFunction(TerminalFunction terminalFunction) {
+		this.terminalFunction = terminalFunction;
 	}
 
 }

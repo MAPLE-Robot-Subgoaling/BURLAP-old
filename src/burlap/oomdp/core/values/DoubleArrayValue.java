@@ -23,42 +23,19 @@ public class DoubleArrayValue extends OOMDPValue {
 		this.doubleArray = null;
 	}
 
-	public DoubleArrayValue(DoubleArrayValue v) {
-		super(v);
-		DoubleArrayValue daValue = (DoubleArrayValue) v;
-		if (daValue.doubleArray != null) {
-			this.doubleArray = daValue.doubleArray.clone();
-		} else {
-			this.doubleArray = null;
-		}
-	}
-
 	public DoubleArrayValue(Attribute attribute, double[] doubleArray) {
 		super(attribute);
 		this.doubleArray = doubleArray;
 	}
 
-	@Override
-	public Value copy() {
-		return new DoubleArrayValue(this);
-	}
-
-	@Override
-	public boolean valueHasBeenSet() {
-		return this.doubleArray != null;
-	}
-
-	@Override
-	public Value setValue(String v) {
-		if (v.startsWith("\"") && v.endsWith("\"")) {
-			v = v.substring(1, v.length());
+	public DoubleArrayValue(DoubleArrayValue v) {
+		super(v);
+		DoubleArrayValue daValue = v;
+		if (daValue.doubleArray != null) {
+			this.doubleArray = daValue.doubleArray.clone();
+		} else {
+			this.doubleArray = null;
 		}
-		String[] comps = v.split(",");
-		double[] doubleArray = new double[comps.length];
-		for (int i = 0; i < comps.length; i++) {
-			doubleArray[i] = Double.parseDouble(comps[i]);
-		}
-		return new DoubleArrayValue(this.attribute, doubleArray);
 	}
 
 	@Override
@@ -73,50 +50,8 @@ public class DoubleArrayValue extends OOMDPValue {
 	}
 
 	@Override
-	public double getNumericRepresentation() {
-		double sum = 0;
-		for (double v : this.doubleArray) {
-			sum *= 31;
-			sum += v;
-		}
-		return sum;
-	}
-
-	@Override
-	public Value setValue(int[] intArray) {
-
-		double[] doubleArray = new double[intArray.length];
-		for (int i = 0; i < intArray.length; i++) {
-			doubleArray[i] = intArray[i];
-		}
-		return new DoubleArrayValue(this.attribute, doubleArray);
-	}
-
-	@Override
-	public Value setValue(double[] doubleArray) {
-		return new DoubleArrayValue(this.attribute, doubleArray);
-	}
-
-	@Override
-	public int[] getIntArray() {
-		if (this.doubleArray == null) {
-			throw new RuntimeException(
-					"Error, double array value is unset, cannot return a value for it.");
-		}
-		int[] intArray = new int[this.doubleArray.length];
-		for (int i = 0; i < this.doubleArray.length; i++) {
-			intArray[i] = (int) this.doubleArray[i];
-		}
-		return intArray;
-	}
-
-	@Override
-	public double[] getDoubleArray() {
-		if (this.doubleArray == null) {
-			throw new RuntimeException(
-					"Error, double array value is unset, cannot return a value for it.");
-		}
-		return this.doubleArray;
+	public Value copy() {
+		return new DoubleArrayValue(this);
 	}
 
 	@Override
@@ -146,5 +81,70 @@ public class DoubleArrayValue extends OOMDPValue {
 
 		return true;
 
+	}
+
+	@Override
+	public double[] getDoubleArray() {
+		if (this.doubleArray == null) {
+			throw new RuntimeException(
+					"Error, double array value is unset, cannot return a value for it.");
+		}
+		return this.doubleArray;
+	}
+
+	@Override
+	public int[] getIntArray() {
+		if (this.doubleArray == null) {
+			throw new RuntimeException(
+					"Error, double array value is unset, cannot return a value for it.");
+		}
+		int[] intArray = new int[this.doubleArray.length];
+		for (int i = 0; i < this.doubleArray.length; i++) {
+			intArray[i] = (int) this.doubleArray[i];
+		}
+		return intArray;
+	}
+
+	@Override
+	public double getNumericRepresentation() {
+		double sum = 0;
+		for (double v : this.doubleArray) {
+			sum *= 31;
+			sum += v;
+		}
+		return sum;
+	}
+
+	@Override
+	public Value setValue(double[] doubleArray) {
+		return new DoubleArrayValue(this.attribute, doubleArray);
+	}
+
+	@Override
+	public Value setValue(int[] intArray) {
+
+		double[] doubleArray = new double[intArray.length];
+		for (int i = 0; i < intArray.length; i++) {
+			doubleArray[i] = intArray[i];
+		}
+		return new DoubleArrayValue(this.attribute, doubleArray);
+	}
+
+	@Override
+	public Value setValue(String v) {
+		if (v.startsWith("\"") && v.endsWith("\"")) {
+			v = v.substring(1, v.length());
+		}
+		String[] comps = v.split(",");
+		double[] doubleArray = new double[comps.length];
+		for (int i = 0; i < comps.length; i++) {
+			doubleArray[i] = Double.parseDouble(comps[i]);
+		}
+		return new DoubleArrayValue(this.attribute, doubleArray);
+	}
+
+	@Override
+	public boolean valueHasBeenSet() {
+		return this.doubleArray != null;
 	}
 }

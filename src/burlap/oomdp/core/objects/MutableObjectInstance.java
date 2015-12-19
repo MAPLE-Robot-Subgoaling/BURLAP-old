@@ -1,10 +1,15 @@
 package burlap.oomdp.core.objects;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 import burlap.oomdp.core.Attribute;
-import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.Attribute.AttributeType;
+import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.values.Value;
 
 /**
@@ -36,23 +41,6 @@ public class MutableObjectInstance extends OOMDPObjectInstance implements
 	protected List<Value> values;
 
 	/**
-	 * Initializes an object instance for a given object class and name.
-	 * 
-	 * @param obClass
-	 *            the object class to which this object belongs
-	 * @param name
-	 *            the name of the object
-	 */
-	public MutableObjectInstance(ObjectClass obClass, String name) {
-
-		this.obClass = obClass;
-		this.name = name;
-
-		this.values = this.initializeValueObjects();
-
-	}
-
-	/**
 	 * Creates a new object instance that is a deep copy of the specified object
 	 * instance's values. The object class and name is a shallow copy.
 	 * 
@@ -70,139 +58,41 @@ public class MutableObjectInstance extends OOMDPObjectInstance implements
 	}
 
 	/**
-	 * Creates and returns a new object instance that is a deep copy of this
-	 * object instance's values.
+	 * Initializes an object instance for a given object class and name.
 	 * 
-	 * @return a new object instance that is a deep copy of this object
-	 *         instance's values (the name and object class reference are a
-	 *         shallow copy)
-	 */
-	public MutableObjectInstance copy() {
-		return new MutableObjectInstance(this);
-	}
-
-	/**
-	 * Creates new value object assignments for each of this object instance
-	 * class's attributes.
-	 */
-	public List<Value> initializeValueObjects() {
-
-		List<Value> values = new ArrayList<Value>(obClass.numAttributes());
-		for (Attribute att : obClass.attributeList) {
-			values.add(att.valueConstructor());
-		}
-		return values;
-	}
-
-	/**
-	 * Sets the name of this object instance.
-	 * 
+	 * @param obClass
+	 *            the object class to which this object belongs
 	 * @param name
-	 *            the name for this object instance.
+	 *            the name of the object
 	 */
-	public ObjectInstance setName(String name) {
+	public MutableObjectInstance(ObjectClass obClass, String name) {
+
+		this.obClass = obClass;
 		this.name = name;
-		return this;
+
+		this.values = this.initializeValueObjects();
+
 	}
 
 	/**
-	 * Sets the value of the attribute named attName for this object instance.
+	 * Adds all relational targets to the attribute attName for this object
+	 * instance. For a single-target relational attribute, the value that is
+	 * ultimately set depends on the iteration order of iterable.
 	 * 
 	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the string rep value to which the attribute of this object
-	 *            instance should be set.
+	 *            the name of the relational attribute that will have a
+	 *            relational target added/set
+	 * @param targets
+	 *            the names of the object references that are to be added as a
+	 *            targets.
 	 */
-	public ObjectInstance setValue(String attName, String v) {
-		int ind = obClass.attributeIndex(attName);
-		Value value = values.get(ind);
-		Value newValue = value.setValue(v);
-		values.set(ind, newValue);
-		return this;
-	}
 
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the double rep value to which the attribute of this object
-	 *            instance should be set.
-	 */
-	public ObjectInstance setValue(String attName, double v) {
+	@Override
+	public ObjectInstance addAllRelationalTargets(String attName,
+			Collection<String> targets) {
 		int ind = obClass.attributeIndex(attName);
 		Value value = values.get(ind);
-		Value newValue = value.setValue(v);
-		values.set(ind, newValue);
-		return this;
-	}
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the int rep value to which the attribute of this object
-	 *            instance should be set.
-	 */
-	public ObjectInstance setValue(String attName, int v) {
-		int ind = obClass.attributeIndex(attName);
-		Value value = values.get(ind);
-		Value newValue = value.setValue(v);
-		values.set(ind, newValue);
-		return this;
-	}
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the int rep value to which the attribute of this object
-	 *            instance should be set.
-	 */
-	public ObjectInstance setValue(String attName, boolean v) {
-		int ind = obClass.attributeIndex(attName);
-		Value value = values.get(ind);
-		Value newValue = value.setValue(v);
-		values.set(ind, newValue);
-		return this;
-	}
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the int array rep value to which the attribute of this object
-	 *            instance should be set.
-	 */
-	public ObjectInstance setValue(String attName, int[] v) {
-		int ind = obClass.attributeIndex(attName);
-		Value value = values.get(ind);
-		Value newValue = value.setValue(v);
-		values.set(ind, newValue);
-		return this;
-	}
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the double array rep value to which the attribute of this
-	 *            object instance should be set.
-	 */
-	public ObjectInstance setValue(String attName, double[] v) {
-		int ind = obClass.attributeIndex(attName);
-		Value value = values.get(ind);
-		Value newValue = value.setValue(v);
+		Value newValue = value.addAllRelationalTargets(targets);
 		values.set(ind, newValue);
 		return this;
 	}
@@ -219,6 +109,7 @@ public class MutableObjectInstance extends OOMDPObjectInstance implements
 	 *            the name of the object reference that is to be added as a
 	 *            target.
 	 */
+	@Override
 	public ObjectInstance addRelationalTarget(String attName, String target) {
 		int ind = obClass.attributeIndex(attName);
 		Value value = values.get(ind);
@@ -227,26 +118,16 @@ public class MutableObjectInstance extends OOMDPObjectInstance implements
 		return this;
 	}
 
-	/**
-	 * Adds all relational targets to the attribute attName for this object
-	 * instance. For a single-target relational attribute, the value that is
-	 * ultimately set depends on the iteration order of iterable.
-	 * 
-	 * @param attName
-	 *            the name of the relational attribute that will have a
-	 *            relational target added/set
-	 * @param targets
-	 *            the names of the object references that are to be added as a
-	 *            targets.
-	 */
+	@Override
+	public StringBuilder buildObjectDescription(StringBuilder builder) {
+		builder = builder.append(name).append(" (").append(this.getClassName())
+				.append(")");
+		for (Value v : values) {
+			builder = builder.append("\n\t").append(v.attName()).append(":\t");
+			builder = v.buildStringVal(builder);
+		}
 
-	public ObjectInstance addAllRelationalTargets(String attName,
-			Collection<String> targets) {
-		int ind = obClass.attributeIndex(attName);
-		Value value = values.get(ind);
-		Value newValue = value.addAllRelationalTargets(targets);
-		values.set(ind, newValue);
-		return this;
+		return builder;
 	}
 
 	/**
@@ -255,6 +136,7 @@ public class MutableObjectInstance extends OOMDPObjectInstance implements
 	 * 
 	 * @param attName
 	 */
+	@Override
 	public ObjectInstance clearRelationalTargets(String attName) {
 		int ind = obClass.attributeIndex(attName);
 		Value value = values.get(ind);
@@ -264,120 +146,24 @@ public class MutableObjectInstance extends OOMDPObjectInstance implements
 	}
 
 	/**
-	 * Removes an object target from the specified relational attribute.
+	 * Creates and returns a new object instance that is a deep copy of this
+	 * object instance's values.
 	 * 
-	 * @param attName
-	 *            the name of the relational attribute from which the target
-	 *            should be removed.
-	 * @param target
-	 *            the target to remove from the relational attribute value.
+	 * @return a new object instance that is a deep copy of this object
+	 *         instance's values (the name and object class reference are a
+	 *         shallow copy)
 	 */
-	public ObjectInstance removeRelationalTarget(String attName, String target) {
-		int ind = obClass.attributeIndex(attName);
-		Value value = values.get(ind);
-		Value newValue = value.removeRelationalTarget(target);
-		values.set(ind, newValue);
-		return this;
+	@Override
+	public MutableObjectInstance copy() {
+		return new MutableObjectInstance(this);
 	}
 
-	/**
-	 * Returns the name identifier of this object instance
-	 * 
-	 * @return the name identifier of this object instance
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * Returns this object instance's object class
-	 * 
-	 * @return this object instance's object class
-	 */
-	public ObjectClass getObjectClass() {
-		return obClass;
-	}
-
-	/**
-	 * Returns the name of this object instance's object class
-	 * 
-	 * @return the name of this object instance's object class
-	 */
-	public String getClassName() {
-		return obClass.name;
-	}
-
-	/**
-	 * Returns the Value object assignment for the attribute named attName
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return the Value object assignment for the attribute named attName
-	 */
-	public Value getValueForAttribute(String attName) {
-		int ind = obClass.attributeIndex(attName);
-		return values.get(ind).copy();
-	}
-
-	/**
-	 * Returns the double value assignment for the real-valued attribute named
-	 * attName. Will throw a runtime exception is the attribute named attName is
-	 * not of type REAL or REALUNBOUNDED
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return the double value assignment for the real-valued attribute named
-	 *         attName.
-	 */
-	public double getRealValForAttribute(String attName) {
-		int ind = obClass.attributeIndex(attName);
-		return values.get(ind).getRealVal();
-	}
-
-	/**
-	 * Returns the double value for the attribute named attType. This method
-	 * differs from the {@link #getRealValForAttribute(String)} method because
-	 * it will cast the int values for non real attributes to double values and
-	 * will not throw an exception. Note that if this method is called on
-	 * relational attributes, it will return 0., where as attributes like
-	 * {@link AttributeType#INT} and {@link AttributeType#DISC} will cast their
-	 * int values to doubles.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return a double value assignment for the attribute; casting occurs if
-	 *         the attribute is not real-valued.
-	 */
-	public double getNumericValForAttribute(String attName) {
-		int ind = obClass.attributeIndex(attName);
-		return values.get(ind).getNumericRepresentation();
-	}
-
-	/**
-	 * Returns the string value representation for the attribute named attName.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return the string value assignment for the attribute named attName.
-	 */
-	public String getStringValForAttribute(String attName) {
-		int ind = obClass.attributeIndex(attName);
-		return values.get(ind).getStringVal();
-	}
-
-	/**
-	 * Returns the int value assignment for the discrete-valued attribute named
-	 * attName. Will throw a runtime exception is the attribute named attName is
-	 * not of type DISC
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return the int value assignment for the discrete-valued attribute named
-	 *         attName.
-	 */
-	public int getIntValForAttribute(String attName) {
-		int ind = obClass.attributeIndex(attName);
-		return values.get(ind).getDiscVal();
+	@Override
+	public boolean equals(Object obj) {
+		MutableObjectInstance op = (MutableObjectInstance) obj;
+		if (op.name.equals(name))
+			return true;
+		return false;
 	}
 
 	/**
@@ -391,6 +177,7 @@ public class MutableObjectInstance extends OOMDPObjectInstance implements
 	 * @return the set of all object instance targets (indicated by their object
 	 *         instance name) for the relational-valued attribute named attName.
 	 */
+	@Override
 	public Set<String> getAllRelationalTargets(String attName) {
 		int ind = obClass.attributeIndex(attName);
 		return new HashSet<String>(values.get(ind).getAllRelationalTargets());
@@ -405,22 +192,20 @@ public class MutableObjectInstance extends OOMDPObjectInstance implements
 	 * @return true if the value for the attribute evaluates to true, false
 	 *         otherwise.
 	 */
+	@Override
 	public boolean getBooleanValForAttribute(String attName) {
 		int ind = obClass.attributeIndex(attName);
 		return values.get(ind).getBooleanValue();
 	}
 
 	/**
-	 * Returns the int array value of the attribute (only defined for int array
-	 * attributes).
+	 * Returns the name of this object instance's object class
 	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned.
-	 * @return the int array value.
+	 * @return the name of this object instance's object class
 	 */
-	public int[] getIntArrayValForAttribute(String attName) {
-		int ind = obClass.attributeIndex(attName);
-		return values.get(ind).getIntArray().clone();
+	@Override
+	public String getClassName() {
+		return obClass.name;
 	}
 
 	/**
@@ -431,72 +216,10 @@ public class MutableObjectInstance extends OOMDPObjectInstance implements
 	 *            the name of the attribute whose value should be returned.
 	 * @return the int array value.
 	 */
+	@Override
 	public double[] getDoubleArrayValForAttribute(String attName) {
 		int ind = obClass.attributeIndex(attName);
 		return values.get(ind).getDoubleArray().clone();
-	}
-
-	/**
-	 * Returns the list of value object assignments to all of this object
-	 * instance's attributes.
-	 * 
-	 * @return the list of value object assignments to all of this object
-	 *         instance's attributes.
-	 */
-	public List<Value> getValues() {
-		List<Value> newValues = new ArrayList<Value>(this.values.size());
-		for (Value v : this.values) {
-			newValues.add(v.copy());
-		}
-		return newValues;
-	}
-
-	/**
-	 * Returns a list of the names of {@link burlap.oomdp.core.Attribute}s that
-	 * have unset values
-	 * 
-	 * @return a list of the names of attributes that have unset values
-	 */
-	public List<String> unsetAttributes() {
-		LinkedList<String> unsetAtts = new LinkedList<String>();
-		for (Value v : this.values) {
-			if (!v.valueHasBeenSet()) {
-				unsetAtts.add(v.attName());
-			}
-		}
-		return unsetAtts;
-	}
-
-	public StringBuilder buildObjectDescription(StringBuilder builder) {
-		builder = builder.append(name).append(" (").append(this.getClassName())
-				.append(")");
-		for (Value v : values) {
-			builder = builder.append("\n\t").append(v.attName()).append(":\t");
-			builder = v.buildStringVal(builder);
-		}
-
-		return builder;
-	}
-
-	/**
-	 * Returns a string description of the object with the unset attribute
-	 * values listed as null.
-	 * 
-	 * @return a string description of the object with the unset attribute
-	 *         values listed as null.
-	 */
-	public String getObjectDescriptionWithNullForUnsetAttributes() {
-		String desc = name + " (" + this.getClassName() + ")\n";
-		for (Value v : values) {
-			if (v.valueHasBeenSet()) {
-				desc = desc + "\t" + v.attName() + ":\t" + v.getStringVal()
-						+ "\n";
-			} else {
-				desc = desc + "\t" + v.attName() + ":\tnull\n";
-			}
-		}
-
-		return desc;
 	}
 
 	/**
@@ -518,6 +241,46 @@ public class MutableObjectInstance extends OOMDPObjectInstance implements
 		}
 
 		return obsFeatureVec;
+	}
+
+	/**
+	 * Returns the int array value of the attribute (only defined for int array
+	 * attributes).
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned.
+	 * @return the int array value.
+	 */
+	@Override
+	public int[] getIntArrayValForAttribute(String attName) {
+		int ind = obClass.attributeIndex(attName);
+		return values.get(ind).getIntArray().clone();
+	}
+
+	/**
+	 * Returns the int value assignment for the discrete-valued attribute named
+	 * attName. Will throw a runtime exception is the attribute named attName is
+	 * not of type DISC
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return the int value assignment for the discrete-valued attribute named
+	 *         attName.
+	 */
+	@Override
+	public int getIntValForAttribute(String attName) {
+		int ind = obClass.attributeIndex(attName);
+		return values.get(ind).getDiscVal();
+	}
+
+	/**
+	 * Returns the name identifier of this object instance
+	 * 
+	 * @return the name identifier of this object instance
+	 */
+	@Override
+	public String getName() {
+		return name;
 	}
 
 	/**
@@ -552,12 +315,287 @@ public class MutableObjectInstance extends OOMDPObjectInstance implements
 
 	}
 
+	/**
+	 * Returns the double value for the attribute named attType. This method
+	 * differs from the {@link #getRealValForAttribute(String)} method because
+	 * it will cast the int values for non real attributes to double values and
+	 * will not throw an exception. Note that if this method is called on
+	 * relational attributes, it will return 0., where as attributes like
+	 * {@link AttributeType#INT} and {@link AttributeType#DISC} will cast their
+	 * int values to doubles.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return a double value assignment for the attribute; casting occurs if
+	 *         the attribute is not real-valued.
+	 */
 	@Override
-	public boolean equals(Object obj) {
-		MutableObjectInstance op = (MutableObjectInstance) obj;
-		if (op.name.equals(name))
-			return true;
-		return false;
+	public double getNumericValForAttribute(String attName) {
+		int ind = obClass.attributeIndex(attName);
+		return values.get(ind).getNumericRepresentation();
+	}
+
+	/**
+	 * Returns this object instance's object class
+	 * 
+	 * @return this object instance's object class
+	 */
+	@Override
+	public ObjectClass getObjectClass() {
+		return obClass;
+	}
+
+	/**
+	 * Returns a string description of the object with the unset attribute
+	 * values listed as null.
+	 * 
+	 * @return a string description of the object with the unset attribute
+	 *         values listed as null.
+	 */
+	@Override
+	public String getObjectDescriptionWithNullForUnsetAttributes() {
+		String desc = name + " (" + this.getClassName() + ")\n";
+		for (Value v : values) {
+			if (v.valueHasBeenSet()) {
+				desc = desc + "\t" + v.attName() + ":\t" + v.getStringVal()
+						+ "\n";
+			} else {
+				desc = desc + "\t" + v.attName() + ":\tnull\n";
+			}
+		}
+
+		return desc;
+	}
+
+	/**
+	 * Returns the double value assignment for the real-valued attribute named
+	 * attName. Will throw a runtime exception is the attribute named attName is
+	 * not of type REAL or REALUNBOUNDED
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return the double value assignment for the real-valued attribute named
+	 *         attName.
+	 */
+	@Override
+	public double getRealValForAttribute(String attName) {
+		int ind = obClass.attributeIndex(attName);
+		return values.get(ind).getRealVal();
+	}
+
+	/**
+	 * Returns the string value representation for the attribute named attName.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return the string value assignment for the attribute named attName.
+	 */
+	@Override
+	public String getStringValForAttribute(String attName) {
+		int ind = obClass.attributeIndex(attName);
+		return values.get(ind).getStringVal();
+	}
+
+	/**
+	 * Returns the Value object assignment for the attribute named attName
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return the Value object assignment for the attribute named attName
+	 */
+	@Override
+	public Value getValueForAttribute(String attName) {
+		int ind = obClass.attributeIndex(attName);
+		return values.get(ind).copy();
+	}
+
+	/**
+	 * Returns the list of value object assignments to all of this object
+	 * instance's attributes.
+	 * 
+	 * @return the list of value object assignments to all of this object
+	 *         instance's attributes.
+	 */
+	@Override
+	public List<Value> getValues() {
+		List<Value> newValues = new ArrayList<Value>(this.values.size());
+		for (Value v : this.values) {
+			newValues.add(v.copy());
+		}
+		return newValues;
+	}
+
+	@Override
+	public int hashCode() {
+		return name.hashCode();
+	}
+
+	/**
+	 * Creates new value object assignments for each of this object instance
+	 * class's attributes.
+	 */
+	public List<Value> initializeValueObjects() {
+
+		List<Value> values = new ArrayList<Value>(obClass.numAttributes());
+		for (Attribute att : obClass.attributeList) {
+			values.add(att.valueConstructor());
+		}
+		return values;
+	}
+
+	/**
+	 * Removes an object target from the specified relational attribute.
+	 * 
+	 * @param attName
+	 *            the name of the relational attribute from which the target
+	 *            should be removed.
+	 * @param target
+	 *            the target to remove from the relational attribute value.
+	 */
+	@Override
+	public ObjectInstance removeRelationalTarget(String attName, String target) {
+		int ind = obClass.attributeIndex(attName);
+		Value value = values.get(ind);
+		Value newValue = value.removeRelationalTarget(target);
+		values.set(ind, newValue);
+		return this;
+	}
+
+	/**
+	 * Sets the name of this object instance.
+	 * 
+	 * @param name
+	 *            the name for this object instance.
+	 */
+	@Override
+	public ObjectInstance setName(String name) {
+		this.name = name;
+		return this;
+	}
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the int rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	@Override
+	public ObjectInstance setValue(String attName, boolean v) {
+		int ind = obClass.attributeIndex(attName);
+		Value value = values.get(ind);
+		Value newValue = value.setValue(v);
+		values.set(ind, newValue);
+		return this;
+	}
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the double rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	@Override
+	public ObjectInstance setValue(String attName, double v) {
+		int ind = obClass.attributeIndex(attName);
+		Value value = values.get(ind);
+		Value newValue = value.setValue(v);
+		values.set(ind, newValue);
+		return this;
+	}
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the double array rep value to which the attribute of this
+	 *            object instance should be set.
+	 */
+	@Override
+	public ObjectInstance setValue(String attName, double[] v) {
+		int ind = obClass.attributeIndex(attName);
+		Value value = values.get(ind);
+		Value newValue = value.setValue(v);
+		values.set(ind, newValue);
+		return this;
+	}
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the int rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	@Override
+	public ObjectInstance setValue(String attName, int v) {
+		int ind = obClass.attributeIndex(attName);
+		Value value = values.get(ind);
+		Value newValue = value.setValue(v);
+		values.set(ind, newValue);
+		return this;
+	}
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the int array rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	@Override
+	public ObjectInstance setValue(String attName, int[] v) {
+		int ind = obClass.attributeIndex(attName);
+		Value value = values.get(ind);
+		Value newValue = value.setValue(v);
+		values.set(ind, newValue);
+		return this;
+	}
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the string rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	@Override
+	public ObjectInstance setValue(String attName, String v) {
+		int ind = obClass.attributeIndex(attName);
+		Value value = values.get(ind);
+		Value newValue = value.setValue(v);
+		values.set(ind, newValue);
+		return this;
+	}
+
+	/**
+	 * Returns a list of the names of {@link burlap.oomdp.core.Attribute}s that
+	 * have unset values
+	 * 
+	 * @return a list of the names of attributes that have unset values
+	 */
+	@Override
+	public List<String> unsetAttributes() {
+		LinkedList<String> unsetAtts = new LinkedList<String>();
+		for (Value v : this.values) {
+			if (!v.valueHasBeenSet()) {
+				unsetAtts.add(v.attName());
+			}
+		}
+		return unsetAtts;
 	}
 
 	/**
@@ -570,6 +608,7 @@ public class MutableObjectInstance extends OOMDPObjectInstance implements
 	 * @return true if this object instance and obj have identical value
 	 *         assignments; false otherwise.
 	 */
+	@Override
 	public boolean valueEquals(ObjectInstance obj) {
 
 		if (!obClass.name.equals(obj.getObjectClass().name)) {
@@ -587,10 +626,6 @@ public class MutableObjectInstance extends OOMDPObjectInstance implements
 
 		return true;
 
-	}
-
-	public int hashCode() {
-		return name.hashCode();
 	}
 
 }

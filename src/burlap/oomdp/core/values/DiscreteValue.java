@@ -1,8 +1,5 @@
 package burlap.oomdp.core.values;
 
-import java.util.Collection;
-import java.util.Set;
-
 import burlap.oomdp.core.Attribute;
 
 /**
@@ -34,6 +31,11 @@ public class DiscreteValue extends OOMDPValue implements Value {
 		this.discVal = UNSET;
 	}
 
+	public DiscreteValue(Attribute attribute, int discVal) {
+		super(attribute);
+		this.discVal = discVal;
+	}
+
 	/**
 	 * Initializes this value as a copy from the source Value object v.
 	 * 
@@ -42,57 +44,8 @@ public class DiscreteValue extends OOMDPValue implements Value {
 	 */
 	public DiscreteValue(DiscreteValue v) {
 		super(v);
-		DiscreteValue dv = (DiscreteValue) v;
+		DiscreteValue dv = v;
 		this.discVal = dv.discVal;
-	}
-
-	public DiscreteValue(Attribute attribute, int discVal) {
-		super(attribute);
-		this.discVal = discVal;
-	}
-
-	@Override
-	public boolean valueHasBeenSet() {
-		return this.discVal != UNSET;
-	}
-
-	@Override
-	public Value copy() {
-		return new DiscreteValue(this);
-	}
-
-	@Override
-	public Value setValue(int v) {
-		return new DiscreteValue(this.attribute, v);
-	}
-
-	@Override
-	public Value setValue(double v) {
-		return new DiscreteValue(this.attribute, (int) v);
-	}
-
-	@Override
-	public Value setValue(boolean v) {
-		int intV = (v) ? 1 : 0;
-		return new DiscreteValue(this.attribute, intV);
-	}
-
-	@Override
-	public Value setValue(String v) {
-		Integer intv = attribute.discValuesHash.get(v);
-		if (intv == null) {
-			throw new RuntimeException("String value " + v
-					+ " is not applicable for attribute " + this.attribute.name);
-		}
-		return new DiscreteValue(this.attribute, intv);
-	}
-
-	@Override
-	public int getDiscVal() {
-		if (this.discVal == -1) {
-			throw new UnsetValueException();
-		}
-		return this.discVal;
 	}
 
 	@Override
@@ -104,11 +57,8 @@ public class DiscreteValue extends OOMDPValue implements Value {
 	}
 
 	@Override
-	public double getNumericRepresentation() {
-		if (this.discVal == -1) {
-			throw new UnsetValueException();
-		}
-		return (double) this.discVal;
+	public Value copy() {
+		return new DiscreteValue(this);
 	}
 
 	@Override
@@ -133,6 +83,53 @@ public class DiscreteValue extends OOMDPValue implements Value {
 	@Override
 	public boolean getBooleanValue() {
 		return this.discVal != 0;
+	}
+
+	@Override
+	public int getDiscVal() {
+		if (this.discVal == -1) {
+			throw new UnsetValueException();
+		}
+		return this.discVal;
+	}
+
+	@Override
+	public double getNumericRepresentation() {
+		if (this.discVal == -1) {
+			throw new UnsetValueException();
+		}
+		return this.discVal;
+	}
+
+	@Override
+	public Value setValue(boolean v) {
+		int intV = (v) ? 1 : 0;
+		return new DiscreteValue(this.attribute, intV);
+	}
+
+	@Override
+	public Value setValue(double v) {
+		return new DiscreteValue(this.attribute, (int) v);
+	}
+
+	@Override
+	public Value setValue(int v) {
+		return new DiscreteValue(this.attribute, v);
+	}
+
+	@Override
+	public Value setValue(String v) {
+		Integer intv = attribute.discValuesHash.get(v);
+		if (intv == null) {
+			throw new RuntimeException("String value " + v
+					+ " is not applicable for attribute " + this.attribute.name);
+		}
+		return new DiscreteValue(this.attribute, intv);
+	}
+
+	@Override
+	public boolean valueHasBeenSet() {
+		return this.discVal != UNSET;
 	}
 
 }

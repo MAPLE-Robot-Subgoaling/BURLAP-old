@@ -8,14 +8,13 @@ import java.util.Set;
 
 import org.yaml.snakeyaml.Yaml;
 
-import burlap.oomdp.legacy.StateParser;
 import burlap.oomdp.core.Attribute;
-import burlap.oomdp.core.objects.ObjectInstance;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.Attribute.AttributeType;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.objects.MutableObjectInstance;
+import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.MutableState;
+import burlap.oomdp.core.states.State;
 
 /**
  * A StateParser class that uses the YAML file format and can can convert states

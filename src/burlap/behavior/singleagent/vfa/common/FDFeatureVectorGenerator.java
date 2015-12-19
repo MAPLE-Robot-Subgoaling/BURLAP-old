@@ -1,11 +1,11 @@
 package burlap.behavior.singleagent.vfa.common;
 
+import java.util.List;
+
 import burlap.behavior.singleagent.vfa.FeatureDatabase;
 import burlap.behavior.singleagent.vfa.StateFeature;
 import burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator;
 import burlap.oomdp.core.states.State;
-
-import java.util.List;
 
 /**
  * A wrapper for turning the features from a
@@ -30,14 +30,6 @@ public class FDFeatureVectorGenerator implements StateToFeatureVectorGenerator {
 		this.fd = fd;
 	}
 
-	public FeatureDatabase getFd() {
-		return fd;
-	}
-
-	public void setFd(FeatureDatabase fd) {
-		this.fd = fd;
-	}
-
 	@Override
 	public double[] generateFeatureVectorFrom(State s) {
 
@@ -47,5 +39,13 @@ public class FDFeatureVectorGenerator implements StateToFeatureVectorGenerator {
 			fv[sf.id] = sf.value;
 		}
 		return fv;
+	}
+
+	public FeatureDatabase getFd() {
+		return fd;
+	}
+
+	public void setFd(FeatureDatabase fd) {
+		this.fd = fd;
 	}
 }

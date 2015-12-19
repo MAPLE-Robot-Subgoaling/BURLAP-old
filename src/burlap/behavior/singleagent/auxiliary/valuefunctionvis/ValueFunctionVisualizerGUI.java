@@ -15,7 +15,6 @@ import burlap.behavior.policy.Policy;
 import burlap.behavior.singleagent.auxiliary.valuefunctionvis.common.ArrowActionGlyph;
 import burlap.behavior.singleagent.auxiliary.valuefunctionvis.common.PolicyGlyphPainter2D;
 import burlap.behavior.singleagent.auxiliary.valuefunctionvis.common.StateValuePainter2D;
-import burlap.behavior.valuefunction.QFunction;
 import burlap.behavior.valuefunction.ValueFunction;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.visualizer.MultiLayerRenderer;
@@ -30,53 +29,6 @@ import burlap.oomdp.visualizer.MultiLayerRenderer;
 public class ValueFunctionVisualizerGUI extends JFrame implements ItemListener {
 
 	private static final long serialVersionUID = 1L;
-
-	/**
-	 * The multi-layer render layer canvas
-	 */
-	protected MultiLayerRenderer visualizer;
-
-	/**
-	 * The value function renderer
-	 */
-	protected ValueFunctionRenderLayer vfLayer;
-
-	/**
-	 * The policy renderer
-	 */
-	protected PolicyRenderLayer pLayer;
-
-	/**
-	 * Painter used to visualize the value function
-	 */
-	protected StateValuePainter svp;
-
-	/**
-	 * Painter used to visualize the policy
-	 */
-	protected StatePolicyPainter spp = null;
-
-	protected List<State> statesToVisualize;
-
-	/**
-	 * Painter used to visualize general state-independent domain information
-	 */
-	protected StaticDomainPainter sdp = null;
-
-	/**
-	 * The button to enable the visualization of the policy
-	 */
-	protected JCheckBox showPolicy;
-
-	/**
-	 * Visualizer canvas width
-	 */
-	protected int cWidth = 800;
-
-	/**
-	 * Visualizer canvas height
-	 */
-	protected int cHeight = 800;
 
 	/**
 	 * A method for creating common 2D arrow glyped value function and policy
@@ -136,6 +88,53 @@ public class ValueFunctionVisualizerGUI extends JFrame implements ItemListener {
 	}
 
 	/**
+	 * The multi-layer render layer canvas
+	 */
+	protected MultiLayerRenderer visualizer;
+
+	/**
+	 * The value function renderer
+	 */
+	protected ValueFunctionRenderLayer vfLayer;
+
+	/**
+	 * The policy renderer
+	 */
+	protected PolicyRenderLayer pLayer;
+
+	/**
+	 * Painter used to visualize the value function
+	 */
+	protected StateValuePainter svp;
+
+	/**
+	 * Painter used to visualize the policy
+	 */
+	protected StatePolicyPainter spp = null;
+
+	protected List<State> statesToVisualize;
+
+	/**
+	 * Painter used to visualize general state-independent domain information
+	 */
+	protected StaticDomainPainter sdp = null;
+
+	/**
+	 * The button to enable the visualization of the policy
+	 */
+	protected JCheckBox showPolicy;
+
+	/**
+	 * Visualizer canvas width
+	 */
+	protected int cWidth = 800;
+
+	/**
+	 * Visualizer canvas height
+	 */
+	protected int cHeight = 800;
+
+	/**
 	 * Initializes the visualizer GUI.
 	 * 
 	 * @param states
@@ -171,26 +170,6 @@ public class ValueFunctionVisualizerGUI extends JFrame implements ItemListener {
 	}
 
 	/**
-	 * Returns the State-wise value function painter
-	 * 
-	 * @return the State-wise value function painter
-	 */
-	public StateValuePainter getSvp() {
-		return svp;
-	}
-
-	/**
-	 * Sets the state-wise value function painter
-	 * 
-	 * @param svp
-	 *            state-wise value function painter
-	 */
-	public void setSvp(StateValuePainter svp) {
-		this.svp = svp;
-		this.vfLayer.setSvp(svp);
-	}
-
-	/**
 	 * Returns the state-wise policy painter
 	 * 
 	 * @return the state-wise policy painter
@@ -200,37 +179,12 @@ public class ValueFunctionVisualizerGUI extends JFrame implements ItemListener {
 	}
 
 	/**
-	 * Sets the state-wise policy painter
+	 * Returns the State-wise value function painter
 	 * 
-	 * @param spp
-	 *            the state-wise policy painter
+	 * @return the State-wise value function painter
 	 */
-	public void setSpp(StatePolicyPainter spp) {
-		this.spp = spp;
-		if (spp != null && this.showPolicy != null) {
-			this.showPolicy.setEnabled(true);
-			this.pLayer.setSpp(spp);
-		}
-	}
-
-	/**
-	 * Sets the canvas background color
-	 * 
-	 * @param col
-	 *            the canvas background color
-	 */
-	public void setBgColor(Color col) {
-		this.visualizer.setBGColor(col);
-	}
-
-	/**
-	 * Sets the policy to render
-	 * 
-	 * @param p
-	 *            the policy to render
-	 */
-	public void setPolicy(Policy p) {
-		this.pLayer.setPolicy(p);
+	public StateValuePainter getSvp() {
+		return svp;
 	}
 
 	/**
@@ -267,6 +221,7 @@ public class ValueFunctionVisualizerGUI extends JFrame implements ItemListener {
 	 * Called when the check back for the policy rendering is checked or
 	 * unchecked.
 	 */
+	@Override
 	public void itemStateChanged(ItemEvent e) {
 
 		Object source = e.getItemSelectable();
@@ -279,6 +234,51 @@ public class ValueFunctionVisualizerGUI extends JFrame implements ItemListener {
 			this.visualizer.repaint();
 		}
 
+	}
+
+	/**
+	 * Sets the canvas background color
+	 * 
+	 * @param col
+	 *            the canvas background color
+	 */
+	public void setBgColor(Color col) {
+		this.visualizer.setBGColor(col);
+	}
+
+	/**
+	 * Sets the policy to render
+	 * 
+	 * @param p
+	 *            the policy to render
+	 */
+	public void setPolicy(Policy p) {
+		this.pLayer.setPolicy(p);
+	}
+
+	/**
+	 * Sets the state-wise policy painter
+	 * 
+	 * @param spp
+	 *            the state-wise policy painter
+	 */
+	public void setSpp(StatePolicyPainter spp) {
+		this.spp = spp;
+		if (spp != null && this.showPolicy != null) {
+			this.showPolicy.setEnabled(true);
+			this.pLayer.setSpp(spp);
+		}
+	}
+
+	/**
+	 * Sets the state-wise value function painter
+	 * 
+	 * @param svp
+	 *            state-wise value function painter
+	 */
+	public void setSvp(StateValuePainter svp) {
+		this.svp = svp;
+		this.vfLayer.setSvp(svp);
 	}
 
 }

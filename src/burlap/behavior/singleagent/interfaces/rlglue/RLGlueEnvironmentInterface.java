@@ -1,16 +1,17 @@
 package burlap.behavior.singleagent.interfaces.rlglue;
 
+import org.rlcommunity.rlglue.codec.AgentInterface;
+import org.rlcommunity.rlglue.codec.taskspec.TaskSpec;
+import org.rlcommunity.rlglue.codec.types.Action;
+import org.rlcommunity.rlglue.codec.types.Observation;
+import org.rlcommunity.rlglue.codec.util.AgentLoader;
+
 import burlap.debugtools.DPrint;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.environment.Environment;
 import burlap.oomdp.singleagent.environment.EnvironmentOutcome;
-import org.rlcommunity.rlglue.codec.AgentInterface;
-import org.rlcommunity.rlglue.codec.taskspec.TaskSpec;
-import org.rlcommunity.rlglue.codec.types.Action;
-import org.rlcommunity.rlglue.codec.types.Observation;
-import org.rlcommunity.rlglue.codec.util.AgentLoader;
 
 /**
  * A BURLAP {@link burlap.oomdp.singleagent.environment.Environment} that
@@ -42,6 +43,44 @@ import org.rlcommunity.rlglue.codec.util.AgentLoader;
  * @author James MacGlashan.
  */
 public class RLGlueEnvironmentInterface implements Environment, AgentInterface {
+
+	/**
+	 * A mutable int wrapper
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class MutableInt {
+		public Integer val = null;
+	}
+
+	/**
+	 * A wrapper that maintains a reference to a
+	 * {@link burlap.oomdp.core.states.State} or null.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class StateReference {
+		public State val = null;
+	}
+
+	/**
+	 * Returns the corresponding RLGlue action for the given action id.
+	 * 
+	 * @param id
+	 *            the action id
+	 * @return An RLGlue action for the corresponding aciton id.
+	 */
+	public static org.rlcommunity.rlglue.codec.types.Action getRLGlueAction(
+			int id) {
+
+		org.rlcommunity.rlglue.codec.types.Action act = new org.rlcommunity.rlglue.codec.types.Action();
+		act.intArray = new int[] { id };
+
+		return act;
+
+	}
 
 	/**
 	 * Debug code used for printing debug information.
@@ -96,136 +135,24 @@ public class RLGlueEnvironmentInterface implements Environment, AgentInterface {
 
 	protected boolean rlGlueExperimentFinished = false;
 
-	/**
-	 * Loads this RLGlue {@link org.rlcommunity.rlglue.codec.AgentInterface}
-	 * into RLGlue and runs its event loop in a separate thread.
-	 */
-	public void loadAgent() {
-		DPrint.toggleCode(debugCode, this.printDebug);
-		final AgentLoader loader = new AgentLoader(this);
-		Thread eventThread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				loader.run();
-			}
-		});
-		eventThread.start();
-
-	}
-
-	/**
-	 * Loads this RLGlue {@link org.rlcommunity.rlglue.codec.AgentInterface}
-	 * into RLGlue using the specified host address and port nd runs its event
-	 * loop in a separate thread.
-	 * 
-	 * @param hostAddress
-	 *            the RLGlue host address.
-	 * @param portString
-	 *            the port on which to connect to RLGlue.
-	 */
-	public void loadAgent(String hostAddress, String portString) {
-		DPrint.toggleCode(debugCode, this.printDebug);
-		final AgentLoader loader = new AgentLoader(hostAddress, portString,
-				this);
-		Thread eventThread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				loader.run();
-			}
-		});
-		eventThread.start();
-	}
-
-	/**
-	 * Toggles whether debug information should be printed
-	 * 
-	 * @param printDebug
-	 *            whether to print debug logs or not
-	 */
-	public void toggleDebug(boolean printDebug) {
-		this.printDebug = printDebug;
-		DPrint.toggleCode(this.debugCode, this.printDebug);
-	}
-
-	public int getDebugCode() {
-		return debugCode;
-	}
-
-	/**
-	 * Returns the domain for this environment. This method will block until the
-	 * domain for this environment is set by RLGLue via the
-	 * {@link #agent_init(String)} method, which means you ought to have called
-	 * {@link #loadAgent()} or {@link #loadAgent(String, String)} before calling
-	 * this method, otherwise RLGlue will not know to set the environment.
-	 * 
-	 * @return the BURLAP {@link burlap.oomdp.core.Domain} specification for
-	 *         this RLGlue environment.
-	 */
-	public Domain getDomain() {
-		if (this.domainSet.val == null) {
-			synchronized (this.domainSet) {
-				while (this.domainSet.val == null) {
-					try {
-						this.domainSet.wait();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-			}
+	@Override
+	public void agent_cleanup() {
+		this.nextAction.val = null;
+		this.nextStateReference.val = null;
+		this.rlGlueExperimentFinished = true;
+		synchronized (this.nextStateReference) {
+			nextStateReference.notifyAll(); // notify to stop blocking
 		}
-		return domain;
 	}
 
-	/**
-	 * Returns the discount factor for this environment. This method will block
-	 * until the domain for this environment is set by RLGLue via the
-	 * {@link #agent_init(String)} method, which means you ought to have called
-	 * {@link #loadAgent()} or {@link #loadAgent(String, String)} before calling
-	 * this method, otherwise RLGlue will not know to set the environment.
-	 * 
-	 * @return the discount factor to use for this RLGlue problem.
-	 */
-	public double getDiscountFactor() {
-		if (this.domainSet.val == null) {
-			synchronized (this.domainSet) {
-				while (this.domainSet.val == null) {
-					try {
-						this.domainSet.wait();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-
-		return discount;
-	}
-
-	/**
-	 * Returns true if the RLGlue experiment is finished; false otherwise.
-	 * 
-	 * @return true if the RLGlue experiment is finished; false otherwise
-	 */
-	public boolean rlGlueExperimentFinished() {
-		return this.rlGlueExperimentFinished;
-	}
-
-	/**
-	 * Blocks the calling thread until a state is provided by the RLGlue server
-	 * or the RLGlue experiment has ended.
-	 */
-	public void blockUntilStateReceived() {
+	@Override
+	public void agent_end(double v) {
+		DPrint.cl(this.debugCode, "Got agent end message");
 		synchronized (nextStateReference) {
-			while (this.nextStateReference.val == null
-					&& !this.rlGlueExperimentFinished) {
-				try {
-					DPrint.cl(debugCode,
-							"Waiting for state from RLGlue Server...");
-					nextStateReference.wait();
-				} catch (InterruptedException ex) {
-					ex.printStackTrace();
-				}
-			}
+			this.lastReward = v;
+			this.curStateIsTerminal = true;
+			nextStateReference.val = curState;
+			nextStateReference.notifyAll();
 		}
 	}
 
@@ -243,6 +170,11 @@ public class RLGlueEnvironmentInterface implements Environment, AgentInterface {
 			this.domainSet.notifyAll();
 		}
 
+	}
+
+	@Override
+	public String agent_message(String s) {
+		return "BURLAP agent does not support messages.";
 	}
 
 	@Override
@@ -308,38 +240,23 @@ public class RLGlueEnvironmentInterface implements Environment, AgentInterface {
 		return toRet;
 	}
 
-	@Override
-	public void agent_end(double v) {
-		DPrint.cl(this.debugCode, "Got agent end message");
+	/**
+	 * Blocks the calling thread until a state is provided by the RLGlue server
+	 * or the RLGlue experiment has ended.
+	 */
+	public void blockUntilStateReceived() {
 		synchronized (nextStateReference) {
-			this.lastReward = v;
-			this.curStateIsTerminal = true;
-			nextStateReference.val = curState;
-			nextStateReference.notifyAll();
+			while (this.nextStateReference.val == null
+					&& !this.rlGlueExperimentFinished) {
+				try {
+					DPrint.cl(debugCode,
+							"Waiting for state from RLGlue Server...");
+					nextStateReference.wait();
+				} catch (InterruptedException ex) {
+					ex.printStackTrace();
+				}
+			}
 		}
-	}
-
-	@Override
-	public void agent_cleanup() {
-		this.nextAction.val = null;
-		this.nextStateReference.val = null;
-		this.rlGlueExperimentFinished = true;
-		synchronized (this.nextStateReference) {
-			nextStateReference.notifyAll(); // notify to stop blocking
-		}
-	}
-
-	@Override
-	public String agent_message(String s) {
-		return "BURLAP agent does not support messages.";
-	}
-
-	@Override
-	public State getCurrentObservation() {
-		if (this.curState == null) {
-			this.blockUntilStateReceived();
-		}
-		return this.curState;
 	}
 
 	@Override
@@ -388,6 +305,68 @@ public class RLGlueEnvironmentInterface implements Environment, AgentInterface {
 	}
 
 	@Override
+	public State getCurrentObservation() {
+		if (this.curState == null) {
+			this.blockUntilStateReceived();
+		}
+		return this.curState;
+	}
+
+	public int getDebugCode() {
+		return debugCode;
+	}
+
+	/**
+	 * Returns the discount factor for this environment. This method will block
+	 * until the domain for this environment is set by RLGLue via the
+	 * {@link #agent_init(String)} method, which means you ought to have called
+	 * {@link #loadAgent()} or {@link #loadAgent(String, String)} before calling
+	 * this method, otherwise RLGlue will not know to set the environment.
+	 * 
+	 * @return the discount factor to use for this RLGlue problem.
+	 */
+	public double getDiscountFactor() {
+		if (this.domainSet.val == null) {
+			synchronized (this.domainSet) {
+				while (this.domainSet.val == null) {
+					try {
+						this.domainSet.wait();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+
+		return discount;
+	}
+
+	/**
+	 * Returns the domain for this environment. This method will block until the
+	 * domain for this environment is set by RLGLue via the
+	 * {@link #agent_init(String)} method, which means you ought to have called
+	 * {@link #loadAgent()} or {@link #loadAgent(String, String)} before calling
+	 * this method, otherwise RLGlue will not know to set the environment.
+	 * 
+	 * @return the BURLAP {@link burlap.oomdp.core.Domain} specification for
+	 *         this RLGlue environment.
+	 */
+	public Domain getDomain() {
+		if (this.domainSet.val == null) {
+			synchronized (this.domainSet) {
+				while (this.domainSet.val == null) {
+					try {
+						this.domainSet.wait();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return domain;
+	}
+
+	@Override
 	public double getLastReward() {
 		return this.lastReward;
 	}
@@ -397,46 +376,68 @@ public class RLGlueEnvironmentInterface implements Environment, AgentInterface {
 		return this.curStateIsTerminal;
 	}
 
+	/**
+	 * Loads this RLGlue {@link org.rlcommunity.rlglue.codec.AgentInterface}
+	 * into RLGlue and runs its event loop in a separate thread.
+	 */
+	public void loadAgent() {
+		DPrint.toggleCode(debugCode, this.printDebug);
+		final AgentLoader loader = new AgentLoader(this);
+		Thread eventThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				loader.run();
+			}
+		});
+		eventThread.start();
+
+	}
+
+	/**
+	 * Loads this RLGlue {@link org.rlcommunity.rlglue.codec.AgentInterface}
+	 * into RLGlue using the specified host address and port nd runs its event
+	 * loop in a separate thread.
+	 * 
+	 * @param hostAddress
+	 *            the RLGlue host address.
+	 * @param portString
+	 *            the port on which to connect to RLGlue.
+	 */
+	public void loadAgent(String hostAddress, String portString) {
+		DPrint.toggleCode(debugCode, this.printDebug);
+		final AgentLoader loader = new AgentLoader(hostAddress, portString,
+				this);
+		Thread eventThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				loader.run();
+			}
+		});
+		eventThread.start();
+	}
+
 	@Override
 	public void resetEnvironment() {
 		this.blockUntilStateReceived();
 	}
 
 	/**
-	 * Returns the corresponding RLGlue action for the given action id.
+	 * Returns true if the RLGlue experiment is finished; false otherwise.
 	 * 
-	 * @param id
-	 *            the action id
-	 * @return An RLGlue action for the corresponding aciton id.
+	 * @return true if the RLGlue experiment is finished; false otherwise
 	 */
-	public static org.rlcommunity.rlglue.codec.types.Action getRLGlueAction(
-			int id) {
-
-		org.rlcommunity.rlglue.codec.types.Action act = new org.rlcommunity.rlglue.codec.types.Action();
-		act.intArray = new int[] { id };
-
-		return act;
-
+	public boolean rlGlueExperimentFinished() {
+		return this.rlGlueExperimentFinished;
 	}
 
 	/**
-	 * A mutable int wrapper
+	 * Toggles whether debug information should be printed
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @param printDebug
+	 *            whether to print debug logs or not
 	 */
-	public static class MutableInt {
-		public Integer val = null;
-	}
-
-	/**
-	 * A wrapper that maintains a reference to a
-	 * {@link burlap.oomdp.core.states.State} or null.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class StateReference {
-		public State val = null;
+	public void toggleDebug(boolean printDebug) {
+		this.printDebug = printDebug;
+		DPrint.toggleCode(this.debugCode, this.printDebug);
 	}
 }

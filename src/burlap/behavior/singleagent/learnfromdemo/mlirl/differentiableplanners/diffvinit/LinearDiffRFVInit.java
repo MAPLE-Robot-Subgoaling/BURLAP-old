@@ -109,52 +109,9 @@ public class LinearDiffRFVInit extends DifferentiableRF implements
 
 	}
 
-	/**
-	 * Returns whether the reward function state features are evaluated on the
-	 * next state of the transition (s' of R(s,a,s')) or the previous state of
-	 * the transition (s of R(s,a,s'))
-	 * 
-	 * @return True if features are evaluated on the next state; false if they
-	 *         are evaluated on the previous state.
-	 */
-	public boolean isRfFeaturesAreForNextState() {
-		return rfFeaturesAreForNextState;
-	}
-
-	public void setRfFeaturesAreForNextState(boolean rfFeaturesAreForNextState) {
-		this.rfFeaturesAreForNextState = rfFeaturesAreForNextState;
-	}
-
-	public StateToFeatureVectorGenerator getRfFvGen() {
-		return rfFvGen;
-	}
-
-	public void setRfFvGen(StateToFeatureVectorGenerator rfFvGen) {
-		this.rfFvGen = rfFvGen;
-	}
-
-	public StateToFeatureVectorGenerator getVinitFvGen() {
-		return vinitFvGen;
-	}
-
-	public void setVinitFvGen(StateToFeatureVectorGenerator vinitFvGen) {
-		this.vinitFvGen = vinitFvGen;
-	}
-
-	public int getRfDim() {
-		return rfDim;
-	}
-
-	public void setRfDim(int rfDim) {
-		this.rfDim = rfDim;
-	}
-
-	public int getVinitDim() {
-		return vinitDim;
-	}
-
-	public void setVinitDim(int vinitDim) {
-		this.vinitDim = vinitDim;
+	@Override
+	protected DifferentiableRF copyHelper() {
+		return null;
 	}
 
 	@Override
@@ -177,8 +134,54 @@ public class LinearDiffRFVInit extends DifferentiableRF implements
 	}
 
 	@Override
-	protected DifferentiableRF copyHelper() {
-		return null;
+	public double[] getQGradient(State s, AbstractGroundedAction ga) {
+		return this.getVGradient(s);
+	}
+
+	public int getRfDim() {
+		return rfDim;
+	}
+
+	public StateToFeatureVectorGenerator getRfFvGen() {
+		return rfFvGen;
+	}
+
+	@Override
+	public double[] getVGradient(State s) {
+
+		double[] vFeatures = this.vinitFvGen.generateFeatureVectorFrom(s);
+
+		double[] allFeatures = new double[this.dim];
+		for (int i = 0; i < vFeatures.length; i++) {
+			allFeatures[i + this.rfDim] = vFeatures[i];
+		}
+
+		return allFeatures;
+	}
+
+	public int getVinitDim() {
+		return vinitDim;
+	}
+
+	public StateToFeatureVectorGenerator getVinitFvGen() {
+		return vinitFvGen;
+	}
+
+	/**
+	 * Returns whether the reward function state features are evaluated on the
+	 * next state of the transition (s' of R(s,a,s')) or the previous state of
+	 * the transition (s of R(s,a,s'))
+	 * 
+	 * @return True if features are evaluated on the next state; false if they
+	 *         are evaluated on the previous state.
+	 */
+	public boolean isRfFeaturesAreForNextState() {
+		return rfFeaturesAreForNextState;
+	}
+
+	@Override
+	public double qValue(State s, AbstractGroundedAction a) {
+		return this.value(s);
 	}
 
 	@Override
@@ -198,22 +201,24 @@ public class LinearDiffRFVInit extends DifferentiableRF implements
 
 	}
 
-	@Override
-	public double[] getVGradient(State s) {
-
-		double[] vFeatures = this.vinitFvGen.generateFeatureVectorFrom(s);
-
-		double[] allFeatures = new double[this.dim];
-		for (int i = 0; i < vFeatures.length; i++) {
-			allFeatures[i + this.rfDim] = vFeatures[i];
-		}
-
-		return allFeatures;
+	public void setRfDim(int rfDim) {
+		this.rfDim = rfDim;
 	}
 
-	@Override
-	public double[] getQGradient(State s, AbstractGroundedAction ga) {
-		return this.getVGradient(s);
+	public void setRfFeaturesAreForNextState(boolean rfFeaturesAreForNextState) {
+		this.rfFeaturesAreForNextState = rfFeaturesAreForNextState;
+	}
+
+	public void setRfFvGen(StateToFeatureVectorGenerator rfFvGen) {
+		this.rfFvGen = rfFvGen;
+	}
+
+	public void setVinitDim(int vinitDim) {
+		this.vinitDim = vinitDim;
+	}
+
+	public void setVinitFvGen(StateToFeatureVectorGenerator vinitFvGen) {
+		this.vinitFvGen = vinitFvGen;
 	}
 
 	@Override
@@ -225,11 +230,6 @@ public class LinearDiffRFVInit extends DifferentiableRF implements
 			sum += features[i] * this.parameters[i + this.rfDim];
 		}
 		return sum;
-	}
-
-	@Override
-	public double qValue(State s, AbstractGroundedAction a) {
-		return this.value(s);
 	}
 
 }

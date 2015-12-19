@@ -1,21 +1,21 @@
 package burlap.behavior.singleagent.learnfromdemo.mlirl.differentiableplanners;
 
-import burlap.behavior.valuefunction.QValue;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.BoltzmannPolicyGradient;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlanner;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientTuple;
 import burlap.behavior.singleagent.planning.stochastic.DynamicProgramming;
-import burlap.oomdp.statehashing.HashableState;
+import burlap.behavior.valuefunction.QValue;
 import burlap.datastructures.BoltzmannDistribution;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TransitionProbability;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import burlap.oomdp.statehashing.HashableState;
 
 /**
  * A class for performing dynamic programming with a differentiable value backup
@@ -44,10 +44,76 @@ public abstract class DifferentiableDP extends DynamicProgramming implements
 	 */
 	protected double boltzBeta;
 
+	/**
+	 * Computes the Q-value gradient for the given
+	 * {@link burlap.oomdp.core.states.State} and
+	 * {@link burlap.oomdp.singleagent.GroundedAction}.
+	 * 
+	 * @param s
+	 *            the state
+	 * @param ga
+	 *            the grounded action.
+	 * @return the Q-value gradient that was computed.
+	 */
+	protected double[] computeQGradient(State s, GroundedAction ga) {
+
+		int d = ((DifferentiableRF) this.rf).getParameterDimension();
+		double[] gradient = new double[d];
+		for (int i = 0; i < gradient.length; i++) {
+			gradient[i] = 0.;
+		}
+
+		List<TransitionProbability> tps = ga.getTransitions(s);
+		for (TransitionProbability tp : tps) {
+			double[] valueGradient = this.getValueGradient(tp.s);
+			double[] rewardGradient = ((DifferentiableRF) this.rf).getGradient(
+					s, ga, tp.s);
+			for (int i = 0; i < gradient.length; i++) {
+				gradient[i] += tp.p
+						* (rewardGradient[i] + this.gamma * valueGradient[i]);
+			}
+		}
+
+		return gradient;
+
+	}
+
 	@Override
-	public void resetSolver() {
-		super.resetSolver();
-		this.valueGradient.clear();
+	public List<QGradientTuple> getAllQGradients(State s) {
+		List<GroundedAction> gas = this.getAllGroundedActions(s);
+		List<QGradientTuple> res = new ArrayList<QGradientTuple>(gas.size());
+		for (GroundedAction ga : gas) {
+			res.add(this.getQGradient(s, ga));
+		}
+		return res;
+	}
+
+	@Override
+	public QGradientTuple getQGradient(State s, GroundedAction a) {
+
+		double[] gradient = this.computeQGradient(s, a);
+		QGradientTuple tuple = new QGradientTuple(s, a, gradient);
+		return tuple;
+	}
+
+	/**
+	 * Returns the value function gradient for the given
+	 * {@link burlap.oomdp.core.states.State}
+	 * 
+	 * @param s
+	 *            the state for which the gradient is be returned.
+	 * @return the value function gradient for the given
+	 *         {@link burlap.oomdp.core.states.State}
+	 */
+	public double[] getValueGradient(State s) {
+		// returns deriviate value
+		HashableState sh = this.hashingFactory.hashState(s);
+		double[] grad = this.valueGradient.get(sh);
+		if (grad == null) {
+			grad = new double[((DifferentiableRF) this.rf)
+					.getParameterDimension()];
+		}
+		return grad;
 	}
 
 	/**
@@ -146,81 +212,15 @@ public abstract class DifferentiableDP extends DynamicProgramming implements
 		return gv;
 	}
 
-	/**
-	 * Returns the value function gradient for the given
-	 * {@link burlap.oomdp.core.states.State}
-	 * 
-	 * @param s
-	 *            the state for which the gradient is be returned.
-	 * @return the value function gradient for the given
-	 *         {@link burlap.oomdp.core.states.State}
-	 */
-	public double[] getValueGradient(State s) {
-		// returns deriviate value
-		HashableState sh = this.hashingFactory.hashState(s);
-		double[] grad = this.valueGradient.get(sh);
-		if (grad == null) {
-			grad = new double[((DifferentiableRF) this.rf)
-					.getParameterDimension()];
-		}
-		return grad;
-	}
-
 	@Override
-	public List<QGradientTuple> getAllQGradients(State s) {
-		List<GroundedAction> gas = this.getAllGroundedActions(s);
-		List<QGradientTuple> res = new ArrayList<QGradientTuple>(gas.size());
-		for (GroundedAction ga : gas) {
-			res.add(this.getQGradient(s, ga));
-		}
-		return res;
-	}
-
-	@Override
-	public QGradientTuple getQGradient(State s, GroundedAction a) {
-
-		double[] gradient = this.computeQGradient(s, a);
-		QGradientTuple tuple = new QGradientTuple(s, a, gradient);
-		return tuple;
+	public void resetSolver() {
+		super.resetSolver();
+		this.valueGradient.clear();
 	}
 
 	@Override
 	public void setBoltzmannBetaParameter(double beta) {
 		this.boltzBeta = beta;
-	}
-
-	/**
-	 * Computes the Q-value gradient for the given
-	 * {@link burlap.oomdp.core.states.State} and
-	 * {@link burlap.oomdp.singleagent.GroundedAction}.
-	 * 
-	 * @param s
-	 *            the state
-	 * @param ga
-	 *            the grounded action.
-	 * @return the Q-value gradient that was computed.
-	 */
-	protected double[] computeQGradient(State s, GroundedAction ga) {
-
-		int d = ((DifferentiableRF) this.rf).getParameterDimension();
-		double[] gradient = new double[d];
-		for (int i = 0; i < gradient.length; i++) {
-			gradient[i] = 0.;
-		}
-
-		List<TransitionProbability> tps = ga.getTransitions(s);
-		for (TransitionProbability tp : tps) {
-			double[] valueGradient = this.getValueGradient(tp.s);
-			double[] rewardGradient = ((DifferentiableRF) this.rf).getGradient(
-					s, ga, tp.s);
-			for (int i = 0; i < gradient.length; i++) {
-				gradient[i] += tp.p
-						* (rewardGradient[i] + this.gamma * valueGradient[i]);
-			}
-		}
-
-		return gradient;
-
 	}
 
 }

@@ -1,6 +1,8 @@
 package burlap.oomdp.core.objects;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.values.Value;
@@ -15,104 +17,6 @@ import burlap.oomdp.core.values.Value;
  * 
  */
 public interface ObjectInstance {
-
-	/**
-	 * Creates and returns a new object instance that is a copy of this object
-	 * instance's values, if mutable the copy should be deep
-	 * 
-	 * @return a new object instance that is a copy of this object instance
-	 */
-	ObjectInstance copy();
-
-	/**
-	 * Sets the name of this object instance.
-	 * 
-	 * @param name
-	 *            the name for this object instance.
-	 */
-	ObjectInstance setName(String name);
-
-	<T> ObjectInstance setValue(String attName, T v);
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the string rep value to which the attribute of this object
-	 *            instance should be set.
-	 */
-	ObjectInstance setValue(String attName, String v);
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the double rep value to which the attribute of this object
-	 *            instance should be set.
-	 */
-	ObjectInstance setValue(String attName, double v);
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the int rep value to which the attribute of this object
-	 *            instance should be set.
-	 */
-	ObjectInstance setValue(String attName, int v);
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the int rep value to which the attribute of this object
-	 *            instance should be set.
-	 */
-	ObjectInstance setValue(String attName, boolean v);
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the int array rep value to which the attribute of this object
-	 *            instance should be set.
-	 */
-	ObjectInstance setValue(String attName, int[] v);
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the double array rep value to which the attribute of this
-	 *            object instance should be set.
-	 */
-	ObjectInstance setValue(String attName, double[] v);
-
-	/**
-	 * Sets/adds the relational value of the attribute named attName for this
-	 * object instance. If the attribute is a multi-target relational attribute,
-	 * then this value is added to the target list.
-	 * 
-	 * @param attName
-	 *            the name of the relational attribute that will have a
-	 *            relational target added/set
-	 * @param target
-	 *            the name of the object reference that is to be added as a
-	 *            target.
-	 */
-	ObjectInstance addRelationalTarget(String attName, String target);
 
 	/**
 	 * Adds all relational targets to the attribute attName for this object
@@ -131,6 +35,22 @@ public interface ObjectInstance {
 			Collection<String> targets);
 
 	/**
+	 * Sets/adds the relational value of the attribute named attName for this
+	 * object instance. If the attribute is a multi-target relational attribute,
+	 * then this value is added to the target list.
+	 * 
+	 * @param attName
+	 *            the name of the relational attribute that will have a
+	 *            relational target added/set
+	 * @param target
+	 *            the name of the object reference that is to be added as a
+	 *            target.
+	 */
+	ObjectInstance addRelationalTarget(String attName, String target);
+
+	StringBuilder buildObjectDescription(StringBuilder builder);
+
+	/**
 	 * Clears all the relational value targets of the attribute named attName
 	 * for this object instance.
 	 * 
@@ -139,95 +59,12 @@ public interface ObjectInstance {
 	ObjectInstance clearRelationalTargets(String attName);
 
 	/**
-	 * Removes an object target from the specified relational attribute.
+	 * Creates and returns a new object instance that is a copy of this object
+	 * instance's values, if mutable the copy should be deep
 	 * 
-	 * @param attName
-	 *            the name of the relational attribute from which the target
-	 *            should be removed.
-	 * @param target
-	 *            the target to remove from the relational attribute value.
+	 * @return a new object instance that is a copy of this object instance
 	 */
-	ObjectInstance removeRelationalTarget(String attName, String target);
-
-	/**
-	 * Returns the name identifier of this object instance
-	 * 
-	 * @return the name identifier of this object instance
-	 */
-	String getName();
-
-	/**
-	 * Returns this object instance's object class
-	 * 
-	 * @return this object instance's object class
-	 */
-	ObjectClass getObjectClass();
-
-	/**
-	 * Returns the name of this object instance's object class
-	 * 
-	 * @return the name of this object instance's object class
-	 */
-	String getClassName();
-
-	/**
-	 * Returns the Value object assignment for the attribute named attName
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return the Value object assignment for the attribute named attName
-	 */
-	Value getValueForAttribute(String attName);
-
-	/**
-	 * Returns the double value assignment for the real-valued attribute named
-	 * attName. Will throw a runtime exception is the attribute named attName is
-	 * not of type REAL or REALUNBOUNDED
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return the double value assignment for the real-valued attribute named
-	 *         attName.
-	 */
-	double getRealValForAttribute(String attName);
-
-	/**
-	 * Returns the double value for the attribute named attType. This method
-	 * differs from the {@link #getRealValForAttribute(String)} method because
-	 * it will cast the int values for non real attributes to double values and
-	 * will not throw an exception. Note that if this method is called on
-	 * relational attributes, it will return 0., where as attributes like
-	 * {@link burlap.oomdp.core.Attribute.AttributeType#INT} and
-	 * {@link burlap.oomdp.core.Attribute.AttributeType#DISC} will cast their
-	 * int values to doubles.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return a double value assignment for the attribute; casting occurs if
-	 *         the attribute is not real-valued.
-	 */
-	double getNumericValForAttribute(String attName);
-
-	/**
-	 * Returns the string value representation for the attribute named attName.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return the string value assignment for the attribute named attName.
-	 */
-	String getStringValForAttribute(String attName);
-
-	/**
-	 * Returns the int value assignment for the discrete-valued attribute named
-	 * attName. Will throw a runtime exception is the attribute named attName is
-	 * not of type DISC
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return the int value assignment for the discrete-valued attribute named
-	 *         attName.
-	 */
-	int getIntValForAttribute(String attName);
+	ObjectInstance copy();
 
 	/**
 	 * Returns the set of all relational targets to which the relational
@@ -254,14 +91,11 @@ public interface ObjectInstance {
 	boolean getBooleanValForAttribute(String attName);
 
 	/**
-	 * Returns the int array value of the attribute (only defined for int array
-	 * attributes).
+	 * Returns the name of this object instance's object class
 	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned.
-	 * @return the int array value.
+	 * @return the name of this object instance's object class
 	 */
-	int[] getIntArrayValForAttribute(String attName);
+	String getClassName();
 
 	/**
 	 * Returns the int array value of the attribute (only defined for int array
@@ -272,43 +106,6 @@ public interface ObjectInstance {
 	 * @return the int array value.
 	 */
 	double[] getDoubleArrayValForAttribute(String attName);
-
-	/**
-	 * Returns the list of value object assignments to all of this object
-	 * instance's attributes.
-	 * 
-	 * @return the list of value object assignments to all of this object
-	 *         instance's attributes.
-	 */
-	List<Value> getValues();
-
-	/**
-	 * Returns a list of the names of {@link burlap.oomdp.core.Attribute}s that
-	 * have unset values
-	 * 
-	 * @return a list of the names of attributes that have unset values
-	 */
-	List<String> unsetAttributes();
-
-	/**
-	 * Returns a string representation of this object including its name and
-	 * value attribute value assignment.
-	 * 
-	 * @return a string representation of this object including its name and
-	 *         value attribute value assignment.
-	 */
-	String getObjectDescription();
-
-	StringBuilder buildObjectDescription(StringBuilder builder);
-
-	/**
-	 * Returns a string description of the object with the unset attribute
-	 * values listed as null.
-	 * 
-	 * @return a string description of the object with the unset attribute
-	 *         values listed as null.
-	 */
-	String getObjectDescriptionWithNullForUnsetAttributes();
 
 	/**
 	 * Returns a double vector of all the observable values in this object
@@ -323,6 +120,35 @@ public interface ObjectInstance {
 	double[] getFeatureVec();
 
 	/**
+	 * Returns the int array value of the attribute (only defined for int array
+	 * attributes).
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned.
+	 * @return the int array value.
+	 */
+	int[] getIntArrayValForAttribute(String attName);
+
+	/**
+	 * Returns the int value assignment for the discrete-valued attribute named
+	 * attName. Will throw a runtime exception is the attribute named attName is
+	 * not of type DISC
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return the int value assignment for the discrete-valued attribute named
+	 *         attName.
+	 */
+	int getIntValForAttribute(String attName);
+
+	/**
+	 * Returns the name identifier of this object instance
+	 * 
+	 * @return the name identifier of this object instance
+	 */
+	String getName();
+
+	/**
 	 * Returns a normalized double vector of all the observable values in this
 	 * object instance. This method relies on the lowerlims and upperlims being
 	 * set for the corresponding attribute. Furthermore, this method will throw
@@ -333,6 +159,182 @@ public interface ObjectInstance {
 	 *         object instance.
 	 */
 	double[] getNormalizedFeatureVec();
+
+	/**
+	 * Returns the double value for the attribute named attType. This method
+	 * differs from the {@link #getRealValForAttribute(String)} method because
+	 * it will cast the int values for non real attributes to double values and
+	 * will not throw an exception. Note that if this method is called on
+	 * relational attributes, it will return 0., where as attributes like
+	 * {@link burlap.oomdp.core.Attribute.AttributeType#INT} and
+	 * {@link burlap.oomdp.core.Attribute.AttributeType#DISC} will cast their
+	 * int values to doubles.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return a double value assignment for the attribute; casting occurs if
+	 *         the attribute is not real-valued.
+	 */
+	double getNumericValForAttribute(String attName);
+
+	/**
+	 * Returns this object instance's object class
+	 * 
+	 * @return this object instance's object class
+	 */
+	ObjectClass getObjectClass();
+
+	/**
+	 * Returns a string representation of this object including its name and
+	 * value attribute value assignment.
+	 * 
+	 * @return a string representation of this object including its name and
+	 *         value attribute value assignment.
+	 */
+	String getObjectDescription();
+
+	/**
+	 * Returns a string description of the object with the unset attribute
+	 * values listed as null.
+	 * 
+	 * @return a string description of the object with the unset attribute
+	 *         values listed as null.
+	 */
+	String getObjectDescriptionWithNullForUnsetAttributes();
+
+	/**
+	 * Returns the double value assignment for the real-valued attribute named
+	 * attName. Will throw a runtime exception is the attribute named attName is
+	 * not of type REAL or REALUNBOUNDED
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return the double value assignment for the real-valued attribute named
+	 *         attName.
+	 */
+	double getRealValForAttribute(String attName);
+
+	/**
+	 * Returns the string value representation for the attribute named attName.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return the string value assignment for the attribute named attName.
+	 */
+	String getStringValForAttribute(String attName);
+
+	/**
+	 * Returns the Value object assignment for the attribute named attName
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return the Value object assignment for the attribute named attName
+	 */
+	Value getValueForAttribute(String attName);
+
+	/**
+	 * Returns the list of value object assignments to all of this object
+	 * instance's attributes.
+	 * 
+	 * @return the list of value object assignments to all of this object
+	 *         instance's attributes.
+	 */
+	List<Value> getValues();
+
+	/**
+	 * Removes an object target from the specified relational attribute.
+	 * 
+	 * @param attName
+	 *            the name of the relational attribute from which the target
+	 *            should be removed.
+	 * @param target
+	 *            the target to remove from the relational attribute value.
+	 */
+	ObjectInstance removeRelationalTarget(String attName, String target);
+
+	/**
+	 * Sets the name of this object instance.
+	 * 
+	 * @param name
+	 *            the name for this object instance.
+	 */
+	ObjectInstance setName(String name);
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the int rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	ObjectInstance setValue(String attName, boolean v);
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the double rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	ObjectInstance setValue(String attName, double v);
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the double array rep value to which the attribute of this
+	 *            object instance should be set.
+	 */
+	ObjectInstance setValue(String attName, double[] v);
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the int rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	ObjectInstance setValue(String attName, int v);
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the int array rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	ObjectInstance setValue(String attName, int[] v);
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the string rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	ObjectInstance setValue(String attName, String v);
+
+	<T> ObjectInstance setValue(String attName, T v);
+
+	/**
+	 * Returns a list of the names of {@link burlap.oomdp.core.Attribute}s that
+	 * have unset values
+	 * 
+	 * @return a list of the names of attributes that have unset values
+	 */
+	List<String> unsetAttributes();
 
 	/**
 	 * Returns true if the value assignments in this object instance are the

@@ -40,11 +40,6 @@ public class SGAgentType {
 	}
 
 	@Override
-	public int hashCode() {
-		return typeName.hashCode();
-	}
-
-	@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof SGAgentType)) {
 			return false;
@@ -52,6 +47,11 @@ public class SGAgentType {
 
 		return ((SGAgentType) o).typeName.equals(typeName);
 
+	}
+
+	@Override
+	public int hashCode() {
+		return typeName.hashCode();
 	}
 
 }

@@ -14,6 +14,29 @@ import burlap.oomdp.singleagent.GroundedAction;
 public class ActionFeaturesQuery {
 
 	/**
+	 * Returns the {@link ActionFeaturesQuery} object from a list of
+	 * {@link ActionFeaturesQuery} objects that is associated with a given
+	 * action.
+	 * 
+	 * @param query
+	 *            the query action to find the {@link ActionFeaturesQuery} for
+	 * @param actionFeaturesSets
+	 *            the list of {@link ActionFeaturesQuery} objects to search
+	 * @return the {@link ActionFeaturesQuery} object that is associated with a
+	 *         given action. Null if it does not exist in the list.
+	 */
+	public static ActionFeaturesQuery getActionFeaturesForQueryFromSet(
+			GroundedAction query, List<ActionFeaturesQuery> actionFeaturesSets) {
+		for (ActionFeaturesQuery afq : actionFeaturesSets) {
+			if (afq.featuresForQuery(query)) {
+				return afq;
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * The action with which the state features are associated
 	 */
 	public GroundedAction queryAction;
@@ -70,29 +93,6 @@ public class ActionFeaturesQuery {
 			return true;
 		}
 		return false;
-	}
-
-	/**
-	 * Returns the {@link ActionFeaturesQuery} object from a list of
-	 * {@link ActionFeaturesQuery} objects that is associated with a given
-	 * action.
-	 * 
-	 * @param query
-	 *            the query action to find the {@link ActionFeaturesQuery} for
-	 * @param actionFeaturesSets
-	 *            the list of {@link ActionFeaturesQuery} objects to search
-	 * @return the {@link ActionFeaturesQuery} object that is associated with a
-	 *         given action. Null if it does not exist in the list.
-	 */
-	public static ActionFeaturesQuery getActionFeaturesForQueryFromSet(
-			GroundedAction query, List<ActionFeaturesQuery> actionFeaturesSets) {
-		for (ActionFeaturesQuery afq : actionFeaturesSets) {
-			if (afq.featuresForQuery(query)) {
-				return afq;
-			}
-		}
-
-		return null;
 	}
 
 }

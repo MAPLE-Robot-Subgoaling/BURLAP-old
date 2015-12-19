@@ -27,6 +27,19 @@ public class QValue {
 	public double q;
 
 	/**
+	 * Initialializes this Q-value by copying the information from another
+	 * Q-value.
+	 * 
+	 * @param src
+	 *            the source Q-value from which to copy.
+	 */
+	public QValue(QValue src) {
+		this.s = src.s.copy();
+		this.a = src.a.copy();
+		this.q = src.q;
+	}
+
+	/**
 	 * Creates a Q-value for the given state an action pair with the specified
 	 * q-value
 	 * 
@@ -41,19 +54,6 @@ public class QValue {
 		this.s = s;
 		this.a = a;
 		this.q = q;
-	}
-
-	/**
-	 * Initialializes this Q-value by copying the information from another
-	 * Q-value.
-	 * 
-	 * @param src
-	 *            the source Q-value from which to copy.
-	 */
-	public QValue(QValue src) {
-		this.s = src.s.copy();
-		this.a = src.a.copy();
-		this.q = src.q;
 	}
 
 }

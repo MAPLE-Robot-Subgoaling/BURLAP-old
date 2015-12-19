@@ -34,6 +34,29 @@ public class TestPlanning {
 	StateConditionTest goalCondition;
 	SimpleHashableStateFactory hashingFactory;
 
+	public void evaluateEpisode(EpisodeAnalysis analysis) {
+		this.evaluateEpisode(analysis, false);
+	}
+
+	public void evaluateEpisode(EpisodeAnalysis analysis, Boolean expectOptimal) {
+		if (expectOptimal) {
+			Assert.assertEquals(this.gw.getHeight() + this.gw.getWidth() - 1,
+					analysis.stateSequence.size());
+			Assert.assertEquals(analysis.stateSequence.size() - 1,
+					analysis.actionSequence.size());
+			Assert.assertEquals(analysis.actionSequence.size(),
+					analysis.rewardSequence.size());
+			Assert.assertEquals(-analysis.actionSequence.size(),
+					analysis.getDiscountedReturn(1.0), TestPlanning.delta);
+		}
+
+		Assert.assertEquals(true, this.tf.isTerminal(analysis.stateSequence
+				.get(analysis.stateSequence.size() - 1)));
+		Assert.assertEquals(true, this.goalCondition
+				.satisfies(analysis.stateSequence.get(analysis.stateSequence
+						.size() - 1)));
+	}
+
 	@Before
 	public void setup() {
 		this.gw = new GridWorldDomain(11, 11);
@@ -46,36 +69,9 @@ public class TestPlanning {
 		this.hashingFactory = new SimpleHashableStateFactory();
 	}
 
-	@Test
-	public void testBFS() {
-		State initialState = GridWorldDomain
-				.getOneAgentOneLocationState(domain);
-		GridWorldDomain.setAgent(initialState, 0, 0);
-		GridWorldDomain.setLocation(initialState, 0, 10, 10);
+	@After
+	public void teardown() {
 
-		DeterministicPlanner planner = new BFS(this.domain, this.goalCondition,
-				this.hashingFactory);
-		planner.planFromState(initialState);
-		Policy p = new SDPlannerPolicy(planner);
-		EpisodeAnalysis analysis = p.evaluateBehavior(initialState, this.rf,
-				this.tf);
-		this.evaluateEpisode(analysis, true);
-	}
-
-	@Test
-	public void testDFS() {
-		State initialState = GridWorldDomain
-				.getOneAgentOneLocationState(domain);
-		GridWorldDomain.setAgent(initialState, 0, 0);
-		GridWorldDomain.setLocation(initialState, 0, 10, 10);
-
-		DeterministicPlanner planner = new DFS(this.domain, this.goalCondition,
-				this.hashingFactory, -1, true);
-		planner.planFromState(initialState);
-		Policy p = new SDPlannerPolicy(planner);
-		EpisodeAnalysis analysis = p.evaluateBehavior(initialState, this.rf,
-				this.tf);
-		this.evaluateEpisode(analysis);
 	}
 
 	@Test
@@ -124,31 +120,35 @@ public class TestPlanning {
 		this.evaluateEpisode(analysis, true);
 	}
 
-	public void evaluateEpisode(EpisodeAnalysis analysis) {
-		this.evaluateEpisode(analysis, false);
+	@Test
+	public void testBFS() {
+		State initialState = GridWorldDomain
+				.getOneAgentOneLocationState(domain);
+		GridWorldDomain.setAgent(initialState, 0, 0);
+		GridWorldDomain.setLocation(initialState, 0, 10, 10);
+
+		DeterministicPlanner planner = new BFS(this.domain, this.goalCondition,
+				this.hashingFactory);
+		planner.planFromState(initialState);
+		Policy p = new SDPlannerPolicy(planner);
+		EpisodeAnalysis analysis = p.evaluateBehavior(initialState, this.rf,
+				this.tf);
+		this.evaluateEpisode(analysis, true);
 	}
 
-	public void evaluateEpisode(EpisodeAnalysis analysis, Boolean expectOptimal) {
-		if (expectOptimal) {
-			Assert.assertEquals(this.gw.getHeight() + this.gw.getWidth() - 1,
-					analysis.stateSequence.size());
-			Assert.assertEquals(analysis.stateSequence.size() - 1,
-					analysis.actionSequence.size());
-			Assert.assertEquals(analysis.actionSequence.size(),
-					analysis.rewardSequence.size());
-			Assert.assertEquals(-analysis.actionSequence.size(),
-					analysis.getDiscountedReturn(1.0), TestPlanning.delta);
-		}
+	@Test
+	public void testDFS() {
+		State initialState = GridWorldDomain
+				.getOneAgentOneLocationState(domain);
+		GridWorldDomain.setAgent(initialState, 0, 0);
+		GridWorldDomain.setLocation(initialState, 0, 10, 10);
 
-		Assert.assertEquals(true, this.tf.isTerminal(analysis.stateSequence
-				.get(analysis.stateSequence.size() - 1)));
-		Assert.assertEquals(true, this.goalCondition
-				.satisfies(analysis.stateSequence.get(analysis.stateSequence
-						.size() - 1)));
-	}
-
-	@After
-	public void teardown() {
-
+		DeterministicPlanner planner = new DFS(this.domain, this.goalCondition,
+				this.hashingFactory, -1, true);
+		planner.planFromState(initialState);
+		Policy p = new SDPlannerPolicy(planner);
+		EpisodeAnalysis analysis = p.evaluateBehavior(initialState, this.rf,
+				this.tf);
+		this.evaluateEpisode(analysis);
 	}
 }

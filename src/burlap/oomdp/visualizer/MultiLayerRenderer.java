@@ -61,6 +61,29 @@ public class MultiLayerRenderer extends Canvas {
 	}
 
 	/**
+	 * Returns the background color of the renderer
+	 * 
+	 * @return the background color of the renderer
+	 */
+	public Color getBgColor() {
+		return bgColor;
+	}
+
+	/**
+	 * Initializes a new offscreen image and context
+	 */
+	protected void initializeOffscreen() {
+		if (this.bufferedGraphics == null
+				|| (this.lastRenderWidth != this.getWidth())
+				&& this.lastRenderHeight != this.getHeight()) {
+			this.offscreen = createImage(this.getWidth(), this.getHeight());
+			this.bufferedGraphics = (Graphics2D) offscreen.getGraphics();
+			this.lastRenderHeight = this.getHeight();
+			this.lastRenderWidth = this.getWidth();
+		}
+	}
+
+	/**
 	 * Inserts a render layer at the specified position
 	 * 
 	 * @param i
@@ -73,41 +96,12 @@ public class MultiLayerRenderer extends Canvas {
 	}
 
 	/**
-	 * Removes the render layer at teh specified position.
-	 * 
-	 * @param i
-	 *            the position of the render layer to remove
-	 */
-	public void removeRenderLayer(int i) {
-		this.renderLayers.remove(i);
-	}
-
-	/**
 	 * Returns the number of render layers
 	 * 
 	 * @return the number of render layers
 	 */
 	public int numRenderLayers() {
 		return this.renderLayers.size();
-	}
-
-	/**
-	 * Sets the color that will fill the canvas before rendering begins
-	 * 
-	 * @param col
-	 *            the background color
-	 */
-	public void setBGColor(Color col) {
-		this.bgColor = col;
-	}
-
-	/**
-	 * Returns the background color of the renderer
-	 * 
-	 * @return the background color of the renderer
-	 */
-	public Color getBgColor() {
-		return bgColor;
 	}
 
 	@Override
@@ -129,17 +123,23 @@ public class MultiLayerRenderer extends Canvas {
 	}
 
 	/**
-	 * Initializes a new offscreen image and context
+	 * Removes the render layer at teh specified position.
+	 * 
+	 * @param i
+	 *            the position of the render layer to remove
 	 */
-	protected void initializeOffscreen() {
-		if (this.bufferedGraphics == null
-				|| (this.lastRenderWidth != this.getWidth())
-				&& this.lastRenderHeight != this.getHeight()) {
-			this.offscreen = createImage(this.getWidth(), this.getHeight());
-			this.bufferedGraphics = (Graphics2D) offscreen.getGraphics();
-			this.lastRenderHeight = this.getHeight();
-			this.lastRenderWidth = this.getWidth();
-		}
+	public void removeRenderLayer(int i) {
+		this.renderLayers.remove(i);
+	}
+
+	/**
+	 * Sets the color that will fill the canvas before rendering begins
+	 * 
+	 * @param col
+	 *            the background color
+	 */
+	public void setBGColor(Color col) {
+		this.bgColor = col;
 	}
 
 }

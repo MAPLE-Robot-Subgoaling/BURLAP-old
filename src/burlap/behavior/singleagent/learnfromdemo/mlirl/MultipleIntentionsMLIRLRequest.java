@@ -1,13 +1,13 @@
 package burlap.behavior.singleagent.learnfromdemo.mlirl;
 
+import java.util.List;
+
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlannerFactory;
 import burlap.behavior.singleagent.planning.Planner;
-import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.core.Domain;
-
-import java.util.List;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * A problem request object for
@@ -31,38 +31,6 @@ public class MultipleIntentionsMLIRLRequest extends MLIRLRequest {
 	 * objects.
 	 */
 	protected QGradientPlannerFactory plannerFactory;
-
-	/**
-	 * Initializes
-	 * 
-	 * @param domain
-	 *            the domain of the problem
-	 * @param plannerFactory
-	 *            A
-	 *            {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlannerFactory}
-	 *            that produces
-	 *            {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlanner}
-	 *            objects.
-	 * @param expertEpisodes
-	 *            the expert trajectories
-	 * @param rf
-	 *            the
-	 *            {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF}
-	 *            model to use.
-	 * @param k
-	 *            the number of clusters
-	 */
-	public MultipleIntentionsMLIRLRequest(Domain domain,
-			QGradientPlannerFactory plannerFactory,
-			List<EpisodeAnalysis> expertEpisodes, DifferentiableRF rf, int k) {
-		super(domain, null, expertEpisodes, rf);
-		this.plannerFactory = plannerFactory;
-		this.k = k;
-		if (this.plannerFactory != null) {
-			this.setPlanner((Planner) plannerFactory
-					.generateDifferentiablePlannerForRequest(this));
-		}
-	}
 
 	/**
 	 * Initializes using a default
@@ -97,6 +65,51 @@ public class MultipleIntentionsMLIRLRequest extends MLIRLRequest {
 				.generateDifferentiablePlannerForRequest(this));
 	}
 
+	/**
+	 * Initializes
+	 * 
+	 * @param domain
+	 *            the domain of the problem
+	 * @param plannerFactory
+	 *            A
+	 *            {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlannerFactory}
+	 *            that produces
+	 *            {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlanner}
+	 *            objects.
+	 * @param expertEpisodes
+	 *            the expert trajectories
+	 * @param rf
+	 *            the
+	 *            {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF}
+	 *            model to use.
+	 * @param k
+	 *            the number of clusters
+	 */
+	public MultipleIntentionsMLIRLRequest(Domain domain,
+			QGradientPlannerFactory plannerFactory,
+			List<EpisodeAnalysis> expertEpisodes, DifferentiableRF rf, int k) {
+		super(domain, null, expertEpisodes, rf);
+		this.plannerFactory = plannerFactory;
+		this.k = k;
+		if (this.plannerFactory != null) {
+			this.setPlanner((Planner) plannerFactory
+					.generateDifferentiablePlannerForRequest(this));
+		}
+	}
+
+	/**
+	 * Returns the number of clusters.
+	 * 
+	 * @return the number of clusters.
+	 */
+	public int getK() {
+		return k;
+	}
+
+	public QGradientPlannerFactory getPlannerFactory() {
+		return plannerFactory;
+	}
+
 	@Override
 	public boolean isValid() {
 		if (!super.isValid()) {
@@ -116,15 +129,6 @@ public class MultipleIntentionsMLIRLRequest extends MLIRLRequest {
 	}
 
 	/**
-	 * Returns the number of clusters.
-	 * 
-	 * @return the number of clusters.
-	 */
-	public int getK() {
-		return k;
-	}
-
-	/**
 	 * Sets the number of clusters
 	 * 
 	 * @param k
@@ -132,10 +136,6 @@ public class MultipleIntentionsMLIRLRequest extends MLIRLRequest {
 	 */
 	public void setK(int k) {
 		this.k = k;
-	}
-
-	public QGradientPlannerFactory getPlannerFactory() {
-		return plannerFactory;
 	}
 
 	/**

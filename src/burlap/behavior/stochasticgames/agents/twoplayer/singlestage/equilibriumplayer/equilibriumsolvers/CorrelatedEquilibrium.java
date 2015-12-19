@@ -27,18 +27,6 @@ public class CorrelatedEquilibrium extends BimatrixEquilibriumSolver {
 	}
 
 	@Override
-	public double[] computeRowStrategy(double[][] rowPayoff,
-			double[][] colPayoff) {
-
-		double[][] jointStrategy = CorrelatedEquilibriumSolver
-				.getCorrelatedEQJointStrategy(this.objective, rowPayoff,
-						colPayoff);
-		return GeneralBimatrixSolverTools
-				.marginalizeRowPlayerStrategy(jointStrategy);
-
-	}
-
-	@Override
 	public double[] computeColStrategy(double[][] rowPayoff,
 			double[][] colPayoff) {
 
@@ -62,6 +50,18 @@ public class CorrelatedEquilibrium extends BimatrixEquilibriumSolver {
 			return GeneralBimatrixSolverTools
 					.marginalizeRowPlayerStrategy(jointStrategy);
 		}
+
+	}
+
+	@Override
+	public double[] computeRowStrategy(double[][] rowPayoff,
+			double[][] colPayoff) {
+
+		double[][] jointStrategy = CorrelatedEquilibriumSolver
+				.getCorrelatedEQJointStrategy(this.objective, rowPayoff,
+						colPayoff);
+		return GeneralBimatrixSolverTools
+				.marginalizeRowPlayerStrategy(jointStrategy);
 
 	}
 

@@ -1,7 +1,7 @@
 package burlap.behavior.singleagent.learnfromdemo.mlirl.differentiableplanners.diffvinit;
 
-import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF;
+import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.states.State;
 
@@ -42,23 +42,23 @@ public class VanillaDiffVinit implements DifferentiableVInit {
 	}
 
 	@Override
-	public double[] getVGradient(State s) {
-		return new double[rf.getParameterDimension()];
-	}
-
-	@Override
 	public double[] getQGradient(State s, AbstractGroundedAction ga) {
 		return new double[rf.getParameterDimension()];
 	}
 
 	@Override
-	public double value(State s) {
-		return this.vinit.value(s);
+	public double[] getVGradient(State s) {
+		return new double[rf.getParameterDimension()];
 	}
 
 	@Override
 	public double qValue(State s, AbstractGroundedAction a) {
 		return this.vinit.qValue(s, a);
+	}
+
+	@Override
+	public double value(State s) {
+		return this.vinit.value(s);
 	}
 
 }

@@ -10,6 +10,40 @@ package burlap.behavior.stochasticgames.solvers;
 public class GeneralBimatrixSolverTools {
 
 	/**
+	 * Returns a double array of a given dimension filled with the same value.
+	 * 
+	 * @param constant
+	 *            the constant value with which the double array is filled.
+	 * @param dimension
+	 *            the dimension of the double array.
+	 * @return a double array of size dimension filled with the value constant.
+	 */
+	public static double[] constantDoubleArray(double constant, int dimension) {
+		double[] a = new double[dimension];
+		for (int i = 0; i < dimension; i++) {
+			a[i] = constant;
+		}
+		return a;
+	}
+
+	/**
+	 * Returns the dot product of two vectors
+	 * 
+	 * @param a
+	 *            first vector
+	 * @param b
+	 *            second vector
+	 * @return the dot product
+	 */
+	public static double dot(double[] a, double[] b) {
+		double sum = 0.;
+		for (int i = 0; i < a.length; i++) {
+			sum += a[i] * b[i];
+		}
+		return sum;
+	}
+
+	/**
 	 * Computes the expected payoff for each player in a bimatrix game according
 	 * to their strategies.
 	 * 
@@ -55,97 +89,21 @@ public class GeneralBimatrixSolverTools {
 	}
 
 	/**
-	 * Computes the joint action probabilities accroding to each player's
-	 * strategy and returns it as a matrix.
+	 * Returns a negated version of the input array in a new array object. That
+	 * is, a new double array (b) is created with b[i] value set to -1 * a[i].
 	 * 
-	 * @param rowPlayerStrategy
-	 *            the strategy of the player whose actions will be represented
-	 *            by the rows of the returned matrix.
-	 * @param colPlayerStrategy
-	 *            the strategy of the player whose actions will represented by
-	 *            the columns of the returned matrix.
-	 * @return the joint action probabilities in a matrix. m[i][j] represents
-	 *         the probability of the row player selecting action i and the
-	 *         column player selecting action j.
+	 * @param a
+	 *            the input double array
+	 * @return a negated version of the input array
 	 */
-	public static double[][] jointActionProbabilities(
-			double[] rowPlayerStrategy, double[] colPlayerStrategy) {
+	public static double[] getNegatedArray(double[] a) {
+		double[] b = new double[a.length];
 
-		double[][] joint = new double[rowPlayerStrategy.length][colPlayerStrategy.length];
-
-		for (int i = 0; i < rowPlayerStrategy.length; i++) {
-			for (int j = 0; j < colPlayerStrategy.length; j++) {
-				joint[i][j] = rowPlayerStrategy[i] * colPlayerStrategy[j];
-			}
+		for (int i = 0; i < a.length; i++) {
+			b[i] = -a[i];
 		}
 
-		return joint;
-
-	}
-
-	/**
-	 * Returns the row player's strategy by marginalizing it out from a joint
-	 * action probability distribution represented as a matrix
-	 * 
-	 * @param jointActionProbabilities
-	 *            a matrix of 2-player joint aciton probability distribution
-	 * @return the row player's strategy
-	 */
-	public static double[] marginalizeRowPlayerStrategy(
-			double[][] jointActionProbabilities) {
-
-		double[] strategy = new double[jointActionProbabilities.length];
-
-		for (int i = 0; i < jointActionProbabilities.length; i++) {
-			double sum = 0.;
-			for (int j = 0; j < jointActionProbabilities[i].length; j++) {
-				sum += jointActionProbabilities[i][j];
-			}
-			strategy[i] = sum;
-		}
-
-		return strategy;
-	}
-
-	/**
-	 * Returns the column player's strategy by marginalizing it out from a joint
-	 * action probability distribution represented as a matrix
-	 * 
-	 * @param jointActionProbabilities
-	 *            a matrix of 2-player joint aciton probability distribution
-	 * @return the column player's strategy
-	 */
-	public static double[] marginalizeColPlayerStrategy(
-			double[][] jointActionProbabilities) {
-
-		double[] strategy = new double[jointActionProbabilities[0].length];
-
-		for (int j = 0; j < jointActionProbabilities[0].length; j++) {
-			double sum = 0.;
-			for (int i = 0; i < jointActionProbabilities.length; i++) {
-				sum += jointActionProbabilities[i][j];
-			}
-			strategy[j] = sum;
-		}
-
-		return strategy;
-	}
-
-	/**
-	 * Returns a double array of a given dimension filled with the same value.
-	 * 
-	 * @param constant
-	 *            the constant value with which the double array is filled.
-	 * @param dimension
-	 *            the dimension of the double array.
-	 * @return a double array of size dimension filled with the value constant.
-	 */
-	public static double[] constantDoubleArray(double constant, int dimension) {
-		double[] a = new double[dimension];
-		for (int i = 0; i < dimension; i++) {
-			a[i] = constant;
-		}
-		return a;
+		return b;
 	}
 
 	/**
@@ -167,24 +125,6 @@ public class GeneralBimatrixSolverTools {
 		}
 
 		return m2;
-	}
-
-	/**
-	 * Returns a negated version of the input array in a new array object. That
-	 * is, a new double array (b) is created with b[i] value set to -1 * a[i].
-	 * 
-	 * @param a
-	 *            the input double array
-	 * @return a negated version of the input array
-	 */
-	public static double[] getNegatedArray(double[] a) {
-		double[] b = new double[a.length];
-
-		for (int i = 0; i < a.length; i++) {
-			b[i] = -a[i];
-		}
-
-		return b;
 	}
 
 	/**
@@ -223,6 +163,83 @@ public class GeneralBimatrixSolverTools {
 	}
 
 	/**
+	 * Computes the joint action probabilities accroding to each player's
+	 * strategy and returns it as a matrix.
+	 * 
+	 * @param rowPlayerStrategy
+	 *            the strategy of the player whose actions will be represented
+	 *            by the rows of the returned matrix.
+	 * @param colPlayerStrategy
+	 *            the strategy of the player whose actions will represented by
+	 *            the columns of the returned matrix.
+	 * @return the joint action probabilities in a matrix. m[i][j] represents
+	 *         the probability of the row player selecting action i and the
+	 *         column player selecting action j.
+	 */
+	public static double[][] jointActionProbabilities(
+			double[] rowPlayerStrategy, double[] colPlayerStrategy) {
+
+		double[][] joint = new double[rowPlayerStrategy.length][colPlayerStrategy.length];
+
+		for (int i = 0; i < rowPlayerStrategy.length; i++) {
+			for (int j = 0; j < colPlayerStrategy.length; j++) {
+				joint[i][j] = rowPlayerStrategy[i] * colPlayerStrategy[j];
+			}
+		}
+
+		return joint;
+
+	}
+
+	/**
+	 * Returns the column player's strategy by marginalizing it out from a joint
+	 * action probability distribution represented as a matrix
+	 * 
+	 * @param jointActionProbabilities
+	 *            a matrix of 2-player joint aciton probability distribution
+	 * @return the column player's strategy
+	 */
+	public static double[] marginalizeColPlayerStrategy(
+			double[][] jointActionProbabilities) {
+
+		double[] strategy = new double[jointActionProbabilities[0].length];
+
+		for (int j = 0; j < jointActionProbabilities[0].length; j++) {
+			double sum = 0.;
+			for (int i = 0; i < jointActionProbabilities.length; i++) {
+				sum += jointActionProbabilities[i][j];
+			}
+			strategy[j] = sum;
+		}
+
+		return strategy;
+	}
+
+	/**
+	 * Returns the row player's strategy by marginalizing it out from a joint
+	 * action probability distribution represented as a matrix
+	 * 
+	 * @param jointActionProbabilities
+	 *            a matrix of 2-player joint aciton probability distribution
+	 * @return the row player's strategy
+	 */
+	public static double[] marginalizeRowPlayerStrategy(
+			double[][] jointActionProbabilities) {
+
+		double[] strategy = new double[jointActionProbabilities.length];
+
+		for (int i = 0; i < jointActionProbabilities.length; i++) {
+			double sum = 0.;
+			for (int j = 0; j < jointActionProbabilities[i].length; j++) {
+				sum += jointActionProbabilities[i][j];
+			}
+			strategy[i] = sum;
+		}
+
+		return strategy;
+	}
+
+	/**
 	 * Creates and returns a new matrix that is a transpose of m.
 	 * 
 	 * @param m
@@ -239,23 +256,6 @@ public class GeneralBimatrixSolverTools {
 		}
 
 		return m2;
-	}
-
-	/**
-	 * Returns the dot product of two vectors
-	 * 
-	 * @param a
-	 *            first vector
-	 * @param b
-	 *            second vector
-	 * @return the dot product
-	 */
-	public static double dot(double[] a, double[] b) {
-		double sum = 0.;
-		for (int i = 0; i < a.length; i++) {
-			sum += a[i] * b[i];
-		}
-		return sum;
 	}
 
 	/**

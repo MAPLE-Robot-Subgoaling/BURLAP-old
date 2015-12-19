@@ -20,21 +20,6 @@ import burlap.oomdp.core.states.State;
 public interface ValueFunctionInitialization extends ValueFunction {
 
 	/**
-	 * Returns the initialization value of the Q-value function for a given
-	 * state and action pair.
-	 * 
-	 * @param s
-	 *            the state for which to get the initial value of the Q-value
-	 *            function.
-	 * @param a
-	 *            the action for which to get the initial value of the Q-value
-	 *            function.
-	 * @return the initialization value of the Q-value function for a given
-	 *         state and action pair.
-	 */
-	public double qValue(State s, AbstractGroundedAction a);
-
-	/**
 	 * A {@link ValueFunctionInitialization} implementation that always returns
 	 * a constant value.
 	 * 
@@ -68,15 +53,30 @@ public interface ValueFunctionInitialization extends ValueFunction {
 		}
 
 		@Override
-		public double value(State s) {
-			return value;
-		}
-
-		@Override
 		public double qValue(State s, AbstractGroundedAction a) {
 			return value;
 		}
 
+		@Override
+		public double value(State s) {
+			return value;
+		}
+
 	}
+
+	/**
+	 * Returns the initialization value of the Q-value function for a given
+	 * state and action pair.
+	 * 
+	 * @param s
+	 *            the state for which to get the initial value of the Q-value
+	 *            function.
+	 * @param a
+	 *            the action for which to get the initial value of the Q-value
+	 *            function.
+	 * @return the initialization value of the Q-value function for a given
+	 *         state and action pair.
+	 */
+	public double qValue(State s, AbstractGroundedAction a);
 
 }

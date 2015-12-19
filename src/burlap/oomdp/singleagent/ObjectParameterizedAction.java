@@ -1,13 +1,12 @@
 package burlap.oomdp.singleagent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import burlap.oomdp.core.AbstractObjectParameterizedGroundedAction;
-import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.common.SimpleGroundedAction;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * If your {@link burlap.oomdp.singleagent.Action} implementation is
@@ -60,6 +59,101 @@ import java.util.List;
  * @author James MacGlashan.
  */
 public abstract class ObjectParameterizedAction extends Action {
+
+	public static class ObjectParameterizedGroundedAction extends
+			GroundedAction implements AbstractObjectParameterizedGroundedAction {
+
+		public String[] params;
+
+		public ObjectParameterizedGroundedAction(Action action) {
+			super(action);
+		}
+
+		public ObjectParameterizedGroundedAction(Action action, String[] params) {
+			super(action);
+			this.params = params;
+		}
+
+		@Override
+		public boolean actionDomainIsObjectIdentifierIndependent() {
+			return ((ObjectParameterizedAction) this.action)
+					.parametersAreObjectIdentifierIndependent();
+		}
+
+		@Override
+		public GroundedAction copy() {
+			return new ObjectParameterizedGroundedAction(this.action,
+					params.clone());
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			if (this == other) {
+				return true;
+			}
+
+			if (!(other instanceof ObjectParameterizedGroundedAction)) {
+				return false;
+			}
+
+			ObjectParameterizedGroundedAction go = (ObjectParameterizedGroundedAction) other;
+
+			if (!this.action.getName().equals(go.action.getName())) {
+				return false;
+			}
+
+			String[] pog = ((ObjectParameterizedAction) this.action)
+					.getParameterOrderGroups();
+
+			for (int i = 0; i < this.params.length; i++) {
+				String p = this.params[i];
+				String orderGroup = pog[i];
+				boolean foundMatch = false;
+				for (int j = 0; j < go.params.length; j++) {
+					if (p.equals(go.params[j]) && orderGroup.equals(pog[j])) {
+						foundMatch = true;
+						break;
+					}
+				}
+				if (!foundMatch) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		@Override
+		public String[] getObjectParameters() {
+			return params;
+		}
+
+		@Override
+		public String[] getParametersAsString() {
+			return this.params;
+		}
+
+		@Override
+		public void initParamsWithStringRep(String[] params) {
+			this.params = params;
+		}
+
+		@Override
+		public void setObjectParameters(String[] params) {
+			this.params = params;
+		}
+
+		@Override
+		public String toString() {
+			StringBuilder buf = new StringBuilder();
+			buf.append(action.getName());
+			for (int i = 0; i < params.length; i++) {
+				buf.append(" ").append(params[i]);
+			}
+
+			return buf.toString();
+		}
+	}
 
 	/**
 	 * The object classes each parameter of this action can accept; empty list
@@ -126,42 +220,6 @@ public abstract class ObjectParameterizedAction extends Action {
 		this.parameterOrderGroup = parameterOrderGroups;
 	}
 
-	/**
-	 * Returns a String array of the names of of the object classes to which
-	 * bound parameters must belong
-	 * 
-	 * @return a String array of the names of of the object classes to which
-	 *         bound parameters must belong. The array is empty if this action
-	 *         does not require parameters.
-	 */
-	public final String[] getParameterClasses() {
-		return parameterClasses;
-	}
-
-	/**
-	 * Returns the a String array specifying the parameter order group of each
-	 * parameter.
-	 * 
-	 * @return the a String array specifying the parameter order group of each
-	 *         parameter. The array is empty if this action does not require
-	 *         parameters.
-	 */
-	public final String[] getParameterOrderGroups() {
-		return parameterOrderGroup;
-	}
-
-	public abstract boolean parametersAreObjectIdentifierIndependent();
-
-	@Override
-	public boolean isParameterized() {
-		return true;
-	}
-
-	@Override
-	public GroundedAction getAssociatedGroundedAction() {
-		return new ObjectParameterizedGroundedAction(this);
-	}
-
 	@Override
 	public List<GroundedAction> getAllApplicableGroundedActions(State s) {
 
@@ -195,99 +253,40 @@ public abstract class ObjectParameterizedAction extends Action {
 
 	}
 
-	public static class ObjectParameterizedGroundedAction extends
-			GroundedAction implements AbstractObjectParameterizedGroundedAction {
-
-		public String[] params;
-
-		public ObjectParameterizedGroundedAction(Action action) {
-			super(action);
-		}
-
-		public ObjectParameterizedGroundedAction(Action action, String[] params) {
-			super(action);
-			this.params = params;
-		}
-
-		@Override
-		public String[] getObjectParameters() {
-			return params;
-		}
-
-		@Override
-		public void initParamsWithStringRep(String[] params) {
-			this.params = params;
-		}
-
-		@Override
-		public String[] getParametersAsString() {
-			return this.params;
-		}
-
-		@Override
-		public void setObjectParameters(String[] params) {
-			this.params = params;
-		}
-
-		@Override
-		public boolean actionDomainIsObjectIdentifierIndependent() {
-			return ((ObjectParameterizedAction) this.action)
-					.parametersAreObjectIdentifierIndependent();
-		}
-
-		@Override
-		public String toString() {
-			StringBuilder buf = new StringBuilder();
-			buf.append(action.getName());
-			for (int i = 0; i < params.length; i++) {
-				buf.append(" ").append(params[i]);
-			}
-
-			return buf.toString();
-		}
-
-		@Override
-		public boolean equals(Object other) {
-			if (this == other) {
-				return true;
-			}
-
-			if (!(other instanceof ObjectParameterizedGroundedAction)) {
-				return false;
-			}
-
-			ObjectParameterizedGroundedAction go = (ObjectParameterizedGroundedAction) other;
-
-			if (!this.action.getName().equals(go.action.getName())) {
-				return false;
-			}
-
-			String[] pog = ((ObjectParameterizedAction) this.action)
-					.getParameterOrderGroups();
-
-			for (int i = 0; i < this.params.length; i++) {
-				String p = this.params[i];
-				String orderGroup = pog[i];
-				boolean foundMatch = false;
-				for (int j = 0; j < go.params.length; j++) {
-					if (p.equals(go.params[j]) && orderGroup.equals(pog[j])) {
-						foundMatch = true;
-						break;
-					}
-				}
-				if (!foundMatch) {
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		@Override
-		public GroundedAction copy() {
-			return new ObjectParameterizedGroundedAction(this.action,
-					params.clone());
-		}
+	@Override
+	public GroundedAction getAssociatedGroundedAction() {
+		return new ObjectParameterizedGroundedAction(this);
 	}
+
+	/**
+	 * Returns a String array of the names of of the object classes to which
+	 * bound parameters must belong
+	 * 
+	 * @return a String array of the names of of the object classes to which
+	 *         bound parameters must belong. The array is empty if this action
+	 *         does not require parameters.
+	 */
+	public final String[] getParameterClasses() {
+		return parameterClasses;
+	}
+
+	/**
+	 * Returns the a String array specifying the parameter order group of each
+	 * parameter.
+	 * 
+	 * @return the a String array specifying the parameter order group of each
+	 *         parameter. The array is empty if this action does not require
+	 *         parameters.
+	 */
+	public final String[] getParameterOrderGroups() {
+		return parameterOrderGroup;
+	}
+
+	@Override
+	public boolean isParameterized() {
+		return true;
+	}
+
+	public abstract boolean parametersAreObjectIdentifierIndependent();
 
 }

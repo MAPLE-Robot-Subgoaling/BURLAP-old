@@ -4,22 +4,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy;
-import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
 import burlap.behavior.singleagent.planning.deterministic.DeterministicPlanner;
+import burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy;
 import burlap.behavior.singleagent.planning.deterministic.SearchNode;
 import burlap.behavior.singleagent.planning.deterministic.informed.Heuristic;
 import burlap.behavior.singleagent.planning.deterministic.informed.PrioritizedSearchNode;
 import burlap.behavior.singleagent.planning.deterministic.informed.PrioritizedSearchNode.PSNComparator;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.debugtools.DPrint;
 import burlap.oomdp.auxiliary.common.NullTermination;
+import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * Iteratively deepening A* implementation.
@@ -69,66 +69,6 @@ public class IDAStar extends DeterministicPlanner {
 
 		this.heuristic = heuristic;
 		nodeComparator = new PrioritizedSearchNode.PSNComparator();
-
-	}
-
-	/**
-	 * Plans and returns a
-	 * {@link burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy}
-	 * . If a {@link burlap.oomdp.core.states.State} is not in the solution path
-	 * of this planner, then the
-	 * {@link burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy}
-	 * will throw a runtime exception. If you want a policy that will
-	 * dynamically replan for unknown states, you should create your own
-	 * {@link burlap.behavior.singleagent.planning.deterministic.DDPlannerPolicy}
-	 * .
-	 * 
-	 * @param initialState
-	 *            the initial state of the planning problem
-	 * @return a
-	 *         {@link burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy}
-	 *         .
-	 */
-	@Override
-	public SDPlannerPolicy planFromState(State initialState) {
-
-		HashableState sih = this.stateHash(initialState);
-
-		if (mapToStateIndex.containsKey(sih)) {
-			return new SDPlannerPolicy(this); // no need to plan since this is
-												// already solved
-		}
-
-		PrioritizedSearchNode initialPSN = new PrioritizedSearchNode(sih,
-				heuristic.h(initialState));
-		double nextMinR = initialPSN.priority;
-
-		PrioritizedSearchNode solutionNode = null;
-		while (solutionNode == null) {
-
-			PrioritizedSearchNode cand = this.FLimtedDFS(initialPSN, nextMinR,
-					0.);
-			if (cand == null) {
-				return new SDPlannerPolicy(this); // FAIL CONDITION, EVERY PATH
-													// LEADS TO A DEAD END
-			}
-
-			// was the goal found within the limit?
-			if (this.planEndNode(cand) && cand.priority >= nextMinR) {
-				solutionNode = cand;
-			}
-			nextMinR = cand.priority;
-
-			if (solutionNode == null) {
-				DPrint.cl(debugCode, "Increase depth to F: " + nextMinR);
-			}
-
-		}
-
-		// search to goal complete now follow back pointers to set policy
-		this.encodePlanIntoPolicy(solutionNode);
-
-		return new SDPlannerPolicy(this);
 
 	}
 
@@ -218,23 +158,6 @@ public class IDAStar extends DeterministicPlanner {
 	}
 
 	/**
-	 * Returns true if the search node wraps a goal state.
-	 * 
-	 * @param node
-	 *            the node to check
-	 * @return true if the search node wraps a goal state; false otherwise.
-	 */
-	protected boolean planEndNode(SearchNode node) {
-
-		if (gc.satisfies(node.s.s)) {
-			return true;
-		}
-
-		return false;
-
-	}
-
-	/**
 	 * Returns true if the search node has not be visited previously on the
 	 * current search path.
 	 * 
@@ -255,6 +178,83 @@ public class IDAStar extends DeterministicPlanner {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Returns true if the search node wraps a goal state.
+	 * 
+	 * @param node
+	 *            the node to check
+	 * @return true if the search node wraps a goal state; false otherwise.
+	 */
+	protected boolean planEndNode(SearchNode node) {
+
+		if (gc.satisfies(node.s.s)) {
+			return true;
+		}
+
+		return false;
+
+	}
+
+	/**
+	 * Plans and returns a
+	 * {@link burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy}
+	 * . If a {@link burlap.oomdp.core.states.State} is not in the solution path
+	 * of this planner, then the
+	 * {@link burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy}
+	 * will throw a runtime exception. If you want a policy that will
+	 * dynamically replan for unknown states, you should create your own
+	 * {@link burlap.behavior.singleagent.planning.deterministic.DDPlannerPolicy}
+	 * .
+	 * 
+	 * @param initialState
+	 *            the initial state of the planning problem
+	 * @return a
+	 *         {@link burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy}
+	 *         .
+	 */
+	@Override
+	public SDPlannerPolicy planFromState(State initialState) {
+
+		HashableState sih = this.stateHash(initialState);
+
+		if (mapToStateIndex.containsKey(sih)) {
+			return new SDPlannerPolicy(this); // no need to plan since this is
+												// already solved
+		}
+
+		PrioritizedSearchNode initialPSN = new PrioritizedSearchNode(sih,
+				heuristic.h(initialState));
+		double nextMinR = initialPSN.priority;
+
+		PrioritizedSearchNode solutionNode = null;
+		while (solutionNode == null) {
+
+			PrioritizedSearchNode cand = this.FLimtedDFS(initialPSN, nextMinR,
+					0.);
+			if (cand == null) {
+				return new SDPlannerPolicy(this); // FAIL CONDITION, EVERY PATH
+													// LEADS TO A DEAD END
+			}
+
+			// was the goal found within the limit?
+			if (this.planEndNode(cand) && cand.priority >= nextMinR) {
+				solutionNode = cand;
+			}
+			nextMinR = cand.priority;
+
+			if (solutionNode == null) {
+				DPrint.cl(debugCode, "Increase depth to F: " + nextMinR);
+			}
+
+		}
+
+		// search to goal complete now follow back pointers to set policy
+		this.encodePlanIntoPolicy(solutionNode);
+
+		return new SDPlannerPolicy(this);
+
 	}
 
 }

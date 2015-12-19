@@ -72,6 +72,39 @@ import burlap.oomdp.singleagent.GroundedAction;
 public abstract class ObservationFunction {
 
 	/**
+	 * A class for associating a probability with an observation. The class is
+	 * pair consisting of a {@link burlap.oomdp.core.states.State} for the
+	 * observation and a double for the probability.
+	 */
+	public class ObservationProbability {
+
+		/**
+		 * The observation represented with a
+		 * {@link burlap.oomdp.core.states.State} object.
+		 */
+		public State observation;
+
+		/**
+		 * The probability of the observation
+		 */
+		public double p;
+
+		/**
+		 * Initializes.
+		 * 
+		 * @param observation
+		 *            the observation represented with a
+		 *            {@link burlap.oomdp.core.states.State} object.
+		 * @param p
+		 *            the probability of the observation
+		 */
+		public ObservationProbability(State observation, double p) {
+			this.observation = observation;
+			this.p = p;
+		}
+	}
+
+	/**
 	 * The POMDP domain with which this
 	 * {@link burlap.oomdp.singleagent.pomdp.ObservationFunction} is associated.
 	 */
@@ -115,23 +148,6 @@ public abstract class ObservationFunction {
 	public abstract List<State> getAllPossibleObservations();
 
 	/**
-	 * Returns the probability that an observation will be observed conditioned
-	 * on the MDP state and previous action taken that led to the state.
-	 * 
-	 * @param observation
-	 *            the observation, represented by a
-	 *            {@link burlap.oomdp.core.states.State}
-	 * @param state
-	 *            The true MDP state that generated the observation.
-	 * @param action
-	 *            the action that led to the MDP state and which generated the
-	 *            observation
-	 * @return the probability of observing the observation.
-	 */
-	public abstract double getObservationProbability(State observation,
-			State state, GroundedAction action);
-
-	/**
 	 * Returns the observation probability mass/density function for all
 	 * observations that have non-zero mass/density conditioned on the true MDP
 	 * state and previous action taken that led to the state. The function is
@@ -153,19 +169,6 @@ public abstract class ObservationFunction {
 	 */
 	public abstract List<ObservationProbability> getObservationProbabilities(
 			State state, GroundedAction action);
-
-	/**
-	 * Samples an observation given the true MDP state and action taken in the
-	 * previous step that led to the MDP state.
-	 * 
-	 * @param state
-	 *            the true MDP state
-	 * @param action
-	 *            the action that led to the MDP state
-	 * @return an observation represented with a
-	 *         {@link burlap.oomdp.core.states.State}.
-	 */
-	public abstract State sampleObservation(State state, GroundedAction action);
 
 	/**
 	 * A superclass method for easily implementing the
@@ -208,6 +211,36 @@ public abstract class ObservationFunction {
 	}
 
 	/**
+	 * Returns the probability that an observation will be observed conditioned
+	 * on the MDP state and previous action taken that led to the state.
+	 * 
+	 * @param observation
+	 *            the observation, represented by a
+	 *            {@link burlap.oomdp.core.states.State}
+	 * @param state
+	 *            The true MDP state that generated the observation.
+	 * @param action
+	 *            the action that led to the MDP state and which generated the
+	 *            observation
+	 * @return the probability of observing the observation.
+	 */
+	public abstract double getObservationProbability(State observation,
+			State state, GroundedAction action);
+
+	/**
+	 * Samples an observation given the true MDP state and action taken in the
+	 * previous step that led to the MDP state.
+	 * 
+	 * @param state
+	 *            the true MDP state
+	 * @param action
+	 *            the action that led to the MDP state
+	 * @return an observation represented with a
+	 *         {@link burlap.oomdp.core.states.State}.
+	 */
+	public abstract State sampleObservation(State state, GroundedAction action);
+
+	/**
 	 * A superclass method for easily implementing the
 	 * {@link #sampleObservation(burlap.oomdp.core.states.State, burlap.oomdp.singleagent.GroundedAction)}
 	 * method that samples an observation by first getting all non-zero
@@ -243,39 +276,6 @@ public abstract class ObservationFunction {
 		throw new RuntimeException(
 				"Could not sample observaiton because observation probabilities did not sum to 1; they summed to "
 						+ sumProb);
-	}
-
-	/**
-	 * A class for associating a probability with an observation. The class is
-	 * pair consisting of a {@link burlap.oomdp.core.states.State} for the
-	 * observation and a double for the probability.
-	 */
-	public class ObservationProbability {
-
-		/**
-		 * The observation represented with a
-		 * {@link burlap.oomdp.core.states.State} object.
-		 */
-		public State observation;
-
-		/**
-		 * The probability of the observation
-		 */
-		public double p;
-
-		/**
-		 * Initializes.
-		 * 
-		 * @param observation
-		 *            the observation represented with a
-		 *            {@link burlap.oomdp.core.states.State} object.
-		 * @param p
-		 *            the probability of the observation
-		 */
-		public ObservationProbability(State observation, double p) {
-			this.observation = observation;
-			this.p = p;
-		}
 	}
 
 }

@@ -20,15 +20,12 @@ import javax.swing.event.ListSelectionListener;
 
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.datastructures.AlphanumericSorting;
-import burlap.oomdp.legacy.StateParser;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.GroundedProp;
 import burlap.oomdp.core.PropositionalFunction;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.states.MutableState;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
-import burlap.oomdp.stateserialization.SerializableStateFactory;
-import burlap.oomdp.stateserialization.simple.SimpleSerializableStateFactory;
 import burlap.oomdp.visualizer.Visualizer;
 
 /**
@@ -74,45 +71,6 @@ public class EpisodeSequenceVisualizer extends JFrame {
 	protected boolean alreadyInitedGUI = false;
 
 	/**
-	 * Initializes the EpisodeSequenceVisualizer. By default the state
-	 * visualizer will be set to the size 800x800 pixels.
-	 * 
-	 * @param v
-	 *            the visualizer used to render states
-	 * @param d
-	 *            the domain in which the episodes took place
-	 * @param experimentDirectory
-	 *            the path to the directory containing the episode files.
-	 */
-	public EpisodeSequenceVisualizer(Visualizer v, Domain d,
-			String experimentDirectory) {
-
-		this.init(v, d, experimentDirectory, 800, 800);
-
-	}
-
-	/**
-	 * Initializes the EpisodeSequenceVisualizer.
-	 * 
-	 * @param v
-	 *            the visualizer used to render states
-	 * @param d
-	 *            the domain in which the episodes took place
-	 * @param experimentDirectory
-	 *            the path to the directory containing the episode files.
-	 * @param w
-	 *            the width of the state visualizer canvas
-	 * @param h
-	 *            the height of the state visualizer canvas
-	 */
-	public EpisodeSequenceVisualizer(Visualizer v, Domain d,
-			String experimentDirectory, int w, int h) {
-
-		this.init(v, d, experimentDirectory, w, h);
-
-	}
-
-	/**
 	 * Initializes the EpisodeSequenceVisualizer with a programatically supplied
 	 * list of {@link burlap.behavior.singleagent.EpisodeAnalysis} objects to
 	 * view. By default the state visualizer will be set to the size 800x800
@@ -152,7 +110,25 @@ public class EpisodeSequenceVisualizer extends JFrame {
 	}
 
 	/**
-	 * Initializes the EpisodeSequenceVisualizer with episodes read from disk.
+	 * Initializes the EpisodeSequenceVisualizer. By default the state
+	 * visualizer will be set to the size 800x800 pixels.
+	 * 
+	 * @param v
+	 *            the visualizer used to render states
+	 * @param d
+	 *            the domain in which the episodes took place
+	 * @param experimentDirectory
+	 *            the path to the directory containing the episode files.
+	 */
+	public EpisodeSequenceVisualizer(Visualizer v, Domain d,
+			String experimentDirectory) {
+
+		this.init(v, d, experimentDirectory, 800, 800);
+
+	}
+
+	/**
+	 * Initializes the EpisodeSequenceVisualizer.
 	 * 
 	 * @param v
 	 *            the visualizer used to render states
@@ -165,185 +141,10 @@ public class EpisodeSequenceVisualizer extends JFrame {
 	 * @param h
 	 *            the height of the state visualizer canvas
 	 */
-	public void init(Visualizer v, Domain d, String experimentDirectory, int w,
-			int h) {
+	public EpisodeSequenceVisualizer(Visualizer v, Domain d,
+			String experimentDirectory, int w, int h) {
 
-		painter = v;
-		domain = d;
-
-		// get rid of trailing / and pull out the file paths
-		if (experimentDirectory.charAt(experimentDirectory.length() - 1) == '/') {
-			experimentDirectory = experimentDirectory.substring(0,
-					experimentDirectory.length());
-		}
-		this.parseEpisodeFiles(experimentDirectory);
-
-		cWidth = w;
-		cHeight = h;
-
-		this.initGUI();
-
-	}
-
-	/**
-	 * Initializes the EpisodeSequenceVisualizer with programatically supplied
-	 * list of {@link burlap.behavior.singleagent.EpisodeAnalysis} objects to
-	 * view.
-	 * 
-	 * @param v
-	 *            the visualizer used to render states
-	 * @param d
-	 *            the domain in which the episodes took place
-	 * @param episodes
-	 *            the episodes to view
-	 * @param w
-	 *            the width of the state visualizer canvas
-	 * @param h
-	 *            the height of the state visualizer canvas
-	 */
-	public void initWithDirectEpisodes(Visualizer v, Domain d,
-			List<EpisodeAnalysis> episodes, int w, int h) {
-
-		painter = v;
-		domain = d;
-
-		this.directEpisodes = episodes;
-		this.episodesListModel = new DefaultListModel();
-		int c = 0;
-		for (EpisodeAnalysis ea : this.directEpisodes) {
-			episodesListModel.addElement("episode_" + c);
-			c++;
-		}
-
-		cWidth = w;
-		cHeight = h;
-
-		this.initGUI();
-
-	}
-
-	/**
-	 * Initializes the GUI and presents it to the user.
-	 */
-	public void initGUI() {
-
-		if (this.alreadyInitedGUI) {
-			return;
-		}
-
-		this.alreadyInitedGUI = true;
-
-		// set viewer components
-		propViewer = new TextArea();
-		propViewer.setEditable(false);
-		painter.setPreferredSize(new Dimension(cWidth, cHeight));
-		propViewer.setPreferredSize(new Dimension(cWidth, 100));
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-		getContentPane().add(painter, BorderLayout.CENTER);
-		getContentPane().add(propViewer, BorderLayout.SOUTH);
-
-		// set episode component
-		episodeList = new JList(episodesListModel);
-
-		episodeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		episodeList.setLayoutOrientation(JList.VERTICAL);
-		episodeList.setVisibleRowCount(-1);
-		episodeList.addListSelectionListener(new ListSelectionListener() {
-
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				handleEpisodeSelection(e);
-			}
-		});
-
-		episodeScroller = new JScrollPane(episodeList);
-		episodeScroller.setPreferredSize(new Dimension(100, 600));
-
-		// set iteration component
-		iterationListModel = new DefaultListModel();
-		iterationList = new JList(iterationListModel);
-
-		iterationList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		iterationList.setLayoutOrientation(JList.VERTICAL);
-		iterationList.setVisibleRowCount(-1);
-		iterationList.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e) {
-				handleIterationSelection(e);
-			}
-		});
-
-		iterationScroller = new JScrollPane(iterationList);
-		iterationScroller.setPreferredSize(new Dimension(150, 600));
-
-		// add episode-iteration lists to window
-		controlContainer = new Container();
-		controlContainer.setLayout(new BorderLayout());
-
-		controlContainer.add(episodeScroller, BorderLayout.WEST);
-		controlContainer.add(iterationScroller, BorderLayout.EAST);
-
-		/*
-		 * //add render movie button JButton renderButton = new
-		 * JButton("Render Episode Movie"); renderButton.addActionListener(new
-		 * ActionListener() {
-		 * 
-		 * @Override public void actionPerformed(ActionEvent arg0) {
-		 * //ExperimentVisualizer.this.handleEpisodeRender();
-		 * 
-		 * } });
-		 * 
-		 * controlContainer.add(renderButton, BorderLayout.SOUTH);
-		 */
-
-		getContentPane().add(controlContainer, BorderLayout.EAST);
-
-		// display the window
-		pack();
-		setVisible(true);
-
-	}
-
-	protected void parseEpisodeFiles(String directory) {
-
-		File dir = new File(directory);
-		final String ext = ".episode";
-
-		FilenameFilter filter = new FilenameFilter() {
-			public boolean accept(File dir, String name) {
-				if (name.endsWith(ext)) {
-					return true;
-				}
-				return false;
-			}
-		};
-		String[] children = dir.list(filter);
-		Arrays.sort(children, new AlphanumericSorting());
-
-		episodeFiles = new ArrayList<String>(children.length);
-		episodesListModel = new DefaultListModel();
-
-		for (int i = 0; i < children.length; i++) {
-			episodeFiles.add(directory + "/" + children[i]);
-			episodesListModel.addElement(children[i].substring(0,
-					children[i].indexOf(ext)));
-			// System.out.println(files.get(i));
-		}
-
-	}
-
-	protected void setIterationListData() {
-
-		// clear the old contents
-		iterationListModel.clear();
-
-		// add each action (which is taken in the state being renderd)
-		for (GroundedAction ga : curEA.actionSequence) {
-			iterationListModel.addElement(ga.toString());
-		}
-
-		// add the final state
-		iterationListModel.addElement("final state");
+		this.init(v, d, experimentDirectory, w, h);
 
 	}
 
@@ -399,6 +200,204 @@ public class EpisodeSequenceVisualizer extends JFrame {
 			}
 
 		}
+
+	}
+
+	/**
+	 * Initializes the EpisodeSequenceVisualizer with episodes read from disk.
+	 * 
+	 * @param v
+	 *            the visualizer used to render states
+	 * @param d
+	 *            the domain in which the episodes took place
+	 * @param experimentDirectory
+	 *            the path to the directory containing the episode files.
+	 * @param w
+	 *            the width of the state visualizer canvas
+	 * @param h
+	 *            the height of the state visualizer canvas
+	 */
+	public void init(Visualizer v, Domain d, String experimentDirectory, int w,
+			int h) {
+
+		painter = v;
+		domain = d;
+
+		// get rid of trailing / and pull out the file paths
+		if (experimentDirectory.charAt(experimentDirectory.length() - 1) == '/') {
+			experimentDirectory = experimentDirectory.substring(0,
+					experimentDirectory.length());
+		}
+		this.parseEpisodeFiles(experimentDirectory);
+
+		cWidth = w;
+		cHeight = h;
+
+		this.initGUI();
+
+	}
+
+	/**
+	 * Initializes the GUI and presents it to the user.
+	 */
+	public void initGUI() {
+
+		if (this.alreadyInitedGUI) {
+			return;
+		}
+
+		this.alreadyInitedGUI = true;
+
+		// set viewer components
+		propViewer = new TextArea();
+		propViewer.setEditable(false);
+		painter.setPreferredSize(new Dimension(cWidth, cHeight));
+		propViewer.setPreferredSize(new Dimension(cWidth, 100));
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		getContentPane().add(painter, BorderLayout.CENTER);
+		getContentPane().add(propViewer, BorderLayout.SOUTH);
+
+		// set episode component
+		episodeList = new JList(episodesListModel);
+
+		episodeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		episodeList.setLayoutOrientation(JList.VERTICAL);
+		episodeList.setVisibleRowCount(-1);
+		episodeList.addListSelectionListener(new ListSelectionListener() {
+
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				handleEpisodeSelection(e);
+			}
+		});
+
+		episodeScroller = new JScrollPane(episodeList);
+		episodeScroller.setPreferredSize(new Dimension(100, 600));
+
+		// set iteration component
+		iterationListModel = new DefaultListModel();
+		iterationList = new JList(iterationListModel);
+
+		iterationList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		iterationList.setLayoutOrientation(JList.VERTICAL);
+		iterationList.setVisibleRowCount(-1);
+		iterationList.addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				handleIterationSelection(e);
+			}
+		});
+
+		iterationScroller = new JScrollPane(iterationList);
+		iterationScroller.setPreferredSize(new Dimension(150, 600));
+
+		// add episode-iteration lists to window
+		controlContainer = new Container();
+		controlContainer.setLayout(new BorderLayout());
+
+		controlContainer.add(episodeScroller, BorderLayout.WEST);
+		controlContainer.add(iterationScroller, BorderLayout.EAST);
+
+		/*
+		 * //add render movie button JButton renderButton = new
+		 * JButton("Render Episode Movie"); renderButton.addActionListener(new
+		 * ActionListener() {
+		 * 
+		 * @Override public void actionPerformed(ActionEvent arg0) {
+		 * //ExperimentVisualizer.this.handleEpisodeRender();
+		 * 
+		 * } });
+		 * 
+		 * controlContainer.add(renderButton, BorderLayout.SOUTH);
+		 */
+
+		getContentPane().add(controlContainer, BorderLayout.EAST);
+
+		// display the window
+		pack();
+		setVisible(true);
+
+	}
+
+	/**
+	 * Initializes the EpisodeSequenceVisualizer with programatically supplied
+	 * list of {@link burlap.behavior.singleagent.EpisodeAnalysis} objects to
+	 * view.
+	 * 
+	 * @param v
+	 *            the visualizer used to render states
+	 * @param d
+	 *            the domain in which the episodes took place
+	 * @param episodes
+	 *            the episodes to view
+	 * @param w
+	 *            the width of the state visualizer canvas
+	 * @param h
+	 *            the height of the state visualizer canvas
+	 */
+	public void initWithDirectEpisodes(Visualizer v, Domain d,
+			List<EpisodeAnalysis> episodes, int w, int h) {
+
+		painter = v;
+		domain = d;
+
+		this.directEpisodes = episodes;
+		this.episodesListModel = new DefaultListModel();
+		int c = 0;
+		for (EpisodeAnalysis ea : this.directEpisodes) {
+			episodesListModel.addElement("episode_" + c);
+			c++;
+		}
+
+		cWidth = w;
+		cHeight = h;
+
+		this.initGUI();
+
+	}
+
+	protected void parseEpisodeFiles(String directory) {
+
+		File dir = new File(directory);
+		final String ext = ".episode";
+
+		FilenameFilter filter = new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				if (name.endsWith(ext)) {
+					return true;
+				}
+				return false;
+			}
+		};
+		String[] children = dir.list(filter);
+		Arrays.sort(children, new AlphanumericSorting());
+
+		episodeFiles = new ArrayList<String>(children.length);
+		episodesListModel = new DefaultListModel();
+
+		for (int i = 0; i < children.length; i++) {
+			episodeFiles.add(directory + "/" + children[i]);
+			episodesListModel.addElement(children[i].substring(0,
+					children[i].indexOf(ext)));
+			// System.out.println(files.get(i));
+		}
+
+	}
+
+	protected void setIterationListData() {
+
+		// clear the old contents
+		iterationListModel.clear();
+
+		// add each action (which is taken in the state being renderd)
+		for (GroundedAction ga : curEA.actionSequence) {
+			iterationListModel.addElement(ga.toString());
+		}
+
+		// add the final state
+		iterationListModel.addElement("final state");
 
 	}
 

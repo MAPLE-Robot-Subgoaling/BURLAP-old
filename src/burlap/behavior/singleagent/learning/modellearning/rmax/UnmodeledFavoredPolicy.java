@@ -1,14 +1,14 @@
 package burlap.behavior.singleagent.learning.modellearning.rmax;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import burlap.behavior.policy.Policy;
 import burlap.behavior.singleagent.learning.modellearning.Model;
 import burlap.debugtools.RandomFactory;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author James MacGlashan.
@@ -48,7 +48,7 @@ public class UnmodeledFavoredPolicy extends Policy {
 
 		if (unmodeled.size() > 0) {
 			List<ActionProb> aps = new ArrayList<ActionProb>(unmodeled.size());
-			double p = 1. / (double) unmodeled.size();
+			double p = 1. / unmodeled.size();
 			for (AbstractGroundedAction ga : unmodeled) {
 				aps.add(new ActionProb(ga, p));
 			}
@@ -59,12 +59,12 @@ public class UnmodeledFavoredPolicy extends Policy {
 	}
 
 	@Override
-	public boolean isStochastic() {
+	public boolean isDefinedFor(State s) {
 		return true;
 	}
 
 	@Override
-	public boolean isDefinedFor(State s) {
+	public boolean isStochastic() {
 		return true;
 	}
 }

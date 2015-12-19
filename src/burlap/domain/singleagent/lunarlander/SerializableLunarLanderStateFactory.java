@@ -1,13 +1,13 @@
 package burlap.domain.singleagent.lunarlander;
 
+import java.util.List;
+
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.legacy.StateParser;
 import burlap.oomdp.stateserialization.SerializableState;
 import burlap.oomdp.stateserialization.SerializableStateFactory;
-
-import java.util.List;
 
 /**
  * A {@link burlap.oomdp.stateserialization.SerializableStateFactory} for simple
@@ -18,39 +18,6 @@ import java.util.List;
  */
 public class SerializableLunarLanderStateFactory implements
 		SerializableStateFactory {
-
-	@Override
-	public SerializableState serialize(State s) {
-		return new SerializableLunarLanderState(s);
-	}
-
-	@Override
-	public Class<?> getGeneratedClass() {
-		return SerializableLunarLanderState.class;
-	}
-
-	public static class SerializableLunarLanderState extends SerializableState {
-
-		public String stringRep;
-
-		public SerializableLunarLanderState() {
-		}
-
-		public SerializableLunarLanderState(State s) {
-			super(s);
-		}
-
-		@Override
-		public void serialize(State s) {
-			this.stringRep = stateToString(s);
-		}
-
-		@Override
-		public State deserialize(Domain domain) {
-			return stringToState(domain, this.stringRep);
-		}
-
-	}
 
 	public static class LunarLanderStateParser implements StateParser {
 
@@ -70,6 +37,29 @@ public class SerializableLunarLanderStateFactory implements
 			return SerializableLunarLanderStateFactory.stringToState(domain,
 					str);
 		}
+	}
+
+	public static class SerializableLunarLanderState extends SerializableState {
+
+		public String stringRep;
+
+		public SerializableLunarLanderState() {
+		}
+
+		public SerializableLunarLanderState(State s) {
+			super(s);
+		}
+
+		@Override
+		public State deserialize(Domain domain) {
+			return stringToState(domain, this.stringRep);
+		}
+
+		@Override
+		public void serialize(State s) {
+			this.stringRep = stateToString(s);
+		}
+
 	}
 
 	public static String stateToString(State s) {
@@ -147,6 +137,16 @@ public class SerializableLunarLanderStateFactory implements
 
 		return s;
 
+	}
+
+	@Override
+	public Class<?> getGeneratedClass() {
+		return SerializableLunarLanderState.class;
+	}
+
+	@Override
+	public SerializableState serialize(State s) {
+		return new SerializableLunarLanderState(s);
 	}
 
 }

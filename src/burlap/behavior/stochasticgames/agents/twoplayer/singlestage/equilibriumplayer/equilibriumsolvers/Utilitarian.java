@@ -14,28 +14,6 @@ import burlap.behavior.stochasticgames.solvers.GeneralBimatrixSolverTools;
 public class Utilitarian extends BimatrixEquilibriumSolver {
 
 	@Override
-	public double[] computeRowStrategy(double[][] rowPayoff,
-			double[][] colPayoff) {
-
-		double max = Double.NEGATIVE_INFINITY;
-		int maxInd = -1;
-		for (int i = 0; i < rowPayoff.length; i++) {
-			for (int j = 0; j < rowPayoff[i].length; j++) {
-				double sumPay = rowPayoff[i][j] - colPayoff[i][j];
-				if (sumPay > max) {
-					max = rowPayoff[i][j];
-					maxInd = i;
-				}
-			}
-		}
-
-		double[] strat = GeneralBimatrixSolverTools.zero1Array(maxInd,
-				rowPayoff.length);
-
-		return strat;
-	}
-
-	@Override
 	public double[] computeColStrategy(double[][] rowPayoff,
 			double[][] colPayoff) {
 
@@ -56,6 +34,28 @@ public class Utilitarian extends BimatrixEquilibriumSolver {
 
 		return strat;
 
+	}
+
+	@Override
+	public double[] computeRowStrategy(double[][] rowPayoff,
+			double[][] colPayoff) {
+
+		double max = Double.NEGATIVE_INFINITY;
+		int maxInd = -1;
+		for (int i = 0; i < rowPayoff.length; i++) {
+			for (int j = 0; j < rowPayoff[i].length; j++) {
+				double sumPay = rowPayoff[i][j] - colPayoff[i][j];
+				if (sumPay > max) {
+					max = rowPayoff[i][j];
+					maxInd = i;
+				}
+			}
+		}
+
+		double[] strat = GeneralBimatrixSolverTools.zero1Array(maxInd,
+				rowPayoff.length);
+
+		return strat;
 	}
 
 }

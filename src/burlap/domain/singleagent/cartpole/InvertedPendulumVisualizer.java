@@ -15,31 +15,6 @@ import burlap.oomdp.visualizer.Visualizer;
 public class InvertedPendulumVisualizer {
 
 	/**
-	 * Returns a {@link Visualizer} object for the {@link InvertedPendulum}
-	 * domain.
-	 * 
-	 * @return a {@link Visualizer} object for the {@link InvertedPendulum}
-	 *         domain.
-	 */
-	public static Visualizer getInvertedPendulumVisualizer() {
-		return new Visualizer(getInvertedPendulumStateRenderLayer());
-	}
-
-	/**
-	 * Returns a {@link StateRenderLayer} object for the
-	 * {@link InvertedPendulum} domain.
-	 * 
-	 * @return a {@link StateRenderLayer} object for the
-	 *         {@link InvertedPendulum} domain.
-	 */
-	public static StateRenderLayer getInvertedPendulumStateRenderLayer() {
-		StateRenderLayer sl = new StateRenderLayer();
-		sl.addObjectClassPainter(InvertedPendulum.CLASSPENDULUM,
-				new PendulumObjectPainter());
-		return sl;
-	}
-
-	/**
 	 * An object painter for the pendulum object. Fixed cart will have
 	 * width/height of 0.1 * the canvas width and pole will have length of 0.5 *
 	 * the canvas width.
@@ -80,6 +55,31 @@ public class InvertedPendulumVisualizer {
 
 		}
 
+	}
+
+	/**
+	 * Returns a {@link StateRenderLayer} object for the
+	 * {@link InvertedPendulum} domain.
+	 * 
+	 * @return a {@link StateRenderLayer} object for the
+	 *         {@link InvertedPendulum} domain.
+	 */
+	public static StateRenderLayer getInvertedPendulumStateRenderLayer() {
+		StateRenderLayer sl = new StateRenderLayer();
+		sl.addObjectClassPainter(InvertedPendulum.CLASSPENDULUM,
+				new PendulumObjectPainter());
+		return sl;
+	}
+
+	/**
+	 * Returns a {@link Visualizer} object for the {@link InvertedPendulum}
+	 * domain.
+	 * 
+	 * @return a {@link Visualizer} object for the {@link InvertedPendulum}
+	 *         domain.
+	 */
+	public static Visualizer getInvertedPendulumVisualizer() {
+		return new Visualizer(getInvertedPendulumStateRenderLayer());
 	}
 
 }

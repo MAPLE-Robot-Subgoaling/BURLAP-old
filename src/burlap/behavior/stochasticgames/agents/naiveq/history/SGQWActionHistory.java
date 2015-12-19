@@ -1,5 +1,9 @@
 package burlap.behavior.stochasticgames.agents.naiveq.history;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import burlap.behavior.stochasticgames.agents.naiveq.SGNaiveQLAgent;
 import burlap.behavior.valuefunction.QValue;
 import burlap.oomdp.core.Attribute;
@@ -10,14 +14,10 @@ import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 import burlap.oomdp.stochasticgames.JointAction;
 import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.SGDomain;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 
 /**
  * A Tabular Q-learning [1] algorithm for stochastic games formalisms that
@@ -104,20 +104,11 @@ public class SGQWActionHistory extends SGNaiveQLAgent {
 	 * @param historySize
 	 *            the number of previous steps to remember and with which to
 	 *            augment the state space
-	 * @param maxPlayers
-	 *            the maximum number of players that will be in the game
-	 * @param actionMap
-	 *            a mapping from actions to integer identifiers for them
 	 */
 	public SGQWActionHistory(SGDomain d, double discount, double learningRate,
-			HashableStateFactory hashFactory, int historySize, int maxPlayers,
-			ActionIdMap actionMap) {
+			HashableStateFactory hashFactory, int historySize) {
 		super(d, discount, learningRate, hashFactory);
 		this.historySize = historySize;
-		this.actionMap = actionMap;
-
-		this.initializeHistoryAugmentedDomain(maxPlayers);
-
 	}
 
 	/**
@@ -135,11 +126,128 @@ public class SGQWActionHistory extends SGNaiveQLAgent {
 	 * @param historySize
 	 *            the number of previous steps to remember and with which to
 	 *            augment the state space
+	 * @param maxPlayers
+	 *            the maximum number of players that will be in the game
+	 * @param actionMap
+	 *            a mapping from actions to integer identifiers for them
 	 */
 	public SGQWActionHistory(SGDomain d, double discount, double learningRate,
-			HashableStateFactory hashFactory, int historySize) {
+			HashableStateFactory hashFactory, int historySize, int maxPlayers,
+			ActionIdMap actionMap) {
 		super(d, discount, learningRate, hashFactory);
 		this.historySize = historySize;
+		this.actionMap = actionMap;
+
+		this.initializeHistoryAugmentedDomain(maxPlayers);
+
+	}
+
+	@Override
+	public void gameStarting() {
+		this.history = new LinkedList<JointAction>();
+		if (this.actionMap == null) {
+			this.initializeActionMapAndAugmentedDomain();
+		}
+	}
+
+	/**
+	 * Takes an input state and returns an augmented state with the history of
+	 * actions each agent previously took.
+	 * 
+	 * @param s
+	 *            the input state to augment
+	 * @return an augmented state with the history of actions each agent
+	 *         previously took.
+	 */
+	protected State getHistoryAugmentedState(State s) {
+
+		State augS = s.copy();
+
+		int h = 0;
+		for (JointAction ja : history) {
+
+			for (GroundedSGAgentAction gsa : ja) {
+				augS.addObject(this.getHistoryObjectInstanceForAgent(gsa, h));
+			}
+
+			h++;
+		}
+
+		if (h < this.historySize) {
+			List<SGAgent> agents = world.getRegisteredAgents();
+			while (h < this.historySize) {
+				for (SGAgent a : agents) {
+					augS.addObject(this.getHistoryLessObjectInstanceForAgent(
+							a.getAgentName(), h));
+				}
+				h++;
+			}
+		}
+
+		return augS;
+
+	}
+
+	/**
+	 * Returns a history object instance for a given agent in which the action
+	 * that was taken is unset because the episode has not last h steps.
+	 * 
+	 * @param aname
+	 *            the name of agent for which the history object should be
+	 *            returned
+	 * @param h
+	 *            how many step backs this object instance represents
+	 * @return a history object instance
+	 */
+	protected ObjectInstance getHistoryLessObjectInstanceForAgent(String aname,
+			int h) {
+
+		ObjectInstance o = new MutableObjectInstance(classHistory, aname + "-h"
+				+ h);
+		o.setValue(ATTHNUM, h);
+		o.setValue(ATTHPN, world.getPlayerNumberForAgent(aname));
+		o.setValue(ATTHAID, actionMap.maxValue());
+
+		return o;
+
+	}
+
+	/**
+	 * Returns a history object instance for the corresponding action and how
+	 * far back in history it occurred
+	 * 
+	 * @param gsa
+	 *            the action that was taken (which includes which agent took it)
+	 * @param h
+	 *            how far back in history the action was taken.
+	 * @return a history object instance for the corresponding action and how
+	 *         far back in history it occurred
+	 */
+	protected ObjectInstance getHistoryObjectInstanceForAgent(
+			GroundedSGAgentAction gsa, int h) {
+
+		String aname = gsa.actingAgent;
+
+		ObjectInstance o = new MutableObjectInstance(classHistory, aname + "-h"
+				+ h);
+		o.setValue(ATTHNUM, h);
+		o.setValue(ATTHPN, world.getPlayerNumberForAgent(aname));
+		o.setValue(ATTHAID, actionMap.getActionId(gsa));
+
+		return o;
+
+	}
+
+	/**
+	 * Initializes the action map to be an instance of
+	 * {@link ParameterNaiveActionIdMap} and then initializes the history
+	 * augmented domain using the max players as the number of players in the
+	 * world which this agent has joined.
+	 */
+	protected void initializeActionMapAndAugmentedDomain() {
+		this.actionMap = new ParameterNaiveActionIdMap(this.domain);
+		int maxPlayers = this.world.getRegisteredAgents().size();
+		this.initializeHistoryAugmentedDomain(maxPlayers);
 	}
 
 	/**
@@ -183,26 +291,6 @@ public class SGQWActionHistory extends SGNaiveQLAgent {
 	}
 
 	@Override
-	public void gameStarting() {
-		this.history = new LinkedList<JointAction>();
-		if (this.actionMap == null) {
-			this.initializeActionMapAndAugmentedDomain();
-		}
-	}
-
-	/**
-	 * Initializes the action map to be an instance of
-	 * {@link ParameterNaiveActionIdMap} and then initializes the history
-	 * augmented domain using the max players as the number of players in the
-	 * world which this agent has joined.
-	 */
-	protected void initializeActionMapAndAugmentedDomain() {
-		this.actionMap = new ParameterNaiveActionIdMap(this.domain);
-		int maxPlayers = this.world.getRegisteredAgents().size();
-		this.initializeHistoryAugmentedDomain(maxPlayers);
-	}
-
-	@Override
 	public void observeOutcome(State s, JointAction jointAction,
 			Map<String, Double> jointReward, State sprime, boolean isTerminal) {
 
@@ -238,94 +326,6 @@ public class SGQWActionHistory extends SGNaiveQLAgent {
 						s, myAction) * (r + (this.discount * maxQ) - qe.q);
 
 		this.totalNumberOfSteps++;
-
-	}
-
-	/**
-	 * Takes an input state and returns an augmented state with the history of
-	 * actions each agent previously took.
-	 * 
-	 * @param s
-	 *            the input state to augment
-	 * @return an augmented state with the history of actions each agent
-	 *         previously took.
-	 */
-	protected State getHistoryAugmentedState(State s) {
-
-		State augS = s.copy();
-
-		int h = 0;
-		for (JointAction ja : history) {
-
-			for (GroundedSGAgentAction gsa : ja) {
-				augS.addObject(this.getHistoryObjectInstanceForAgent(gsa, h));
-			}
-
-			h++;
-		}
-
-		if (h < this.historySize) {
-			List<SGAgent> agents = world.getRegisteredAgents();
-			while (h < this.historySize) {
-				for (SGAgent a : agents) {
-					augS.addObject(this.getHistoryLessObjectInstanceForAgent(
-							a.getAgentName(), h));
-				}
-				h++;
-			}
-		}
-
-		return augS;
-
-	}
-
-	/**
-	 * Returns a history object instance for the corresponding action and how
-	 * far back in history it occurred
-	 * 
-	 * @param gsa
-	 *            the action that was taken (which includes which agent took it)
-	 * @param h
-	 *            how far back in history the action was taken.
-	 * @return a history object instance for the corresponding action and how
-	 *         far back in history it occurred
-	 */
-	protected ObjectInstance getHistoryObjectInstanceForAgent(
-			GroundedSGAgentAction gsa, int h) {
-
-		String aname = gsa.actingAgent;
-
-		ObjectInstance o = new MutableObjectInstance(classHistory, aname + "-h"
-				+ h);
-		o.setValue(ATTHNUM, h);
-		o.setValue(ATTHPN, world.getPlayerNumberForAgent(aname));
-		o.setValue(ATTHAID, actionMap.getActionId(gsa));
-
-		return o;
-
-	}
-
-	/**
-	 * Returns a history object instance for a given agent in which the action
-	 * that was taken is unset because the episode has not last h steps.
-	 * 
-	 * @param aname
-	 *            the name of agent for which the history object should be
-	 *            returned
-	 * @param h
-	 *            how many step backs this object instance represents
-	 * @return a history object instance
-	 */
-	protected ObjectInstance getHistoryLessObjectInstanceForAgent(String aname,
-			int h) {
-
-		ObjectInstance o = new MutableObjectInstance(classHistory, aname + "-h"
-				+ h);
-		o.setValue(ATTHNUM, h);
-		o.setValue(ATTHPN, world.getPlayerNumberForAgent(aname));
-		o.setValue(ATTHAID, actionMap.maxValue());
-
-		return o;
 
 	}
 

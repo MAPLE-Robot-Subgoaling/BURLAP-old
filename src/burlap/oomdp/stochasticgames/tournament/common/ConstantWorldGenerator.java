@@ -55,23 +55,6 @@ public class ConstantWorldGenerator implements WorldGenerator {
 	}
 
 	/**
-	 * Initializes the WorldGenerator.
-	 * 
-	 * @param domain
-	 *            the SGDomain the world will use
-	 * @param jr
-	 *            the joint reward function
-	 * @param tf
-	 *            the terminal function
-	 * @param sg
-	 *            a state generator for generating initial states of a game
-	 */
-	public ConstantWorldGenerator(SGDomain domain, JointReward jr,
-			TerminalFunction tf, SGStateGenerator sg) {
-		this.CWGInit(domain, jr, tf, sg, new NullAbstraction());
-	}
-
-	/**
 	 * This constructor is deprecated, because
 	 * {@link burlap.oomdp.stochasticgames.SGDomain} objects are now expected to
 	 * have a {@link burlap.oomdp.stochasticgames.JointActionModel} associated
@@ -97,6 +80,23 @@ public class ConstantWorldGenerator implements WorldGenerator {
 			JointReward jr, TerminalFunction tf, SGStateGenerator sg,
 			StateAbstraction abstractionForAgents) {
 		this.CWGInit(domain, jr, tf, sg, abstractionForAgents);
+	}
+
+	/**
+	 * Initializes the WorldGenerator.
+	 * 
+	 * @param domain
+	 *            the SGDomain the world will use
+	 * @param jr
+	 *            the joint reward function
+	 * @param tf
+	 *            the terminal function
+	 * @param sg
+	 *            a state generator for generating initial states of a game
+	 */
+	public ConstantWorldGenerator(SGDomain domain, JointReward jr,
+			TerminalFunction tf, SGStateGenerator sg) {
+		this.CWGInit(domain, jr, tf, sg, new NullAbstraction());
 	}
 
 	/**

@@ -4,8 +4,8 @@ import burlap.behavior.policy.Policy;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.environment.Environment;
 import burlap.oomdp.singleagent.pomdp.BeliefAgent;
-import burlap.oomdp.singleagent.pomdp.beliefstate.BeliefState;
 import burlap.oomdp.singleagent.pomdp.PODomain;
+import burlap.oomdp.singleagent.pomdp.beliefstate.BeliefState;
 
 /**
  * A Belief agent that follows a specified policy.

@@ -1,11 +1,11 @@
 package burlap.oomdp.stateserialization;
 
-import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.states.State;
 
 /**
  * A class for transforming {@link burlap.oomdp.core.states.State} objects into
@@ -43,49 +43,6 @@ import java.util.List;
  */
 public abstract class SerializableState implements Serializable {
 
-	public SerializableState() {
-		// do nothing
-	}
-
-	/**
-	 * Constructs and serializes the input
-	 * {@link burlap.oomdp.core.states.State} by calling this object's
-	 * {@link #serialize(burlap.oomdp.core.states.State)} method.
-	 * 
-	 * @param s
-	 *            the input {@link burlap.oomdp.core.states.State} to serialize.
-	 */
-	public SerializableState(State s) {
-		this.serialize(s);
-	}
-
-	/**
-	 * Causes this object to be a serializable representation of the input
-	 * {@link burlap.oomdp.core.states.State}
-	 * 
-	 * @param s
-	 *            the {@link burlap.oomdp.core.states.State} to be represented
-	 *            by this object.
-	 */
-	public abstract void serialize(State s);
-
-	/**
-	 * Unpacks this {@link burlap.oomdp.stateserialization.SerializableState}
-	 * into an actual {@link burlap.oomdp.core.states.State} in which the
-	 * {@link burlap.oomdp.core.ObjectClass},
-	 * {@link burlap.oomdp.core.Attribute} and other
-	 * {@link burlap.oomdp.core.Domain} information refers to the provided
-	 * {@link burlap.oomdp.core.Domain}.
-	 * 
-	 * @param domain
-	 *            The {@link burlap.oomdp.core.Domain} specifying
-	 *            {@link burlap.oomdp.core.ObjectClass} and
-	 *            {@link burlap.oomdp.core.Attribute} information.
-	 * @return a {@link burlap.oomdp.core.states.State} corresponding to this
-	 *         {@link burlap.oomdp.stateserialization.SerializableState}
-	 */
-	public abstract State deserialize(Domain domain);
-
 	/**
 	 * Takes a {@link java.util.List} of
 	 * {@link burlap.oomdp.stateserialization.SerializableState} objects and
@@ -112,5 +69,48 @@ public abstract class SerializableState implements Serializable {
 		}
 		return states;
 	}
+
+	public SerializableState() {
+		// do nothing
+	}
+
+	/**
+	 * Constructs and serializes the input
+	 * {@link burlap.oomdp.core.states.State} by calling this object's
+	 * {@link #serialize(burlap.oomdp.core.states.State)} method.
+	 * 
+	 * @param s
+	 *            the input {@link burlap.oomdp.core.states.State} to serialize.
+	 */
+	public SerializableState(State s) {
+		this.serialize(s);
+	}
+
+	/**
+	 * Unpacks this {@link burlap.oomdp.stateserialization.SerializableState}
+	 * into an actual {@link burlap.oomdp.core.states.State} in which the
+	 * {@link burlap.oomdp.core.ObjectClass},
+	 * {@link burlap.oomdp.core.Attribute} and other
+	 * {@link burlap.oomdp.core.Domain} information refers to the provided
+	 * {@link burlap.oomdp.core.Domain}.
+	 * 
+	 * @param domain
+	 *            The {@link burlap.oomdp.core.Domain} specifying
+	 *            {@link burlap.oomdp.core.ObjectClass} and
+	 *            {@link burlap.oomdp.core.Attribute} information.
+	 * @return a {@link burlap.oomdp.core.states.State} corresponding to this
+	 *         {@link burlap.oomdp.stateserialization.SerializableState}
+	 */
+	public abstract State deserialize(Domain domain);
+
+	/**
+	 * Causes this object to be a serializable representation of the input
+	 * {@link burlap.oomdp.core.states.State}
+	 * 
+	 * @param s
+	 *            the {@link burlap.oomdp.core.states.State} to be represented
+	 *            by this object.
+	 */
+	public abstract void serialize(State s);
 
 }

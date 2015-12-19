@@ -7,8 +7,8 @@ import java.util.Random;
 import javax.management.RuntimeErrorException;
 
 import burlap.behavior.singleagent.MDPSolverInterface;
-import burlap.behavior.valuefunction.QValue;
 import burlap.behavior.valuefunction.QFunction;
+import burlap.behavior.valuefunction.QValue;
 import burlap.debugtools.RandomFactory;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.AbstractObjectParameterizedGroundedAction;
@@ -40,17 +40,6 @@ public class GreedyQPolicy extends Policy implements SolverDerivedPolicy {
 	public GreedyQPolicy(QFunction planner) {
 		qplanner = planner;
 		rand = RandomFactory.getMapped(0);
-	}
-
-	@Override
-	public void setSolver(MDPSolverInterface solver) {
-
-		if (!(solver instanceof QFunction)) {
-			throw new RuntimeErrorException(new Error(
-					"Planner is not a QComputablePlanner"));
-		}
-
-		this.qplanner = (QFunction) solver;
 	}
 
 	@Override
@@ -93,7 +82,7 @@ public class GreedyQPolicy extends Policy implements SolverDerivedPolicy {
 		}
 
 		List<ActionProb> res = new ArrayList<Policy.ActionProb>();
-		double uniformMax = 1. / (double) numMax;
+		double uniformMax = 1. / numMax;
 		for (int i = 0; i < qValues.size(); i++) {
 			QValue q = qValues.get(i);
 			double p = 0.;
@@ -110,14 +99,25 @@ public class GreedyQPolicy extends Policy implements SolverDerivedPolicy {
 	}
 
 	@Override
+	public boolean isDefinedFor(State s) {
+		return true; // can always find q-values with default value
+	}
+
+	@Override
 	public boolean isStochastic() {
 		return true; // although the policy is greedy, it randomly selects
 						// between tied actions
 	}
 
 	@Override
-	public boolean isDefinedFor(State s) {
-		return true; // can always find q-values with default value
+	public void setSolver(MDPSolverInterface solver) {
+
+		if (!(solver instanceof QFunction)) {
+			throw new RuntimeErrorException(new Error(
+					"Planner is not a QComputablePlanner"));
+		}
+
+		this.qplanner = (QFunction) solver;
 	}
 
 }

@@ -3,9 +3,9 @@ package burlap.domain.singleagent.gridworld;
 import java.util.HashSet;
 import java.util.Set;
 
+import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.core.TerminalFunction;
 
 /**
  * This class is used for setting a terminal function for GridWorlds that is
@@ -24,6 +24,37 @@ import burlap.oomdp.core.TerminalFunction;
  * 
  */
 public class GridWorldTerminalFunction implements TerminalFunction {
+
+	/**
+	 * A pair class for two ints.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class IntPair {
+		public int x;
+		public int y;
+
+		public IntPair(int x, int y) {
+			this.x = x;
+			this.y = y;
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			if (!(other instanceof IntPair)) {
+				return false;
+			}
+
+			IntPair o = (IntPair) other;
+			return this.x == o.x && this.y == o.y;
+		}
+
+		@Override
+		public int hashCode() {
+			return this.x + 31 * this.y;
+		}
+	}
 
 	/**
 	 * The set of positions marked as terminal positions.
@@ -64,36 +95,13 @@ public class GridWorldTerminalFunction implements TerminalFunction {
 		}
 	}
 
-	/**
-	 * Marks a position as a terminal position for the agent.
-	 * 
-	 * @param x
-	 *            the x location of the agent.
-	 * @param y
-	 *            the y location of the agent.
-	 */
-	public void markAsTerminalPosition(int x, int y) {
-		this.terminalPositions.add(new IntPair(x, y));
-	}
-
-	/**
-	 * Unmarks an agent position as a terminal position.
-	 * 
-	 * @param x
-	 *            the x location of the agent.
-	 * @param y
-	 *            the y location of the agent.
-	 */
-	public void unmarkTerminalPosition(int x, int y) {
-		this.terminalPositions.remove(new IntPair(x, y));
-	}
-
-	/**
-	 * Unmarks all agent positions as terminal positions. That is, no position
-	 * will be considered a terminal position.
-	 */
-	public void unmarkAllTerminalPositions() {
-		this.terminalPositions.clear();
+	@Override
+	public boolean isTerminal(State s) {
+		ObjectInstance agent = s
+				.getFirstObjectOfClass(GridWorldDomain.CLASSAGENT);
+		int x = agent.getIntValForAttribute(GridWorldDomain.ATTX);
+		int y = agent.getIntValForAttribute(GridWorldDomain.ATTY);
+		return this.terminalPositions.contains(new IntPair(x, y));
 	}
 
 	/**
@@ -111,44 +119,36 @@ public class GridWorldTerminalFunction implements TerminalFunction {
 		return this.terminalPositions.contains(new IntPair(x, y));
 	}
 
-	@Override
-	public boolean isTerminal(State s) {
-		ObjectInstance agent = s
-				.getFirstObjectOfClass(GridWorldDomain.CLASSAGENT);
-		int x = agent.getIntValForAttribute(GridWorldDomain.ATTX);
-		int y = agent.getIntValForAttribute(GridWorldDomain.ATTY);
-		return this.terminalPositions.contains(new IntPair(x, y));
+	/**
+	 * Marks a position as a terminal position for the agent.
+	 * 
+	 * @param x
+	 *            the x location of the agent.
+	 * @param y
+	 *            the y location of the agent.
+	 */
+	public void markAsTerminalPosition(int x, int y) {
+		this.terminalPositions.add(new IntPair(x, y));
 	}
 
 	/**
-	 * A pair class for two ints.
-	 * 
-	 * @author James MacGlashan
-	 * 
+	 * Unmarks all agent positions as terminal positions. That is, no position
+	 * will be considered a terminal position.
 	 */
-	public class IntPair {
-		public int x;
-		public int y;
+	public void unmarkAllTerminalPositions() {
+		this.terminalPositions.clear();
+	}
 
-		public IntPair(int x, int y) {
-			this.x = x;
-			this.y = y;
-		}
-
-		@Override
-		public int hashCode() {
-			return this.x + 31 * this.y;
-		}
-
-		@Override
-		public boolean equals(Object other) {
-			if (!(other instanceof IntPair)) {
-				return false;
-			}
-
-			IntPair o = (IntPair) other;
-			return this.x == o.x && this.y == o.y;
-		}
+	/**
+	 * Unmarks an agent position as a terminal position.
+	 * 
+	 * @param x
+	 *            the x location of the agent.
+	 * @param y
+	 *            the y location of the agent.
+	 */
+	public void unmarkTerminalPosition(int x, int y) {
+		this.terminalPositions.remove(new IntPair(x, y));
 	}
 
 }

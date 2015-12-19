@@ -1,8 +1,8 @@
 package burlap.oomdp.auxiliary.common;
 
 import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 
 /**
  * Creates a terminal function that indicates terminal states are any states

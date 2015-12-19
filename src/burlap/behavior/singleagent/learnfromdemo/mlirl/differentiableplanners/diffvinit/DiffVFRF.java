@@ -33,13 +33,13 @@ public class DiffVFRF extends DifferentiableRF {
 	}
 
 	@Override
-	public double[] getGradient(State s, GroundedAction ga, State sp) {
-		return new double[this.dim];
+	protected DifferentiableRF copyHelper() {
+		return null;
 	}
 
 	@Override
-	protected DifferentiableRF copyHelper() {
-		return null;
+	public double[] getGradient(State s, GroundedAction ga, State sp) {
+		return new double[this.dim];
 	}
 
 	@Override

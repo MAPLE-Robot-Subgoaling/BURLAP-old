@@ -1,9 +1,9 @@
 package burlap.behavior.stochasticgames.agents.naiveq;
 
-import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.auxiliary.StateAbstraction;
-import burlap.oomdp.stochasticgames.SGAgent;
+import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.stochasticgames.AgentFactory;
+import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.SGDomain;
 
 /**
@@ -95,6 +95,16 @@ public class SGNaiveQFactory implements AgentFactory {
 		this.storedAbstraction = storedAbstraction;
 	}
 
+	@Override
+	public SGAgent generateAgent() {
+		SGNaiveQLAgent agent = new SGNaiveQLAgent(domain, discount,
+				learningRate, defaultQ, stateHash);
+		if (storedAbstraction != null) {
+			agent.setStoredMapAbstraction(storedAbstraction);
+		}
+		return agent;
+	}
+
 	/**
 	 * Sets the factory to provide Q-learning algorithms with the given state
 	 * abstraction.
@@ -104,16 +114,6 @@ public class SGNaiveQFactory implements AgentFactory {
 	 */
 	public void setStoredAbstraction(StateAbstraction abs) {
 		this.storedAbstraction = abs;
-	}
-
-	@Override
-	public SGAgent generateAgent() {
-		SGNaiveQLAgent agent = new SGNaiveQLAgent(domain, discount,
-				learningRate, defaultQ, stateHash);
-		if (storedAbstraction != null) {
-			agent.setStoredMapAbstraction(storedAbstraction);
-		}
-		return agent;
 	}
 
 }

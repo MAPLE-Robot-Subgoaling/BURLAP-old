@@ -18,21 +18,6 @@ public class DebugFlags {
 	private static Map<Integer, Integer> flags;
 
 	/**
-	 * Creates/sets a debug flag
-	 * 
-	 * @param id
-	 *            the flag identifier
-	 * @param v
-	 *            the value of the flag
-	 */
-	public static void setFlag(int id, int v) {
-		if (flags == null) {
-			flags = new HashMap<Integer, Integer>();
-		}
-		flags.put(id, v);
-	}
-
-	/**
 	 * Returns the value for a given flag; 0 if the flag has never been
 	 * created/set
 	 * 
@@ -50,6 +35,21 @@ public class DebugFlags {
 			return 0;
 		}
 		return v;
+	}
+
+	/**
+	 * Creates/sets a debug flag
+	 * 
+	 * @param id
+	 *            the flag identifier
+	 * @param v
+	 *            the value of the flag
+	 */
+	public static void setFlag(int id, int v) {
+		if (flags == null) {
+			flags = new HashMap<Integer, Integer>();
+		}
+		flags.put(id, v);
 	}
 
 }

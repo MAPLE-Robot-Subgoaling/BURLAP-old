@@ -36,6 +36,13 @@ public class MultiTargetRelationalValue extends OOMDPValue implements Value {
 		this.targetObjects = Collections.unmodifiableSet(new TreeSet<String>());
 	}
 
+	public MultiTargetRelationalValue(Attribute attribute,
+			Collection<String> targets) {
+		super(attribute);
+		this.targetObjects = Collections.unmodifiableSet(new TreeSet<String>(
+				targets));
+	}
+
 	/**
 	 * Initializes this value as a copy from the source Value object v.
 	 * 
@@ -44,41 +51,8 @@ public class MultiTargetRelationalValue extends OOMDPValue implements Value {
 	 */
 	public MultiTargetRelationalValue(MultiTargetRelationalValue v) {
 		super(v);
-		MultiTargetRelationalValue rv = (MultiTargetRelationalValue) v;
+		MultiTargetRelationalValue rv = v;
 		this.targetObjects = rv.targetObjects;
-	}
-
-	public MultiTargetRelationalValue(Attribute attribute,
-			Collection<String> targets) {
-		super(attribute);
-		this.targetObjects = Collections.unmodifiableSet(new TreeSet<String>(
-				targets));
-	}
-
-	@Override
-	public Value copy() {
-		return new MultiTargetRelationalValue(this);
-	}
-
-	@Override
-	public boolean valueHasBeenSet() {
-		return true;
-	}
-
-	@Override
-	public Value setValue(String v) {
-		if (v.indexOf(';') != -1) {
-			return new MultiTargetRelationalValue(this.attribute,
-					Arrays.asList(v.split(";")));
-		}
-		return new MultiTargetRelationalValue(this.attribute, Arrays.asList(v));
-	}
-
-	@Override
-	public Value addRelationalTarget(String t) {
-		TreeSet<String> targets = new TreeSet<String>(this.targetObjects);
-		targets.add(t);
-		return new MultiTargetRelationalValue(this.attribute, targets);
 	}
 
 	@Override
@@ -89,20 +63,10 @@ public class MultiTargetRelationalValue extends OOMDPValue implements Value {
 	}
 
 	@Override
-	public Value clearRelationTargets() {
-		return new MultiTargetRelationalValue(this.attribute);
-	}
-
-	@Override
-	public Value removeRelationalTarget(String target) {
+	public Value addRelationalTarget(String t) {
 		TreeSet<String> targets = new TreeSet<String>(this.targetObjects);
-		targets.remove(target);
+		targets.add(t);
 		return new MultiTargetRelationalValue(this.attribute, targets);
-	}
-
-	@Override
-	public Set<String> getAllRelationalTargets() {
-		return this.targetObjects;
 	}
 
 	@Override
@@ -119,8 +83,13 @@ public class MultiTargetRelationalValue extends OOMDPValue implements Value {
 	}
 
 	@Override
-	public double getNumericRepresentation() {
-		return 0;
+	public Value clearRelationTargets() {
+		return new MultiTargetRelationalValue(this.attribute);
+	}
+
+	@Override
+	public Value copy() {
+		return new MultiTargetRelationalValue(this);
 	}
 
 	@Override
@@ -149,5 +118,36 @@ public class MultiTargetRelationalValue extends OOMDPValue implements Value {
 
 		return true;
 
+	}
+
+	@Override
+	public Set<String> getAllRelationalTargets() {
+		return this.targetObjects;
+	}
+
+	@Override
+	public double getNumericRepresentation() {
+		return 0;
+	}
+
+	@Override
+	public Value removeRelationalTarget(String target) {
+		TreeSet<String> targets = new TreeSet<String>(this.targetObjects);
+		targets.remove(target);
+		return new MultiTargetRelationalValue(this.attribute, targets);
+	}
+
+	@Override
+	public Value setValue(String v) {
+		if (v.indexOf(';') != -1) {
+			return new MultiTargetRelationalValue(this.attribute,
+					Arrays.asList(v.split(";")));
+		}
+		return new MultiTargetRelationalValue(this.attribute, Arrays.asList(v));
+	}
+
+	@Override
+	public boolean valueHasBeenSet() {
+		return true;
 	}
 }

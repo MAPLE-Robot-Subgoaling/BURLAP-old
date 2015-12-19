@@ -40,6 +40,16 @@ public class FunctionWeight {
 	}
 
 	/**
+	 * Sets the weight
+	 * 
+	 * @param w
+	 *            the value to set the weight to
+	 */
+	public void setWeight(double w) {
+		this.weightValue = w;
+	}
+
+	/**
 	 * Returns the weight identifier
 	 * 
 	 * @return the weight identifier
@@ -55,16 +65,6 @@ public class FunctionWeight {
 	 */
 	public double weightValue() {
 		return weightValue;
-	}
-
-	/**
-	 * Sets the weight
-	 * 
-	 * @param w
-	 *            the value to set the weight to
-	 */
-	public void setWeight(double w) {
-		this.weightValue = w;
 	}
 
 }

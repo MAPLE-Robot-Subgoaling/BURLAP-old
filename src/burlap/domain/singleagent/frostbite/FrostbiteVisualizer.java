@@ -1,93 +1,19 @@
 package burlap.domain.singleagent.frostbite;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.visualizer.ObjectPainter;
 import burlap.oomdp.visualizer.StaticPainter;
 import burlap.oomdp.visualizer.Visualizer;
 
-import java.awt.*;
-import java.awt.geom.Rectangle2D;
-
 /**
  * @author Phillipe Morere
  */
 public class FrostbiteVisualizer {
-
-	private final static Color activatedPlatformColor = new Color(0.73333335f,
-			0.84313726f, 0.9411765f);
-	private final static Color iglooColor = new Color(0.7294118f, 0.827451f,
-			0.84313726f);
-	private final static Color waterColor = new Color(0.34509805f, 0.43529412f,
-			0.60784316f);
-	static int glob = 0;
-
-	/**
-	 * Returns a visualizer for a lunar lander domain.
-	 * 
-	 * @param fd
-	 *            the specific frostbite domain generator to visualize
-	 * @return a visualizer for a lunar lander domain.
-	 */
-	public static Visualizer getVisualizer(FrostbiteDomain fd) {
-
-		Visualizer v = new Visualizer();
-
-		v.addStaticPainter(new StaticPainter() {
-			@Override
-			public void paint(Graphics2D g2, State s, float cWidth,
-					float cHeight) {
-				g2.setColor(waterColor);
-				g2.fill(new Rectangle2D.Double(0, 0, FrostbiteDomain.gameWidth,
-						FrostbiteDomain.gameHeight));
-				g2.setColor(Color.white);
-				g2.fill(new Rectangle2D.Double(0, 0, FrostbiteDomain.gameWidth,
-						FrostbiteDomain.gameIceHeight));
-			}
-		});
-
-		v.addObjectClassPainter(FrostbiteDomain.PLATFORMCLASS,
-				new PlatformPainter(fd));
-		v.addObjectClassPainter(FrostbiteDomain.IGLOOCLASS,
-				new IglooPainter(fd));
-		v.addObjectClassPainter(FrostbiteDomain.AGENTCLASS,
-				new AgentPainter(fd));
-
-		return v;
-	}
-
-	public static class PlatformPainter implements ObjectPainter {
-
-		protected FrostbiteDomain fd;
-
-		public PlatformPainter(FrostbiteDomain fd) {
-			this.fd = fd;
-		}
-
-		@Override
-		public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
-				float cWidth, float cHeight) {
-
-			int x = ob.getIntValForAttribute(FrostbiteDomain.XATTNAME);
-			int y = ob.getIntValForAttribute(FrostbiteDomain.YATTNAME);
-			int size = ob.getIntValForAttribute(FrostbiteDomain.SIZEATTNAME);
-			boolean activated = ob
-					.getBooleanValForAttribute(FrostbiteDomain.ACTIVATEDATTNAME);
-			if (activated)
-				g2.setColor(activatedPlatformColor);
-			else
-				g2.setColor(Color.white);
-
-			g2.fill(new Rectangle2D.Double(x, y, size, size));
-
-			if (x + size > FrostbiteDomain.gameWidth)
-				g2.fill(new Rectangle2D.Double(x - FrostbiteDomain.gameWidth,
-						y, size, size));
-			else if (x < 0)
-				g2.fill(new Rectangle2D.Double(x + FrostbiteDomain.gameWidth,
-						y, size, size));
-		}
-	}
 
 	public static class AgentPainter implements ObjectPainter {
 
@@ -110,7 +36,6 @@ public class FrostbiteVisualizer {
 			g2.fill(new Rectangle2D.Double(x, y, size, size));
 		}
 	}
-
 	public static class IglooPainter implements ObjectPainter {
 
 		protected FrostbiteDomain fd;
@@ -158,6 +83,82 @@ public class FrostbiteVisualizer {
 						doorWidth, doorHeight));
 			}
 		}
+	}
+	public static class PlatformPainter implements ObjectPainter {
+
+		protected FrostbiteDomain fd;
+
+		public PlatformPainter(FrostbiteDomain fd) {
+			this.fd = fd;
+		}
+
+		@Override
+		public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
+				float cWidth, float cHeight) {
+
+			int x = ob.getIntValForAttribute(FrostbiteDomain.XATTNAME);
+			int y = ob.getIntValForAttribute(FrostbiteDomain.YATTNAME);
+			int size = ob.getIntValForAttribute(FrostbiteDomain.SIZEATTNAME);
+			boolean activated = ob
+					.getBooleanValForAttribute(FrostbiteDomain.ACTIVATEDATTNAME);
+			if (activated)
+				g2.setColor(activatedPlatformColor);
+			else
+				g2.setColor(Color.white);
+
+			g2.fill(new Rectangle2D.Double(x, y, size, size));
+
+			if (x + size > FrostbiteDomain.gameWidth)
+				g2.fill(new Rectangle2D.Double(x - FrostbiteDomain.gameWidth,
+						y, size, size));
+			else if (x < 0)
+				g2.fill(new Rectangle2D.Double(x + FrostbiteDomain.gameWidth,
+						y, size, size));
+		}
+	}
+	private final static Color activatedPlatformColor = new Color(0.73333335f,
+			0.84313726f, 0.9411765f);
+
+	private final static Color iglooColor = new Color(0.7294118f, 0.827451f,
+			0.84313726f);
+
+	private final static Color waterColor = new Color(0.34509805f, 0.43529412f,
+			0.60784316f);
+
+	static int glob = 0;
+
+	/**
+	 * Returns a visualizer for a lunar lander domain.
+	 * 
+	 * @param fd
+	 *            the specific frostbite domain generator to visualize
+	 * @return a visualizer for a lunar lander domain.
+	 */
+	public static Visualizer getVisualizer(FrostbiteDomain fd) {
+
+		Visualizer v = new Visualizer();
+
+		v.addStaticPainter(new StaticPainter() {
+			@Override
+			public void paint(Graphics2D g2, State s, float cWidth,
+					float cHeight) {
+				g2.setColor(waterColor);
+				g2.fill(new Rectangle2D.Double(0, 0, FrostbiteDomain.gameWidth,
+						FrostbiteDomain.gameHeight));
+				g2.setColor(Color.white);
+				g2.fill(new Rectangle2D.Double(0, 0, FrostbiteDomain.gameWidth,
+						FrostbiteDomain.gameIceHeight));
+			}
+		});
+
+		v.addObjectClassPainter(FrostbiteDomain.PLATFORMCLASS,
+				new PlatformPainter(fd));
+		v.addObjectClassPainter(FrostbiteDomain.IGLOOCLASS,
+				new IglooPainter(fd));
+		v.addObjectClassPainter(FrostbiteDomain.AGENTCLASS,
+				new AgentPainter(fd));
+
+		return v;
 	}
 
 }

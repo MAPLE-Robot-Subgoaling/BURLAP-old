@@ -23,6 +23,16 @@ public abstract class ShapedRewardFunction implements RewardFunction {
 	protected RewardFunction baseRF;
 
 	/**
+	 * Initializes with the base objective task reward function.
+	 * 
+	 * @param baseRF
+	 *            the objective task reward function.
+	 */
+	public ShapedRewardFunction(RewardFunction baseRF) {
+		this.baseRF = baseRF;
+	}
+
+	/**
 	 * Returns the reward value to add to the base objective reward function.
 	 * 
 	 * @param s
@@ -35,16 +45,6 @@ public abstract class ShapedRewardFunction implements RewardFunction {
 	 */
 	public abstract double additiveReward(State s, GroundedAction a,
 			State sprime);
-
-	/**
-	 * Initializes with the base objective task reward function.
-	 * 
-	 * @param baseRF
-	 *            the objective task reward function.
-	 */
-	public ShapedRewardFunction(RewardFunction baseRF) {
-		this.baseRF = baseRF;
-	}
 
 	@Override
 	public double reward(State s, GroundedAction a, State sprime) {

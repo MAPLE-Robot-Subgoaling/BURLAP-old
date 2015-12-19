@@ -2,10 +2,7 @@ package burlap.behavior.singleagent.learning.modellearning;
 
 import burlap.behavior.policy.Policy;
 import burlap.behavior.singleagent.planning.Planner;
-import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.core.TerminalFunction;
-import burlap.oomdp.singleagent.RewardFunction;
 
 /**
  * Interface for defining planning algorithms that operate on iteratively

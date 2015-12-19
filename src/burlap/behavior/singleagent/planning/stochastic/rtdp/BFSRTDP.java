@@ -9,14 +9,15 @@ import java.util.Set;
 import burlap.behavior.policy.GreedyQPolicy;
 import burlap.behavior.singleagent.planning.stochastic.ActionTransitions;
 import burlap.behavior.singleagent.planning.stochastic.HashedTransitionProbability;
-import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
+import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.debugtools.DPrint;
+import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * A modified version of Real-time Dynamic Programming [1] in which first a
@@ -140,35 +141,6 @@ public class BFSRTDP extends RTDP {
 	}
 
 	/**
-	 * Sets the goal state that causes the BFS-like pass to stop expanding when
-	 * found.
-	 * 
-	 * @param gc
-	 */
-	public void setGoalCondition(StateConditionTest gc) {
-		this.goalCondition = gc;
-	}
-
-	/**
-	 * Plans from the input state and then returns a
-	 * {@link burlap.behavior.policy.GreedyQPolicy} that greedily selects the
-	 * action with the highest Q-value and breaks ties uniformly randomly.
-	 * 
-	 * @param initialState
-	 *            the initial state of the planning problem
-	 * @return a {@link burlap.behavior.policy.GreedyQPolicy}.
-	 */
-	@Override
-	public GreedyQPolicy planFromState(State initialState) {
-		HashableState sh = this.stateHash(initialState);
-		if (!mapToStateIndex.containsKey(sh)) {
-			this.performInitialPassFromState(initialState);
-		}
-		return super.planFromState(initialState);
-
-	}
-
-	/**
 	 * Performs a BFS-like pass to either all reachable states or to depth at
 	 * which a goal state is found and then performs the Bellman update on all
 	 * those states.
@@ -261,6 +233,25 @@ public class BFSRTDP extends RTDP {
 	}
 
 	/**
+	 * Plans from the input state and then returns a
+	 * {@link burlap.behavior.policy.GreedyQPolicy} that greedily selects the
+	 * action with the highest Q-value and breaks ties uniformly randomly.
+	 * 
+	 * @param initialState
+	 *            the initial state of the planning problem
+	 * @return a {@link burlap.behavior.policy.GreedyQPolicy}.
+	 */
+	@Override
+	public GreedyQPolicy planFromState(State initialState) {
+		HashableState sh = this.stateHash(initialState);
+		if (!mapToStateIndex.containsKey(sh)) {
+			this.performInitialPassFromState(initialState);
+		}
+		return super.planFromState(initialState);
+
+	}
+
+	/**
 	 * Returns whether a state is a goal state.
 	 * 
 	 * @param s
@@ -272,6 +263,16 @@ public class BFSRTDP extends RTDP {
 			return false;
 		}
 		return goalCondition.satisfies(s);
+	}
+
+	/**
+	 * Sets the goal state that causes the BFS-like pass to stop expanding when
+	 * found.
+	 * 
+	 * @param gc
+	 */
+	public void setGoalCondition(StateConditionTest gc) {
+		this.goalCondition = gc;
 	}
 
 }

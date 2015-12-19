@@ -1,17 +1,17 @@
 package burlap.oomdp.statehashing;
 
-import burlap.oomdp.core.Attribute;
-import burlap.oomdp.core.objects.ObjectInstance;
-import burlap.oomdp.core.states.State;
-import burlap.oomdp.core.states.ImmutableState;
-import burlap.oomdp.core.values.Value;
-
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+import burlap.oomdp.core.Attribute;
+import burlap.oomdp.core.objects.ObjectInstance;
+import burlap.oomdp.core.states.ImmutableState;
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.core.values.Value;
 
 /**
  * A straightforward factory for creating
@@ -43,6 +43,98 @@ import java.util.Set;
 public class SimpleHashableStateFactory implements HashableStateFactory {
 
 	/**
+	 * Classes of {@link burlap.oomdp.core.Attribute.AttributeType} that affect
+	 * how hashing will be performed
+	 */
+	protected static enum AttClass {
+		INT, DOUBLE, INTARRAY, DOUBLEARRAY, STRING, RELATIONAL
+	}
+
+	protected class SimpleCachedHashableState extends
+			HashableState.CachedHashableState implements
+			SimpleHashableStateInterface {
+
+		public SimpleCachedHashableState(State s) {
+			super(s);
+		}
+
+		@Override
+		public int computeHashCode() {
+			return SimpleHashableStateFactory.this.computeHashCode(this.s);
+		}
+
+		@Override
+		public State copy() {
+			return new SimpleCachedHashableState(this.s.copy());
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			if (this == other) {
+				return true;
+			}
+			if (!(other instanceof HashableState)) {
+				return false;
+			}
+			HashableState o = (HashableState) other;
+			return statesEqual(this.s, o.s);
+		}
+
+		@Override
+		public HashableStateFactory getParentHashingFactory() {
+			return SimpleHashableStateFactory.this;
+		}
+
+	}
+
+	protected class SimpleHashableState extends HashableState implements
+			SimpleHashableStateInterface {
+
+		public SimpleHashableState(State s) {
+			super(s);
+		}
+
+		@Override
+		public State copy() {
+			return new SimpleHashableState(this.s.copy());
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			if (this == other) {
+				return true;
+			}
+			if (!(other instanceof HashableState)) {
+				return false;
+			}
+			HashableState o = (HashableState) other;
+			return statesEqual(this.s, o.s);
+		}
+
+		@Override
+		public HashableStateFactory getParentHashingFactory() {
+			return SimpleHashableStateFactory.this;
+		}
+
+		@Override
+		public int hashCode() {
+			return SimpleHashableStateFactory.this.computeHashCode(this.s);
+		}
+	}
+
+	/**
+	 * An interface for {@link burlap.oomdp.statehashing.HashableState}
+	 * instances that are created by the
+	 * {@link burlap.oomdp.statehashing.SimpleHashableStateFactory}. It provides
+	 * a method for checking that the parent factory is the same and is used for
+	 * both cached and non-cached hash code
+	 * {@link burlap.oomdp.statehashing.HashableState} instances.
+	 */
+	public static interface SimpleHashableStateInterface {
+		HashableStateFactory getParentHashingFactory();
+	}
+
+	/**
 	 * Whether state evaluations are object identifier independent (the names of
 	 * objects don't matter). By default it is independent.
 	 */
@@ -53,14 +145,6 @@ public class SimpleHashableStateFactory implements HashableStateFactory {
 	 * {@link burlap.oomdp.statehashing.HashableState}. Default is non-cached.
 	 */
 	protected boolean useCached = false;
-
-	/**
-	 * Classes of {@link burlap.oomdp.core.Attribute.AttributeType} that affect
-	 * how hashing will be performed
-	 */
-	protected static enum AttClass {
-		INT, DOUBLE, INTARRAY, DOUBLEARRAY, STRING, RELATIONAL
-	}
 
 	/**
 	 * Default constructor: object identifier independent and no hash code
@@ -96,86 +180,6 @@ public class SimpleHashableStateFactory implements HashableStateFactory {
 			boolean useCached) {
 		this.identifierIndependent = identifierIndependent;
 		this.useCached = useCached;
-	}
-
-	@Override
-	public HashableState hashState(State s) {
-		if (s instanceof HashableState) {
-			if (s instanceof SimpleHashableStateInterface) {
-				if (((SimpleHashableStateInterface) s)
-						.getParentHashingFactory() == this) {
-					return (HashableState) s; // asking to hash what we've
-												// already hashed so just return
-												// it
-				}
-			}
-		}
-
-		if (useCached) {
-			return new SimpleCachedHashableState(s);
-		}
-		return new SimpleHashableState(s);
-	}
-
-	@Override
-	public boolean objectIdentifierIndependent() {
-		return this.identifierIndependent;
-	}
-
-	/**
-	 * Computes the hash code for the input state.
-	 * 
-	 * @param s
-	 *            the input state for which a hash code is to be computed
-	 * @return the hash code
-	 */
-	protected int computeHashCode(State s) {
-
-		int[] hashCodes = new int[s.numTotalObjects()];
-		if (s instanceof ImmutableState) {
-			ImmutableState sTimm = (ImmutableState) s;
-			for (int i = 0; i < hashCodes.length; i++) {
-				hashCodes[i] = computeHashCode(sTimm.getObject(i));
-			}
-		} else {
-			List<ObjectInstance> objects = s.getAllObjects();
-
-			for (int i = 0; i < hashCodes.length; i++) {
-				hashCodes[i] = computeHashCode(objects.get(i));
-			}
-		}
-		// sort for invariance to order
-		Arrays.sort(hashCodes);
-		HashCodeBuilder hashCodeBuilder = new HashCodeBuilder(17, 31);
-		hashCodeBuilder.append(hashCodes);
-		return hashCodeBuilder.toHashCode();
-	}
-
-	/**
-	 * Computes the hash code for an individual
-	 * {@link burlap.oomdp.core.objects.ObjectInstance}.
-	 * 
-	 * @param o
-	 *            the {@link burlap.oomdp.core.objects.ObjectInstance} whose
-	 *            hash code will be computed.
-	 * @return the hash code for the
-	 *         {@link burlap.oomdp.core.objects.ObjectInstance}.
-	 */
-	protected int computeHashCode(ObjectInstance o) {
-
-		HashCodeBuilder hashCodeBuilder = new HashCodeBuilder(17, 31);
-		if (!this.identifierIndependent) {
-			hashCodeBuilder.append(o.getName());
-		}
-
-		hashCodeBuilder.append(o.getClassName());
-
-		List<Value> values = o.getValues();
-		for (Value v : values) {
-			this.appendHashcodeForValue(hashCodeBuilder, v);
-		}
-
-		return hashCodeBuilder.toHashCode();
 	}
 
 	/**
@@ -226,6 +230,62 @@ public class SimpleHashableStateFactory implements HashableStateFactory {
 		}
 	}
 
+	/**
+	 * Computes the hash code for an individual
+	 * {@link burlap.oomdp.core.objects.ObjectInstance}.
+	 * 
+	 * @param o
+	 *            the {@link burlap.oomdp.core.objects.ObjectInstance} whose
+	 *            hash code will be computed.
+	 * @return the hash code for the
+	 *         {@link burlap.oomdp.core.objects.ObjectInstance}.
+	 */
+	protected int computeHashCode(ObjectInstance o) {
+
+		HashCodeBuilder hashCodeBuilder = new HashCodeBuilder(17, 31);
+		if (!this.identifierIndependent) {
+			hashCodeBuilder.append(o.getName());
+		}
+
+		hashCodeBuilder.append(o.getClassName());
+
+		List<Value> values = o.getValues();
+		for (Value v : values) {
+			this.appendHashcodeForValue(hashCodeBuilder, v);
+		}
+
+		return hashCodeBuilder.toHashCode();
+	}
+
+	/**
+	 * Computes the hash code for the input state.
+	 * 
+	 * @param s
+	 *            the input state for which a hash code is to be computed
+	 * @return the hash code
+	 */
+	protected int computeHashCode(State s) {
+
+		int[] hashCodes = new int[s.numTotalObjects()];
+		if (s instanceof ImmutableState) {
+			ImmutableState sTimm = (ImmutableState) s;
+			for (int i = 0; i < hashCodes.length; i++) {
+				hashCodes[i] = computeHashCode(sTimm.getObject(i));
+			}
+		} else {
+			List<ObjectInstance> objects = s.getAllObjects();
+
+			for (int i = 0; i < hashCodes.length; i++) {
+				hashCodes[i] = computeHashCode(objects.get(i));
+			}
+		}
+		// sort for invariance to order
+		Arrays.sort(hashCodes);
+		HashCodeBuilder hashCodeBuilder = new HashCodeBuilder(17, 31);
+		hashCodeBuilder.append(hashCodes);
+		return hashCodeBuilder.toHashCode();
+	}
+
 	protected AttClass getAttClass(Attribute att) {
 		if (att.type == Attribute.AttributeType.INT
 				|| att.type == Attribute.AttributeType.DISC
@@ -249,23 +309,59 @@ public class SimpleHashableStateFactory implements HashableStateFactory {
 						+ att.type);
 	}
 
+	@Override
+	public HashableState hashState(State s) {
+		if (s instanceof HashableState) {
+			if (s instanceof SimpleHashableStateInterface) {
+				if (((SimpleHashableStateInterface) s)
+						.getParentHashingFactory() == this) {
+					return (HashableState) s; // asking to hash what we've
+												// already hashed so just return
+												// it
+				}
+			}
+		}
+
+		if (useCached) {
+			return new SimpleCachedHashableState(s);
+		}
+		return new SimpleHashableState(s);
+	}
+
 	/**
-	 * Returns true if the two input states are equal. Equality respect this
-	 * hashing factory's identifier independence setting.
+	 * Evaluates whether two states are equal when equality depends on object
+	 * identifiers/names being equal.
 	 * 
 	 * @param s1
-	 *            a {@link burlap.oomdp.core.states.State}
+	 *            the first {@link State} to compare
 	 * @param s2
-	 *            another {@link burlap.oomdp.core.states.State} with which to
-	 *            compare
-	 * @return true if s1 equals s2, false otherwise.
+	 *            the second {@link State} to compare
+	 * @return true if s1 = s2; false otherwise
 	 */
-	protected boolean statesEqual(State s1, State s2) {
-		if (this.identifierIndependent) {
-			return identifierIndependentEquals(s1, s2);
-		} else {
-			return identifierDependentEquals(s1, s2);
+	protected boolean identifierDependentEquals(State s1, State s2) {
+		if (s1 == s2) {
+			return true;
 		}
+		if (s1.numTotalObjects() != s2.numTotalObjects()) {
+			return false;
+		}
+
+		List<ObjectInstance> theseObjects = s1.getAllObjects();
+		if (theseObjects.size() != s2.numTotalObjects()) {
+			return false;
+		}
+		for (ObjectInstance ob : theseObjects) {
+			ObjectInstance oByName = s2.getObject(ob.getName());
+			if (oByName == null) {
+				return false;
+			}
+			if (!objectValuesEqual(ob, oByName)) {
+				return false;
+			}
+		}
+
+		return true;
+
 	}
 
 	/**
@@ -320,40 +416,9 @@ public class SimpleHashableStateFactory implements HashableStateFactory {
 
 	}
 
-	/**
-	 * Evaluates whether two states are equal when equality depends on object
-	 * identifiers/names being equal.
-	 * 
-	 * @param s1
-	 *            the first {@link State} to compare
-	 * @param s2
-	 *            the second {@link State} to compare
-	 * @return true if s1 = s2; false otherwise
-	 */
-	protected boolean identifierDependentEquals(State s1, State s2) {
-		if (s1 == s2) {
-			return true;
-		}
-		if (s1.numTotalObjects() != s2.numTotalObjects()) {
-			return false;
-		}
-
-		List<ObjectInstance> theseObjects = s1.getAllObjects();
-		if (theseObjects.size() != s2.numTotalObjects()) {
-			return false;
-		}
-		for (ObjectInstance ob : theseObjects) {
-			ObjectInstance oByName = s2.getObject(ob.getName());
-			if (oByName == null) {
-				return false;
-			}
-			if (!objectValuesEqual(ob, oByName)) {
-				return false;
-			}
-		}
-
-		return true;
-
+	@Override
+	public boolean objectIdentifierIndependent() {
+		return this.identifierIndependent;
 	}
 
 	/**
@@ -389,6 +454,25 @@ public class SimpleHashableStateFactory implements HashableStateFactory {
 	}
 
 	/**
+	 * Returns true if the two input states are equal. Equality respect this
+	 * hashing factory's identifier independence setting.
+	 * 
+	 * @param s1
+	 *            a {@link burlap.oomdp.core.states.State}
+	 * @param s2
+	 *            another {@link burlap.oomdp.core.states.State} with which to
+	 *            compare
+	 * @return true if s1 equals s2, false otherwise.
+	 */
+	protected boolean statesEqual(State s1, State s2) {
+		if (this.identifierIndependent) {
+			return identifierIndependentEquals(s1, s2);
+		} else {
+			return identifierDependentEquals(s1, s2);
+		}
+	}
+
+	/**
 	 * Returns whether two values are equal.
 	 * 
 	 * @param v1
@@ -399,90 +483,6 @@ public class SimpleHashableStateFactory implements HashableStateFactory {
 	 */
 	protected boolean valuesEqual(Value v1, Value v2) {
 		return v1.equals(v2);
-	}
-
-	/**
-	 * An interface for {@link burlap.oomdp.statehashing.HashableState}
-	 * instances that are created by the
-	 * {@link burlap.oomdp.statehashing.SimpleHashableStateFactory}. It provides
-	 * a method for checking that the parent factory is the same and is used for
-	 * both cached and non-cached hash code
-	 * {@link burlap.oomdp.statehashing.HashableState} instances.
-	 */
-	public static interface SimpleHashableStateInterface {
-		HashableStateFactory getParentHashingFactory();
-	}
-
-	protected class SimpleCachedHashableState extends
-			HashableState.CachedHashableState implements
-			SimpleHashableStateInterface {
-
-		public SimpleCachedHashableState(State s) {
-			super(s);
-		}
-
-		@Override
-		public int computeHashCode() {
-			return SimpleHashableStateFactory.this.computeHashCode(this.s);
-		}
-
-		@Override
-		public boolean equals(Object other) {
-			if (this == other) {
-				return true;
-			}
-			if (!(other instanceof HashableState)) {
-				return false;
-			}
-			HashableState o = (HashableState) other;
-			return statesEqual(this.s, o.s);
-		}
-
-		@Override
-		public State copy() {
-			return new SimpleCachedHashableState(this.s.copy());
-		}
-
-		@Override
-		public HashableStateFactory getParentHashingFactory() {
-			return SimpleHashableStateFactory.this;
-		}
-
-	}
-
-	protected class SimpleHashableState extends HashableState implements
-			SimpleHashableStateInterface {
-
-		public SimpleHashableState(State s) {
-			super(s);
-		}
-
-		@Override
-		public int hashCode() {
-			return SimpleHashableStateFactory.this.computeHashCode(this.s);
-		}
-
-		@Override
-		public boolean equals(Object other) {
-			if (this == other) {
-				return true;
-			}
-			if (!(other instanceof HashableState)) {
-				return false;
-			}
-			HashableState o = (HashableState) other;
-			return statesEqual(this.s, o.s);
-		}
-
-		@Override
-		public State copy() {
-			return new SimpleHashableState(this.s.copy());
-		}
-
-		@Override
-		public HashableStateFactory getParentHashingFactory() {
-			return SimpleHashableStateFactory.this;
-		}
 	}
 
 }

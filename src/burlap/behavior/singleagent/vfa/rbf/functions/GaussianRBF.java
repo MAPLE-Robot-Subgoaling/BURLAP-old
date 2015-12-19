@@ -1,11 +1,11 @@
 package burlap.behavior.singleagent.vfa.rbf.functions;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import burlap.behavior.singleagent.vfa.rbf.DistanceMetric;
 import burlap.behavior.singleagent.vfa.rbf.RBF;
 import burlap.oomdp.core.states.State;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * An RBF whose response is dictated by a Gaussian kernel. More specifically,
@@ -20,36 +20,6 @@ import java.util.List;
  * 
  */
 public class GaussianRBF extends RBF {
-
-	/**
-	 * The bandwidth parameter. The larger the bandwidth value, the more uniform
-	 * the response it gives to any arbitrary input state.
-	 */
-	protected double epsilon;
-
-	/**
-	 * Initializes with a center state, a distance metric and a bandwidth
-	 * parameter.
-	 * 
-	 * @param centerdState
-	 *            the center state of this RBF unit.
-	 * @param metric
-	 *            the distance metric to use.
-	 * @param epsilon
-	 *            the bandwidth parameter.
-	 */
-	public GaussianRBF(State centerdState, DistanceMetric metric, double epsilon) {
-		super(centerdState, metric);
-		this.epsilon = epsilon;
-	}
-
-	@Override
-	public double responseFor(State input) {
-		double distance = metric.distance(centeredState, input);
-
-		return Math.exp(-1 * (Math.pow(distance / epsilon, 2.0)));
-
-	}
 
 	/**
 	 * Creates a {@link java.util.List} of
@@ -79,6 +49,36 @@ public class GaussianRBF extends RBF {
 		}
 
 		return units;
+	}
+
+	/**
+	 * The bandwidth parameter. The larger the bandwidth value, the more uniform
+	 * the response it gives to any arbitrary input state.
+	 */
+	protected double epsilon;
+
+	/**
+	 * Initializes with a center state, a distance metric and a bandwidth
+	 * parameter.
+	 * 
+	 * @param centerdState
+	 *            the center state of this RBF unit.
+	 * @param metric
+	 *            the distance metric to use.
+	 * @param epsilon
+	 *            the bandwidth parameter.
+	 */
+	public GaussianRBF(State centerdState, DistanceMetric metric, double epsilon) {
+		super(centerdState, metric);
+		this.epsilon = epsilon;
+	}
+
+	@Override
+	public double responseFor(State input) {
+		double distance = metric.distance(centeredState, input);
+
+		return Math.exp(-1 * (Math.pow(distance / epsilon, 2.0)));
+
 	}
 
 }

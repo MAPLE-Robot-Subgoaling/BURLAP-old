@@ -7,17 +7,17 @@ import java.util.List;
 import java.util.Set;
 
 import burlap.behavior.policy.GreedyQPolicy;
-import burlap.behavior.singleagent.planning.stochastic.ActionTransitions;
-import burlap.behavior.singleagent.planning.stochastic.HashedTransitionProbability;
-import burlap.behavior.singleagent.planning.stochastic.DynamicProgramming;
 import burlap.behavior.singleagent.planning.Planner;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
+import burlap.behavior.singleagent.planning.stochastic.ActionTransitions;
+import burlap.behavior.singleagent.planning.stochastic.DynamicProgramming;
+import burlap.behavior.singleagent.planning.stochastic.HashedTransitionProbability;
 import burlap.debugtools.DPrint;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * An implementation of asynchronous value iteration. Values of states are
@@ -98,101 +98,6 @@ public class ValueIteration extends DynamicProgramming implements Planner {
 	}
 
 	/**
-	 * Calling this method will force the valueFunction to recompute the
-	 * reachable states when the {@link #planFromState(State)} method is called
-	 * next. This may be useful if the transition dynamics from the last
-	 * planning call have changed and if planning needs to be restarted as a
-	 * result.
-	 */
-	public void recomputeReachableStates() {
-		this.foundReachableStates = false;
-		this.transitionDynamics = new HashMap<HashableState, List<ActionTransitions>>();
-	}
-
-	/**
-	 * Sets whether the state reachability search to generate the state space
-	 * will be prune the search from terminal states. The default is not to
-	 * prune.
-	 * 
-	 * @param toggle
-	 *            true if the search should prune the search at terminal states;
-	 *            false if the search should find all reachable states
-	 *            regardless of terminal states.
-	 */
-	public void toggleReachabiltiyTerminalStatePruning(boolean toggle) {
-		this.stopReachabilityFromTerminalStates = toggle;
-	}
-
-	/**
-	 * Plans from the input state and then returns a
-	 * {@link burlap.behavior.policy.GreedyQPolicy} that greedily selects the
-	 * action with the highest Q-value and breaks ties uniformly randomly.
-	 * 
-	 * @param initialState
-	 *            the initial state of the planning problem
-	 * @return a {@link burlap.behavior.policy.GreedyQPolicy}.
-	 */
-	@Override
-	public GreedyQPolicy planFromState(State initialState) {
-		this.initializeOptionsForExpectationComputations();
-		if (this.performReachabilityFrom(initialState) || !this.hasRunVI) {
-			this.runVI();
-		}
-
-		return new GreedyQPolicy(this);
-	}
-
-	@Override
-	public void resetSolver() {
-		super.resetSolver();
-		this.foundReachableStates = false;
-		this.hasRunVI = false;
-	}
-
-	/**
-	 * Runs VI until the specified termination conditions are met. In general,
-	 * this method should only be called indirectly through the
-	 * {@link #planFromState(State)} method. The
-	 * {@link #performReachabilityFrom(State)} must have been performed at least
-	 * once in the past or a runtime exception will be thrown. The
-	 * {@link #planFromState(State)} method will automatically call the
-	 * {@link #performReachabilityFrom(State)} method first and then this if it
-	 * hasn't been run.
-	 */
-	public void runVI() {
-
-		if (!this.foundReachableStates) {
-			throw new RuntimeException(
-					"Cannot run VI until the reachable states have been found. Use the planFromState or performReachabilityFrom method at least once before calling runVI.");
-		}
-
-		Set<HashableState> states = mapToStateIndex.keySet();
-
-		int i = 0;
-		for (i = 0; i < this.maxIterations; i++) {
-
-			double delta = 0.;
-			for (HashableState sh : states) {
-
-				double v = this.value(sh);
-				double maxQ = this.performBellmanUpdateOn(sh);
-				delta = Math.max(Math.abs(maxQ - v), delta);
-
-			}
-
-			if (delta < this.maxDelta) {
-				break; // approximated well enough; stop iterating
-			}
-
-		}
-
-		DPrint.cl(this.debugCode, "Passes: " + i);
-
-		this.hasRunVI = true;
-
-	}
-
-	/**
 	 * This method will find all reachable states that will be used by the
 	 * {@link #runVI()} method and will cache all the transition dynamics. This
 	 * method will not do anything if all reachable states from the input state
@@ -261,6 +166,101 @@ public class ValueIteration extends DynamicProgramming implements Planner {
 
 		return true;
 
+	}
+
+	/**
+	 * Plans from the input state and then returns a
+	 * {@link burlap.behavior.policy.GreedyQPolicy} that greedily selects the
+	 * action with the highest Q-value and breaks ties uniformly randomly.
+	 * 
+	 * @param initialState
+	 *            the initial state of the planning problem
+	 * @return a {@link burlap.behavior.policy.GreedyQPolicy}.
+	 */
+	@Override
+	public GreedyQPolicy planFromState(State initialState) {
+		this.initializeOptionsForExpectationComputations();
+		if (this.performReachabilityFrom(initialState) || !this.hasRunVI) {
+			this.runVI();
+		}
+
+		return new GreedyQPolicy(this);
+	}
+
+	/**
+	 * Calling this method will force the valueFunction to recompute the
+	 * reachable states when the {@link #planFromState(State)} method is called
+	 * next. This may be useful if the transition dynamics from the last
+	 * planning call have changed and if planning needs to be restarted as a
+	 * result.
+	 */
+	public void recomputeReachableStates() {
+		this.foundReachableStates = false;
+		this.transitionDynamics = new HashMap<HashableState, List<ActionTransitions>>();
+	}
+
+	@Override
+	public void resetSolver() {
+		super.resetSolver();
+		this.foundReachableStates = false;
+		this.hasRunVI = false;
+	}
+
+	/**
+	 * Runs VI until the specified termination conditions are met. In general,
+	 * this method should only be called indirectly through the
+	 * {@link #planFromState(State)} method. The
+	 * {@link #performReachabilityFrom(State)} must have been performed at least
+	 * once in the past or a runtime exception will be thrown. The
+	 * {@link #planFromState(State)} method will automatically call the
+	 * {@link #performReachabilityFrom(State)} method first and then this if it
+	 * hasn't been run.
+	 */
+	public void runVI() {
+
+		if (!this.foundReachableStates) {
+			throw new RuntimeException(
+					"Cannot run VI until the reachable states have been found. Use the planFromState or performReachabilityFrom method at least once before calling runVI.");
+		}
+
+		Set<HashableState> states = mapToStateIndex.keySet();
+
+		int i = 0;
+		for (i = 0; i < this.maxIterations; i++) {
+
+			double delta = 0.;
+			for (HashableState sh : states) {
+
+				double v = this.value(sh);
+				double maxQ = this.performBellmanUpdateOn(sh);
+				delta = Math.max(Math.abs(maxQ - v), delta);
+
+			}
+
+			if (delta < this.maxDelta) {
+				break; // approximated well enough; stop iterating
+			}
+
+		}
+
+		DPrint.cl(this.debugCode, "Passes: " + i);
+
+		this.hasRunVI = true;
+
+	}
+
+	/**
+	 * Sets whether the state reachability search to generate the state space
+	 * will be prune the search from terminal states. The default is not to
+	 * prune.
+	 * 
+	 * @param toggle
+	 *            true if the search should prune the search at terminal states;
+	 *            false if the search should find all reachable states
+	 *            regardless of terminal states.
+	 */
+	public void toggleReachabiltiyTerminalStatePruning(boolean toggle) {
+		this.stopReachabilityFromTerminalStates = toggle;
 	}
 
 }

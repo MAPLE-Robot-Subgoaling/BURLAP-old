@@ -4,8 +4,8 @@ import java.util.List;
 
 import burlap.oomdp.core.GroundedProp;
 import burlap.oomdp.core.PropositionalFunction;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 
 /**
  * This class defines a terminal function that terminates in states where there
@@ -51,19 +51,6 @@ public class SinglePFTF implements TerminalFunction {
 		this.terminateOnTrue = terminateOnTrue;
 	}
 
-	/**
-	 * Sets whether to be terminal state it is required for there to be a true
-	 * grounded version of this class' propositional function or whether it is
-	 * required for there to be a false grounded version.
-	 * 
-	 * @param terminateOnTrue
-	 *            if true then there must be a true grounded prop; if false then
-	 *            there must be a false grounded prop.
-	 */
-	public void setTerminateOnTrue(boolean terminateOnTrue) {
-		this.terminateOnTrue = terminateOnTrue;
-	}
-
 	@Override
 	public boolean isTerminal(State s) {
 		// List<GroundedProp> gps = s.getAllGroundedPropsFor(pf);
@@ -83,6 +70,19 @@ public class SinglePFTF implements TerminalFunction {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Sets whether to be terminal state it is required for there to be a true
+	 * grounded version of this class' propositional function or whether it is
+	 * required for there to be a false grounded version.
+	 * 
+	 * @param terminateOnTrue
+	 *            if true then there must be a true grounded prop; if false then
+	 *            there must be a false grounded prop.
+	 */
+	public void setTerminateOnTrue(boolean terminateOnTrue) {
+		this.terminateOnTrue = terminateOnTrue;
 	}
 
 }

@@ -1,17 +1,17 @@
 package burlap.behavior.singleagent.planning.vfa.fittedvi;
 
-import burlap.behavior.valuefunction.ValueFunction;
-import burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator;
-import burlap.datastructures.WekaInterfaces;
-import burlap.oomdp.core.states.State;
+import java.util.List;
+
 import weka.classifiers.Classifier;
 import weka.classifiers.lazy.IBk;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SelectedTag;
 import weka.core.neighboursearch.KDTree;
-
-import java.util.List;
+import burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator;
+import burlap.behavior.valuefunction.ValueFunction;
+import burlap.datastructures.WekaInterfaces;
+import burlap.oomdp.core.states.State;
 
 /**
  * A class for using supervised learning algorithms provided by the Weka library
@@ -36,92 +36,19 @@ import java.util.List;
 public class WekaVFATrainer implements SupervisedVFA {
 
 	/**
-	 * The generator of the Weka {@link weka.classifiers.Classifier} to use for
-	 * training.
+	 * An interface for generating Weka {@link weka.classifiers.Classifier}
+	 * objects to use for training.
 	 */
-	protected WekaClassifierGenerator baseClassifier;
+	public static interface WekaClassifierGenerator {
 
-	/**
-	 * The {@link burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator}
-	 * used to convert BURLAP {@link burlap.oomdp.core.states.State} objects to
-	 * feature vectors.
-	 */
-	protected StateToFeatureVectorGenerator fvGen;
-
-	/**
-	 * Initializes.
-	 * 
-	 * @param baseClassifier
-	 *            The generator of the Weka {@link weka.classifiers.Classifier}
-	 *            to use for training.
-	 * @param fvGen
-	 *            The
-	 *            {@link burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator}
-	 *            used to convert BURLAP {@link burlap.oomdp.core.states.State}
-	 *            objects to feature vectors.
-	 */
-	public WekaVFATrainer(WekaClassifierGenerator baseClassifier,
-			StateToFeatureVectorGenerator fvGen) {
-		this.baseClassifier = baseClassifier;
-		this.fvGen = fvGen;
-	}
-
-	@Override
-	public ValueFunction train(
-			List<SupervisedVFA.SupervisedVFAInstance> trainingData) {
-
-		Instances dataset = WekaInterfaces.getInstancesShell(
-				trainingData.get(0).s, this.fvGen, trainingData.size());
-
-		for (SupervisedVFA.SupervisedVFAInstance td : trainingData) {
-			dataset.add(WekaInterfaces.getInstance(td.s, this.fvGen, td.v,
-					dataset));
-		}
-
-		Classifier classifier = this.baseClassifier.generateClassifier();
-		try {
-			classifier.buildClassifier(dataset);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return new WekaVFA(this.fvGen, classifier);
-	}
-
-	/**
-	 * Creates a standard supervised VFA trainer that uses Weka's
-	 * {@link weka.classifiers.lazy.IBk} instance-based algorithm with a KD-tree
-	 * and 1-distance similarity measure.
-	 * 
-	 * @param fvGen
-	 *            the
-	 *            {@link burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator}
-	 *            for converting the BURLAP state into a feature vector usable
-	 *            by Weka.
-	 * @param k
-	 *            the number of nearest neighbors uses in the regression
-	 *            algorithm.
-	 * @return the
-	 *         {@link burlap.behavior.singleagent.planning.vfa.fittedvi.WekaVFATrainer}
-	 *         for Weka's {@link weka.classifiers.lazy.IBk} algorithm.
-	 */
-	public static WekaVFATrainer getKNNTrainer(
-			StateToFeatureVectorGenerator fvGen, final int k) {
-
-		WekaClassifierGenerator generator = new WekaClassifierGenerator() {
-			@Override
-			public Classifier generateClassifier() {
-				IBk classifer = new IBk();
-				classifer.setNearestNeighbourSearchAlgorithm(new KDTree());
-				classifer.setKNN(k);
-				classifer.setDistanceWeighting(new SelectedTag(
-						IBk.WEIGHT_SIMILARITY, IBk.TAGS_WEIGHTING));
-				return classifer;
-			}
-		};
-
-		WekaVFATrainer trainer = new WekaVFATrainer(generator, fvGen);
-		return trainer;
+		/**
+		 * Returns a Weka {@link weka.classifiers.Classifier} that can be used
+		 * to for training on new data.
+		 * 
+		 * @return a Weka {@link weka.classifiers.Classifier} that can be used
+		 *         to for training on new data.
+		 */
+		public Classifier generateClassifier();
 
 	}
 
@@ -182,20 +109,93 @@ public class WekaVFATrainer implements SupervisedVFA {
 	}
 
 	/**
-	 * An interface for generating Weka {@link weka.classifiers.Classifier}
-	 * objects to use for training.
+	 * Creates a standard supervised VFA trainer that uses Weka's
+	 * {@link weka.classifiers.lazy.IBk} instance-based algorithm with a KD-tree
+	 * and 1-distance similarity measure.
+	 * 
+	 * @param fvGen
+	 *            the
+	 *            {@link burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator}
+	 *            for converting the BURLAP state into a feature vector usable
+	 *            by Weka.
+	 * @param k
+	 *            the number of nearest neighbors uses in the regression
+	 *            algorithm.
+	 * @return the
+	 *         {@link burlap.behavior.singleagent.planning.vfa.fittedvi.WekaVFATrainer}
+	 *         for Weka's {@link weka.classifiers.lazy.IBk} algorithm.
 	 */
-	public static interface WekaClassifierGenerator {
+	public static WekaVFATrainer getKNNTrainer(
+			StateToFeatureVectorGenerator fvGen, final int k) {
 
-		/**
-		 * Returns a Weka {@link weka.classifiers.Classifier} that can be used
-		 * to for training on new data.
-		 * 
-		 * @return a Weka {@link weka.classifiers.Classifier} that can be used
-		 *         to for training on new data.
-		 */
-		public Classifier generateClassifier();
+		WekaClassifierGenerator generator = new WekaClassifierGenerator() {
+			@Override
+			public Classifier generateClassifier() {
+				IBk classifer = new IBk();
+				classifer.setNearestNeighbourSearchAlgorithm(new KDTree());
+				classifer.setKNN(k);
+				classifer.setDistanceWeighting(new SelectedTag(
+						IBk.WEIGHT_SIMILARITY, IBk.TAGS_WEIGHTING));
+				return classifer;
+			}
+		};
 
+		WekaVFATrainer trainer = new WekaVFATrainer(generator, fvGen);
+		return trainer;
+
+	}
+
+	/**
+	 * The generator of the Weka {@link weka.classifiers.Classifier} to use for
+	 * training.
+	 */
+	protected WekaClassifierGenerator baseClassifier;
+
+	/**
+	 * The {@link burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator}
+	 * used to convert BURLAP {@link burlap.oomdp.core.states.State} objects to
+	 * feature vectors.
+	 */
+	protected StateToFeatureVectorGenerator fvGen;
+
+	/**
+	 * Initializes.
+	 * 
+	 * @param baseClassifier
+	 *            The generator of the Weka {@link weka.classifiers.Classifier}
+	 *            to use for training.
+	 * @param fvGen
+	 *            The
+	 *            {@link burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator}
+	 *            used to convert BURLAP {@link burlap.oomdp.core.states.State}
+	 *            objects to feature vectors.
+	 */
+	public WekaVFATrainer(WekaClassifierGenerator baseClassifier,
+			StateToFeatureVectorGenerator fvGen) {
+		this.baseClassifier = baseClassifier;
+		this.fvGen = fvGen;
+	}
+
+	@Override
+	public ValueFunction train(
+			List<SupervisedVFA.SupervisedVFAInstance> trainingData) {
+
+		Instances dataset = WekaInterfaces.getInstancesShell(
+				trainingData.get(0).s, this.fvGen, trainingData.size());
+
+		for (SupervisedVFA.SupervisedVFAInstance td : trainingData) {
+			dataset.add(WekaInterfaces.getInstance(td.s, this.fvGen, td.v,
+					dataset));
+		}
+
+		Classifier classifier = this.baseClassifier.generateClassifier();
+		try {
+			classifier.buildClassifier(dataset);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return new WekaVFA(this.fvGen, classifier);
 	}
 
 }

@@ -8,8 +8,8 @@ import java.util.Map;
 
 import burlap.debugtools.DPrint;
 import burlap.debugtools.RandomFactory;
-import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.AgentFactory;
+import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.World;
 import burlap.oomdp.stochasticgames.WorldGenerator;
 
@@ -46,30 +46,6 @@ public class Tournament {
 	 * @param maxStages
 	 *            the maximum number of stages to be played in any single game
 	 *            of the tournament.
-	 * @param selector
-	 *            a match selector that dictates which agents will play who and
-	 *            in which games
-	 * @param worldGenerator
-	 *            a world generator to create new worlds for each match
-	 */
-	public Tournament(int maxStages, MatchSelector selector,
-			WorldGenerator worldGenerator) {
-		agents = new ArrayList<AgentFactory>();
-		tournamentCumulatedReward = new ArrayList<Double>();
-		this.maxStages = maxStages;
-		this.selector = selector;
-		this.worldGenerator = worldGenerator;
-
-		this.numGames = 0;
-
-	}
-
-	/**
-	 * Initializes the Tournament
-	 * 
-	 * @param maxStages
-	 *            the maximum number of stages to be played in any single game
-	 *            of the tournament.
 	 * @param numGames
 	 *            the number of games that will be played for each agent
 	 *            matching
@@ -94,8 +70,6 @@ public class Tournament {
 	/**
 	 * Initializes the Tournament
 	 * 
-	 * @param agents
-	 *            the list of agents that will participate in the tournament
 	 * @param maxStages
 	 *            the maximum number of stages to be played in any single game
 	 *            of the tournament.
@@ -105,19 +79,16 @@ public class Tournament {
 	 * @param worldGenerator
 	 *            a world generator to create new worlds for each match
 	 */
-	public Tournament(List<AgentFactory> agents, int maxStages,
-			MatchSelector selector, WorldGenerator worldGenerator) {
-		this.agents = agents;
-		tournamentCumulatedReward = new ArrayList<Double>(this.agents.size());
-		for (int i = 0; i < agents.size(); i++) {
-			tournamentCumulatedReward.add(0.);
-		}
-
+	public Tournament(int maxStages, MatchSelector selector,
+			WorldGenerator worldGenerator) {
+		agents = new ArrayList<AgentFactory>();
+		tournamentCumulatedReward = new ArrayList<Double>();
 		this.maxStages = maxStages;
 		this.selector = selector;
 		this.worldGenerator = worldGenerator;
 
 		this.numGames = 0;
+
 	}
 
 	/**
@@ -154,6 +125,35 @@ public class Tournament {
 	}
 
 	/**
+	 * Initializes the Tournament
+	 * 
+	 * @param agents
+	 *            the list of agents that will participate in the tournament
+	 * @param maxStages
+	 *            the maximum number of stages to be played in any single game
+	 *            of the tournament.
+	 * @param selector
+	 *            a match selector that dictates which agents will play who and
+	 *            in which games
+	 * @param worldGenerator
+	 *            a world generator to create new worlds for each match
+	 */
+	public Tournament(List<AgentFactory> agents, int maxStages,
+			MatchSelector selector, WorldGenerator worldGenerator) {
+		this.agents = agents;
+		tournamentCumulatedReward = new ArrayList<Double>(this.agents.size());
+		for (int i = 0; i < agents.size(); i++) {
+			tournamentCumulatedReward.add(0.);
+		}
+
+		this.maxStages = maxStages;
+		this.selector = selector;
+		this.worldGenerator = worldGenerator;
+
+		this.numGames = 0;
+	}
+
+	/**
 	 * Adds an agent to the tournament
 	 * 
 	 * @param agent
@@ -164,15 +164,6 @@ public class Tournament {
 		this.agents.add(agent);
 		this.tournamentCumulatedReward.add(0.);
 		return this.agents.size() - 1;
-	}
-
-	/**
-	 * Returns the number of agents who are playing in this tournament
-	 * 
-	 * @return the number of agents who are playing in this tournament
-	 */
-	public int getNumAgents() {
-		return agents.size();
 	}
 
 	/**
@@ -189,12 +180,12 @@ public class Tournament {
 	}
 
 	/**
-	 * Reset the cumulative reward received by each agent in this tournament.
+	 * Returns the number of agents who are playing in this tournament
+	 * 
+	 * @return the number of agents who are playing in this tournament
 	 */
-	public void resetTournamentReward() {
-		for (int i = 0; i < tournamentCumulatedReward.size(); i++) {
-			tournamentCumulatedReward.set(i, 0.);
-		}
+	public int getNumAgents() {
+		return agents.size();
 	}
 
 	/**
@@ -204,6 +195,15 @@ public class Tournament {
 	public void printOutResults() {
 		for (int i = 0; i < agents.size(); i++) {
 			System.out.println(i + ": " + tournamentCumulatedReward.get(i));
+		}
+	}
+
+	/**
+	 * Reset the cumulative reward received by each agent in this tournament.
+	 */
+	public void resetTournamentReward() {
+		for (int i = 0; i < tournamentCumulatedReward.size(); i++) {
+			tournamentCumulatedReward.set(i, 0.);
 		}
 	}
 

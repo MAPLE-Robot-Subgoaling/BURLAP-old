@@ -37,15 +37,6 @@ import burlap.oomdp.singleagent.GroundedAction;
 public interface Environment {
 
 	/**
-	 * Returns the current observation of the environment as a
-	 * {@link burlap.oomdp.core.states.State}.
-	 * 
-	 * @return the current observation of the environment as a
-	 *         {@link burlap.oomdp.core.states.State}.
-	 */
-	State getCurrentObservation();
-
-	/**
 	 * Executes the specified action in this environment
 	 * 
 	 * @param ga
@@ -55,6 +46,15 @@ public interface Environment {
 	 *         given GroundedAction in this environment.
 	 */
 	EnvironmentOutcome executeAction(GroundedAction ga);
+
+	/**
+	 * Returns the current observation of the environment as a
+	 * {@link burlap.oomdp.core.states.State}.
+	 * 
+	 * @return the current observation of the environment as a
+	 *         {@link burlap.oomdp.core.states.State}.
+	 */
+	State getCurrentObservation();
 
 	/**
 	 * Returns the last reward returned by the environment

@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import burlap.behavior.valuefunction.ValueFunctionInitialization;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.core.states.State;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.stochasticgames.JointAction;
 
 /**
@@ -20,20 +20,6 @@ import burlap.oomdp.stochasticgames.JointAction;
  * 
  */
 public interface QSourceForSingleAgent {
-
-	/**
-	 * Returns a Q-value (represented with a {@link JAQValue} object) stored for
-	 * the given state and joint action. Modification to the returned object
-	 * will directly modify the stored value that will be returned in subsequent
-	 * calls to this method.
-	 * 
-	 * @param s
-	 *            the Q-value's associated state
-	 * @param ja
-	 *            the Q-value's associated joint aciton
-	 * @return a {@link JAQValue} for the given state and joint action.
-	 */
-	public JAQValue getQValueFor(State s, JointAction ja);
 
 	/**
 	 * An implementation of the {@link QSourceForSingleAgent} interface that has
@@ -68,6 +54,26 @@ public interface QSourceForSingleAgent {
 			this.qInit = qInit;
 		}
 
+		/**
+		 * Returns the Map from joint actions to q-values for a given state. If
+		 * the map does not already exist, then it is created and indexed.
+		 * 
+		 * @param s
+		 *            the state for which the map is returned.
+		 * @return the Map from joint actions to q-values for a given state
+		 */
+		protected Map<JointAction, JAQValue> getJAMap(State s) {
+
+			HashableState sh = this.hashingFactory.hashState(s);
+			Map<JointAction, JAQValue> storedMap = this.qValues.get(sh);
+			if (storedMap == null) {
+				storedMap = new HashMap<JointAction, JAQValue>();
+				this.qValues.put(sh, storedMap);
+			}
+			return storedMap;
+
+		}
+
 		@Override
 		public JAQValue getQValueFor(State s, JointAction ja) {
 
@@ -100,26 +106,20 @@ public interface QSourceForSingleAgent {
 			return q;
 		}
 
-		/**
-		 * Returns the Map from joint actions to q-values for a given state. If
-		 * the map does not already exist, then it is created and indexed.
-		 * 
-		 * @param s
-		 *            the state for which the map is returned.
-		 * @return the Map from joint actions to q-values for a given state
-		 */
-		protected Map<JointAction, JAQValue> getJAMap(State s) {
-
-			HashableState sh = this.hashingFactory.hashState(s);
-			Map<JointAction, JAQValue> storedMap = this.qValues.get(sh);
-			if (storedMap == null) {
-				storedMap = new HashMap<JointAction, JAQValue>();
-				this.qValues.put(sh, storedMap);
-			}
-			return storedMap;
-
-		}
-
 	}
+
+	/**
+	 * Returns a Q-value (represented with a {@link JAQValue} object) stored for
+	 * the given state and joint action. Modification to the returned object
+	 * will directly modify the stored value that will be returned in subsequent
+	 * calls to this method.
+	 * 
+	 * @param s
+	 *            the Q-value's associated state
+	 * @param ja
+	 *            the Q-value's associated joint aciton
+	 * @return a {@link JAQValue} for the given state and joint action.
+	 */
+	public JAQValue getQValueFor(State s, JointAction ja);
 
 }

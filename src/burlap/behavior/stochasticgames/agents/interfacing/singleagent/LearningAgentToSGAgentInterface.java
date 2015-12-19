@@ -1,5 +1,7 @@
 package burlap.behavior.stochasticgames.agents.interfacing.singleagent;
 
+import java.util.Map;
+
 import burlap.behavior.singleagent.MDPSolver;
 import burlap.behavior.singleagent.learning.LearningAgent;
 import burlap.oomdp.core.Domain;
@@ -8,10 +10,12 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.environment.Environment;
 import burlap.oomdp.singleagent.environment.EnvironmentOutcome;
-import burlap.oomdp.stochasticgames.*;
+import burlap.oomdp.stochasticgames.JointAction;
+import burlap.oomdp.stochasticgames.SGAgent;
+import burlap.oomdp.stochasticgames.SGAgentType;
+import burlap.oomdp.stochasticgames.SGDomain;
+import burlap.oomdp.stochasticgames.World;
 import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
-
-import java.util.Map;
 
 /**
  * A stochastic games {@link burlap.oomdp.stochasticgames.SGAgent} that takes as
@@ -39,6 +43,23 @@ import java.util.Map;
  */
 public class LearningAgentToSGAgentInterface extends SGAgent implements
 		Environment {
+
+	/**
+	 * A wrapper that maintains a reference to a
+	 * {@link burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction}
+	 * or null.
+	 */
+	protected static class ActionReference {
+		protected GroundedSGAgentAction val;
+	}
+
+	/**
+	 * A wrapper that maintains a reference to a
+	 * {@link burlap.oomdp.core.states.State} or null.
+	 */
+	protected static class StateReference {
+		protected State val = null;
+	}
 
 	/**
 	 * The single agent
@@ -97,27 +118,55 @@ public class LearningAgentToSGAgentInterface extends SGAgent implements
 	}
 
 	@Override
-	public void joinWorld(World w, SGAgentType as) {
-		super.joinWorld(w, as);
+	public EnvironmentOutcome executeAction(GroundedAction ga) {
 
-		if (this.learningAgent instanceof MDPSolver) {
-			SGToSADomain dgen = new SGToSADomain(this.domain, as);
-			Domain saDomain = dgen.generateDomain();
-			for (Action a : saDomain.getActions()) {
-				if (a instanceof SGToSADomain.SAActionWrapper) {
-					((SGToSADomain.SAActionWrapper) a).agentName = this
-							.getAgentName();
+		State prevState = this.currentState;
+		synchronized (this.nextAction) {
+			GroundedSGAgentAction gsa = ((SGToSADomain.GroundedSAAActionWrapper) ga).wrappedSGAction;
+			gsa.actingAgent = this.getAgentName();
+			this.nextAction.val = gsa;
+			this.nextAction.notifyAll();
+		}
+
+		synchronized (this.nextState) {
+			while (this.nextState.val == null) {
+				try {
+					nextState.wait();
+				} catch (InterruptedException ex) {
+					ex.printStackTrace();
 				}
 			}
-
-			((MDPSolver) this.learningAgent).setDomain(saDomain);
-
+			this.nextState.val = null;
 		}
+
+		EnvironmentOutcome eo = new EnvironmentOutcome(prevState, ga,
+				this.currentState, this.lastReward, this.curStateIsTerminal);
+
+		return eo;
 	}
 
 	@Override
 	public void gameStarting() {
 		// do nothing
+	}
+
+	@Override
+	public void gameTerminated() {
+
+		// notify the thread that it's terminal
+		synchronized (this.nextState) {
+			this.curStateIsTerminal = true;
+			this.nextState.val = this.currentState;
+			this.nextState.notifyAll();
+		}
+
+		// then join the thread to end it
+		try {
+			this.saThread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		this.saThread = null;
 	}
 
 	@Override
@@ -158,62 +207,8 @@ public class LearningAgentToSGAgentInterface extends SGAgent implements
 	}
 
 	@Override
-	public void observeOutcome(State s, JointAction jointAction,
-			Map<String, Double> jointReward, State sprime, boolean isTerminal) {
-		this.lastReward = jointReward.get(this.getAgentName());
-		this.currentState = sprime;
-	}
-
-	@Override
-	public void gameTerminated() {
-
-		// notify the thread that it's terminal
-		synchronized (this.nextState) {
-			this.curStateIsTerminal = true;
-			this.nextState.val = this.currentState;
-			this.nextState.notifyAll();
-		}
-
-		// then join the thread to end it
-		try {
-			this.saThread.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		this.saThread = null;
-	}
-
-	@Override
 	public State getCurrentObservation() {
 		return this.currentState;
-	}
-
-	@Override
-	public EnvironmentOutcome executeAction(GroundedAction ga) {
-
-		State prevState = this.currentState;
-		synchronized (this.nextAction) {
-			GroundedSGAgentAction gsa = ((SGToSADomain.GroundedSAAActionWrapper) ga).wrappedSGAction;
-			gsa.actingAgent = this.getAgentName();
-			this.nextAction.val = gsa;
-			this.nextAction.notifyAll();
-		}
-
-		synchronized (this.nextState) {
-			while (this.nextState.val == null) {
-				try {
-					nextState.wait();
-				} catch (InterruptedException ex) {
-					ex.printStackTrace();
-				}
-			}
-			this.nextState.val = null;
-		}
-
-		EnvironmentOutcome eo = new EnvironmentOutcome(prevState, ga,
-				this.currentState, this.lastReward, this.curStateIsTerminal);
-
-		return eo;
 	}
 
 	@Override
@@ -227,24 +222,33 @@ public class LearningAgentToSGAgentInterface extends SGAgent implements
 	}
 
 	@Override
+	public void joinWorld(World w, SGAgentType as) {
+		super.joinWorld(w, as);
+
+		if (this.learningAgent instanceof MDPSolver) {
+			SGToSADomain dgen = new SGToSADomain(this.domain, as);
+			Domain saDomain = dgen.generateDomain();
+			for (Action a : saDomain.getActions()) {
+				if (a instanceof SGToSADomain.SAActionWrapper) {
+					((SGToSADomain.SAActionWrapper) a).agentName = this
+							.getAgentName();
+				}
+			}
+
+			((MDPSolver) this.learningAgent).setDomain(saDomain);
+
+		}
+	}
+
+	@Override
+	public void observeOutcome(State s, JointAction jointAction,
+			Map<String, Double> jointReward, State sprime, boolean isTerminal) {
+		this.lastReward = jointReward.get(this.getAgentName());
+		this.currentState = sprime;
+	}
+
+	@Override
 	public void resetEnvironment() {
 		// nothing to do
-	}
-
-	/**
-	 * A wrapper that maintains a reference to a
-	 * {@link burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction}
-	 * or null.
-	 */
-	protected static class ActionReference {
-		protected GroundedSGAgentAction val;
-	}
-
-	/**
-	 * A wrapper that maintains a reference to a
-	 * {@link burlap.oomdp.core.states.State} or null.
-	 */
-	protected static class StateReference {
-		protected State val = null;
 	}
 }

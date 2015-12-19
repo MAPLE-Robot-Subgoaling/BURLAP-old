@@ -7,16 +7,16 @@ import java.util.Map;
 
 import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.singleagent.options.support.OptionEvaluatingRF;
-import burlap.oomdp.core.AbstractObjectParameterizedGroundedAction;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.debugtools.DPrint;
+import burlap.oomdp.core.AbstractObjectParameterizedGroundedAction;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * The abstract super class to use for various MDP solving algorithms, including
@@ -81,25 +81,6 @@ public abstract class MDPSolver implements MDPSolverInterface {
 	protected int debugCode;
 
 	@Override
-	public abstract void resetSolver();
-
-	@Override
-	public void solverInit(Domain domain, RewardFunction rf,
-			TerminalFunction tf, double gamma,
-			HashableStateFactory hashingFactory) {
-
-		this.rf = rf;
-		this.tf = tf;
-		this.gamma = gamma;
-		this.hashingFactory = hashingFactory;
-
-		mapToStateIndex = new HashMap<HashableState, HashableState>();
-
-		this.setDomain(domain);
-
-	}
-
-	@Override
 	public void addNonDomainReferencedAction(Action a) {
 		// make sure it doesn't already exist in the list
 		if (!actions.contains(a)) {
@@ -123,58 +104,23 @@ public abstract class MDPSolver implements MDPSolverInterface {
 	}
 
 	@Override
-	public void setActions(List<Action> actions) {
-		this.actions = actions;
-	}
-
-	@Override
 	public List<Action> getActions() {
 		return new ArrayList<Action>(this.actions);
 	}
 
-	@Override
-	public TerminalFunction getTF() {
-		return tf;
-	}
+	/**
+	 * Returns all grounded actions in the provided state for all the actions
+	 * that this valueFunction can use.
+	 * 
+	 * @param s
+	 *            the source state for which to get all GroundedActions.
+	 * @return all GroundedActions.
+	 */
+	protected List<GroundedAction> getAllGroundedActions(State s) {
 
-	@Override
-	public RewardFunction getRF() {
-		return rf;
-	}
+		return Action.getAllApplicableGroundedActionsFromActionList(
+				this.actions, s);
 
-	@Override
-	public void setHashingFactory(HashableStateFactory hashingFactory) {
-		this.hashingFactory = hashingFactory;
-	}
-
-	@Override
-	public HashableStateFactory getHashingFactory() {
-		return this.hashingFactory;
-	}
-
-	@Override
-	public void setRf(RewardFunction rf) {
-		this.rf = rf;
-	}
-
-	@Override
-	public void setTf(TerminalFunction tf) {
-		this.tf = tf;
-	}
-
-	@Override
-	public double getGamma() {
-		return this.gamma;
-	}
-
-	@Override
-	public void setGamma(double gamma) {
-		this.gamma = gamma;
-	}
-
-	@Override
-	public void setDebugCode(int code) {
-		this.debugCode = code;
 	}
 
 	@Override
@@ -183,8 +129,51 @@ public abstract class MDPSolver implements MDPSolverInterface {
 	}
 
 	@Override
-	public void toggleDebugPrinting(boolean toggle) {
-		DPrint.toggleCode(debugCode, toggle);
+	public Domain getDomain() {
+		return domain;
+	}
+
+	@Override
+	public double getGamma() {
+		return this.gamma;
+	}
+
+	@Override
+	public HashableStateFactory getHashingFactory() {
+		return this.hashingFactory;
+	}
+
+	@Override
+	public RewardFunction getRf() {
+		return rf;
+	}
+
+	@Override
+	public RewardFunction getRF() {
+		return rf;
+	}
+
+	@Override
+	public TerminalFunction getTf() {
+		return tf;
+	}
+
+	@Override
+	public TerminalFunction getTF() {
+		return tf;
+	}
+
+	@Override
+	public abstract void resetSolver();
+
+	@Override
+	public void setActions(List<Action> actions) {
+		this.actions = actions;
+	}
+
+	@Override
+	public void setDebugCode(int code) {
+		this.debugCode = code;
 	}
 
 	@Override
@@ -216,18 +205,55 @@ public abstract class MDPSolver implements MDPSolverInterface {
 	}
 
 	@Override
-	public Domain getDomain() {
-		return domain;
+	public void setGamma(double gamma) {
+		this.gamma = gamma;
 	}
 
 	@Override
-	public RewardFunction getRf() {
-		return rf;
+	public void setHashingFactory(HashableStateFactory hashingFactory) {
+		this.hashingFactory = hashingFactory;
 	}
 
 	@Override
-	public TerminalFunction getTf() {
-		return tf;
+	public void setRf(RewardFunction rf) {
+		this.rf = rf;
+	}
+
+	@Override
+	public void setTf(TerminalFunction tf) {
+		this.tf = tf;
+	}
+
+	@Override
+	public void solverInit(Domain domain, RewardFunction rf,
+			TerminalFunction tf, double gamma,
+			HashableStateFactory hashingFactory) {
+
+		this.rf = rf;
+		this.tf = tf;
+		this.gamma = gamma;
+		this.hashingFactory = hashingFactory;
+
+		mapToStateIndex = new HashMap<HashableState, HashableState>();
+
+		this.setDomain(domain);
+
+	}
+
+	/**
+	 * A shorthand method for hashing a state.
+	 * 
+	 * @param s
+	 *            the state to hash
+	 * @return a StateHashTuple produce from this planners StateHashFactory.
+	 */
+	public HashableState stateHash(State s) {
+		return hashingFactory.hashState(s);
+	}
+
+	@Override
+	public void toggleDebugPrinting(boolean toggle) {
+		DPrint.toggleCode(debugCode, toggle);
 	}
 
 	/**
@@ -255,7 +281,7 @@ public abstract class MDPSolver implements MDPSolverInterface {
 			return a;
 		}
 
-		GroundedAction nga = (GroundedAction) a.copy();
+		GroundedAction nga = a.copy();
 		String[] params = ((AbstractObjectParameterizedGroundedAction) a)
 				.getObjectParameters();
 
@@ -266,32 +292,6 @@ public abstract class MDPSolver implements MDPSolverInterface {
 		((AbstractObjectParameterizedGroundedAction) nga)
 				.setObjectParameters(newParams);
 		return nga;
-	}
-
-	/**
-	 * A shorthand method for hashing a state.
-	 * 
-	 * @param s
-	 *            the state to hash
-	 * @return a StateHashTuple produce from this planners StateHashFactory.
-	 */
-	public HashableState stateHash(State s) {
-		return hashingFactory.hashState(s);
-	}
-
-	/**
-	 * Returns all grounded actions in the provided state for all the actions
-	 * that this valueFunction can use.
-	 * 
-	 * @param s
-	 *            the source state for which to get all GroundedActions.
-	 * @return all GroundedActions.
-	 */
-	protected List<GroundedAction> getAllGroundedActions(State s) {
-
-		return Action.getAllApplicableGroundedActionsFromActionList(
-				this.actions, s);
-
 	}
 
 }

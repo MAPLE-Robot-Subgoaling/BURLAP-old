@@ -1,9 +1,9 @@
 package burlap.oomdp.core;
 
-import burlap.oomdp.core.states.State;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import burlap.oomdp.core.states.State;
 
 /**
  * The propositional function class defines evaluations of object instances in
@@ -35,6 +35,30 @@ import java.util.List;
  * 
  */
 public abstract class PropositionalFunction {
+
+	/**
+	 * Returns all possible groundings for all of the
+	 * {@link PropositionalFunction}s in the provided list for the given
+	 * {@link State}.
+	 * 
+	 * @param pfs
+	 *            The list of {@link PropositionalFunction}s for which all
+	 *            groundings will be returned.
+	 * @param s
+	 *            the {@link State} in which the groundings should be produced.
+	 * @return a {@link List} of all possible groundings for all of the
+	 *         {@link PropositionalFunction}s in the provided list for the given
+	 *         {@link State}
+	 */
+	public static List<GroundedProp> getAllGroundedPropsFromPFList(
+			List<PropositionalFunction> pfs, State s) {
+		List<GroundedProp> res = new ArrayList<GroundedProp>();
+		for (PropositionalFunction pf : pfs) {
+			List<GroundedProp> gps = pf.getAllGroundedPropsForState(s);
+			res.addAll(gps);
+		}
+		return res;
+	}
 
 	/*
 	 * name of the propositional function
@@ -242,103 +266,12 @@ public abstract class PropositionalFunction {
 				pfClassName);
 	}
 
-	protected final void init(String name, Domain domain,
-			String[] parameterClasses, String[] parameterOrderGroup,
-			String pfClass) {
-		this.name = name;
-		this.domain = domain;
-		this.domain.addPropositionalFunction(this);
-		this.parameterClasses = parameterClasses;
-		this.parameterOrderGroup = parameterOrderGroup;
-		this.pfClass = pfClass;
-	}
-
-	/**
-	 * Returns the name of this propositional function.
-	 * 
-	 * @return the name of this propositional function.
-	 */
-	public final String getName() {
-		return name;
-	}
-
-	/**
-	 * Returns the object classes of the parameters for this propositional
-	 * function
-	 * 
-	 * @return the object classes of the parameters for this propositional
-	 *         function
-	 */
-	public final String[] getParameterClasses() {
-		return parameterClasses;
-	}
-
-	/**
-	 * Returns the parameter order group names for the parameters of this
-	 * propositional function.
-	 * 
-	 * @return the parameter order group names for the parameters of this
-	 *         propositional function.
-	 */
-	public final String[] getParameterOrderGroups() {
-		return parameterOrderGroup;
-	}
-
-	/**
-	 * Sets the class name for this propositional function.
-	 * 
-	 * @param cn
-	 *            the propositional function class name to which this PF should
-	 *            be assigned.
-	 */
-	public final void setClassName(String cn) {
-		pfClass = cn;
-	}
-
-	/**
-	 * Returns the propositional function class name of this PF.
-	 * 
-	 * @return the propositional function class name of this PF.
-	 */
-	public final String getClassName() {
-		return pfClass;
-	}
-
-	/**
-	 * Returns whether the propositional function is true for the given state
-	 * with the given parameters This version is preferred to the comma
-	 * delimited version.
-	 * 
-	 * @param s
-	 *            the state that is being checked
-	 * @param params
-	 *            the parameters being passed in to the propositional function
-	 * @return whether the propositional function is true
-	 */
-	public abstract boolean isTrue(State s, String... params);
-
-	/**
-	 * Returns all possible groundings for all of the
-	 * {@link PropositionalFunction}s in the provided list for the given
-	 * {@link State}.
-	 * 
-	 * @param pfs
-	 *            The list of {@link PropositionalFunction}s for which all
-	 *            groundings will be returned.
-	 * @param s
-	 *            the {@link State} in which the groundings should be produced.
-	 * @return a {@link List} of all possible groundings for all of the
-	 *         {@link PropositionalFunction}s in the provided list for the given
-	 *         {@link State}
-	 */
-	public static List<GroundedProp> getAllGroundedPropsFromPFList(
-			List<PropositionalFunction> pfs, State s) {
-		List<GroundedProp> res = new ArrayList<GroundedProp>();
-		for (PropositionalFunction pf : pfs) {
-			List<GroundedProp> gps = pf.getAllGroundedPropsForState(s);
-			res.addAll(gps);
-		}
-		return res;
+	@Override
+	public boolean equals(Object obj) {
+		PropositionalFunction op = (PropositionalFunction) obj;
+		if (op.name.equals(name))
+			return true;
+		return false;
 	}
 
 	/**
@@ -375,6 +308,86 @@ public abstract class PropositionalFunction {
 	}
 
 	/**
+	 * Returns the propositional function class name of this PF.
+	 * 
+	 * @return the propositional function class name of this PF.
+	 */
+	public final String getClassName() {
+		return pfClass;
+	}
+
+	/**
+	 * Returns the name of this propositional function.
+	 * 
+	 * @return the name of this propositional function.
+	 */
+	public final String getName() {
+		return name;
+	}
+
+	/**
+	 * Returns the object classes of the parameters for this propositional
+	 * function
+	 * 
+	 * @return the object classes of the parameters for this propositional
+	 *         function
+	 */
+	public final String[] getParameterClasses() {
+		return parameterClasses;
+	}
+
+	/**
+	 * Returns the parameter order group names for the parameters of this
+	 * propositional function.
+	 * 
+	 * @return the parameter order group names for the parameters of this
+	 *         propositional function.
+	 */
+	public final String[] getParameterOrderGroups() {
+		return parameterOrderGroup;
+	}
+
+	@Override
+	public int hashCode() {
+		return name.hashCode();
+	}
+
+	protected final void init(String name, Domain domain,
+			String[] parameterClasses, String[] parameterOrderGroup,
+			String pfClass) {
+		this.name = name;
+		this.domain = domain;
+		this.domain.addPropositionalFunction(this);
+		this.parameterClasses = parameterClasses;
+		this.parameterOrderGroup = parameterOrderGroup;
+		this.pfClass = pfClass;
+	}
+
+	/**
+	 * Returns whether the propositional function is true for the given state
+	 * with the given parameters This version is preferred to the comma
+	 * delimited version.
+	 * 
+	 * @param s
+	 *            the state that is being checked
+	 * @param params
+	 *            the parameters being passed in to the propositional function
+	 * @return whether the propositional function is true
+	 */
+	public abstract boolean isTrue(State s, String... params);
+
+	/**
+	 * Sets the class name for this propositional function.
+	 * 
+	 * @param cn
+	 *            the propositional function class name to which this PF should
+	 *            be assigned.
+	 */
+	public final void setClassName(String cn) {
+		pfClass = cn;
+	}
+
+	/**
 	 * Returns true if there existing a {@link GroundedProp} for the provided
 	 * {@link State} that is in true in the {@link State}.
 	 * 
@@ -396,21 +409,8 @@ public abstract class PropositionalFunction {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		PropositionalFunction op = (PropositionalFunction) obj;
-		if (op.name.equals(name))
-			return true;
-		return false;
-	}
-
-	@Override
 	public String toString() {
 		return this.name;
-	}
-
-	@Override
-	public int hashCode() {
-		return name.hashCode();
 	}
 
 }

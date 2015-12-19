@@ -1,16 +1,16 @@
 package burlap.behavior.singleagent.learnfromdemo.mlirl;
 
-import burlap.behavior.singleagent.EpisodeAnalysis;
+import java.util.List;
+
+import burlap.behavior.policy.BoltzmannQPolicy;
 import burlap.behavior.policy.Policy;
+import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.BoltzmannPolicyGradient;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlanner;
 import burlap.behavior.valuefunction.QFunction;
-import burlap.behavior.policy.BoltzmannQPolicy;
 import burlap.debugtools.DPrint;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
-
-import java.util.List;
 
 /**
  * An implementation of Maximum-likelihood Inverse Reinforcement Learning [1].
@@ -43,6 +43,21 @@ import java.util.List;
  * @author James MacGlashan.
  */
 public class MLIRL {
+
+	/**
+	 * Performs a vector addition and stores the results in sumVector
+	 * 
+	 * @param sumVector
+	 *            the input vector to which the values in deltaVector will be
+	 *            added.
+	 * @param deltaVector
+	 *            the vector values to add to sumVector.
+	 */
+	protected static void addToVector(double[] sumVector, double[] deltaVector) {
+		for (int i = 0; i < sumVector.length; i++) {
+			sumVector[i] += deltaVector[i];
+		}
+	}
 
 	/**
 	 * The MLRIL request defining the IRL problem.
@@ -102,34 +117,6 @@ public class MLIRL {
 	}
 
 	/**
-	 * Sets the
-	 * {@link burlap.behavior.singleagent.learnfromdemo.mlirl.MLIRLRequest}
-	 * object defining the IRL problem.
-	 * 
-	 * @param request
-	 *            the
-	 *            {@link burlap.behavior.singleagent.learnfromdemo.mlirl.MLIRLRequest}
-	 *            object defining the IRL problem.
-	 */
-	public void setRequest(MLIRLRequest request) {
-		this.request = request;
-	}
-
-	/**
-	 * Sets whether information during learning is printed to the terminal. Will
-	 * automatically toggle the debug printing for the underlying valueFunction
-	 * as well.
-	 * 
-	 * @param printDebug
-	 *            if true, information is printed to the terminal; if false then
-	 *            it is silent.
-	 */
-	public void toggleDebugPrinting(boolean printDebug) {
-		DPrint.toggleCode(this.debugCode, printDebug);
-		this.request.getPlanner().toggleDebugPrinting(printDebug);
-	}
-
-	/**
 	 * Returns the debug code used for printing to the terminal
 	 * 
 	 * @return the debug code used for printing to the terminal.
@@ -139,13 +126,108 @@ public class MLIRL {
 	}
 
 	/**
-	 * Sets the debug code used for printing to the terminal
+	 * Computes and returns the log-likelihood of all expert trajectories under
+	 * the current reward function parameters.
 	 * 
-	 * @param debugCode
-	 *            the debug code used for printing to the terminal
+	 * @return the log-likelihood of all expert trajectories under the current
+	 *         reward function parameters.
 	 */
-	public void setDebugCode(int debugCode) {
-		this.debugCode = debugCode;
+	public double logLikelihood() {
+
+		double[] weights = this.request.getEpisodeWeights();
+		List<EpisodeAnalysis> exampleTrajectories = this.request
+				.getExpertEpisodes();
+
+		double sum = 0.;
+		for (int i = 0; i < exampleTrajectories.size(); i++) {
+			sum += this.logLikelihoodOfTrajectory(exampleTrajectories.get(i),
+					weights[i]);
+		}
+
+		return sum;
+
+	}
+
+	/**
+	 * Computes and returns the gradient of the log-likelihood of all
+	 * trajectories
+	 * 
+	 * @return the gradient of the log-likelihood of all trajectories
+	 */
+	public double[] logLikelihoodGradient() {
+		double[] gradient = new double[this.request.getRf()
+				.getParameterDimension()];
+		double[] weights = this.request.getEpisodeWeights();
+		List<EpisodeAnalysis> exampleTrajectories = this.request
+				.getExpertEpisodes();
+
+		for (int i = 0; i < exampleTrajectories.size(); i++) {
+			EpisodeAnalysis ea = exampleTrajectories.get(i);
+			double weight = weights[i];
+			for (int t = 0; t < ea.numTimeSteps() - 1; t++) {
+				this.request.getPlanner().planFromState(ea.getState(t));
+				double[] policyGrad = this.logPolicyGrad(ea.getState(t),
+						ea.getAction(t));
+				// weigh it by trajectory strength
+				for (int j = 0; j < policyGrad.length; j++) {
+					policyGrad[j] *= weight;
+				}
+				MLIRL.addToVector(gradient, policyGrad);
+			}
+		}
+
+		return gradient;
+	}
+
+	/**
+	 * Computes and returns the log-likelihood of the given trajectory under the
+	 * current reward function parameters and weights it by the given weight.
+	 * 
+	 * @param ea
+	 *            the trajectory
+	 * @param weight
+	 *            the weight to assign the trajectory
+	 * @return the log-likelihood of the given trajectory under the current
+	 *         reward function parameters and weights it by the given weight.
+	 */
+	public double logLikelihoodOfTrajectory(EpisodeAnalysis ea, double weight) {
+		double logLike = 0.;
+		Policy p = new BoltzmannQPolicy((QFunction) this.request.getPlanner(),
+				1. / this.request.getBoltzmannBeta());
+		for (int i = 0; i < ea.numTimeSteps() - 1; i++) {
+			this.request.getPlanner().planFromState(ea.getState(i));
+			double actProb = p.getProbOfAction(ea.getState(i), ea.getAction(i));
+			logLike += Math.log(actProb);
+		}
+		logLike *= weight;
+		return logLike;
+	}
+
+	/**
+	 * Computes and returns the gradient of the Boltzmann policy for the given
+	 * state and action.
+	 * 
+	 * @param s
+	 *            the state in which the policy is queried
+	 * @param ga
+	 *            the action for which the policy is queried.
+	 * @return s the gradient of the Boltzmann policy for the given state and
+	 *         action.
+	 */
+	public double[] logPolicyGrad(State s, GroundedAction ga) {
+
+		Policy p = new BoltzmannQPolicy((QFunction) this.request.getPlanner(),
+				1. / this.request.getBoltzmannBeta());
+		double invActProb = 1. / p.getProbOfAction(s, ga);
+		double[] gradient = BoltzmannPolicyGradient
+				.computeBoltzmannPolicyGradient(s, ga,
+						(QGradientPlanner) this.request.getPlanner(),
+						this.request.getBoltzmannBeta());
+		for (int f = 0; f < gradient.length; f++) {
+			gradient[f] *= invActProb;
+		}
+		return gradient;
+
 	}
 
 	/**
@@ -201,123 +283,41 @@ public class MLIRL {
 	}
 
 	/**
-	 * Computes and returns the log-likelihood of all expert trajectories under
-	 * the current reward function parameters.
+	 * Sets the debug code used for printing to the terminal
 	 * 
-	 * @return the log-likelihood of all expert trajectories under the current
-	 *         reward function parameters.
+	 * @param debugCode
+	 *            the debug code used for printing to the terminal
 	 */
-	public double logLikelihood() {
-
-		double[] weights = this.request.getEpisodeWeights();
-		List<EpisodeAnalysis> exampleTrajectories = this.request
-				.getExpertEpisodes();
-
-		double sum = 0.;
-		for (int i = 0; i < exampleTrajectories.size(); i++) {
-			sum += this.logLikelihoodOfTrajectory(exampleTrajectories.get(i),
-					weights[i]);
-		}
-
-		return sum;
-
+	public void setDebugCode(int debugCode) {
+		this.debugCode = debugCode;
 	}
 
 	/**
-	 * Computes and returns the log-likelihood of the given trajectory under the
-	 * current reward function parameters and weights it by the given weight.
+	 * Sets the
+	 * {@link burlap.behavior.singleagent.learnfromdemo.mlirl.MLIRLRequest}
+	 * object defining the IRL problem.
 	 * 
-	 * @param ea
-	 *            the trajectory
-	 * @param weight
-	 *            the weight to assign the trajectory
-	 * @return the log-likelihood of the given trajectory under the current
-	 *         reward function parameters and weights it by the given weight.
+	 * @param request
+	 *            the
+	 *            {@link burlap.behavior.singleagent.learnfromdemo.mlirl.MLIRLRequest}
+	 *            object defining the IRL problem.
 	 */
-	public double logLikelihoodOfTrajectory(EpisodeAnalysis ea, double weight) {
-		double logLike = 0.;
-		Policy p = new BoltzmannQPolicy((QFunction) this.request.getPlanner(),
-				1. / this.request.getBoltzmannBeta());
-		for (int i = 0; i < ea.numTimeSteps() - 1; i++) {
-			this.request.getPlanner().planFromState(ea.getState(i));
-			double actProb = p.getProbOfAction(ea.getState(i), ea.getAction(i));
-			logLike += Math.log(actProb);
-		}
-		logLike *= weight;
-		return logLike;
+	public void setRequest(MLIRLRequest request) {
+		this.request = request;
 	}
 
 	/**
-	 * Computes and returns the gradient of the log-likelihood of all
-	 * trajectories
+	 * Sets whether information during learning is printed to the terminal. Will
+	 * automatically toggle the debug printing for the underlying valueFunction
+	 * as well.
 	 * 
-	 * @return the gradient of the log-likelihood of all trajectories
+	 * @param printDebug
+	 *            if true, information is printed to the terminal; if false then
+	 *            it is silent.
 	 */
-	public double[] logLikelihoodGradient() {
-		double[] gradient = new double[this.request.getRf()
-				.getParameterDimension()];
-		double[] weights = this.request.getEpisodeWeights();
-		List<EpisodeAnalysis> exampleTrajectories = this.request
-				.getExpertEpisodes();
-
-		for (int i = 0; i < exampleTrajectories.size(); i++) {
-			EpisodeAnalysis ea = exampleTrajectories.get(i);
-			double weight = weights[i];
-			for (int t = 0; t < ea.numTimeSteps() - 1; t++) {
-				this.request.getPlanner().planFromState(ea.getState(t));
-				double[] policyGrad = this.logPolicyGrad(ea.getState(t),
-						ea.getAction(t));
-				// weigh it by trajectory strength
-				for (int j = 0; j < policyGrad.length; j++) {
-					policyGrad[j] *= weight;
-				}
-				this.addToVector(gradient, policyGrad);
-			}
-		}
-
-		return gradient;
-	}
-
-	/**
-	 * Computes and returns the gradient of the Boltzmann policy for the given
-	 * state and action.
-	 * 
-	 * @param s
-	 *            the state in which the policy is queried
-	 * @param ga
-	 *            the action for which the policy is queried.
-	 * @return s the gradient of the Boltzmann policy for the given state and
-	 *         action.
-	 */
-	public double[] logPolicyGrad(State s, GroundedAction ga) {
-
-		Policy p = new BoltzmannQPolicy((QFunction) this.request.getPlanner(),
-				1. / this.request.getBoltzmannBeta());
-		double invActProb = 1. / p.getProbOfAction(s, ga);
-		double[] gradient = BoltzmannPolicyGradient
-				.computeBoltzmannPolicyGradient(s, ga,
-						(QGradientPlanner) this.request.getPlanner(),
-						this.request.getBoltzmannBeta());
-		for (int f = 0; f < gradient.length; f++) {
-			gradient[f] *= invActProb;
-		}
-		return gradient;
-
-	}
-
-	/**
-	 * Performs a vector addition and stores the results in sumVector
-	 * 
-	 * @param sumVector
-	 *            the input vector to which the values in deltaVector will be
-	 *            added.
-	 * @param deltaVector
-	 *            the vector values to add to sumVector.
-	 */
-	protected static void addToVector(double[] sumVector, double[] deltaVector) {
-		for (int i = 0; i < sumVector.length; i++) {
-			sumVector[i] += deltaVector[i];
-		}
+	public void toggleDebugPrinting(boolean printDebug) {
+		DPrint.toggleCode(this.debugCode, printDebug);
+		this.request.getPlanner().toggleDebugPrinting(printDebug);
 	}
 
 }

@@ -9,9 +9,9 @@ import burlap.behavior.policy.Policy;
 import burlap.behavior.policy.Policy.ActionProb;
 import burlap.behavior.singleagent.auxiliary.valuefunctionvis.StatePolicyPainter;
 import burlap.oomdp.core.Attribute;
+import burlap.oomdp.core.Attribute.AttributeType;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.core.Attribute.AttributeType;
 
 /**
  * An class for rendering the policy for states by painting different glyphs for
@@ -126,118 +126,12 @@ public class PolicyGlyphPainter2D implements StatePolicyPainter {
 	}
 
 	/**
-	 * Will set the x-y attributes to use for cell rendering to the x y
-	 * attributes of the first object in the state of the designated classes.
-	 * 
-	 * @param xClassName
-	 *            the object class name containing the render x-axis attribute
-	 * @param xAttName
-	 *            the render x-axis attribute name
-	 * @param yClassName
-	 *            the object class name containing the render y-axis attribute
-	 * @param yAttName
-	 *            the render y-axis attribute name
-	 */
-	public void setXYAttByObjectClass(String xClassName, String xAttName,
-			String yClassName, String yAttName) {
-		this.xClassName = xClassName;
-		this.xAttName = xAttName;
-
-		this.yClassName = yClassName;
-		this.yAttName = yAttName;
-
-		this.xObjectName = null;
-		this.yObjectName = null;
-	}
-
-	/**
-	 * Will set the x-y attributes to use for cell rendering to the x y
-	 * attributes of the designated object references.
-	 * 
-	 * @param xObjectName
-	 *            the object name reference that contains the render x-axis
-	 *            attribute
-	 * @param xAttName
-	 *            the render x-axis attribute name
-	 * @param yObjectName
-	 *            the object name reference that contains the render y-axis
-	 *            attribute
-	 * @param yAttName
-	 *            the render y-axis attribute name
-	 */
-	public void setXYAttByObjectReference(String xObjectName, String xAttName,
-			String yObjectName, String yAttName) {
-		this.xObjectName = xObjectName;
-		this.xAttName = xAttName;
-
-		this.yObjectName = yObjectName;
-		this.yAttName = yAttName;
-
-		this.xClassName = null;
-		this.yClassName = null;
-	}
-
-	/**
-	 * Sets which glyph painter to use for an action with the given name
-	 * 
-	 * @param actionName
-	 *            the name of the action
-	 * @param actionPainter
-	 *            the glyph painter used to represent it
-	 */
-	public void setActionNameGlyphPainter(String actionName,
-			ActionGlyphPainter actionPainter) {
-		this.actionNameToGlyphPainter.put(actionName, actionPainter);
-	}
-
-	/**
-	 * Sets the number of states that will be rendered along a row
-	 * 
-	 * @param numXCells
-	 *            the number of states that will be rendered along a row
-	 */
-	public void setNumXCells(int numXCells) {
-		this.numXCells = numXCells;
-	}
-
-	/**
-	 * Sets the number of states that will be rendered along a row
-	 * 
-	 * @param numYCells
-	 *            the number of states that will be rendered along a column
-	 */
-	public void setNumYCells(int numYCells) {
-		this.numYCells = numYCells;
-	}
-
-	/**
 	 * Returns the rendering style
 	 * 
 	 * @return the rendering style
 	 */
 	public PolicyGlyphRenderStyle getRenderStyle() {
 		return renderStyle;
-	}
-
-	/**
-	 * Sets the rendering style
-	 * 
-	 * @param renderStyle
-	 *            the rending style to use
-	 */
-	public void setRenderStyle(PolicyGlyphRenderStyle renderStyle) {
-		this.renderStyle = renderStyle;
-	}
-
-	/**
-	 * Sets the soft difference between max actions to determine ties when the
-	 * MAXACTIONSOFSOFTTIE render style is used.
-	 * 
-	 * @param delta
-	 *            the delta for determining ties.
-	 */
-	public void setSoftTieRenderStyleDelta(double delta) {
-		this.softTieDelta = delta;
 	}
 
 	/**
@@ -364,6 +258,112 @@ public class PolicyGlyphPainter2D implements StatePolicyPainter {
 
 		return new float[] { nx, ny, nw, nh };
 
+	}
+
+	/**
+	 * Sets which glyph painter to use for an action with the given name
+	 * 
+	 * @param actionName
+	 *            the name of the action
+	 * @param actionPainter
+	 *            the glyph painter used to represent it
+	 */
+	public void setActionNameGlyphPainter(String actionName,
+			ActionGlyphPainter actionPainter) {
+		this.actionNameToGlyphPainter.put(actionName, actionPainter);
+	}
+
+	/**
+	 * Sets the number of states that will be rendered along a row
+	 * 
+	 * @param numXCells
+	 *            the number of states that will be rendered along a row
+	 */
+	public void setNumXCells(int numXCells) {
+		this.numXCells = numXCells;
+	}
+
+	/**
+	 * Sets the number of states that will be rendered along a row
+	 * 
+	 * @param numYCells
+	 *            the number of states that will be rendered along a column
+	 */
+	public void setNumYCells(int numYCells) {
+		this.numYCells = numYCells;
+	}
+
+	/**
+	 * Sets the rendering style
+	 * 
+	 * @param renderStyle
+	 *            the rending style to use
+	 */
+	public void setRenderStyle(PolicyGlyphRenderStyle renderStyle) {
+		this.renderStyle = renderStyle;
+	}
+
+	/**
+	 * Sets the soft difference between max actions to determine ties when the
+	 * MAXACTIONSOFSOFTTIE render style is used.
+	 * 
+	 * @param delta
+	 *            the delta for determining ties.
+	 */
+	public void setSoftTieRenderStyleDelta(double delta) {
+		this.softTieDelta = delta;
+	}
+
+	/**
+	 * Will set the x-y attributes to use for cell rendering to the x y
+	 * attributes of the first object in the state of the designated classes.
+	 * 
+	 * @param xClassName
+	 *            the object class name containing the render x-axis attribute
+	 * @param xAttName
+	 *            the render x-axis attribute name
+	 * @param yClassName
+	 *            the object class name containing the render y-axis attribute
+	 * @param yAttName
+	 *            the render y-axis attribute name
+	 */
+	public void setXYAttByObjectClass(String xClassName, String xAttName,
+			String yClassName, String yAttName) {
+		this.xClassName = xClassName;
+		this.xAttName = xAttName;
+
+		this.yClassName = yClassName;
+		this.yAttName = yAttName;
+
+		this.xObjectName = null;
+		this.yObjectName = null;
+	}
+
+	/**
+	 * Will set the x-y attributes to use for cell rendering to the x y
+	 * attributes of the designated object references.
+	 * 
+	 * @param xObjectName
+	 *            the object name reference that contains the render x-axis
+	 *            attribute
+	 * @param xAttName
+	 *            the render x-axis attribute name
+	 * @param yObjectName
+	 *            the object name reference that contains the render y-axis
+	 *            attribute
+	 * @param yAttName
+	 *            the render y-axis attribute name
+	 */
+	public void setXYAttByObjectReference(String xObjectName, String xAttName,
+			String yObjectName, String yAttName) {
+		this.xObjectName = xObjectName;
+		this.xAttName = xAttName;
+
+		this.yObjectName = yObjectName;
+		this.yAttName = yAttName;
+
+		this.xClassName = null;
+		this.yClassName = null;
 	}
 
 	/**

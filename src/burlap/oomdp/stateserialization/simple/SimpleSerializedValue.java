@@ -1,8 +1,8 @@
 package burlap.oomdp.stateserialization.simple;
 
-import burlap.oomdp.core.values.Value;
-
 import java.io.Serializable;
+
+import burlap.oomdp.core.values.Value;
 
 /**
  * A serializable representation of {@link burlap.oomdp.core.values.Value}

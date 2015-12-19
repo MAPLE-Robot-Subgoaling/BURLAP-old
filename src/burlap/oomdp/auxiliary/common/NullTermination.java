@@ -1,7 +1,7 @@
 package burlap.oomdp.auxiliary.common;
 
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 
 /**
  * A terminal state function in which no state is considered a terminal state.

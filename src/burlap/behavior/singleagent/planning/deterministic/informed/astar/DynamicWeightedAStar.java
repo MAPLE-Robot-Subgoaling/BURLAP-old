@@ -6,18 +6,18 @@ import java.util.Map;
 
 import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy;
-import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
 import burlap.behavior.singleagent.planning.deterministic.informed.Heuristic;
 import burlap.behavior.singleagent.planning.deterministic.informed.PrioritizedSearchNode;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.datastructures.HashIndexedHeap;
 import burlap.debugtools.DPrint;
+import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * Dynamic Weighted A* [1] uses a dynamic heuristic weight that is based on
@@ -102,15 +102,47 @@ public class DynamicWeightedAStar extends AStar {
 	}
 
 	@Override
-	public void prePlanPrep() {
-		super.prePlanPrep();
-		depthMap = new HashMap<HashableState, Integer>();
+	public double computeF(PrioritizedSearchNode parentNode,
+			GroundedAction generatingAction, HashableState successorState) {
+		double cumR = 0.;
+		double r = 0.;
+		int d = 0;
+		if (parentNode != null) {
+			double pCumR = cumulatedRewardMap.get(parentNode.s);
+			r = rf.reward(parentNode.s.s, generatingAction, successorState.s);
+			cumR = pCumR + r;
+
+			int pD = depthMap.get(parentNode.s);
+			if (generatingAction.action.isPrimitive()) {
+				d = pD + 1;
+			} else {
+				Option o = (Option) generatingAction.action;
+				d = pD + o.getLastNumSteps();
+			}
+		}
+
+		double H = heuristic.h(successorState.s);
+		lastComputedCumR = cumR;
+		lastComputedDepth = d;
+		double weightedE = this.epsilon * this.epsilonWeight(d);
+		double F = cumR + ((1. + weightedE) * H);
+
+		return F;
 	}
 
-	@Override
-	public void postPlanPrep() {
-		super.postPlanPrep();
-		depthMap = null; // clear out to reclaim memory
+	/**
+	 * Returns the weighted epsilon value at the given search depth
+	 * 
+	 * @param depth
+	 *            the search depth
+	 * @return the weighted epsilon value at the given search depth
+	 */
+	protected double epsilonWeight(int depth) {
+
+		double ratio = ((double) depth) / ((double) expectedDepth);
+		return Math.max(1. - ratio, 0.0);
+		// return 1.;
+
 	}
 
 	@Override
@@ -119,13 +151,6 @@ public class DynamicWeightedAStar extends AStar {
 			PrioritizedSearchNode psn) {
 		super.insertIntoOpen(openQueue, psn);
 		depthMap.put(psn.s, lastComputedDepth);
-	}
-
-	@Override
-	public void updateOpen(HashIndexedHeap<PrioritizedSearchNode> openQueue,
-			PrioritizedSearchNode openPSN, PrioritizedSearchNode npsn) {
-		super.updateOpen(openQueue, openPSN, npsn);
-		depthMap.put(npsn.s, lastComputedDepth);
 	}
 
 	/**
@@ -250,47 +275,22 @@ public class DynamicWeightedAStar extends AStar {
 	}
 
 	@Override
-	public double computeF(PrioritizedSearchNode parentNode,
-			GroundedAction generatingAction, HashableState successorState) {
-		double cumR = 0.;
-		double r = 0.;
-		int d = 0;
-		if (parentNode != null) {
-			double pCumR = cumulatedRewardMap.get(parentNode.s);
-			r = rf.reward(parentNode.s.s, generatingAction, successorState.s);
-			cumR = pCumR + r;
-
-			int pD = depthMap.get(parentNode.s);
-			if (generatingAction.action.isPrimitive()) {
-				d = pD + 1;
-			} else {
-				Option o = (Option) generatingAction.action;
-				d = pD + o.getLastNumSteps();
-			}
-		}
-
-		double H = heuristic.h(successorState.s);
-		lastComputedCumR = cumR;
-		lastComputedDepth = d;
-		double weightedE = this.epsilon * this.epsilonWeight(d);
-		double F = cumR + ((1. + weightedE) * H);
-
-		return F;
+	public void postPlanPrep() {
+		super.postPlanPrep();
+		depthMap = null; // clear out to reclaim memory
 	}
 
-	/**
-	 * Returns the weighted epsilon value at the given search depth
-	 * 
-	 * @param depth
-	 *            the search depth
-	 * @return the weighted epsilon value at the given search depth
-	 */
-	protected double epsilonWeight(int depth) {
+	@Override
+	public void prePlanPrep() {
+		super.prePlanPrep();
+		depthMap = new HashMap<HashableState, Integer>();
+	}
 
-		double ratio = ((double) depth) / ((double) expectedDepth);
-		return Math.max(1. - ratio, 0.0);
-		// return 1.;
-
+	@Override
+	public void updateOpen(HashIndexedHeap<PrioritizedSearchNode> openQueue,
+			PrioritizedSearchNode openPSN, PrioritizedSearchNode npsn) {
+		super.updateOpen(openQueue, openPSN, npsn);
+		depthMap.put(npsn.s, lastComputedDepth);
 	}
 
 }

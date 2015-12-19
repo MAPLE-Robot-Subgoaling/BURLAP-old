@@ -9,15 +9,15 @@ import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.GroundedProp;
 import burlap.oomdp.core.ObjectClass;
-import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.PropositionalFunction;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.core.objects.MutableObjectInstance;
+import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.MutableState;
-import burlap.oomdp.stochasticgames.SGAgentType;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.stochasticgames.JointAction;
 import burlap.oomdp.stochasticgames.JointReward;
+import burlap.oomdp.stochasticgames.SGAgentType;
 import burlap.oomdp.stochasticgames.SGDomain;
 import burlap.oomdp.stochasticgames.agentactions.SimpleSGAgentAction;
 import burlap.oomdp.stochasticgames.explorers.SGVisualExplorer;
@@ -51,6 +51,371 @@ import burlap.oomdp.visualizer.Visualizer;
  * 
  */
 public class GridGame implements DomainGenerator {
+
+	/**
+	 * Defines a propositional function that evaluates to true when a given
+	 * agent is in any of its personal goals
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	static class AgentInPGoal extends PropositionalFunction {
+
+		/**
+		 * Initializes with the given name and domain and is set to evaluate on
+		 * agent objects
+		 * 
+		 * @param name
+		 *            the name of the propositional function
+		 * @param domain
+		 *            the domain for this propositional function
+		 */
+		public AgentInPGoal(String name, Domain domain) {
+			super(name, domain, new String[] { CLASSAGENT });
+		}
+
+		@Override
+		public boolean isTrue(State s, String... params) {
+
+			ObjectInstance agent = s.getObject(params[0]);
+			int ax = agent.getIntValForAttribute(ATTX);
+			int ay = agent.getIntValForAttribute(ATTY);
+			int apn = agent.getIntValForAttribute(ATTPN);
+
+			// find all universal goals
+			List<ObjectInstance> goals = s.getObjectsOfClass(CLASSGOAL);
+			for (ObjectInstance goal : goals) {
+
+				int gt = goal.getIntValForAttribute(ATTGT);
+				if (gt == apn + 1) {
+
+					int gx = goal.getIntValForAttribute(ATTX);
+					int gy = goal.getIntValForAttribute(ATTY);
+					if (gx == ax && gy == ay) {
+						return true;
+					}
+
+				}
+
+			}
+
+			return false;
+		}
+
+	}
+
+	/**
+	 * Defines a propositional function that evaluates to true when a given
+	 * agent is in any universal goal
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	static class AgentInUGoal extends PropositionalFunction {
+
+		/**
+		 * Initializes with the given name and domain and is set to evaluate on
+		 * agent objects
+		 * 
+		 * @param name
+		 *            the name of the propositional function
+		 * @param domain
+		 *            the domain for this propositional function
+		 */
+		public AgentInUGoal(String name, Domain domain) {
+			super(name, domain, new String[] { CLASSAGENT });
+		}
+
+		@Override
+		public boolean isTrue(State s, String... params) {
+
+			ObjectInstance agent = s.getObject(params[0]);
+			int ax = agent.getIntValForAttribute(ATTX);
+			int ay = agent.getIntValForAttribute(ATTY);
+
+			// find all universal goals
+			List<ObjectInstance> goals = s.getObjectsOfClass(CLASSGOAL);
+			for (ObjectInstance goal : goals) {
+
+				int gt = goal.getIntValForAttribute(ATTGT);
+				if (gt == 0) {
+
+					int gx = goal.getIntValForAttribute(ATTX);
+					int gy = goal.getIntValForAttribute(ATTY);
+					if (gx == ax && gy == ay) {
+						return true;
+					}
+
+				}
+
+			}
+
+			return false;
+		}
+
+	}
+
+	/**
+	 * Specifies goal rewards and default rewards for agents. Defaults rewards
+	 * to 0 reward everywhere except transition to unviersal or personal goals
+	 * which return a reward 1.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class GGJointRewardFunction implements JointReward {
+
+		PropositionalFunction agentInPersonalGoal;
+		PropositionalFunction agentInUniversalGoal;
+
+		double stepCost = 0.;
+		double pGoalReward = 1.;
+		double uGoalReward = 1.;
+		boolean noopIncursCost = false;
+		Map<Integer, Double> personalGoalRewards = null;
+
+		/**
+		 * Initializes for a given domain. Defaults rewards to 0 reward
+		 * everywhere except transition to unviersal or personal goals which
+		 * return a reward 1.
+		 * 
+		 * @param ggDomain
+		 *            the domain
+		 */
+		public GGJointRewardFunction(Domain ggDomain) {
+			agentInPersonalGoal = ggDomain.getPropFunction(GridGame.PFINPGOAL);
+			agentInUniversalGoal = ggDomain.getPropFunction(GridGame.PFINUGOAL);
+		}
+
+		/**
+		 * Initializes for a given domain, step cost reward and goal reward.
+		 * 
+		 * @param ggDomain
+		 *            the domain
+		 * @param stepCost
+		 *            the reward returned for all transitions except transtions
+		 *            to goal locations
+		 * @param goalReward
+		 *            the reward returned for transitioning to a personal or
+		 *            universal goal
+		 * @param noopIncursStepCost
+		 *            if true, then noop actions also incur the stepCost reward;
+		 *            if false, then noops always return 0 reward.
+		 */
+		public GGJointRewardFunction(Domain ggDomain, double stepCost,
+				double goalReward, boolean noopIncursStepCost) {
+			agentInPersonalGoal = ggDomain.getPropFunction(GridGame.PFINPGOAL);
+			agentInUniversalGoal = ggDomain.getPropFunction(GridGame.PFINUGOAL);
+			this.stepCost = stepCost;
+			this.pGoalReward = this.uGoalReward = goalReward;
+			this.noopIncursCost = noopIncursStepCost;
+		}
+
+		/**
+		 * Initializes for a given domain, step cost reward, universal goal
+		 * reward, and unique personal goal reward for each player.
+		 * 
+		 * @param ggDomain
+		 *            the domain
+		 * @param stepCost
+		 *            the reward returned for all transitions except transtions
+		 *            to goal locations
+		 * @param universalGoalReward
+		 *            the reward returned for transitions to a universal goal
+		 * @param noopIncursStepCost
+		 *            if true, then noop actions also incur the stepCost reward;
+		 *            if false, then noops always return 0 reward.
+		 * @param personalGoalRewards
+		 *            a map from player numbers to their personal goal reward
+		 *            (the first player number is 0)
+		 */
+		public GGJointRewardFunction(Domain ggDomain, double stepCost,
+				double universalGoalReward, boolean noopIncursStepCost,
+				Map<Integer, Double> personalGoalRewards) {
+
+			agentInPersonalGoal = ggDomain.getPropFunction(GridGame.PFINPGOAL);
+			agentInUniversalGoal = ggDomain.getPropFunction(GridGame.PFINUGOAL);
+			this.stepCost = stepCost;
+			this.uGoalReward = universalGoalReward;
+			this.noopIncursCost = noopIncursStepCost;
+			this.personalGoalRewards = personalGoalRewards;
+
+		}
+
+		/**
+		 * Initializes for a given domain, step cost reward, personal goal
+		 * reward, and universal goal reward.
+		 * 
+		 * @param ggDomain
+		 *            the domain
+		 * @param stepCost
+		 *            the reward returned for all transitions except transtions
+		 *            to goal locations
+		 * @param personalGoalReward
+		 *            the reward returned for transitions to a personal goal
+		 * @param universalGoalReward
+		 *            the reward returned for transitions to a universal goal
+		 * @param noopIncursStepCost
+		 *            if true, then noop actions also incur the stepCost reward;
+		 *            if false, then noops always return 0 reward.
+		 */
+		public GGJointRewardFunction(Domain ggDomain, double stepCost,
+				double personalGoalReward, double universalGoalReward,
+				boolean noopIncursStepCost) {
+			agentInPersonalGoal = ggDomain.getPropFunction(GridGame.PFINPGOAL);
+			agentInUniversalGoal = ggDomain.getPropFunction(GridGame.PFINUGOAL);
+			this.stepCost = stepCost;
+			this.pGoalReward = personalGoalReward;
+			this.uGoalReward = universalGoalReward;
+			this.noopIncursCost = noopIncursStepCost;
+		}
+
+		/**
+		 * Returns a default cost for an agent assuming the agent didn't
+		 * transition to a goal state. If noops incur step cost, then this is
+		 * always the step cost. If noops do not incur step costs and the agent
+		 * took a noop, then 0 is returned.
+		 * 
+		 * @param aname
+		 *            the name of the agent for which the default reward should
+		 *            be returned.
+		 * @param ja
+		 *            the joint action set
+		 * @return the default reward; either step cost or 0.
+		 */
+		protected double defaultCost(String aname, JointAction ja) {
+			if (this.noopIncursCost) {
+				return this.stepCost;
+			} else if (ja.action(aname).action.actionName
+					.equals(GridGame.ACTIONNOOP)) {
+				return 0.;
+			}
+			return this.stepCost;
+		}
+
+		/**
+		 * Returns the personal goal rewards. If a single common personal goal
+		 * reward was set then that is returned. If different personal goal
+		 * rewards were defined for each player number, then that is queried and
+		 * returned instead.
+		 * 
+		 * @param s
+		 *            the state in which the agent player numbers are defined
+		 * @param agentName
+		 *            the agent name for which the person goal reward is to be
+		 *            returned
+		 * @return the personal goal reward for the specified agent.
+		 */
+		protected double getPersonalGoalReward(State s, String agentName) {
+			if (this.personalGoalRewards == null) {
+				return this.pGoalReward;
+			}
+
+			int pn = s.getObject(agentName).getIntValForAttribute(
+					GridGame.ATTPN);
+			return this.personalGoalRewards.get(pn);
+
+		}
+
+		@Override
+		public Map<String, Double> reward(State s, JointAction ja, State sp) {
+
+			Map<String, Double> rewards = new HashMap<String, Double>();
+
+			// get all agents and initialize reward to default
+			List<ObjectInstance> obs = sp
+					.getObjectsOfClass(GridGame.CLASSAGENT);
+			for (ObjectInstance o : obs) {
+				rewards.put(o.getName(), this.defaultCost(o.getName(), ja));
+			}
+
+			// check for any agents that reached a universal goal location and
+			// give them a goal reward if they did
+			// List<GroundedProp> upgps =
+			// sp.getAllGroundedPropsFor(agentInUniversalGoal);
+			List<GroundedProp> upgps = agentInUniversalGoal
+					.getAllGroundedPropsForState(sp);
+			for (GroundedProp gp : upgps) {
+				String agentName = gp.params[0];
+				if (gp.isTrue(sp)) {
+					rewards.put(agentName, uGoalReward);
+				}
+			}
+
+			// check for any agents that reached a personal goal location and
+			// give them a goal reward if they did
+			// List<GroundedProp> ipgps =
+			// sp.getAllGroundedPropsFor(agentInPersonalGoal);
+			List<GroundedProp> ipgps = agentInPersonalGoal
+					.getAllGroundedPropsForState(sp);
+			for (GroundedProp gp : ipgps) {
+				String agentName = gp.params[0];
+				if (gp.isTrue(sp)) {
+					rewards.put(agentName,
+							this.getPersonalGoalReward(sp, agentName));
+				}
+			}
+
+			return rewards;
+
+		}
+
+	}
+
+	/**
+	 * Causes termination when any agent reaches a personal or universal goal
+	 * location.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class GGTerminalFunction implements TerminalFunction {
+
+		PropositionalFunction agentInPersonalGoal;
+		PropositionalFunction agentInUniversalGoal;
+
+		/**
+		 * Initializes for the given domain
+		 * 
+		 * @param ggDomain
+		 *            the specific grid world domain.
+		 */
+		public GGTerminalFunction(Domain ggDomain) {
+			agentInPersonalGoal = ggDomain.getPropFunction(GridGame.PFINPGOAL);
+			agentInUniversalGoal = ggDomain.getPropFunction(GridGame.PFINUGOAL);
+		}
+
+		@Override
+		public boolean isTerminal(State s) {
+
+			// check personal goals; if anyone reached their personal goal, it's
+			// game over
+			// List<GroundedProp> ipgps =
+			// s.getAllGroundedPropsFor(agentInPersonalGoal);
+			List<GroundedProp> ipgps = agentInPersonalGoal
+					.getAllGroundedPropsForState(s);
+			for (GroundedProp gp : ipgps) {
+				if (gp.isTrue(s)) {
+					return true;
+				}
+			}
+
+			// check universal goals; if anyone reached a universal goal, it's
+			// game over
+			// List<GroundedProp> upgps =
+			// s.getAllGroundedPropsFor(agentInUniversalGoal);
+			List<GroundedProp> upgps = agentInUniversalGoal
+					.getAllGroundedPropsForState(s);
+			for (GroundedProp gp : upgps) {
+				if (gp.isTrue(s)) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+	}
 
 	/**
 	 * A constant for the name of the x position attribute
@@ -115,7 +480,6 @@ public class GridGame implements DomainGenerator {
 	 * A constant for the name of the horizontal wall class.
 	 */
 	public static final String CLASSDIMHWALL = "dimensionlessHorizontalWall";
-
 	/**
 	 * A constant for the name of the vertical wall class.
 	 */
@@ -135,6 +499,7 @@ public class GridGame implements DomainGenerator {
 	 * A constant for the name of the east action.
 	 */
 	public static final String ACTIONEAST = "east";
+
 	/**
 	 * A constant for the name of the west action.
 	 */
@@ -158,29 +523,203 @@ public class GridGame implements DomainGenerator {
 	public static final String PFINPGOAL = "agentInPersonalGoal";
 
 	/**
-	 * The width and height of the world.
+	 * AddsN objects of a specific object class to a state object
+	 * 
+	 * @param d
+	 *            the domain of the object classes
+	 * @param s
+	 *            the state to which the objects of the specified class should
+	 *            be added
+	 * @param className
+	 *            the name of the object class for which to create object
+	 *            instances
+	 * @param n
+	 *            the number of object instances to create
 	 */
-	protected int maxDim = 50;
+	protected static void addNObjects(Domain d, State s, String className, int n) {
+		for (int i = 0; i < n; i++) {
+			ObjectInstance o = new MutableObjectInstance(
+					d.getObjectClass(className), className + i);
+			s.addObject(o);
+		}
+	}
 
 	/**
-	 * The maximum number of players that can be in the game
+	 * Returns a state with with the specified number of objects for each object
+	 * class and with the specified boundary of the playing area. The number of
+	 * walls *MUST* include the world boundary walls; that is, there must be at
+	 * least 2 horizontal walls and 2 vertical walls.
+	 * 
+	 * @param d
+	 *            the domain object of the grid world
+	 * @param na
+	 *            the number of agents/players
+	 * @param ng
+	 *            the number of goal objects
+	 * @param nhw
+	 *            the number of horizontal walls
+	 * @param nvw
+	 *            the number of vertical walls
+	 * @param width
+	 *            the width of the playing area
+	 * @param height
+	 *            the height of the playing area
+	 * @return A state with the specified number of objects
 	 */
-	protected int maxPlyrs = 10;
+	public static State getCleanState(Domain d, int na, int ng, int nhw,
+			int nvw, int width, int height) {
+
+		State s = new MutableState();
+		addNObjects(d, s, CLASSGOAL, ng);
+		addNObjects(d, s, CLASSAGENT, na);
+		addNObjects(d, s, CLASSDIMHWALL, nhw);
+		addNObjects(d, s, CLASSDIMVWALL, nvw);
+
+		setBoundaryWalls(s, width, height);
+
+		return s;
+	}
 
 	/**
-	 * The number of goal types
+	 * Returns the initial state for a classic coordination game, where the
+	 * agent's personal goals are on opposite sides.
+	 * 
+	 * @param d
+	 *            the grid games domain object
+	 * @return the coordination game initial state
 	 */
-	protected int maxGT = maxPlyrs + 1;
+	public static State getCorrdinationGameInitialState(Domain d) {
+		State s = GridGame.getCleanState(d, 2, 2, 2, 2, 3, 3);
+
+		GridGame.setAgent(s, 0, 0, 0, 0);
+		GridGame.setAgent(s, 1, 2, 0, 1);
+
+		GridGame.setGoal(s, 0, 0, 2, 2);
+		GridGame.setGoal(s, 1, 2, 2, 1);
+
+		return s;
+	}
 
 	/**
-	 * The number of wall types
+	 * Returns the initial state for Friend Foe game.
+	 * 
+	 * @param d
+	 *            the grid game's domain object
+	 * @return the initial state for Friend Foe
 	 */
-	protected int maxWT = 2;
+	public static State getFriendFoeInitialState(Domain d) {
+
+		State s = GridGame.getCleanState(d, 2, 2, 2, 2, 8, 1);
+
+		GridGame.setAgent(s, 0, 3, 0, 0);
+		GridGame.setAgent(s, 1, 6, 0, 1);
+
+		GridGame.setGoal(s, 0, 0, 0, 1);
+		GridGame.setGoal(s, 1, 4, 0, 0);
+
+		return s;
+	}
 
 	/**
-	 * The probability that an agent will pass through a semi-wall.
+	 * Returns the initial state for the Incredible game (a game in which player
+	 * 0 can give an incredible threat).
+	 * 
+	 * @param d
+	 *            the grid game's domain object
+	 * @return the initial state for the Incredible game.
 	 */
-	protected double semiWallProb = 0.5;
+	public static State getIncredibleInitialState(Domain d) {
+
+		State s = GridGame.getCleanState(d, 2, 2, 2, 2, 4, 1);
+
+		GridGame.setAgent(s, 0, 2, 0, 0);
+		GridGame.setAgent(s, 1, 3, 0, 1);
+
+		GridGame.setGoal(s, 0, 0, 0, 1);
+		GridGame.setGoal(s, 1, 1, 0, 2);
+
+		return s;
+
+	}
+
+	/**
+	 * Returns the initial state for a classic prisoner's dilemma formulated in
+	 * a Grid Game.
+	 * 
+	 * @param d
+	 *            the grid game's domain object
+	 * @return the grid game prisoner's dilemma initial state
+	 */
+	public static State getPrisonersDilemmaInitialState(Domain d) {
+		State s = GridGame.getCleanState(d, 2, 3, 2, 2, 9, 1);
+
+		GridGame.setAgent(s, 0, 3, 0, 0);
+		GridGame.setAgent(s, 1, 5, 0, 1);
+
+		GridGame.setGoal(s, 0, 0, 0, 1);
+		GridGame.setGoal(s, 1, 4, 0, 0);
+		GridGame.setGoal(s, 2, 8, 0, 2);
+
+		return s;
+	}
+
+	/**
+	 * Returns the initial state for a simple game in which both players can win
+	 * without interfering with one another.
+	 * 
+	 * @param d
+	 *            the grid games domain object
+	 * @return the simple game initial state
+	 */
+	public static State getSimpleGameInitialState(Domain d) {
+		State s = GridGame.getCleanState(d, 2, 2, 2, 2, 3, 3);
+
+		GridGame.setAgent(s, 0, 0, 0, 0);
+		GridGame.setAgent(s, 1, 2, 0, 1);
+
+		GridGame.setGoal(s, 0, 0, 2, 1);
+		GridGame.setGoal(s, 1, 2, 2, 2);
+
+		return s;
+	}
+
+	/**
+	 * Creates and returns a standard
+	 * {@link burlap.oomdp.stochasticgames.SGAgentType} for grid games. This
+	 * {@link burlap.oomdp.stochasticgames.SGAgentType} is assigned the type
+	 * name "agent", grid game OO-MDP object class for "agent", and has its
+	 * action space set to all possible actions in the grid game domain.
+	 * Typically, all agents in a grid game should be assigned to the same type.
+	 * 
+	 * @param domain
+	 *            the domain object of the grid game.
+	 * @return An {@link burlap.oomdp.stochasticgames.SGAgentType} that
+	 *         typically all {@link burlap.oomdp.stochasticgames.SGAgent}'s of
+	 *         the grid game should play as.
+	 */
+	public static SGAgentType getStandardGridGameAgentType(Domain domain) {
+		return new SGAgentType(GridGame.CLASSAGENT,
+				domain.getObjectClass(GridGame.CLASSAGENT),
+				domain.getAgentActions());
+	}
+
+	public static State getTurkeyInitialState(Domain d) {
+
+		State s = GridGame.getCleanState(d, 2, 3, 4, 2, 3, 4);
+
+		GridGame.setHorizontalWall(s, 2, 1, 0, 0, 1);
+		GridGame.setHorizontalWall(s, 3, 1, 2, 2, 1);
+
+		GridGame.setAgent(s, 0, 0, 0, 0);
+		GridGame.setAgent(s, 1, 2, 0, 1);
+
+		GridGame.setGoal(s, 0, 0, 3, 1);
+		GridGame.setGoal(s, 1, 1, 2, 0);
+		GridGame.setGoal(s, 2, 2, 3, 2);
+
+		return s;
+
+	}
 
 	/**
 	 * Creates a visual explorer for a simple domain with two agents in it. The
@@ -239,99 +778,170 @@ public class GridGame implements DomainGenerator {
 	}
 
 	/**
-	 * Returns the maximum dimension of the world; it's width and height.
+	 * Sets an agent's attribute values
 	 * 
-	 * @return the maximum dimension of the world; it's width and height.
+	 * @param s
+	 *            the state in which the agent exists
+	 * @param i
+	 *            indicates the ith agent object whose values should be set
+	 * @param x
+	 *            the x position of the agent
+	 * @param y
+	 *            the y position of the agent
+	 * @param pn
+	 *            the player number of the agent
 	 */
-	public int getMaxDim() {
-		return maxDim;
+	public static void setAgent(State s, int i, int x, int y, int pn) {
+		ObjectInstance agent = s.getObjectsOfClass(CLASSAGENT).get(i);
+		agent.setValue(ATTX, x);
+		agent.setValue(ATTY, y);
+		agent.setValue(ATTPN, pn);
 	}
 
 	/**
-	 * Sets the maximum dimension of the world; it's width and height.
+	 * Sets boundary walls of a domain. This method will add 4 solid walls (top
+	 * left bottom right) to create a playing field in which the agents can
+	 * interact.
 	 * 
-	 * @param maxDim
-	 *            the maximum dimension of the world; it's width and height.
+	 * @param s
+	 *            the state in which the walls should be added
+	 * @param w
+	 *            the width of the playing field
+	 * @param h
+	 *            the height of the playing field
 	 */
-	public void setMaxDim(int maxDim) {
-		this.maxDim = maxDim;
+	public static void setBoundaryWalls(State s, int w, int h) {
+
+		List<ObjectInstance> verticalWalls = s.getObjectsOfClass(CLASSDIMVWALL);
+		List<ObjectInstance> horizontalWalls = s
+				.getObjectsOfClass(CLASSDIMHWALL);
+
+		ObjectInstance leftWall = verticalWalls.get(0);
+		ObjectInstance rightWall = verticalWalls.get(1);
+
+		ObjectInstance bottomWall = horizontalWalls.get(0);
+		ObjectInstance topWall = horizontalWalls.get(1);
+
+		setWallInstance(leftWall, 0, 0, h - 1, 0);
+		setWallInstance(rightWall, w, 0, h - 1, 0);
+		setWallInstance(bottomWall, 0, 0, w - 1, 0);
+		setWallInstance(topWall, h, 0, w - 1, 0);
+
 	}
 
 	/**
-	 * Returns the max number of players
+	 * Sets a goal objects attribute values
 	 * 
-	 * @return the max number of players
+	 * @param s
+	 *            the state in which the goal exists
+	 * @param i
+	 *            indicates the ith goal object whose values should be set
+	 * @param x
+	 *            the x position of the goal
+	 * @param y
+	 *            the y position of the goal
+	 * @param gt
+	 *            the goal type
 	 */
-	public int getMaxPlyrs() {
-		return maxPlyrs;
+	public static void setGoal(State s, int i, int x, int y, int gt) {
+		ObjectInstance goal = s.getObjectsOfClass(CLASSGOAL).get(i);
+		goal.setValue(ATTX, x);
+		goal.setValue(ATTY, y);
+		goal.setValue(ATTGT, gt);
 	}
 
 	/**
-	 * Sets the max number of players
+	 * Sets the attribute values for a horizontal wall
 	 * 
-	 * @param maxPlyrs
-	 *            the max number of players
-	 */
-	public void setMaxPlyrs(int maxPlyrs) {
-		this.maxPlyrs = maxPlyrs;
-	}
-
-	/**
-	 * Returns the maximum goal types
-	 * 
-	 * @return the maximum goal types
-	 */
-	public int getMaxGT() {
-		return maxGT;
-	}
-
-	/**
-	 * Sets the maximum goal types
-	 * 
-	 * @param maxGT
-	 *            the maximum goal types
-	 */
-	public void setMaxGT(int maxGT) {
-		this.maxGT = maxGT;
-	}
-
-	/**
-	 * Returns the maximum number of wall types
-	 * 
-	 * @return the maximum number of wall types
-	 */
-	public int getMaxWT() {
-		return maxWT;
-	}
-
-	/**
-	 * Sets the maximum number of wall types
-	 * 
-	 * @param maxWT
-	 *            the maximum number of wall types
-	 */
-	public void setMaxWT(int maxWT) {
-		this.maxWT = maxWT;
-	}
-
-	/**
-	 * Sets the probability that an agent can pass through a semi-wall.
-	 * 
+	 * @param s
+	 *            the state in which the wall exits
+	 * @param i
+	 *            indicates the ith horizontal wall instance whose values should
+	 *            be set
 	 * @param p
-	 *            the probability that an agent will pass through a semi-wall.
+	 *            the y position of the vertical wall
+	 * @param e1
+	 *            the left end point of the wall
+	 * @param e2
+	 *            the right end point of the wall
+	 * @param wt
+	 *            the type of the wall (0 is solid, 1 is semi)
 	 */
-	public void setSemiWallPassableProbability(double p) {
-		this.semiWallProb = p;
+	public static void setHorizontalWall(State s, int i, int p, int e1, int e2,
+			int wt) {
+		setWallInstance(s.getObjectsOfClass(CLASSDIMHWALL).get(i), p, e1, e2,
+				wt);
 	}
 
 	/**
-	 * Returns the probability that an agent can pass through a semi-wall.
+	 * Sets the attribute values for a vertical wall
 	 * 
-	 * @return the probability that an agent can pass through a semi-wall.
+	 * @param s
+	 *            the state in which the wall exits
+	 * @param i
+	 *            indicates the ith vertical wall instance whose values should
+	 *            be set
+	 * @param p
+	 *            the x position of the vertical wall
+	 * @param e1
+	 *            the bottom end point of the wall
+	 * @param e2
+	 *            the top end point of the wall
+	 * @param wt
+	 *            the type of the wall
 	 */
-	public double getSemiWallProb() {
-		return this.semiWallProb;
+	public static void setVerticalWall(State s, int i, int p, int e1, int e2,
+			int wt) {
+		setWallInstance(s.getObjectsOfClass(CLASSDIMVWALL).get(i), p, e1, e2,
+				wt);
 	}
+
+	/**
+	 * Sets the attribute values for a wall instance
+	 * 
+	 * @param w
+	 *            the wall instance to set
+	 * @param p
+	 *            the orthogonal position of the wall instance
+	 * @param e1
+	 *            the first end point of the wall
+	 * @param e2
+	 *            the second end point of the wall
+	 * @param wt
+	 *            the type of the wall
+	 */
+	public static void setWallInstance(ObjectInstance w, int p, int e1, int e2,
+			int wt) {
+		w.setValue(ATTP, p);
+		w.setValue(ATTE1, e1);
+		w.setValue(ATTE2, e2);
+		w.setValue(ATTWT, wt);
+	}
+
+	/**
+	 * The width and height of the world.
+	 */
+	protected int maxDim = 50;
+
+	/**
+	 * The maximum number of players that can be in the game
+	 */
+	protected int maxPlyrs = 10;
+
+	/**
+	 * The number of goal types
+	 */
+	protected int maxGT = maxPlyrs + 1;
+
+	/**
+	 * The number of wall types
+	 */
+	protected int maxWT = 2;
+
+	/**
+	 * The probability that an agent will pass through a semi-wall.
+	 */
+	protected double semiWallProb = 0.5;
 
 	@Override
 	public Domain generateDomain() {
@@ -408,708 +1018,98 @@ public class GridGame implements DomainGenerator {
 	}
 
 	/**
-	 * Returns a state with with the specified number of objects for each object
-	 * class and with the specified boundary of the playing area. The number of
-	 * walls *MUST* include the world boundary walls; that is, there must be at
-	 * least 2 horizontal walls and 2 vertical walls.
+	 * Returns the maximum dimension of the world; it's width and height.
 	 * 
-	 * @param d
-	 *            the domain object of the grid world
-	 * @param na
-	 *            the number of agents/players
-	 * @param ng
-	 *            the number of goal objects
-	 * @param nhw
-	 *            the number of horizontal walls
-	 * @param nvw
-	 *            the number of vertical walls
-	 * @param width
-	 *            the width of the playing area
-	 * @param height
-	 *            the height of the playing area
-	 * @return A state with the specified number of objects
+	 * @return the maximum dimension of the world; it's width and height.
 	 */
-	public static State getCleanState(Domain d, int na, int ng, int nhw,
-			int nvw, int width, int height) {
-
-		State s = new MutableState();
-		addNObjects(d, s, CLASSGOAL, ng);
-		addNObjects(d, s, CLASSAGENT, na);
-		addNObjects(d, s, CLASSDIMHWALL, nhw);
-		addNObjects(d, s, CLASSDIMVWALL, nvw);
-
-		setBoundaryWalls(s, width, height);
-
-		return s;
+	public int getMaxDim() {
+		return maxDim;
 	}
 
 	/**
-	 * Returns the initial state for a simple game in which both players can win
-	 * without interfering with one another.
+	 * Returns the maximum goal types
 	 * 
-	 * @param d
-	 *            the grid games domain object
-	 * @return the simple game initial state
+	 * @return the maximum goal types
 	 */
-	public static State getSimpleGameInitialState(Domain d) {
-		State s = GridGame.getCleanState(d, 2, 2, 2, 2, 3, 3);
-
-		GridGame.setAgent(s, 0, 0, 0, 0);
-		GridGame.setAgent(s, 1, 2, 0, 1);
-
-		GridGame.setGoal(s, 0, 0, 2, 1);
-		GridGame.setGoal(s, 1, 2, 2, 2);
-
-		return s;
+	public int getMaxGT() {
+		return maxGT;
 	}
 
 	/**
-	 * Returns the initial state for a classic coordination game, where the
-	 * agent's personal goals are on opposite sides.
+	 * Returns the max number of players
 	 * 
-	 * @param d
-	 *            the grid games domain object
-	 * @return the coordination game initial state
+	 * @return the max number of players
 	 */
-	public static State getCorrdinationGameInitialState(Domain d) {
-		State s = GridGame.getCleanState(d, 2, 2, 2, 2, 3, 3);
-
-		GridGame.setAgent(s, 0, 0, 0, 0);
-		GridGame.setAgent(s, 1, 2, 0, 1);
-
-		GridGame.setGoal(s, 0, 0, 2, 2);
-		GridGame.setGoal(s, 1, 2, 2, 1);
-
-		return s;
+	public int getMaxPlyrs() {
+		return maxPlyrs;
 	}
 
 	/**
-	 * Returns the initial state for a classic prisoner's dilemma formulated in
-	 * a Grid Game.
+	 * Returns the maximum number of wall types
 	 * 
-	 * @param d
-	 *            the grid game's domain object
-	 * @return the grid game prisoner's dilemma initial state
+	 * @return the maximum number of wall types
 	 */
-	public static State getPrisonersDilemmaInitialState(Domain d) {
-		State s = GridGame.getCleanState(d, 2, 3, 2, 2, 9, 1);
-
-		GridGame.setAgent(s, 0, 3, 0, 0);
-		GridGame.setAgent(s, 1, 5, 0, 1);
-
-		GridGame.setGoal(s, 0, 0, 0, 1);
-		GridGame.setGoal(s, 1, 4, 0, 0);
-		GridGame.setGoal(s, 2, 8, 0, 2);
-
-		return s;
+	public int getMaxWT() {
+		return maxWT;
 	}
 
 	/**
-	 * Returns the initial state for Friend Foe game.
+	 * Returns the probability that an agent can pass through a semi-wall.
 	 * 
-	 * @param d
-	 *            the grid game's domain object
-	 * @return the initial state for Friend Foe
+	 * @return the probability that an agent can pass through a semi-wall.
 	 */
-	public static State getFriendFoeInitialState(Domain d) {
-
-		State s = GridGame.getCleanState(d, 2, 2, 2, 2, 8, 1);
-
-		GridGame.setAgent(s, 0, 3, 0, 0);
-		GridGame.setAgent(s, 1, 6, 0, 1);
-
-		GridGame.setGoal(s, 0, 0, 0, 1);
-		GridGame.setGoal(s, 1, 4, 0, 0);
-
-		return s;
+	public double getSemiWallProb() {
+		return this.semiWallProb;
 	}
 
 	/**
-	 * Returns the initial state for the Incredible game (a game in which player
-	 * 0 can give an incredible threat).
+	 * Sets the maximum dimension of the world; it's width and height.
 	 * 
-	 * @param d
-	 *            the grid game's domain object
-	 * @return the initial state for the Incredible game.
+	 * @param maxDim
+	 *            the maximum dimension of the world; it's width and height.
 	 */
-	public static State getIncredibleInitialState(Domain d) {
-
-		State s = GridGame.getCleanState(d, 2, 2, 2, 2, 4, 1);
-
-		GridGame.setAgent(s, 0, 2, 0, 0);
-		GridGame.setAgent(s, 1, 3, 0, 1);
-
-		GridGame.setGoal(s, 0, 0, 0, 1);
-		GridGame.setGoal(s, 1, 1, 0, 2);
-
-		return s;
-
-	}
-
-	public static State getTurkeyInitialState(Domain d) {
-
-		State s = GridGame.getCleanState(d, 2, 3, 4, 2, 3, 4);
-
-		GridGame.setHorizontalWall(s, 2, 1, 0, 0, 1);
-		GridGame.setHorizontalWall(s, 3, 1, 2, 2, 1);
-
-		GridGame.setAgent(s, 0, 0, 0, 0);
-		GridGame.setAgent(s, 1, 2, 0, 1);
-
-		GridGame.setGoal(s, 0, 0, 3, 1);
-		GridGame.setGoal(s, 1, 1, 2, 0);
-		GridGame.setGoal(s, 2, 2, 3, 2);
-
-		return s;
-
+	public void setMaxDim(int maxDim) {
+		this.maxDim = maxDim;
 	}
 
 	/**
-	 * AddsN objects of a specific object class to a state object
+	 * Sets the maximum goal types
 	 * 
-	 * @param d
-	 *            the domain of the object classes
-	 * @param s
-	 *            the state to which the objects of the specified class should
-	 *            be added
-	 * @param className
-	 *            the name of the object class for which to create object
-	 *            instances
-	 * @param n
-	 *            the number of object instances to create
+	 * @param maxGT
+	 *            the maximum goal types
 	 */
-	protected static void addNObjects(Domain d, State s, String className, int n) {
-		for (int i = 0; i < n; i++) {
-			ObjectInstance o = new MutableObjectInstance(
-					d.getObjectClass(className), className + i);
-			s.addObject(o);
-		}
+	public void setMaxGT(int maxGT) {
+		this.maxGT = maxGT;
 	}
 
 	/**
-	 * Sets an agent's attribute values
+	 * Sets the max number of players
 	 * 
-	 * @param s
-	 *            the state in which the agent exists
-	 * @param i
-	 *            indicates the ith agent object whose values should be set
-	 * @param x
-	 *            the x position of the agent
-	 * @param y
-	 *            the y position of the agent
-	 * @param pn
-	 *            the player number of the agent
+	 * @param maxPlyrs
+	 *            the max number of players
 	 */
-	public static void setAgent(State s, int i, int x, int y, int pn) {
-		ObjectInstance agent = s.getObjectsOfClass(CLASSAGENT).get(i);
-		agent.setValue(ATTX, x);
-		agent.setValue(ATTY, y);
-		agent.setValue(ATTPN, pn);
+	public void setMaxPlyrs(int maxPlyrs) {
+		this.maxPlyrs = maxPlyrs;
 	}
 
 	/**
-	 * Sets a goal objects attribute values
+	 * Sets the maximum number of wall types
 	 * 
-	 * @param s
-	 *            the state in which the goal exists
-	 * @param i
-	 *            indicates the ith goal object whose values should be set
-	 * @param x
-	 *            the x position of the goal
-	 * @param y
-	 *            the y position of the goal
-	 * @param gt
-	 *            the goal type
+	 * @param maxWT
+	 *            the maximum number of wall types
 	 */
-	public static void setGoal(State s, int i, int x, int y, int gt) {
-		ObjectInstance goal = s.getObjectsOfClass(CLASSGOAL).get(i);
-		goal.setValue(ATTX, x);
-		goal.setValue(ATTY, y);
-		goal.setValue(ATTGT, gt);
+	public void setMaxWT(int maxWT) {
+		this.maxWT = maxWT;
 	}
 
 	/**
-	 * Sets boundary walls of a domain. This method will add 4 solid walls (top
-	 * left bottom right) to create a playing field in which the agents can
-	 * interact.
+	 * Sets the probability that an agent can pass through a semi-wall.
 	 * 
-	 * @param s
-	 *            the state in which the walls should be added
-	 * @param w
-	 *            the width of the playing field
-	 * @param h
-	 *            the height of the playing field
-	 */
-	public static void setBoundaryWalls(State s, int w, int h) {
-
-		List<ObjectInstance> verticalWalls = s.getObjectsOfClass(CLASSDIMVWALL);
-		List<ObjectInstance> horizontalWalls = s
-				.getObjectsOfClass(CLASSDIMHWALL);
-
-		ObjectInstance leftWall = verticalWalls.get(0);
-		ObjectInstance rightWall = verticalWalls.get(1);
-
-		ObjectInstance bottomWall = horizontalWalls.get(0);
-		ObjectInstance topWall = horizontalWalls.get(1);
-
-		setWallInstance(leftWall, 0, 0, h - 1, 0);
-		setWallInstance(rightWall, w, 0, h - 1, 0);
-		setWallInstance(bottomWall, 0, 0, w - 1, 0);
-		setWallInstance(topWall, h, 0, w - 1, 0);
-
-	}
-
-	/**
-	 * Sets the attribute values for a wall instance
-	 * 
-	 * @param w
-	 *            the wall instance to set
 	 * @param p
-	 *            the orthogonal position of the wall instance
-	 * @param e1
-	 *            the first end point of the wall
-	 * @param e2
-	 *            the second end point of the wall
-	 * @param wt
-	 *            the type of the wall
+	 *            the probability that an agent will pass through a semi-wall.
 	 */
-	public static void setWallInstance(ObjectInstance w, int p, int e1, int e2,
-			int wt) {
-		w.setValue(ATTP, p);
-		w.setValue(ATTE1, e1);
-		w.setValue(ATTE2, e2);
-		w.setValue(ATTWT, wt);
-	}
-
-	/**
-	 * Sets the attribute values for a vertical wall
-	 * 
-	 * @param s
-	 *            the state in which the wall exits
-	 * @param i
-	 *            indicates the ith vertical wall instance whose values should
-	 *            be set
-	 * @param p
-	 *            the x position of the vertical wall
-	 * @param e1
-	 *            the bottom end point of the wall
-	 * @param e2
-	 *            the top end point of the wall
-	 * @param wt
-	 *            the type of the wall
-	 */
-	public static void setVerticalWall(State s, int i, int p, int e1, int e2,
-			int wt) {
-		setWallInstance(s.getObjectsOfClass(CLASSDIMVWALL).get(i), p, e1, e2,
-				wt);
-	}
-
-	/**
-	 * Sets the attribute values for a horizontal wall
-	 * 
-	 * @param s
-	 *            the state in which the wall exits
-	 * @param i
-	 *            indicates the ith horizontal wall instance whose values should
-	 *            be set
-	 * @param p
-	 *            the y position of the vertical wall
-	 * @param e1
-	 *            the left end point of the wall
-	 * @param e2
-	 *            the right end point of the wall
-	 * @param wt
-	 *            the type of the wall (0 is solid, 1 is semi)
-	 */
-	public static void setHorizontalWall(State s, int i, int p, int e1, int e2,
-			int wt) {
-		setWallInstance(s.getObjectsOfClass(CLASSDIMHWALL).get(i), p, e1, e2,
-				wt);
-	}
-
-	/**
-	 * Creates and returns a standard
-	 * {@link burlap.oomdp.stochasticgames.SGAgentType} for grid games. This
-	 * {@link burlap.oomdp.stochasticgames.SGAgentType} is assigned the type
-	 * name "agent", grid game OO-MDP object class for "agent", and has its
-	 * action space set to all possible actions in the grid game domain.
-	 * Typically, all agents in a grid game should be assigned to the same type.
-	 * 
-	 * @param domain
-	 *            the domain object of the grid game.
-	 * @return An {@link burlap.oomdp.stochasticgames.SGAgentType} that
-	 *         typically all {@link burlap.oomdp.stochasticgames.SGAgent}'s of
-	 *         the grid game should play as.
-	 */
-	public static SGAgentType getStandardGridGameAgentType(Domain domain) {
-		return new SGAgentType(GridGame.CLASSAGENT,
-				domain.getObjectClass(GridGame.CLASSAGENT),
-				domain.getAgentActions());
-	}
-
-	/**
-	 * Defines a propositional function that evaluates to true when a given
-	 * agent is in any universal goal
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	static class AgentInUGoal extends PropositionalFunction {
-
-		/**
-		 * Initializes with the given name and domain and is set to evaluate on
-		 * agent objects
-		 * 
-		 * @param name
-		 *            the name of the propositional function
-		 * @param domain
-		 *            the domain for this propositional function
-		 */
-		public AgentInUGoal(String name, Domain domain) {
-			super(name, domain, new String[] { CLASSAGENT });
-		}
-
-		@Override
-		public boolean isTrue(State s, String... params) {
-
-			ObjectInstance agent = s.getObject(params[0]);
-			int ax = agent.getIntValForAttribute(ATTX);
-			int ay = agent.getIntValForAttribute(ATTY);
-
-			// find all universal goals
-			List<ObjectInstance> goals = s.getObjectsOfClass(CLASSGOAL);
-			for (ObjectInstance goal : goals) {
-
-				int gt = goal.getIntValForAttribute(ATTGT);
-				if (gt == 0) {
-
-					int gx = goal.getIntValForAttribute(ATTX);
-					int gy = goal.getIntValForAttribute(ATTY);
-					if (gx == ax && gy == ay) {
-						return true;
-					}
-
-				}
-
-			}
-
-			return false;
-		}
-
-	}
-
-	/**
-	 * Defines a propositional function that evaluates to true when a given
-	 * agent is in any of its personal goals
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	static class AgentInPGoal extends PropositionalFunction {
-
-		/**
-		 * Initializes with the given name and domain and is set to evaluate on
-		 * agent objects
-		 * 
-		 * @param name
-		 *            the name of the propositional function
-		 * @param domain
-		 *            the domain for this propositional function
-		 */
-		public AgentInPGoal(String name, Domain domain) {
-			super(name, domain, new String[] { CLASSAGENT });
-		}
-
-		@Override
-		public boolean isTrue(State s, String... params) {
-
-			ObjectInstance agent = s.getObject(params[0]);
-			int ax = agent.getIntValForAttribute(ATTX);
-			int ay = agent.getIntValForAttribute(ATTY);
-			int apn = agent.getIntValForAttribute(ATTPN);
-
-			// find all universal goals
-			List<ObjectInstance> goals = s.getObjectsOfClass(CLASSGOAL);
-			for (ObjectInstance goal : goals) {
-
-				int gt = goal.getIntValForAttribute(ATTGT);
-				if (gt == apn + 1) {
-
-					int gx = goal.getIntValForAttribute(ATTX);
-					int gy = goal.getIntValForAttribute(ATTY);
-					if (gx == ax && gy == ay) {
-						return true;
-					}
-
-				}
-
-			}
-
-			return false;
-		}
-
-	}
-
-	/**
-	 * Specifies goal rewards and default rewards for agents. Defaults rewards
-	 * to 0 reward everywhere except transition to unviersal or personal goals
-	 * which return a reward 1.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class GGJointRewardFunction implements JointReward {
-
-		PropositionalFunction agentInPersonalGoal;
-		PropositionalFunction agentInUniversalGoal;
-
-		double stepCost = 0.;
-		double pGoalReward = 1.;
-		double uGoalReward = 1.;
-		boolean noopIncursCost = false;
-		Map<Integer, Double> personalGoalRewards = null;
-
-		/**
-		 * Initializes for a given domain. Defaults rewards to 0 reward
-		 * everywhere except transition to unviersal or personal goals which
-		 * return a reward 1.
-		 * 
-		 * @param ggDomain
-		 *            the domain
-		 */
-		public GGJointRewardFunction(Domain ggDomain) {
-			agentInPersonalGoal = ggDomain.getPropFunction(GridGame.PFINPGOAL);
-			agentInUniversalGoal = ggDomain.getPropFunction(GridGame.PFINUGOAL);
-		}
-
-		/**
-		 * Initializes for a given domain, step cost reward and goal reward.
-		 * 
-		 * @param ggDomain
-		 *            the domain
-		 * @param stepCost
-		 *            the reward returned for all transitions except transtions
-		 *            to goal locations
-		 * @param goalReward
-		 *            the reward returned for transitioning to a personal or
-		 *            universal goal
-		 * @param noopIncursStepCost
-		 *            if true, then noop actions also incur the stepCost reward;
-		 *            if false, then noops always return 0 reward.
-		 */
-		public GGJointRewardFunction(Domain ggDomain, double stepCost,
-				double goalReward, boolean noopIncursStepCost) {
-			agentInPersonalGoal = ggDomain.getPropFunction(GridGame.PFINPGOAL);
-			agentInUniversalGoal = ggDomain.getPropFunction(GridGame.PFINUGOAL);
-			this.stepCost = stepCost;
-			this.pGoalReward = this.uGoalReward = goalReward;
-			this.noopIncursCost = noopIncursStepCost;
-		}
-
-		/**
-		 * Initializes for a given domain, step cost reward, personal goal
-		 * reward, and universal goal reward.
-		 * 
-		 * @param ggDomain
-		 *            the domain
-		 * @param stepCost
-		 *            the reward returned for all transitions except transtions
-		 *            to goal locations
-		 * @param personalGoalReward
-		 *            the reward returned for transitions to a personal goal
-		 * @param universalGoalReward
-		 *            the reward returned for transitions to a universal goal
-		 * @param noopIncursStepCost
-		 *            if true, then noop actions also incur the stepCost reward;
-		 *            if false, then noops always return 0 reward.
-		 */
-		public GGJointRewardFunction(Domain ggDomain, double stepCost,
-				double personalGoalReward, double universalGoalReward,
-				boolean noopIncursStepCost) {
-			agentInPersonalGoal = ggDomain.getPropFunction(GridGame.PFINPGOAL);
-			agentInUniversalGoal = ggDomain.getPropFunction(GridGame.PFINUGOAL);
-			this.stepCost = stepCost;
-			this.pGoalReward = personalGoalReward;
-			this.uGoalReward = universalGoalReward;
-			this.noopIncursCost = noopIncursStepCost;
-		}
-
-		/**
-		 * Initializes for a given domain, step cost reward, universal goal
-		 * reward, and unique personal goal reward for each player.
-		 * 
-		 * @param ggDomain
-		 *            the domain
-		 * @param stepCost
-		 *            the reward returned for all transitions except transtions
-		 *            to goal locations
-		 * @param universalGoalReward
-		 *            the reward returned for transitions to a universal goal
-		 * @param noopIncursStepCost
-		 *            if true, then noop actions also incur the stepCost reward;
-		 *            if false, then noops always return 0 reward.
-		 * @param personalGoalRewards
-		 *            a map from player numbers to their personal goal reward
-		 *            (the first player number is 0)
-		 */
-		public GGJointRewardFunction(Domain ggDomain, double stepCost,
-				double universalGoalReward, boolean noopIncursStepCost,
-				Map<Integer, Double> personalGoalRewards) {
-
-			agentInPersonalGoal = ggDomain.getPropFunction(GridGame.PFINPGOAL);
-			agentInUniversalGoal = ggDomain.getPropFunction(GridGame.PFINUGOAL);
-			this.stepCost = stepCost;
-			this.uGoalReward = universalGoalReward;
-			this.noopIncursCost = noopIncursStepCost;
-			this.personalGoalRewards = personalGoalRewards;
-
-		}
-
-		@Override
-		public Map<String, Double> reward(State s, JointAction ja, State sp) {
-
-			Map<String, Double> rewards = new HashMap<String, Double>();
-
-			// get all agents and initialize reward to default
-			List<ObjectInstance> obs = sp
-					.getObjectsOfClass(GridGame.CLASSAGENT);
-			for (ObjectInstance o : obs) {
-				rewards.put(o.getName(), this.defaultCost(o.getName(), ja));
-			}
-
-			// check for any agents that reached a universal goal location and
-			// give them a goal reward if they did
-			// List<GroundedProp> upgps =
-			// sp.getAllGroundedPropsFor(agentInUniversalGoal);
-			List<GroundedProp> upgps = agentInUniversalGoal
-					.getAllGroundedPropsForState(sp);
-			for (GroundedProp gp : upgps) {
-				String agentName = gp.params[0];
-				if (gp.isTrue(sp)) {
-					rewards.put(agentName, uGoalReward);
-				}
-			}
-
-			// check for any agents that reached a personal goal location and
-			// give them a goal reward if they did
-			// List<GroundedProp> ipgps =
-			// sp.getAllGroundedPropsFor(agentInPersonalGoal);
-			List<GroundedProp> ipgps = agentInPersonalGoal
-					.getAllGroundedPropsForState(sp);
-			for (GroundedProp gp : ipgps) {
-				String agentName = gp.params[0];
-				if (gp.isTrue(sp)) {
-					rewards.put(agentName,
-							this.getPersonalGoalReward(sp, agentName));
-				}
-			}
-
-			return rewards;
-
-		}
-
-		/**
-		 * Returns a default cost for an agent assuming the agent didn't
-		 * transition to a goal state. If noops incur step cost, then this is
-		 * always the step cost. If noops do not incur step costs and the agent
-		 * took a noop, then 0 is returned.
-		 * 
-		 * @param aname
-		 *            the name of the agent for which the default reward should
-		 *            be returned.
-		 * @param ja
-		 *            the joint action set
-		 * @return the default reward; either step cost or 0.
-		 */
-		protected double defaultCost(String aname, JointAction ja) {
-			if (this.noopIncursCost) {
-				return this.stepCost;
-			} else if (ja.action(aname).action.actionName
-					.equals(GridGame.ACTIONNOOP)) {
-				return 0.;
-			}
-			return this.stepCost;
-		}
-
-		/**
-		 * Returns the personal goal rewards. If a single common personal goal
-		 * reward was set then that is returned. If different personal goal
-		 * rewards were defined for each player number, then that is queried and
-		 * returned instead.
-		 * 
-		 * @param s
-		 *            the state in which the agent player numbers are defined
-		 * @param agentName
-		 *            the agent name for which the person goal reward is to be
-		 *            returned
-		 * @return the personal goal reward for the specified agent.
-		 */
-		protected double getPersonalGoalReward(State s, String agentName) {
-			if (this.personalGoalRewards == null) {
-				return this.pGoalReward;
-			}
-
-			int pn = s.getObject(agentName).getIntValForAttribute(
-					GridGame.ATTPN);
-			return this.personalGoalRewards.get(pn);
-
-		}
-
-	}
-
-	/**
-	 * Causes termination when any agent reaches a personal or universal goal
-	 * location.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class GGTerminalFunction implements TerminalFunction {
-
-		PropositionalFunction agentInPersonalGoal;
-		PropositionalFunction agentInUniversalGoal;
-
-		/**
-		 * Initializes for the given domain
-		 * 
-		 * @param ggDomain
-		 *            the specific grid world domain.
-		 */
-		public GGTerminalFunction(Domain ggDomain) {
-			agentInPersonalGoal = ggDomain.getPropFunction(GridGame.PFINPGOAL);
-			agentInUniversalGoal = ggDomain.getPropFunction(GridGame.PFINUGOAL);
-		}
-
-		@Override
-		public boolean isTerminal(State s) {
-
-			// check personal goals; if anyone reached their personal goal, it's
-			// game over
-			// List<GroundedProp> ipgps =
-			// s.getAllGroundedPropsFor(agentInPersonalGoal);
-			List<GroundedProp> ipgps = agentInPersonalGoal
-					.getAllGroundedPropsForState(s);
-			for (GroundedProp gp : ipgps) {
-				if (gp.isTrue(s)) {
-					return true;
-				}
-			}
-
-			// check universal goals; if anyone reached a universal goal, it's
-			// game over
-			// List<GroundedProp> upgps =
-			// s.getAllGroundedPropsFor(agentInUniversalGoal);
-			List<GroundedProp> upgps = agentInUniversalGoal
-					.getAllGroundedPropsForState(s);
-			for (GroundedProp gp : upgps) {
-				if (gp.isTrue(s)) {
-					return true;
-				}
-			}
-
-			return false;
-		}
-
+	public void setSemiWallPassableProbability(double p) {
+		this.semiWallProb = p;
 	}
 
 }

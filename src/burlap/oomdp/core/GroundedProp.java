@@ -31,6 +31,7 @@ public class GroundedProp implements Cloneable {
 		params = par;
 	}
 
+	@Override
 	public Object clone() {
 		try {
 			return super.clone();
@@ -39,40 +40,7 @@ public class GroundedProp implements Cloneable {
 		}
 	}
 
-	/**
-	 * Evaluates whether this grounded propositional function is true in the
-	 * provided state.
-	 * 
-	 * @param s
-	 *            the state on which to evaluate the grounded propositional
-	 *            function
-	 * @return true if the propositional function bounded to this groundedProp's
-	 *         parameters is true in the specified state.
-	 */
-	public boolean isTrue(State s) {
-		return pf.isTrue(s, params);
-	}
-
-	/**
-	 * Returns a string representation of this grounded prop. If this
-	 * groundedProp is specified by two parameters (ob1, ob2) then the returned
-	 * format is: "PFName(ob1, ob2)"
-	 */
-	public String toString() {
-		StringBuffer buf = new StringBuffer();
-
-		buf.append(pf.name).append("(");
-		for (int i = 0; i < params.length; i++) {
-			if (i > 0) {
-				buf.append(", ");
-			}
-			buf.append(params[i]);
-		}
-		buf.append(")");
-
-		return buf.toString();
-	}
-
+	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
 			return true;
@@ -119,6 +87,41 @@ public class GroundedProp implements Cloneable {
 
 		return true;
 
+	}
+
+	/**
+	 * Evaluates whether this grounded propositional function is true in the
+	 * provided state.
+	 * 
+	 * @param s
+	 *            the state on which to evaluate the grounded propositional
+	 *            function
+	 * @return true if the propositional function bounded to this groundedProp's
+	 *         parameters is true in the specified state.
+	 */
+	public boolean isTrue(State s) {
+		return pf.isTrue(s, params);
+	}
+
+	/**
+	 * Returns a string representation of this grounded prop. If this
+	 * groundedProp is specified by two parameters (ob1, ob2) then the returned
+	 * format is: "PFName(ob1, ob2)"
+	 */
+	@Override
+	public String toString() {
+		StringBuffer buf = new StringBuffer();
+
+		buf.append(pf.name).append("(");
+		for (int i = 0; i < params.length; i++) {
+			if (i > 0) {
+				buf.append(", ");
+			}
+			buf.append(params[i]);
+		}
+		buf.append(")");
+
+		return buf.toString();
 	}
 
 }

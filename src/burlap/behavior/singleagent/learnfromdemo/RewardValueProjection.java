@@ -1,5 +1,9 @@
 package burlap.behavior.singleagent.learnfromdemo;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import burlap.behavior.singleagent.planning.stochastic.sparsesampling.SparseSampling;
 import burlap.behavior.valuefunction.QFunction;
 import burlap.behavior.valuefunction.QValue;
@@ -11,10 +15,6 @@ import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.statehashing.SimpleHashableStateFactory;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * This class is a {@link burlap.behavior.valuefunction.QFunction}/
@@ -59,14 +59,14 @@ import java.util.List;
  */
 public class RewardValueProjection implements QFunction {
 
-	protected RewardFunction rf;
-	protected RewardProjectionType projectionType = RewardProjectionType.ONESTEP.DESTINATIONSTATE;
-	protected SparseSampling oneStepBellmanPlanner;
-	protected Domain domain;
-
 	public static enum RewardProjectionType {
 		SOURCESTATE, DESTINATIONSTATE, STATEACTION, ONESTEP
 	}
+	protected RewardFunction rf;
+	protected RewardProjectionType projectionType = RewardProjectionType.ONESTEP.DESTINATIONSTATE;
+	protected SparseSampling oneStepBellmanPlanner;
+
+	protected Domain domain;
 
 	/**
 	 * Initializes for the given {@link burlap.oomdp.singleagent.RewardFunction}
@@ -133,6 +133,25 @@ public class RewardValueProjection implements QFunction {
 	}
 
 	@Override
+	public QValue getQ(State s, AbstractGroundedAction a) {
+
+		switch (this.projectionType) {
+		case DESTINATIONSTATE:
+			return new QValue(s, a, this.rf.reward(null, (GroundedAction) a, s));
+		case SOURCESTATE:
+		case STATEACTION:
+			return new QValue(s, a, this.rf.reward(s, (GroundedAction) a, null));
+		case ONESTEP:
+			return this.oneStepBellmanPlanner.getQ(s, a);
+
+		}
+
+		throw new RuntimeException(
+				"Unknown RewardProjectionType... this shouldn't happen.");
+
+	}
+
+	@Override
 	public List<QValue> getQs(State s) {
 
 		if (this.domain != null) {
@@ -161,25 +180,6 @@ public class RewardValueProjection implements QFunction {
 
 		throw new RuntimeException(
 				"Unknown RewardProjectionType... this shouldn't happen.");
-	}
-
-	@Override
-	public QValue getQ(State s, AbstractGroundedAction a) {
-
-		switch (this.projectionType) {
-		case DESTINATIONSTATE:
-			return new QValue(s, a, this.rf.reward(null, (GroundedAction) a, s));
-		case SOURCESTATE:
-		case STATEACTION:
-			return new QValue(s, a, this.rf.reward(s, (GroundedAction) a, null));
-		case ONESTEP:
-			return this.oneStepBellmanPlanner.getQ(s, a);
-
-		}
-
-		throw new RuntimeException(
-				"Unknown RewardProjectionType... this shouldn't happen.");
-
 	}
 
 	@Override

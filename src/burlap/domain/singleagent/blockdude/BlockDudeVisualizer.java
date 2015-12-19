@@ -1,13 +1,14 @@
 package burlap.domain.singleagent.blockdude;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.visualizer.ObjectPainter;
 import burlap.oomdp.visualizer.StateRenderLayer;
 import burlap.oomdp.visualizer.Visualizer;
-
-import java.awt.*;
-import java.awt.geom.Rectangle2D;
 
 /**
  * A state visualizer for {@link burlap.domain.singleagent.blockdude.BlockDude}.
@@ -18,48 +19,6 @@ import java.awt.geom.Rectangle2D;
  * @author James MacGlashan.
  */
 public class BlockDudeVisualizer {
-
-	/**
-	 * Returns a {@link burlap.oomdp.visualizer.Visualizer} for
-	 * {@link burlap.domain.singleagent.blockdude.BlockDude}.
-	 * 
-	 * @param maxx
-	 *            the max x dimensionality of the world
-	 * @param maxy
-	 *            the max y dimensionality of the world
-	 * @return a {@link burlap.oomdp.visualizer.Visualizer} for
-	 *         {@link burlap.domain.singleagent.blockdude.BlockDude}
-	 */
-	public static Visualizer getVisualizer(int maxx, int maxy) {
-		Visualizer v = new Visualizer(getStateRenderLayer(maxx, maxy));
-		return v;
-	}
-
-	/**
-	 * Returns a {@link burlap.oomdp.visualizer.StateRenderLayer} for
-	 * {@link burlap.domain.singleagent.blockdude.BlockDudeVisualizer}.
-	 * 
-	 * @param maxx
-	 *            the max x dimensionality of the world
-	 * @param maxy
-	 *            the max y dimensionality of the world
-	 * @return a {@link burlap.oomdp.visualizer.StateRenderLayer} for
-	 *         {@link burlap.domain.singleagent.blockdude.BlockDudeVisualizer}.
-	 */
-	public static StateRenderLayer getStateRenderLayer(int maxx, int maxy) {
-
-		StateRenderLayer srl = new StateRenderLayer();
-		srl.addObjectClassPainter(BlockDude.CLASSBRICKS, new BricksPainter(
-				maxx, maxy));
-		srl.addObjectClassPainter(BlockDude.CLASSAGENT, new AgentPainter(maxx,
-				maxy));
-		srl.addObjectClassPainter(BlockDude.CLASSEXIT, new ExitPainter(maxx,
-				maxy));
-		srl.addObjectClassPainter(BlockDude.CLASSBLOCK, new BlockPainter(maxx,
-				maxy));
-
-		return srl;
-	}
 
 	/**
 	 * A class for rendering the agent as a blue square with a gold eye
@@ -171,54 +130,6 @@ public class BlockDudeVisualizer {
 	}
 
 	/**
-	 * A class for rendering an exit with a black square
-	 */
-	public static class ExitPainter implements ObjectPainter {
-
-		public int minx = 0;
-		public int miny = 0;
-
-		public int maxx;
-		public int maxy;
-
-		/**
-		 * Initializes.
-		 * 
-		 * @param maxx
-		 *            the max x dimensionality of the world
-		 * @param maxy
-		 *            the max y dimensionality of the world
-		 */
-		public ExitPainter(int maxx, int maxy) {
-
-			this.maxx = maxx;
-			this.maxy = maxy;
-		}
-
-		@Override
-		public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
-				float cWidth, float cHeight) {
-
-			g2.setColor(Color.black);
-
-			float domainXScale = (maxx) - minx;
-			float domainYScale = (maxy) - miny;
-
-			// determine then normalized width
-			float width = (1.0f / domainXScale) * cWidth;
-			float height = (1.0f / domainYScale) * cHeight;
-
-			float rx = ob.getIntValForAttribute(BlockDude.ATTX) * width;
-			float ry = cHeight - height
-					- ob.getIntValForAttribute(BlockDude.ATTY) * height;
-
-			g2.fill(new Rectangle2D.Float(rx, ry, width, height));
-
-		}
-
-	}
-
-	/**
 	 * A class for rendering bricks as green squares. Since all bricks are
 	 * specified in a single 1D array, rather than a separate object for each,
 	 * this class will iterate through the array and paint each brick.
@@ -276,6 +187,96 @@ public class BlockDudeVisualizer {
 			}
 
 		}
+	}
+
+	/**
+	 * A class for rendering an exit with a black square
+	 */
+	public static class ExitPainter implements ObjectPainter {
+
+		public int minx = 0;
+		public int miny = 0;
+
+		public int maxx;
+		public int maxy;
+
+		/**
+		 * Initializes.
+		 * 
+		 * @param maxx
+		 *            the max x dimensionality of the world
+		 * @param maxy
+		 *            the max y dimensionality of the world
+		 */
+		public ExitPainter(int maxx, int maxy) {
+
+			this.maxx = maxx;
+			this.maxy = maxy;
+		}
+
+		@Override
+		public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
+				float cWidth, float cHeight) {
+
+			g2.setColor(Color.black);
+
+			float domainXScale = (maxx) - minx;
+			float domainYScale = (maxy) - miny;
+
+			// determine then normalized width
+			float width = (1.0f / domainXScale) * cWidth;
+			float height = (1.0f / domainYScale) * cHeight;
+
+			float rx = ob.getIntValForAttribute(BlockDude.ATTX) * width;
+			float ry = cHeight - height
+					- ob.getIntValForAttribute(BlockDude.ATTY) * height;
+
+			g2.fill(new Rectangle2D.Float(rx, ry, width, height));
+
+		}
+
+	}
+
+	/**
+	 * Returns a {@link burlap.oomdp.visualizer.StateRenderLayer} for
+	 * {@link burlap.domain.singleagent.blockdude.BlockDudeVisualizer}.
+	 * 
+	 * @param maxx
+	 *            the max x dimensionality of the world
+	 * @param maxy
+	 *            the max y dimensionality of the world
+	 * @return a {@link burlap.oomdp.visualizer.StateRenderLayer} for
+	 *         {@link burlap.domain.singleagent.blockdude.BlockDudeVisualizer}.
+	 */
+	public static StateRenderLayer getStateRenderLayer(int maxx, int maxy) {
+
+		StateRenderLayer srl = new StateRenderLayer();
+		srl.addObjectClassPainter(BlockDude.CLASSBRICKS, new BricksPainter(
+				maxx, maxy));
+		srl.addObjectClassPainter(BlockDude.CLASSAGENT, new AgentPainter(maxx,
+				maxy));
+		srl.addObjectClassPainter(BlockDude.CLASSEXIT, new ExitPainter(maxx,
+				maxy));
+		srl.addObjectClassPainter(BlockDude.CLASSBLOCK, new BlockPainter(maxx,
+				maxy));
+
+		return srl;
+	}
+
+	/**
+	 * Returns a {@link burlap.oomdp.visualizer.Visualizer} for
+	 * {@link burlap.domain.singleagent.blockdude.BlockDude}.
+	 * 
+	 * @param maxx
+	 *            the max x dimensionality of the world
+	 * @param maxy
+	 *            the max y dimensionality of the world
+	 * @return a {@link burlap.oomdp.visualizer.Visualizer} for
+	 *         {@link burlap.domain.singleagent.blockdude.BlockDude}
+	 */
+	public static Visualizer getVisualizer(int maxx, int maxy) {
+		Visualizer v = new Visualizer(getStateRenderLayer(maxx, maxy));
+		return v;
 	}
 
 }

@@ -22,27 +22,6 @@ import burlap.oomdp.visualizer.Visualizer;
 public class CartPoleVisualizer {
 
 	/**
-	 * Returns a visualizer for cart pole.
-	 * 
-	 * @return a visualizer for cart pole.
-	 */
-	public static Visualizer getCartPoleVisualizer() {
-		return new Visualizer(getCartPoleStateRenderLayer());
-	}
-
-	/**
-	 * Returns a StateRenderLayer for cart pole.
-	 * 
-	 * @return a StateRenderLayer for cart pole.
-	 */
-	public static StateRenderLayer getCartPoleStateRenderLayer() {
-		StateRenderLayer rl = new StateRenderLayer();
-		rl.addObjectClassPainter(CartPoleDomain.CLASSCARTPOLE,
-				new CartPoleObjectPainter());
-		return rl;
-	}
-
-	/**
 	 * An object painter for the cart pole object. Cart will have width/height
 	 * of 0.1 * the canvas width and pole will have length of 0.5 * the canvas
 	 * width.
@@ -91,5 +70,26 @@ public class CartPoleVisualizer {
 
 		}
 
+	}
+
+	/**
+	 * Returns a StateRenderLayer for cart pole.
+	 * 
+	 * @return a StateRenderLayer for cart pole.
+	 */
+	public static StateRenderLayer getCartPoleStateRenderLayer() {
+		StateRenderLayer rl = new StateRenderLayer();
+		rl.addObjectClassPainter(CartPoleDomain.CLASSCARTPOLE,
+				new CartPoleObjectPainter());
+		return rl;
+	}
+
+	/**
+	 * Returns a visualizer for cart pole.
+	 * 
+	 * @return a visualizer for cart pole.
+	 */
+	public static Visualizer getCartPoleVisualizer() {
+		return new Visualizer(getCartPoleStateRenderLayer());
 	}
 }

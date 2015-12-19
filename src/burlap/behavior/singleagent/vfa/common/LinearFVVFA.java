@@ -1,13 +1,19 @@
 package burlap.behavior.singleagent.vfa.common;
 
-import burlap.behavior.singleagent.vfa.*;
-import burlap.oomdp.core.states.State;
-import burlap.oomdp.singleagent.GroundedAction;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import burlap.behavior.singleagent.vfa.ActionApproximationResult;
+import burlap.behavior.singleagent.vfa.ApproximationResult;
+import burlap.behavior.singleagent.vfa.FunctionWeight;
+import burlap.behavior.singleagent.vfa.StateFeature;
+import burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator;
+import burlap.behavior.singleagent.vfa.ValueFunctionApproximation;
+import burlap.behavior.singleagent.vfa.WeightGradient;
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.singleagent.GroundedAction;
 
 /**
  * This class can be used to perform linear value function approximation, either
@@ -83,8 +89,44 @@ public class LinearFVVFA implements ValueFunctionApproximation {
 		this.defaultWeight = defaultWeightValue;
 	}
 
-	public StateToFeatureVectorGenerator getFvGen() {
-		return fvGen;
+	@Override
+	public LinearFVVFA copy() {
+		LinearFVVFA vfa = new LinearFVVFA(this.fvGen, this.defaultWeight);
+		vfa.actionOffset = new HashMap<GroundedAction, Integer>(
+				this.actionOffset);
+		vfa.stateWeights = new FunctionWeight[this.stateWeights.length];
+		for (int i = 0; i < this.stateWeights.length; i++) {
+			vfa.stateWeights[i] = new FunctionWeight(
+					this.stateWeights[i].weightId(),
+					this.stateWeights[i].weightValue());
+		}
+		vfa.stateActionWeights = new FunctionWeight[this.stateActionWeights.length];
+		for (int i = 0; i < this.stateActionWeights.length; i++) {
+			vfa.stateActionWeights[i] = new FunctionWeight(
+					this.stateActionWeights[i].weightId(),
+					this.stateActionWeights[i].weightValue());
+		}
+
+		return vfa;
+	}
+
+	/**
+	 * Expands the state-action function weight vector by a fixed sized and
+	 * initializes their value to the default weight value set for this object.
+	 * 
+	 * @param num
+	 *            the number of function weights to add to the state-action
+	 *            function weight vector
+	 */
+	protected void expandStateActionWeights(int num) {
+		FunctionWeight[] nWeights = new FunctionWeight[this.stateActionWeights.length
+				+ num];
+		for (int i = 0; i < this.stateActionWeights.length; i++) {
+			nWeights[i] = this.stateActionWeights[i];
+		}
+		for (int i = this.stateActionWeights.length; i < nWeights.length; i++) {
+			nWeights[i] = new FunctionWeight(i, this.defaultWeight);
+		}
 	}
 
 	public double getDefaultWeight() {
@@ -92,36 +134,34 @@ public class LinearFVVFA implements ValueFunctionApproximation {
 	}
 
 	@Override
-	public ApproximationResult getStateValue(State s) {
+	public FunctionWeight getFunctionWeight(int featureId) {
 
-		if (this.stateActionWeights != null) {
-			throw new RuntimeException(
-					"LinearFVVFA is already being used to predict the Q-value function; it cannot be overloaded to predict the state value function");
-		}
-
-		double[] vec = this.fvGen.generateFeatureVectorFrom(s);
-
-		if (stateWeights == null) {
-			stateWeights = new FunctionWeight[vec.length];
-			for (int i = 0; i < stateWeights.length; i++) {
-				stateWeights[i] = new FunctionWeight(i, this.defaultWeight);
+		if (this.stateWeights != null) {
+			if (featureId >= this.stateWeights.length) {
+				throw new RuntimeException(
+						"Cannot return function weight for feature "
+								+ featureId
+								+ ", because VFA dimensionality is only "
+								+ this.stateWeights.length);
 			}
-		}
-
-		double sum = 0.;
-		List<StateFeature> sfs = new ArrayList<StateFeature>(vec.length);
-		List<FunctionWeight> fws = new ArrayList<FunctionWeight>(vec.length);
-		for (int i = 0; i < vec.length; i++) {
-			if (vec[i] != 0.) {
-				sum += vec[i] * this.stateWeights[i].weightValue();
-				sfs.add(new StateFeature(i, vec[i]));
-				fws.add(stateWeights[i]);
+			return this.stateWeights[featureId];
+		} else if (this.stateActionWeights != null) {
+			if (featureId >= this.stateActionWeights.length) {
+				throw new RuntimeException(
+						"Cannot return function weight for feature "
+								+ featureId
+								+ ", because VFA dimensionality is only "
+								+ this.stateActionWeights.length);
 			}
+			return this.stateActionWeights[featureId];
 		}
 
-		ApproximationResult res = new ApproximationResult(sum, sfs, fws);
+		throw new RuntimeException(
+				"VFA cannot return function weight, because function weights and dimensionality have not yet been initialized.");
+	}
 
-		return res;
+	public StateToFeatureVectorGenerator getFvGen() {
+		return fvGen;
 	}
 
 	@Override
@@ -181,23 +221,37 @@ public class LinearFVVFA implements ValueFunctionApproximation {
 		return results;
 	}
 
-	/**
-	 * Expands the state-action function weight vector by a fixed sized and
-	 * initializes their value to the default weight value set for this object.
-	 * 
-	 * @param num
-	 *            the number of function weights to add to the state-action
-	 *            function weight vector
-	 */
-	protected void expandStateActionWeights(int num) {
-		FunctionWeight[] nWeights = new FunctionWeight[this.stateActionWeights.length
-				+ num];
-		for (int i = 0; i < this.stateActionWeights.length; i++) {
-			nWeights[i] = this.stateActionWeights[i];
+	@Override
+	public ApproximationResult getStateValue(State s) {
+
+		if (this.stateActionWeights != null) {
+			throw new RuntimeException(
+					"LinearFVVFA is already being used to predict the Q-value function; it cannot be overloaded to predict the state value function");
 		}
-		for (int i = this.stateActionWeights.length; i < nWeights.length; i++) {
-			nWeights[i] = new FunctionWeight(i, this.defaultWeight);
+
+		double[] vec = this.fvGen.generateFeatureVectorFrom(s);
+
+		if (stateWeights == null) {
+			stateWeights = new FunctionWeight[vec.length];
+			for (int i = 0; i < stateWeights.length; i++) {
+				stateWeights[i] = new FunctionWeight(i, this.defaultWeight);
+			}
 		}
+
+		double sum = 0.;
+		List<StateFeature> sfs = new ArrayList<StateFeature>(vec.length);
+		List<FunctionWeight> fws = new ArrayList<FunctionWeight>(vec.length);
+		for (int i = 0; i < vec.length; i++) {
+			if (vec[i] != 0.) {
+				sum += vec[i] * this.stateWeights[i].weightValue();
+				sfs.add(new StateFeature(i, vec[i]));
+				fws.add(stateWeights[i]);
+			}
+		}
+
+		ApproximationResult res = new ApproximationResult(sum, sfs, fws);
+
+		return res;
 	}
 
 	@Override
@@ -211,6 +265,19 @@ public class LinearFVVFA implements ValueFunctionApproximation {
 		}
 
 		return wg;
+	}
+
+	@Override
+	public int numFeatures() {
+
+		if (this.stateWeights != null) {
+			return this.stateWeights.length;
+		}
+		if (this.stateActionWeights != null) {
+			return this.stateActionWeights.length;
+		}
+
+		return 0;
 	}
 
 	@Override
@@ -251,66 +318,5 @@ public class LinearFVVFA implements ValueFunctionApproximation {
 		throw new RuntimeException(
 				"VFA cannot set function weight, because function weights and dimensionality have not yet been initialized.");
 
-	}
-
-	@Override
-	public FunctionWeight getFunctionWeight(int featureId) {
-
-		if (this.stateWeights != null) {
-			if (featureId >= this.stateWeights.length) {
-				throw new RuntimeException(
-						"Cannot return function weight for feature "
-								+ featureId
-								+ ", because VFA dimensionality is only "
-								+ this.stateWeights.length);
-			}
-			return this.stateWeights[featureId];
-		} else if (this.stateActionWeights != null) {
-			if (featureId >= this.stateActionWeights.length) {
-				throw new RuntimeException(
-						"Cannot return function weight for feature "
-								+ featureId
-								+ ", because VFA dimensionality is only "
-								+ this.stateActionWeights.length);
-			}
-			return this.stateActionWeights[featureId];
-		}
-
-		throw new RuntimeException(
-				"VFA cannot return function weight, because function weights and dimensionality have not yet been initialized.");
-	}
-
-	@Override
-	public int numFeatures() {
-
-		if (this.stateWeights != null) {
-			return this.stateWeights.length;
-		}
-		if (this.stateActionWeights != null) {
-			return this.stateActionWeights.length;
-		}
-
-		return 0;
-	}
-
-	@Override
-	public LinearFVVFA copy() {
-		LinearFVVFA vfa = new LinearFVVFA(this.fvGen, this.defaultWeight);
-		vfa.actionOffset = new HashMap<GroundedAction, Integer>(
-				this.actionOffset);
-		vfa.stateWeights = new FunctionWeight[this.stateWeights.length];
-		for (int i = 0; i < this.stateWeights.length; i++) {
-			vfa.stateWeights[i] = new FunctionWeight(
-					this.stateWeights[i].weightId(),
-					this.stateWeights[i].weightValue());
-		}
-		vfa.stateActionWeights = new FunctionWeight[this.stateActionWeights.length];
-		for (int i = 0; i < this.stateActionWeights.length; i++) {
-			vfa.stateActionWeights[i] = new FunctionWeight(
-					this.stateActionWeights[i].weightId(),
-					this.stateActionWeights[i].weightValue());
-		}
-
-		return vfa;
 	}
 }

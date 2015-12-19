@@ -1,14 +1,14 @@
 package burlap.oomdp.auxiliary.common;
 
+import java.util.List;
+import java.util.Random;
+
 import burlap.behavior.singleagent.auxiliary.StateReachability;
 import burlap.oomdp.auxiliary.StateGenerator;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.SADomain;
 import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.statehashing.SimpleHashableStateFactory;
-
-import java.util.List;
-import java.util.Random;
 
 /**
  * This class will return a random state from a set of states that are reachable

@@ -55,26 +55,6 @@ public abstract class BeliefAgent {
 	}
 
 	/**
-	 * Sets the POMDP environment
-	 * 
-	 * @param environment
-	 *            the POMDP environment
-	 */
-	public void setEnvironment(Environment environment) {
-		this.environment = environment;
-	}
-
-	/**
-	 * Sets this agent's current belief
-	 * 
-	 * @param beliefState
-	 *            the agent' current belief
-	 */
-	public void setBeliefState(BeliefState beliefState) {
-		this.curBelief = beliefState;
-	}
-
-	/**
 	 * Causes the agent to act until the environment reaches a termination
 	 * condition. The agent's belief is automatically updated by this method
 	 * using the the current
@@ -153,5 +133,25 @@ public abstract class BeliefAgent {
 	 *         {@link burlap.oomdp.singleagent.pomdp.beliefstate.BeliefState}.
 	 */
 	public abstract GroundedAction getAction(BeliefState curBelief);
+
+	/**
+	 * Sets this agent's current belief
+	 * 
+	 * @param beliefState
+	 *            the agent' current belief
+	 */
+	public void setBeliefState(BeliefState beliefState) {
+		this.curBelief = beliefState;
+	}
+
+	/**
+	 * Sets the POMDP environment
+	 * 
+	 * @param environment
+	 *            the POMDP environment
+	 */
+	public void setEnvironment(Environment environment) {
+		this.environment = environment;
+	}
 
 }

@@ -54,13 +54,13 @@ public class PlotTest {
 		LearningAgentFactory qLearningFactory = new LearningAgentFactory() {
 
 			@Override
-			public String getAgentName() {
-				return "Q-learning";
+			public LearningAgent generateAgent() {
+				return new QLearning(domain, 0.99, hashingFactory, 0.3, 0.1);
 			}
 
 			@Override
-			public LearningAgent generateAgent() {
-				return new QLearning(domain, 0.99, hashingFactory, 0.3, 0.1);
+			public String getAgentName() {
+				return "Q-learning";
 			}
 		};
 

@@ -1,5 +1,10 @@
 package burlap.behavior.singleagent.planning.stochastic.policyiteration;
 
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import burlap.behavior.policy.GreedyQPolicy;
 import burlap.behavior.policy.Policy;
 import burlap.behavior.singleagent.planning.Planner;
@@ -13,11 +18,6 @@ import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.statehashing.HashableStateFactory;
-
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 
 public class PolicyIteration extends DynamicProgramming implements Planner {
 
@@ -83,45 +83,6 @@ public class PolicyIteration extends DynamicProgramming implements Planner {
 	 *            the discount factor
 	 * @param hashingFactory
 	 *            the state hashing factor to use
-	 * @param maxDelta
-	 *            when the maximum change in the value function is smaller than
-	 *            this value, policy evaluation will terminate. Similarly, when
-	 *            the maximum value value function change between policy
-	 *            iterations is smaller than this value planning will terminate.
-	 * @param maxEvaluationIterations
-	 *            when the number iterations of value iteration used to evaluate
-	 *            a policy exceeds this value, policy evaluation will terminate.
-	 * @param maxPolicyIterations
-	 *            when the number of policy iterations passes this value,
-	 *            planning will terminate.
-	 */
-	public PolicyIteration(Domain domain, RewardFunction rf,
-			TerminalFunction tf, double gamma,
-			HashableStateFactory hashingFactory, double maxDelta,
-			int maxEvaluationIterations, int maxPolicyIterations) {
-		this.DPPInit(domain, rf, tf, gamma, hashingFactory);
-
-		this.maxEvalDelta = maxDelta;
-		this.maxPIDelta = maxDelta;
-		this.maxIterations = maxEvaluationIterations;
-		this.maxPolicyIterations = maxPolicyIterations;
-
-		this.evaluativePolicy = new GreedyQPolicy(this.getCopyOfValueFunction());
-	}
-
-	/**
-	 * Initializes the valueFunction.
-	 * 
-	 * @param domain
-	 *            the domain in which to plan
-	 * @param rf
-	 *            the reward function
-	 * @param tf
-	 *            the terminal state function
-	 * @param gamma
-	 *            the discount factor
-	 * @param hashingFactory
-	 *            the state hashing factor to use
 	 * @param maxPIDelta
 	 *            when the maximum value value function change between policy
 	 *            iterations is smaller than this value planning will terminate.
@@ -151,99 +112,42 @@ public class PolicyIteration extends DynamicProgramming implements Planner {
 	}
 
 	/**
-	 * Sets the initial policy that will be evaluated when planning with policy
-	 * iteration begins. After the first policy iteration, the evaluative policy
-	 * will be {@link burlap.behavior.policy.GreedyQPolicy} on the function
-	 * evaluation.
+	 * Initializes the valueFunction.
 	 * 
-	 * @param p
-	 *            the initial policy to evaluate when planning begins.
+	 * @param domain
+	 *            the domain in which to plan
+	 * @param rf
+	 *            the reward function
+	 * @param tf
+	 *            the terminal state function
+	 * @param gamma
+	 *            the discount factor
+	 * @param hashingFactory
+	 *            the state hashing factor to use
+	 * @param maxDelta
+	 *            when the maximum change in the value function is smaller than
+	 *            this value, policy evaluation will terminate. Similarly, when
+	 *            the maximum value value function change between policy
+	 *            iterations is smaller than this value planning will terminate.
+	 * @param maxEvaluationIterations
+	 *            when the number iterations of value iteration used to evaluate
+	 *            a policy exceeds this value, policy evaluation will terminate.
+	 * @param maxPolicyIterations
+	 *            when the number of policy iterations passes this value,
+	 *            planning will terminate.
 	 */
-	public void setPolicyToEvaluate(Policy p) {
-		this.evaluativePolicy = p;
-	}
+	public PolicyIteration(Domain domain, RewardFunction rf,
+			TerminalFunction tf, double gamma,
+			HashableStateFactory hashingFactory, double maxDelta,
+			int maxEvaluationIterations, int maxPolicyIterations) {
+		this.DPPInit(domain, rf, tf, gamma, hashingFactory);
 
-	/**
-	 * Returns the policy that was last computed (or the initial policy if no
-	 * planning has been performed).
-	 * 
-	 * @return the policy that was last computed.
-	 */
-	public Policy getComputedPolicy() {
-		return this.evaluativePolicy;
-	}
+		this.maxEvalDelta = maxDelta;
+		this.maxPIDelta = maxDelta;
+		this.maxIterations = maxEvaluationIterations;
+		this.maxPolicyIterations = maxPolicyIterations;
 
-	/**
-	 * Calling this method will force the valueFunction to recompute the
-	 * reachable states when the {@link #planFromState(State)} method is called
-	 * next. This may be useful if the transition dynamics from the last
-	 * planning call have changed and if planning needs to be restarted as a
-	 * result.
-	 */
-	public void recomputeReachableStates() {
-		this.foundReachableStates = false;
-	}
-
-	/**
-	 * Returns the total number of policy iterations that have been performed.
-	 * 
-	 * @return the total number of policy iterations that have been performed.
-	 */
-	public int getTotalPolicyIterations() {
-		return totalPolicyIterations;
-	}
-
-	/**
-	 * Returns the total number of value iterations used to evaluate policies.
-	 * 
-	 * @return the total number of value iterations used to evaluate policies.
-	 */
-	public int getTotalValueIterations() {
-		return totalValueIterations;
-	}
-
-	/**
-	 * Plans from the input state and then returns a
-	 * {@link burlap.behavior.policy.GreedyQPolicy} that greedily selects the
-	 * action with the highest Q-value and breaks ties uniformly randomly.
-	 * 
-	 * @param initialState
-	 *            the initial state of the planning problem
-	 * @return a {@link burlap.behavior.policy.GreedyQPolicy}.
-	 */
-	@Override
-	public GreedyQPolicy planFromState(State initialState) {
-
-		int iterations = 0;
-		this.initializeOptionsForExpectationComputations();
-		if (this.performReachabilityFrom(initialState) || !this.hasRunPlanning) {
-
-			double delta;
-			do {
-				delta = this.evaluatePolicy();
-				iterations++;
-				this.evaluativePolicy = new GreedyQPolicy(
-						this.getCopyOfValueFunction());
-			} while (delta > this.maxPIDelta
-					&& iterations < maxPolicyIterations);
-
-			this.hasRunPlanning = true;
-
-		}
-
-		DPrint.cl(this.debugCode, "Total policy iterations: " + iterations);
-		this.totalPolicyIterations += iterations;
-
-		return (GreedyQPolicy) this.evaluativePolicy;
-
-	}
-
-	@Override
-	public void resetSolver() {
-		super.resetSolver();
-		this.foundReachableStates = false;
-		this.totalValueIterations = 0;
-		this.totalPolicyIterations = 0;
+		this.evaluativePolicy = new GreedyQPolicy(this.getCopyOfValueFunction());
 	}
 
 	/**
@@ -292,6 +196,34 @@ public class PolicyIteration extends DynamicProgramming implements Planner {
 
 		return maxChangeInPolicyEvaluation;
 
+	}
+
+	/**
+	 * Returns the policy that was last computed (or the initial policy if no
+	 * planning has been performed).
+	 * 
+	 * @return the policy that was last computed.
+	 */
+	public Policy getComputedPolicy() {
+		return this.evaluativePolicy;
+	}
+
+	/**
+	 * Returns the total number of policy iterations that have been performed.
+	 * 
+	 * @return the total number of policy iterations that have been performed.
+	 */
+	public int getTotalPolicyIterations() {
+		return totalPolicyIterations;
+	}
+
+	/**
+	 * Returns the total number of value iterations used to evaluate policies.
+	 * 
+	 * @return the total number of value iterations used to evaluate policies.
+	 */
+	public int getTotalValueIterations() {
+		return totalValueIterations;
 	}
 
 	/**
@@ -362,6 +294,74 @@ public class PolicyIteration extends DynamicProgramming implements Planner {
 
 		return true;
 
+	}
+
+	/**
+	 * Plans from the input state and then returns a
+	 * {@link burlap.behavior.policy.GreedyQPolicy} that greedily selects the
+	 * action with the highest Q-value and breaks ties uniformly randomly.
+	 * 
+	 * @param initialState
+	 *            the initial state of the planning problem
+	 * @return a {@link burlap.behavior.policy.GreedyQPolicy}.
+	 */
+	@Override
+	public GreedyQPolicy planFromState(State initialState) {
+
+		int iterations = 0;
+		this.initializeOptionsForExpectationComputations();
+		if (this.performReachabilityFrom(initialState) || !this.hasRunPlanning) {
+
+			double delta;
+			do {
+				delta = this.evaluatePolicy();
+				iterations++;
+				this.evaluativePolicy = new GreedyQPolicy(
+						this.getCopyOfValueFunction());
+			} while (delta > this.maxPIDelta
+					&& iterations < maxPolicyIterations);
+
+			this.hasRunPlanning = true;
+
+		}
+
+		DPrint.cl(this.debugCode, "Total policy iterations: " + iterations);
+		this.totalPolicyIterations += iterations;
+
+		return (GreedyQPolicy) this.evaluativePolicy;
+
+	}
+
+	/**
+	 * Calling this method will force the valueFunction to recompute the
+	 * reachable states when the {@link #planFromState(State)} method is called
+	 * next. This may be useful if the transition dynamics from the last
+	 * planning call have changed and if planning needs to be restarted as a
+	 * result.
+	 */
+	public void recomputeReachableStates() {
+		this.foundReachableStates = false;
+	}
+
+	@Override
+	public void resetSolver() {
+		super.resetSolver();
+		this.foundReachableStates = false;
+		this.totalValueIterations = 0;
+		this.totalPolicyIterations = 0;
+	}
+
+	/**
+	 * Sets the initial policy that will be evaluated when planning with policy
+	 * iteration begins. After the first policy iteration, the evaluative policy
+	 * will be {@link burlap.behavior.policy.GreedyQPolicy} on the function
+	 * evaluation.
+	 * 
+	 * @param p
+	 *            the initial policy to evaluate when planning begins.
+	 */
+	public void setPolicyToEvaluate(Policy p) {
+		this.evaluativePolicy = p;
 	}
 
 }

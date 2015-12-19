@@ -134,23 +134,13 @@ public class EGreedyMaxWellfare extends MAQSourcePolicy {
 		this.breakTiesRandomly = breakTiesRandomly;
 	}
 
-	/**
-	 * Whether to break ties randomly or deterministically. The former is useful
-	 * for exploration during learning. The latter is useful to synchronize
-	 * action selection for agents that must select an action indepdently from
-	 * the same joint policy.
-	 * 
-	 * @param breakTiesRandomly
-	 *            true if ties will be broken randomly; false if ties will be
-	 *            broken detemrinistically.
-	 */
-	public void setBreakTiesRandomly(boolean breakTiesRandomly) {
-		this.breakTiesRandomly = breakTiesRandomly;
-	}
-
 	@Override
-	public void setQSourceProvider(MultiAgentQSourceProvider provider) {
-		this.qSourceProvider = provider;
+	public JointPolicy copy() {
+		EGreedyMaxWellfare np = new EGreedyMaxWellfare(this.epsilon,
+				this.breakTiesRandomly);
+		np.setAgentsInJointPolicy(this.agentsInJointPolicy);
+		np.setQSourceProvider(this.qSourceProvider);
+		return np;
 	}
 
 	@Override
@@ -238,27 +228,37 @@ public class EGreedyMaxWellfare extends MAQSourcePolicy {
 	}
 
 	@Override
-	public boolean isStochastic() {
-		return this.epsilon > 0. || this.breakTiesRandomly;
-	}
-
-	@Override
 	public boolean isDefinedFor(State s) {
 		return true;
 	}
 
 	@Override
-	public void setTargetAgent(String agentName) {
-		// do nothing
+	public boolean isStochastic() {
+		return this.epsilon > 0. || this.breakTiesRandomly;
+	}
+
+	/**
+	 * Whether to break ties randomly or deterministically. The former is useful
+	 * for exploration during learning. The latter is useful to synchronize
+	 * action selection for agents that must select an action indepdently from
+	 * the same joint policy.
+	 * 
+	 * @param breakTiesRandomly
+	 *            true if ties will be broken randomly; false if ties will be
+	 *            broken detemrinistically.
+	 */
+	public void setBreakTiesRandomly(boolean breakTiesRandomly) {
+		this.breakTiesRandomly = breakTiesRandomly;
 	}
 
 	@Override
-	public JointPolicy copy() {
-		EGreedyMaxWellfare np = new EGreedyMaxWellfare(this.epsilon,
-				this.breakTiesRandomly);
-		np.setAgentsInJointPolicy(this.agentsInJointPolicy);
-		np.setQSourceProvider(this.qSourceProvider);
-		return np;
+	public void setQSourceProvider(MultiAgentQSourceProvider provider) {
+		this.qSourceProvider = provider;
+	}
+
+	@Override
+	public void setTargetAgent(String agentName) {
+		// do nothing
 	}
 
 }

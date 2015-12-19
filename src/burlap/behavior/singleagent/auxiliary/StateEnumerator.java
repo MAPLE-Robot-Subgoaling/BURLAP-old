@@ -4,12 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.SADomain;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * For some algorithms, it is useful to have an explicit unique state identifier
@@ -100,6 +100,24 @@ public class StateEnumerator {
 	}
 
 	/**
+	 * Get or create and get the enumeration id for a hashed state
+	 * 
+	 * @param sh
+	 *            the hased state to get the enumeration id
+	 * @return the enumeration id
+	 */
+	protected int getEnumeratedID(HashableState sh) {
+		Integer storedID = this.enumeration.get(sh);
+		if (storedID == null) {
+			this.enumeration.put(sh, this.nextEnumeratedID);
+			this.reverseEnumerate.put(this.nextEnumeratedID, sh.s);
+			storedID = this.nextEnumeratedID;
+			this.nextEnumeratedID++;
+		}
+		return storedID;
+	}
+
+	/**
 	 * Get or create and get the enumeration id for a state
 	 * 
 	 * @param s
@@ -136,24 +154,6 @@ public class StateEnumerator {
 	 */
 	public int numStatesEnumerated() {
 		return this.enumeration.size();
-	}
-
-	/**
-	 * Get or create and get the enumeration id for a hashed state
-	 * 
-	 * @param sh
-	 *            the hased state to get the enumeration id
-	 * @return the enumeration id
-	 */
-	protected int getEnumeratedID(HashableState sh) {
-		Integer storedID = this.enumeration.get(sh);
-		if (storedID == null) {
-			this.enumeration.put(sh, this.nextEnumeratedID);
-			this.reverseEnumerate.put(this.nextEnumeratedID, sh.s);
-			storedID = this.nextEnumeratedID;
-			this.nextEnumeratedID++;
-		}
-		return storedID;
 	}
 
 }

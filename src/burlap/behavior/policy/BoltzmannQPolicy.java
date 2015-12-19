@@ -1,5 +1,10 @@
 package burlap.behavior.policy;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.management.RuntimeErrorException;
+
 import burlap.behavior.singleagent.MDPSolverInterface;
 import burlap.behavior.valuefunction.QFunction;
 import burlap.behavior.valuefunction.QValue;
@@ -7,10 +12,6 @@ import burlap.datastructures.BoltzmannDistribution;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.AbstractObjectParameterizedGroundedAction;
 import burlap.oomdp.core.states.State;
-
-import javax.management.RuntimeErrorException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class implements a Boltzmann policy where the the Q-values represent the
@@ -61,12 +62,6 @@ public class BoltzmannQPolicy extends Policy implements SolverDerivedPolicy {
 		return this.sampleFromActionDistribution(s);
 	}
 
-	@Override
-	public List<ActionProb> getActionDistributionForState(State s) {
-		List<QValue> qValues = this.qplanner.getQs(s);
-		return this.getActionDistributionForQValues(s, qValues);
-	}
-
 	private List<ActionProb> getActionDistributionForQValues(State queryState,
 			List<QValue> qValues) {
 
@@ -92,6 +87,17 @@ public class BoltzmannQPolicy extends Policy implements SolverDerivedPolicy {
 	}
 
 	@Override
+	public List<ActionProb> getActionDistributionForState(State s) {
+		List<QValue> qValues = this.qplanner.getQs(s);
+		return this.getActionDistributionForQValues(s, qValues);
+	}
+
+	@Override
+	public boolean isDefinedFor(State s) {
+		return true; // can always find q-values with default value
+	}
+
+	@Override
 	public boolean isStochastic() {
 		return true;
 	}
@@ -105,11 +111,6 @@ public class BoltzmannQPolicy extends Policy implements SolverDerivedPolicy {
 
 		this.qplanner = (QFunction) solver;
 
-	}
-
-	@Override
-	public boolean isDefinedFor(State s) {
-		return true; // can always find q-values with default value
 	}
 
 }

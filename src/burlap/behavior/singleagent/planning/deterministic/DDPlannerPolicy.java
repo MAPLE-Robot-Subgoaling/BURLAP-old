@@ -40,18 +40,6 @@ public class DDPlannerPolicy extends Policy implements SolverDerivedPolicy {
 	}
 
 	@Override
-	public void setSolver(MDPSolverInterface solver) {
-
-		if (!(solver instanceof DeterministicPlanner)) {
-			throw new RuntimeErrorException(new Error(
-					"Planner is not a Deterministic Planner"));
-		}
-
-		this.dp = (DeterministicPlanner) solver;
-
-	}
-
-	@Override
 	public AbstractGroundedAction getAction(State s) {
 		return dp.querySelectedActionForState(s);
 	}
@@ -63,11 +51,6 @@ public class DDPlannerPolicy extends Policy implements SolverDerivedPolicy {
 		ActionProb ap = new ActionProb(selectedAction, 1.);
 		res.add(ap);
 		return res;
-	}
-
-	@Override
-	public boolean isStochastic() {
-		return false;
 	}
 
 	@Override
@@ -83,6 +66,23 @@ public class DDPlannerPolicy extends Policy implements SolverDerivedPolicy {
 		}
 
 		return false;
+	}
+
+	@Override
+	public boolean isStochastic() {
+		return false;
+	}
+
+	@Override
+	public void setSolver(MDPSolverInterface solver) {
+
+		if (!(solver instanceof DeterministicPlanner)) {
+			throw new RuntimeErrorException(new Error(
+					"Planner is not a Deterministic Planner"));
+		}
+
+		this.dp = (DeterministicPlanner) solver;
+
 	}
 
 }

@@ -1,15 +1,15 @@
 package burlap.behavior.policy;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 import burlap.debugtools.RandomFactory;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 /**
  * A uniform random policy for single agent domains. You may set the actions
@@ -76,53 +76,6 @@ public class RandomPolicy extends Policy {
 		this.actions.clear();
 	}
 
-	/**
-	 * Removes an action from consideration.
-	 * 
-	 * @param actionName
-	 *            the name of the action to remove.
-	 */
-	public void removeAction(String actionName) {
-		Action toRemove = null;
-		for (Action a : this.actions) {
-			if (a.getName().equals(actionName)) {
-				toRemove = a;
-				break;
-			}
-		}
-		if (toRemove != null) {
-			this.actions.remove(toRemove);
-		}
-	}
-
-	/**
-	 * Returns of the list of actions that can be randomly selected.
-	 * 
-	 * @return the list of actions that can be randomly selected.
-	 */
-	public List<Action> getSelectionActions() {
-		return this.actions;
-	}
-
-	/**
-	 * Returns the random generator used for action selection.
-	 * 
-	 * @return the random generator used for action selection.
-	 */
-	public Random getRandomGenerator() {
-		return this.rand;
-	}
-
-	/**
-	 * Sets the random generator used for action selection.
-	 * 
-	 * @param rand
-	 *            the random generator used for action selection.
-	 */
-	public void setRandomGenerator(Random rand) {
-		this.rand = rand;
-	}
-
 	@Override
 	public AbstractGroundedAction getAction(State s) {
 		List<GroundedAction> gas = Action
@@ -151,14 +104,61 @@ public class RandomPolicy extends Policy {
 		return aps;
 	}
 
-	@Override
-	public boolean isStochastic() {
-		return true;
+	/**
+	 * Returns the random generator used for action selection.
+	 * 
+	 * @return the random generator used for action selection.
+	 */
+	public Random getRandomGenerator() {
+		return this.rand;
+	}
+
+	/**
+	 * Returns of the list of actions that can be randomly selected.
+	 * 
+	 * @return the list of actions that can be randomly selected.
+	 */
+	public List<Action> getSelectionActions() {
+		return this.actions;
 	}
 
 	@Override
 	public boolean isDefinedFor(State s) {
 		return Action.getAllApplicableGroundedActionsFromActionList(
 				this.actions, s).size() > 0;
+	}
+
+	@Override
+	public boolean isStochastic() {
+		return true;
+	}
+
+	/**
+	 * Removes an action from consideration.
+	 * 
+	 * @param actionName
+	 *            the name of the action to remove.
+	 */
+	public void removeAction(String actionName) {
+		Action toRemove = null;
+		for (Action a : this.actions) {
+			if (a.getName().equals(actionName)) {
+				toRemove = a;
+				break;
+			}
+		}
+		if (toRemove != null) {
+			this.actions.remove(toRemove);
+		}
+	}
+
+	/**
+	 * Sets the random generator used for action selection.
+	 * 
+	 * @param rand
+	 *            the random generator used for action selection.
+	 */
+	public void setRandomGenerator(Random rand) {
+		this.rand = rand;
 	}
 }

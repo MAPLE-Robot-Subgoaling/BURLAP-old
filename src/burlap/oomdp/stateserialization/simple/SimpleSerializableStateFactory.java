@@ -13,12 +13,12 @@ import burlap.oomdp.stateserialization.SerializableStateFactory;
  */
 public class SimpleSerializableStateFactory implements SerializableStateFactory {
 	@Override
-	public SerializableState serialize(State s) {
-		return new SimpleSerializableState(s);
+	public Class<?> getGeneratedClass() {
+		return SimpleSerializableState.class;
 	}
 
 	@Override
-	public Class<?> getGeneratedClass() {
-		return SimpleSerializableState.class;
+	public SerializableState serialize(State s) {
+		return new SimpleSerializableState(s);
 	}
 }

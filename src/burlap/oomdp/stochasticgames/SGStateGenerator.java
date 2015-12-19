@@ -2,9 +2,9 @@ package burlap.oomdp.stochasticgames;
 
 import java.util.List;
 
+import burlap.oomdp.core.objects.MutableObjectInstance;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.core.objects.MutableObjectInstance;
 
 /**
  * An abstract class defining the interface and common mechanism for generating

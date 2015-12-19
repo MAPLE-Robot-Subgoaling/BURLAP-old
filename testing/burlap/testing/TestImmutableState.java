@@ -17,10 +17,10 @@ public class TestImmutableState {
 		this.gridWorldTest.setup();
 	}
 
-	@Test
-	public void testImmutableStateGridWorld() {
-		State s = this.gridWorldTest.generateState();
-		this.gridWorldTest.testGridWorld(new ImmutableState(s));
+	@After
+	public void teardown() {
+		this.gridWorldTest.teardown();
+		this.gridWorldTest = null;
 	}
 
 	@Test
@@ -29,9 +29,9 @@ public class TestImmutableState {
 		this.gridWorldTest.testGridWorld(new FixedSizeImmutableState(s));
 	}
 
-	@After
-	public void teardown() {
-		this.gridWorldTest.teardown();
-		this.gridWorldTest = null;
+	@Test
+	public void testImmutableStateGridWorld() {
+		State s = this.gridWorldTest.generateState();
+		this.gridWorldTest.testGridWorld(new ImmutableState(s));
 	}
 }

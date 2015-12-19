@@ -1,16 +1,16 @@
 package burlap.behavior.singleagent.vfa.common;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import burlap.behavior.singleagent.vfa.ActionFeaturesQuery;
 import burlap.behavior.singleagent.vfa.FeatureDatabase;
 import burlap.behavior.singleagent.vfa.StateFeature;
 import burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * A class wrapper for converting a
@@ -68,17 +68,17 @@ public class FVToFeatureDatabase implements FeatureDatabase {
 	}
 
 	@Override
-	public List<StateFeature> getStateFeatures(State s) {
+	public FVToFeatureDatabase copy() {
+		FVToFeatureDatabase fvfd = new FVToFeatureDatabase(this.fvGen, this.dim);
+		fvfd.actionFeatureMultiplier = new HashMap<GroundedAction, Integer>(
+				this.actionFeatureMultiplier);
+		fvfd.nextActionMultiplier = this.nextActionMultiplier;
+		return fvfd;
+	}
 
-		double[] vec = this.fvGen.generateFeatureVectorFrom(s);
-		List<StateFeature> sfs = new ArrayList<StateFeature>(vec.length);
-		for (int i = 0; i < vec.length; i++) {
-			if (vec[i] != 0.) {
-				sfs.add(new StateFeature(i, vec[i]));
-			}
-		}
-
-		return sfs;
+	@Override
+	public void freezeDatabaseState(boolean toggle) {
+		// do nothing
 	}
 
 	@Override
@@ -103,19 +103,6 @@ public class FVToFeatureDatabase implements FeatureDatabase {
 		return afqs;
 	}
 
-	@Override
-	public void freezeDatabaseState(boolean toggle) {
-		// do nothing
-	}
-
-	@Override
-	public int numberOfFeatures() {
-		if (this.nextActionMultiplier == 0) {
-			return dim;
-		}
-		return dim * this.nextActionMultiplier;
-	}
-
 	/**
 	 * This method returns the action multiplier for the specified grounded
 	 * action. If the action is not stored, a new action multiplier will
@@ -138,11 +125,24 @@ public class FVToFeatureDatabase implements FeatureDatabase {
 	}
 
 	@Override
-	public FVToFeatureDatabase copy() {
-		FVToFeatureDatabase fvfd = new FVToFeatureDatabase(this.fvGen, this.dim);
-		fvfd.actionFeatureMultiplier = new HashMap<GroundedAction, Integer>(
-				this.actionFeatureMultiplier);
-		fvfd.nextActionMultiplier = this.nextActionMultiplier;
-		return fvfd;
+	public List<StateFeature> getStateFeatures(State s) {
+
+		double[] vec = this.fvGen.generateFeatureVectorFrom(s);
+		List<StateFeature> sfs = new ArrayList<StateFeature>(vec.length);
+		for (int i = 0; i < vec.length; i++) {
+			if (vec[i] != 0.) {
+				sfs.add(new StateFeature(i, vec[i]));
+			}
+		}
+
+		return sfs;
+	}
+
+	@Override
+	public int numberOfFeatures() {
+		if (this.nextActionMultiplier == 0) {
+			return dim;
+		}
+		return dim * this.nextActionMultiplier;
 	}
 }

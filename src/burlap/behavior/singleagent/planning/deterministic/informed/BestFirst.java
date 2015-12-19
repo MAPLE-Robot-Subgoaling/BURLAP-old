@@ -6,12 +6,12 @@ import java.util.Map;
 
 import burlap.behavior.singleagent.planning.deterministic.DeterministicPlanner;
 import burlap.behavior.singleagent.planning.deterministic.SDPlannerPolicy;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.datastructures.HashIndexedHeap;
 import burlap.debugtools.DPrint;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.statehashing.HashableState;
 
 /**
  * An abstract class for implementing Best-first search planning. Best-first
@@ -56,24 +56,6 @@ public abstract class BestFirst extends DeterministicPlanner {
 			GroundedAction generatingAction, HashableState successorState);
 
 	/**
-	 * This method is called at the start of the {@link #planFromState(State)}
-	 * method and can be used initialize any special data structures needed by
-	 * the subclass. By default it does nothing.
-	 */
-	public void prePlanPrep() {
-		// do nothing for default
-	}
-
-	/**
-	 * This method is called at the end of the {@link #planFromState(State)}
-	 * method and can be used clean up any special data structures needed by the
-	 * subclass. By default it does nothing.
-	 */
-	public void postPlanPrep() {
-		// do nothing for default
-	}
-
-	/**
 	 * This method is used to insert a prioritized search node into the
 	 * openQueue. If the subclass needs to do special procedures on his insert
 	 * (such as using a subclass of {@link PrioritizedSearchNode} with more
@@ -88,27 +70,6 @@ public abstract class BestFirst extends DeterministicPlanner {
 			HashIndexedHeap<PrioritizedSearchNode> openQueue,
 			PrioritizedSearchNode psn) {
 		openQueue.insert(psn);
-	}
-
-	/**
-	 * This method is called whenever a search node already in the openQueue
-	 * needs to have its information or priority updated to reflect a new search
-	 * node. If a subclass needs to handle special procedures (such as using a
-	 * subclass of {@link PrioritizedSearchNode} with more information), it can
-	 * override this method.
-	 * 
-	 * @param openQueue
-	 *            the open queue in which the search node exists.
-	 * @param openPSN
-	 *            the search node indexed in the open queue that will be
-	 *            updated.
-	 * @param npsn
-	 *            the new search node that contains the updated information.
-	 */
-	public void updateOpen(HashIndexedHeap<PrioritizedSearchNode> openQueue,
-			PrioritizedSearchNode openPSN, PrioritizedSearchNode npsn) {
-		openPSN.setAuxInfoTo(npsn);
-		openQueue.refreshPriority(openPSN);
 	}
 
 	/**
@@ -224,6 +185,45 @@ public abstract class BestFirst extends DeterministicPlanner {
 
 		return new SDPlannerPolicy(this);
 
+	}
+
+	/**
+	 * This method is called at the end of the {@link #planFromState(State)}
+	 * method and can be used clean up any special data structures needed by the
+	 * subclass. By default it does nothing.
+	 */
+	public void postPlanPrep() {
+		// do nothing for default
+	}
+
+	/**
+	 * This method is called at the start of the {@link #planFromState(State)}
+	 * method and can be used initialize any special data structures needed by
+	 * the subclass. By default it does nothing.
+	 */
+	public void prePlanPrep() {
+		// do nothing for default
+	}
+
+	/**
+	 * This method is called whenever a search node already in the openQueue
+	 * needs to have its information or priority updated to reflect a new search
+	 * node. If a subclass needs to handle special procedures (such as using a
+	 * subclass of {@link PrioritizedSearchNode} with more information), it can
+	 * override this method.
+	 * 
+	 * @param openQueue
+	 *            the open queue in which the search node exists.
+	 * @param openPSN
+	 *            the search node indexed in the open queue that will be
+	 *            updated.
+	 * @param npsn
+	 *            the new search node that contains the updated information.
+	 */
+	public void updateOpen(HashIndexedHeap<PrioritizedSearchNode> openQueue,
+			PrioritizedSearchNode openPSN, PrioritizedSearchNode npsn) {
+		openPSN.setAuxInfoTo(npsn);
+		openQueue.refreshPriority(openPSN);
 	}
 
 }

@@ -78,6 +78,54 @@ public class ApprenticeshipLearningRequest extends IRLRequest {
 		this.setStartStateGenerator(startStateGenerator);
 	}
 
+	@Override
+	public Domain getDomain() {
+		return this.domain;
+	}
+
+	public double getEpsilon() {
+		return this.epsilon;
+	}
+
+	@Override
+	public List<EpisodeAnalysis> getExpertEpisodes() {
+		return new ArrayList<EpisodeAnalysis>(this.expertEpisodes);
+	}
+
+	public StateToFeatureVectorGenerator getFeatureGenerator() {
+		return this.featureGenerator;
+	}
+
+	@Override
+	public double getGamma() {
+		return this.gamma;
+	}
+
+	public int getMaxIterations() {
+		return this.maxIterations;
+	}
+
+	@Override
+	public Planner getPlanner() {
+		return this.planner;
+	}
+
+	public int getPolicyCount() {
+		return this.policyCount;
+	}
+
+	public StateGenerator getStartStateGenerator() {
+		return this.startStateGenerator;
+	}
+
+	public double[] getTHistory() {
+		return this.tHistory.clone();
+	}
+
+	public boolean getUsingMaxMargin() {
+		return this.useMaxMargin;
+	}
+
 	protected void initDefaults() {
 		this.epsilon = ApprenticeshipLearningRequest.DEFAULT_EPSILON;
 		this.maxIterations = ApprenticeshipLearningRequest.DEFAULT_MAXITERATIONS;
@@ -110,12 +158,18 @@ public class ApprenticeshipLearningRequest extends IRLRequest {
 		return true;
 	}
 
+	@Override
 	public void setDomain(Domain d) {
 		this.domain = d;
 	}
 
-	public void setPlanner(Planner p) {
-		this.planner = p;
+	public void setEpsilon(double epsilon) {
+		this.epsilon = epsilon;
+	}
+
+	@Override
+	public void setExpertEpisodes(List<EpisodeAnalysis> episodeList) {
+		this.expertEpisodes = new ArrayList<EpisodeAnalysis>(episodeList);
 	}
 
 	public void setFeatureGenerator(
@@ -123,28 +177,26 @@ public class ApprenticeshipLearningRequest extends IRLRequest {
 		this.featureGenerator = stateFeaturesGenerator;
 	}
 
-	public void setExpertEpisodes(List<EpisodeAnalysis> episodeList) {
-		this.expertEpisodes = new ArrayList<EpisodeAnalysis>(episodeList);
-	}
-
-	public void setStartStateGenerator(StateGenerator startStateGenerator) {
-		this.startStateGenerator = startStateGenerator;
-	}
-
+	@Override
 	public void setGamma(double gamma) {
 		this.gamma = gamma;
-	}
-
-	public void setEpsilon(double epsilon) {
-		this.epsilon = epsilon;
 	}
 
 	public void setMaxIterations(int maxIterations) {
 		this.maxIterations = maxIterations;
 	}
 
+	@Override
+	public void setPlanner(Planner p) {
+		this.planner = p;
+	}
+
 	public void setPolicyCount(int policyCount) {
 		this.policyCount = policyCount;
+	}
+
+	public void setStartStateGenerator(StateGenerator startStateGenerator) {
+		this.startStateGenerator = startStateGenerator;
 	}
 
 	public void setTHistory(double[] tHistory) {
@@ -153,49 +205,5 @@ public class ApprenticeshipLearningRequest extends IRLRequest {
 
 	public void setUsingMaxMargin(boolean useMaxMargin) {
 		this.useMaxMargin = useMaxMargin;
-	}
-
-	public Domain getDomain() {
-		return this.domain;
-	}
-
-	public Planner getPlanner() {
-		return this.planner;
-	}
-
-	public StateToFeatureVectorGenerator getFeatureGenerator() {
-		return this.featureGenerator;
-	}
-
-	public List<EpisodeAnalysis> getExpertEpisodes() {
-		return new ArrayList<EpisodeAnalysis>(this.expertEpisodes);
-	}
-
-	public StateGenerator getStartStateGenerator() {
-		return this.startStateGenerator;
-	}
-
-	public double getGamma() {
-		return this.gamma;
-	}
-
-	public double getEpsilon() {
-		return this.epsilon;
-	}
-
-	public int getMaxIterations() {
-		return this.maxIterations;
-	}
-
-	public int getPolicyCount() {
-		return this.policyCount;
-	}
-
-	public double[] getTHistory() {
-		return this.tHistory.clone();
-	}
-
-	public boolean getUsingMaxMargin() {
-		return this.useMaxMargin;
 	}
 }

@@ -1,16 +1,16 @@
 package burlap.behavior.singleagent.learnfromdemo.mlirl;
 
+import java.util.List;
+
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.learnfromdemo.IRLRequest;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.differentiableplanners.DifferentiableVI;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlanner;
 import burlap.behavior.singleagent.planning.Planner;
-import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.auxiliary.common.NullTermination;
 import burlap.oomdp.core.Domain;
-
-import java.util.List;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * A request object for Maximum-Likelihood Inverse Reinforcement Learning (
@@ -51,36 +51,6 @@ public class MLIRLRequest extends IRLRequest {
 	protected DifferentiableRF rf;
 
 	/**
-	 * Initializes the request without any expert trajectory weights (which will
-	 * be assumed to have a value 1). If the provided valueFunction is not null
-	 * and does not implement the
-	 * {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlanner}
-	 * interface, an exception will be thrown.
-	 * 
-	 * @param domain
-	 *            the domain in which trajectories are provided.
-	 * @param planner
-	 *            a valueFunction that implements the
-	 *            {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlanner}
-	 *            interface.
-	 * @param expertEpisodes
-	 *            the expert episodes/trajectories to use for training.
-	 * @param rf
-	 *            the
-	 *            {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF}
-	 *            model to use.
-	 */
-	public MLIRLRequest(Domain domain, Planner planner,
-			List<EpisodeAnalysis> expertEpisodes, DifferentiableRF rf) {
-		super(domain, planner, expertEpisodes);
-		if (planner != null && !(planner instanceof QGradientPlanner)) {
-			throw new RuntimeException(
-					"Error: MLIRLRequest requires the valueFunction to be an instance of QGradientPlanner");
-		}
-		this.rf = rf;
-	}
-
-	/**
 	 * Initializes without any expert trajectory weights (which will be assumed
 	 * to have a value 1) and requests a default
 	 * {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlanner}
@@ -115,6 +85,62 @@ public class MLIRLRequest extends IRLRequest {
 
 	}
 
+	/**
+	 * Initializes the request without any expert trajectory weights (which will
+	 * be assumed to have a value 1). If the provided valueFunction is not null
+	 * and does not implement the
+	 * {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlanner}
+	 * interface, an exception will be thrown.
+	 * 
+	 * @param domain
+	 *            the domain in which trajectories are provided.
+	 * @param planner
+	 *            a valueFunction that implements the
+	 *            {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlanner}
+	 *            interface.
+	 * @param expertEpisodes
+	 *            the expert episodes/trajectories to use for training.
+	 * @param rf
+	 *            the
+	 *            {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF}
+	 *            model to use.
+	 */
+	public MLIRLRequest(Domain domain, Planner planner,
+			List<EpisodeAnalysis> expertEpisodes, DifferentiableRF rf) {
+		super(domain, planner, expertEpisodes);
+		if (planner != null && !(planner instanceof QGradientPlanner)) {
+			throw new RuntimeException(
+					"Error: MLIRLRequest requires the valueFunction to be an instance of QGradientPlanner");
+		}
+		this.rf = rf;
+	}
+
+	public double getBoltzmannBeta() {
+		return boltzmannBeta;
+	}
+
+	/**
+	 * Returns expert episodes weights. If no specific weights have been set, a
+	 * new double array the same length as the number of expert episodes with a
+	 * constant value of 1 will be created and returned.
+	 * 
+	 * @return expert episodes weights
+	 */
+	public double[] getEpisodeWeights() {
+		if (this.episodeWeights == null) {
+			double[] weights = new double[this.expertEpisodes.size()];
+			for (int i = 0; i < weights.length; i++) {
+				weights[i] = 1.;
+			}
+			return weights;
+		}
+		return episodeWeights;
+	}
+
+	public DifferentiableRF getRf() {
+		return rf;
+	}
+
 	@Override
 	public boolean isValid() {
 
@@ -139,6 +165,18 @@ public class MLIRLRequest extends IRLRequest {
 
 	}
 
+	public void setBoltzmannBeta(double boltzmannBeta) {
+		this.boltzmannBeta = boltzmannBeta;
+		if (this.planner != null) {
+			((QGradientPlanner) this.planner)
+					.setBoltzmannBetaParameter(boltzmannBeta);
+		}
+	}
+
+	public void setEpisodeWeights(double[] episodeWeights) {
+		this.episodeWeights = episodeWeights;
+	}
+
 	@Override
 	public void setPlanner(Planner p) {
 		if (planner != null && !(p instanceof QGradientPlanner)) {
@@ -146,44 +184,6 @@ public class MLIRLRequest extends IRLRequest {
 					"Error: MLIRLRequest requires the valueFunction to be an instance of QGradientPlanner");
 		}
 		this.planner = p;
-	}
-
-	/**
-	 * Returns expert episodes weights. If no specific weights have been set, a
-	 * new double array the same length as the number of expert episodes with a
-	 * constant value of 1 will be created and returned.
-	 * 
-	 * @return expert episodes weights
-	 */
-	public double[] getEpisodeWeights() {
-		if (this.episodeWeights == null) {
-			double[] weights = new double[this.expertEpisodes.size()];
-			for (int i = 0; i < weights.length; i++) {
-				weights[i] = 1.;
-			}
-			return weights;
-		}
-		return episodeWeights;
-	}
-
-	public double getBoltzmannBeta() {
-		return boltzmannBeta;
-	}
-
-	public DifferentiableRF getRf() {
-		return rf;
-	}
-
-	public void setEpisodeWeights(double[] episodeWeights) {
-		this.episodeWeights = episodeWeights;
-	}
-
-	public void setBoltzmannBeta(double boltzmannBeta) {
-		this.boltzmannBeta = boltzmannBeta;
-		if (this.planner != null) {
-			((QGradientPlanner) this.planner)
-					.setBoltzmannBetaParameter(boltzmannBeta);
-		}
 	}
 
 	public void setRf(DifferentiableRF rf) {

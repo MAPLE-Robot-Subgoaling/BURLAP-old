@@ -1,18 +1,18 @@
 package burlap.domain.singleagent.cartpole;
 
-import java.util.List;
-
 import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectClass;
-import burlap.oomdp.core.objects.ObjectInstance;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
-import burlap.oomdp.core.TransitionProbability;
 import burlap.oomdp.core.objects.MutableObjectInstance;
+import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.MutableState;
-import burlap.oomdp.singleagent.*;
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.singleagent.FullActionModel;
+import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.singleagent.SADomain;
 import burlap.oomdp.singleagent.common.SimpleAction;
 import burlap.oomdp.singleagent.explorer.VisualExplorer;
 
@@ -76,50 +76,120 @@ import burlap.oomdp.singleagent.explorer.VisualExplorer;
 public class CartPoleDomain implements DomainGenerator {
 
 	/**
-	 * A constant for the name of the position attribute
+	 * A default reward function for this task. Returns 0 everywhere except at
+	 * fail conditions, which return -1 and are defined by the agent reaching
+	 * the end of the track or by the angle of the pole being grater than some
+	 * threshold (default 12 degrees or about 0.2 radians).
+	 * 
+	 * @author James MacGlashan
+	 * 
 	 */
-	public static final String ATTX = "xAtt";
+	public static class CartPoleRewardFunction implements RewardFunction {
+
+		/**
+		 * The maximum pole angle to cause failure.
+		 */
+		double maxAbsoluteAngle = 12. * (Math.PI / 180.);
+
+		/**
+		 * Initializes with max pole angle threshold of 12 degrees (about 0.2
+		 * radians)
+		 */
+		public CartPoleRewardFunction() {
+			// do nothing
+		}
+
+		/**
+		 * Initializes with a max pole angle as specified in radians
+		 * 
+		 * @param maxAbsoluteAngleInRadians
+		 *            the maximum pole angle that causes task failure.
+		 */
+		public CartPoleRewardFunction(double maxAbsoluteAngleInRadians) {
+			this.maxAbsoluteAngle = maxAbsoluteAngleInRadians;
+		}
+
+		@Override
+		public double reward(State s, GroundedAction a, State sprime) {
+
+			ObjectInstance cartpole = sprime
+					.getFirstObjectOfClass(CLASSCARTPOLE);
+			double x = cartpole.getRealValForAttribute(ATTX);
+			Attribute xatt = cartpole.getObjectClass().getAttribute(ATTX);
+			double xmin = xatt.lowerLim;
+			double xmax = xatt.upperLim;
+
+			double failReward = -1;
+
+			if (x <= xmin || x >= xmax) {
+				return failReward;
+			}
+
+			double ang = cartpole.getRealValForAttribute(ATTANGLE);
+			if (Math.abs(ang) >= maxAbsoluteAngle) {
+				return failReward;
+			}
+
+			return 0.;
+		}
+
+	}
 
 	/**
-	 * A constant for the name of the position velocity
+	 * A default terminal function for this domain. Terminates when cart reaches
+	 * end of track of angle between pole and vertical axis is greater than 12
+	 * degrees (about 0.2 radians).
+	 * 
+	 * @author James MacGlashan
+	 * 
 	 */
-	public static final String ATTV = "xvAtt";
+	public static class CartPoleTerminalFunction implements TerminalFunction {
 
-	/**
-	 * A constant for the name of the angle attribute
-	 */
-	public static final String ATTANGLE = "angleAtt";
+		/**
+		 * The maximum pole angle to cause termination/failure.
+		 */
+		double maxAbsoluteAngle = 12. * (Math.PI / 180.);
 
-	/**
-	 * A constant for the name of the angle velocity
-	 */
-	public static final String ATTANGLEV = "angleVAtt";
+		/**
+		 * Initializes with default max angle of 12 degrees (about 0.2 radians)
+		 */
+		public CartPoleTerminalFunction() {
+			// do nothing
+		}
 
-	/**
-	 * Attribute name for maintaining the direction sign of the force normal.
-	 * This attribute will only be included if the correct model is being used.
-	 */
-	public static final String ATTNORMSGN = "normalSign";
+		/**
+		 * Initializes with a max pole angle as specified in radians
+		 * 
+		 * @param maxAbsoluteAngleInRadians
+		 *            the maximum pole angle that causes task
+		 *            termination/failure.
+		 */
+		public CartPoleTerminalFunction(double maxAbsoluteAngleInRadians) {
+			this.maxAbsoluteAngle = maxAbsoluteAngleInRadians;
+		}
 
-	/**
-	 * A constant for the name of the cart and pole object to be moved
-	 */
-	public static final String CLASSCARTPOLE = "cartPole";
+		@Override
+		public boolean isTerminal(State s) {
 
-	/**
-	 * A constant for the name of the left action
-	 */
-	public static final String ACTIONLEFT = "left";
+			ObjectInstance cartpole = s.getFirstObjectOfClass(CLASSCARTPOLE);
+			double x = cartpole.getRealValForAttribute(ATTX);
+			Attribute xatt = cartpole.getObjectClass().getAttribute(ATTX);
+			double xmin = xatt.lowerLim;
+			double xmax = xatt.upperLim;
 
-	/**
-	 * A constant for the name of the right action
-	 */
-	public static final String ACTIONRIGHT = "right";
+			if (x <= xmin || x >= xmax) {
+				return true;
+			}
 
-	/**
-	 * An object specifying the physics parameters for the cart pole domain.
-	 */
-	public CPPhysicsParams physParams = new CPPhysicsParams();
+			double a = cartpole.getRealValForAttribute(ATTANGLE);
+			if (Math.abs(a) >= maxAbsoluteAngle) {
+				return true;
+			}
+
+			return false;
+		}
+
+	}
 
 	public static class CPPhysicsParams {
 
@@ -238,102 +308,144 @@ public class CartPoleDomain implements DomainGenerator {
 		}
 	}
 
-	@Override
-	public Domain generateDomain() {
-
-		SADomain domain = new SADomain();
-
-		Attribute xatt = new Attribute(domain, ATTX,
-				Attribute.AttributeType.REAL);
-		xatt.setLims(-physParams.halfTrackLength, physParams.halfTrackLength);
-
-		Attribute xvatt = new Attribute(domain, ATTV,
-				Attribute.AttributeType.REAL);
-		xvatt.setLims(-this.physParams.maxCartSpeed,
-				this.physParams.maxCartSpeed);
-
-		Attribute angleatt = new Attribute(domain, ATTANGLE,
-				Attribute.AttributeType.REAL);
-		angleatt.setLims(-this.physParams.angleRange,
-				this.physParams.angleRange);
-
-		Attribute anglevatt = new Attribute(domain, ATTANGLEV,
-				Attribute.AttributeType.REAL);
-		anglevatt.setLims(-this.physParams.maxAngleSpeed,
-				this.physParams.maxAngleSpeed);
-
-		Attribute normAtt = null;
-		if (this.physParams.useCorrectModel) {
-			normAtt = new Attribute(domain, ATTNORMSGN,
-					Attribute.AttributeType.REAL);
-			normAtt.setLims(-1., 1.);
-
-		}
-
-		ObjectClass cartPoleClass = new ObjectClass(domain, CLASSCARTPOLE);
-		cartPoleClass.addAttribute(xatt);
-		cartPoleClass.addAttribute(xvatt);
-		cartPoleClass.addAttribute(angleatt);
-		cartPoleClass.addAttribute(anglevatt);
-		if (this.physParams.useCorrectModel) {
-			cartPoleClass.addAttribute(normAtt);
-		}
-
-		CPPhysicsParams cphys = this.physParams.copy();
-
-		new MovementAction(ACTIONLEFT, domain, -1., cphys);
-		new MovementAction(ACTIONRIGHT, domain, 1., cphys);
-
-		return domain;
-	}
-
 	/**
-	 * Sets to use the classic model by Barto, Sutton, and Anderson which has
-	 * incorrect friction forces, but will use correct gravity.
-	 */
-	public void setToIncorrectClassicModelWithCorrectGravity() {
-		this.physParams.gravity = Math.abs(this.physParams.gravity);
-		this.physParams.useCorrectModel = false;
-	}
-
-	/**
-	 * Sets to the use the classic model by Barto, Sutton, and Anderson, which
-	 * has incorrect friction forces and gravity in the wrong direction
-	 */
-	public void setToIncorrectClassicModel() {
-		this.physParams.gravity = Math.abs(this.physParams.gravity) * -1;
-		this.physParams.useCorrectModel = false;
-	}
-
-	/**
-	 * Sets to use the correct physics model by Florian.
-	 */
-	public void setToCorrectModel() {
-		this.physParams.gravity = Math.abs(this.physParams.gravity);
-		this.physParams.useCorrectModel = true;
-	}
-
-	/**
-	 * Given the current action force, track length and masses, sets the max
-	 * cart speed to an upperbound of what is possible from moving from one side
-	 * of the track to another. This method modifies the parameter maxCartSpeed.
+	 * A movement action which applies force in the specified direction.
 	 * 
-	 * @return the resulting max speed that is set.
+	 * @author James MacGlashan
+	 * 
 	 */
-	public double setMaxCartSpeedToMaxWithMovementFromOneSideToOther() {
+	protected static class MovementAction extends
+			SimpleAction.SimpleDeterministicAction implements FullActionModel {
 
-		// using simplified mechanics
-		double cartAcceleration = this.physParams.movementForceMag
-				/ (this.physParams.cartMass + this.physParams.poleMass);
+		CPPhysicsParams physParams;
 
-		// time to go from one end to the other
-		double t = Math.sqrt(2 * (2 * this.physParams.halfTrackLength)
-				/ cartAcceleration);
+		/**
+		 * The direction of force that this action applies
+		 */
+		double dir;
 
-		// final time
-		double vf = cartAcceleration * t;
+		/**
+		 * Initializes.
+		 * 
+		 * @param name
+		 *            the name of the action.
+		 * @param domain
+		 *            the domain object to which this action will be associated.
+		 * @param dir
+		 *            the direction of force applied to the cart.
+		 * @param physParams
+		 *            the
+		 *            {@link burlap.domain.singleagent.cartpole.CartPoleDomain.CPPhysicsParams}
+		 *            object specifying the physics to use for movement
+		 */
+		public MovementAction(String name, Domain domain, double dir,
+				CPPhysicsParams physParams) {
+			super(name, domain);
+			this.dir = dir;
+			this.physParams = physParams;
+		}
 
-		return vf;
+		@Override
+		protected State performActionHelper(State s,
+				GroundedAction groundedAction) {
+			if (physParams.useCorrectModel) {
+				return CartPoleDomain.moveCorrectModel(s, this.dir,
+						this.physParams);
+			}
+			return CartPoleDomain
+					.moveClassicModel(s, this.dir, this.physParams);
+		}
+
+	}
+
+	/**
+	 * A constant for the name of the position attribute
+	 */
+	public static final String ATTX = "xAtt";
+
+	/**
+	 * A constant for the name of the position velocity
+	 */
+	public static final String ATTV = "xvAtt";
+
+	/**
+	 * A constant for the name of the angle attribute
+	 */
+	public static final String ATTANGLE = "angleAtt";
+
+	/**
+	 * A constant for the name of the angle velocity
+	 */
+	public static final String ATTANGLEV = "angleVAtt";
+
+	/**
+	 * Attribute name for maintaining the direction sign of the force normal.
+	 * This attribute will only be included if the correct model is being used.
+	 */
+	public static final String ATTNORMSGN = "normalSign";
+
+	/**
+	 * A constant for the name of the cart and pole object to be moved
+	 */
+	public static final String CLASSCARTPOLE = "cartPole";
+
+	/**
+	 * A constant for the name of the left action
+	 */
+	public static final String ACTIONLEFT = "left";
+
+	/**
+	 * A constant for the name of the right action
+	 */
+	public static final String ACTIONRIGHT = "right";
+
+	/**
+	 * Computes the 2nd order derivative of the angle for a given normal force
+	 * sign using the corrected model.
+	 * 
+	 * @param xv0
+	 *            the cart velocity
+	 * @param a0
+	 *            the pole angle
+	 * @param av0
+	 *            the pole angle velocity
+	 * @param nsign
+	 *            the normal force sign
+	 * @param f
+	 *            the force applied to the cart
+	 * @param physParams
+	 *            the
+	 *            {@link burlap.domain.singleagent.cartpole.CartPoleDomain.CPPhysicsParams}
+	 *            object specifying the physics to use for movement
+	 * @return the 2nd order derivative of the angle
+	 */
+	protected static double getAngle2ndDeriv(double xv0, double a0, double av0,
+			double nsign, double f, CPPhysicsParams physParams) {
+
+		double sMass = physParams.cartMass + physParams.poleMass;
+
+		double sint = Math.sin(a0);
+		double cost = Math.cos(a0);
+
+		double anumCosFactor = (-f - (physParams.poleMass
+				* physParams.halfPoleLength * av0 * av0 * (sint + physParams.cartFriction
+				* Math.signum(nsign * xv0) * cost))
+
+		)
+				/ sMass;
+
+		double anumPFricTerm = physParams.cartFriction * physParams.gravity
+				* Math.signum(nsign * xv0);
+
+		double anum = (physParams.gravity * Math.sin(a0))
+				+ (Math.cos(a0) * anumCosFactor) + anumPFricTerm;
+
+		double adenom = physParams.halfPoleLength
+				* ((4. / 3.) - ((physParams.poleMass * cost / sMass) * (cost - physParams.cartMass
+						* Math.signum(nsign * xv0))));
+
+		return anum / adenom;
+
 	}
 
 	/**
@@ -380,6 +492,93 @@ public class CartPoleDomain implements DomainGenerator {
 		s.addObject(cartPole);
 
 		return s;
+	}
+
+	/**
+	 * Computes the normal force for the corrected model
+	 * 
+	 * @param a0
+	 *            the pole angle
+	 * @param av0
+	 *            the pole angle velocity
+	 * @param a_2
+	 *            the 2nd order derivative of the pole angle
+	 * @param physParams
+	 *            the
+	 *            {@link burlap.domain.singleagent.cartpole.CartPoleDomain.CPPhysicsParams}
+	 *            object specifying the physics to use for movement
+	 * @return the normal force
+	 */
+	protected static double getNormForce(double a0, double av0, double a_2,
+			CPPhysicsParams physParams) {
+		double norm = ((physParams.cartMass + physParams.poleMass) * physParams.gravity)
+				- (physParams.poleMass * physParams.halfPoleLength * (a_2
+						* Math.sin(a0) + (av0 * av0 * Math.cos(a0))));
+		return norm;
+	}
+
+	/**
+	 * Returns the second order x position derivative for the corrected model.
+	 * 
+	 * @param xv0
+	 *            the cart velocity
+	 * @param a0
+	 *            the pole angle
+	 * @param av0
+	 *            the pole angle velocity
+	 * @param n
+	 *            the normal force
+	 * @param f
+	 *            the force applied to the cart
+	 * @param a2
+	 *            the second order angle derivative
+	 * @param physParams
+	 *            the
+	 *            {@link burlap.domain.singleagent.cartpole.CartPoleDomain.CPPhysicsParams}
+	 *            object specifying the physics to use for movement
+	 * @return the second order x position derivative
+	 */
+	protected static double getX2ndDeriv(double xv0, double a0, double av0,
+			double n, double f, double a2, CPPhysicsParams physParams) {
+
+		double sMass = physParams.cartMass + physParams.poleMass;
+
+		double sint = Math.sin(a0);
+		double cost = Math.cos(a0);
+
+		double xnum = f
+				+ (physParams.poleMass * physParams.halfPoleLength * ((av0
+						* av0 * sint) - (a2 * cost)))
+				- (physParams.cartFriction * n * Math.signum(n * xv0));
+
+		double x_2 = xnum / sMass;
+
+		return x_2;
+
+	}
+
+	/**
+	 * Launches an interactive visualize in which key 'a' applies a force in the
+	 * left direction and key 'd' applies force in the right direction. The
+	 * corrected physics model is used.
+	 * 
+	 * @param args
+	 *            ignored.
+	 */
+	public static void main(String[] args) {
+		CartPoleDomain dgen = new CartPoleDomain();
+
+		Domain domain = dgen.generateDomain();
+
+		State s = CartPoleDomain.getInitialState(domain);
+
+		VisualExplorer exp = new VisualExplorer(domain,
+				CartPoleVisualizer.getCartPoleVisualizer(), s);
+		exp.addKeyAction("a", ACTIONLEFT);
+		exp.addKeyAction("d", ACTIONRIGHT);
+
+		exp.initGUI();
+
 	}
 
 	/**
@@ -558,305 +757,106 @@ public class CartPoleDomain implements DomainGenerator {
 	}
 
 	/**
-	 * Computes the 2nd order derivative of the angle for a given normal force
-	 * sign using the corrected model.
-	 * 
-	 * @param xv0
-	 *            the cart velocity
-	 * @param a0
-	 *            the pole angle
-	 * @param av0
-	 *            the pole angle velocity
-	 * @param nsign
-	 *            the normal force sign
-	 * @param f
-	 *            the force applied to the cart
-	 * @param physParams
-	 *            the
-	 *            {@link burlap.domain.singleagent.cartpole.CartPoleDomain.CPPhysicsParams}
-	 *            object specifying the physics to use for movement
-	 * @return the 2nd order derivative of the angle
+	 * An object specifying the physics parameters for the cart pole domain.
 	 */
-	protected static double getAngle2ndDeriv(double xv0, double a0, double av0,
-			double nsign, double f, CPPhysicsParams physParams) {
+	public CPPhysicsParams physParams = new CPPhysicsParams();
 
-		double sMass = physParams.cartMass + physParams.poleMass;
+	@Override
+	public Domain generateDomain() {
 
-		double sint = Math.sin(a0);
-		double cost = Math.cos(a0);
+		SADomain domain = new SADomain();
 
-		double anumCosFactor = (-f - (physParams.poleMass
-				* physParams.halfPoleLength * av0 * av0 * (sint + physParams.cartFriction
-				* Math.signum(nsign * xv0) * cost))
+		Attribute xatt = new Attribute(domain, ATTX,
+				Attribute.AttributeType.REAL);
+		xatt.setLims(-physParams.halfTrackLength, physParams.halfTrackLength);
 
-		)
-				/ sMass;
+		Attribute xvatt = new Attribute(domain, ATTV,
+				Attribute.AttributeType.REAL);
+		xvatt.setLims(-this.physParams.maxCartSpeed,
+				this.physParams.maxCartSpeed);
 
-		double anumPFricTerm = physParams.cartFriction * physParams.gravity
-				* Math.signum(nsign * xv0);
+		Attribute angleatt = new Attribute(domain, ATTANGLE,
+				Attribute.AttributeType.REAL);
+		angleatt.setLims(-this.physParams.angleRange,
+				this.physParams.angleRange);
 
-		double anum = (physParams.gravity * Math.sin(a0))
-				+ (Math.cos(a0) * anumCosFactor) + anumPFricTerm;
+		Attribute anglevatt = new Attribute(domain, ATTANGLEV,
+				Attribute.AttributeType.REAL);
+		anglevatt.setLims(-this.physParams.maxAngleSpeed,
+				this.physParams.maxAngleSpeed);
 
-		double adenom = physParams.halfPoleLength
-				* ((4. / 3.) - ((physParams.poleMass * cost / sMass) * (cost - physParams.cartMass
-						* Math.signum(nsign * xv0))));
+		Attribute normAtt = null;
+		if (this.physParams.useCorrectModel) {
+			normAtt = new Attribute(domain, ATTNORMSGN,
+					Attribute.AttributeType.REAL);
+			normAtt.setLims(-1., 1.);
 
-		return anum / adenom;
+		}
 
+		ObjectClass cartPoleClass = new ObjectClass(domain, CLASSCARTPOLE);
+		cartPoleClass.addAttribute(xatt);
+		cartPoleClass.addAttribute(xvatt);
+		cartPoleClass.addAttribute(angleatt);
+		cartPoleClass.addAttribute(anglevatt);
+		if (this.physParams.useCorrectModel) {
+			cartPoleClass.addAttribute(normAtt);
+		}
+
+		CPPhysicsParams cphys = this.physParams.copy();
+
+		new MovementAction(ACTIONLEFT, domain, -1., cphys);
+		new MovementAction(ACTIONRIGHT, domain, 1., cphys);
+
+		return domain;
 	}
 
 	/**
-	 * Computes the normal force for the corrected model
+	 * Given the current action force, track length and masses, sets the max
+	 * cart speed to an upperbound of what is possible from moving from one side
+	 * of the track to another. This method modifies the parameter maxCartSpeed.
 	 * 
-	 * @param a0
-	 *            the pole angle
-	 * @param av0
-	 *            the pole angle velocity
-	 * @param a_2
-	 *            the 2nd order derivative of the pole angle
-	 * @param physParams
-	 *            the
-	 *            {@link burlap.domain.singleagent.cartpole.CartPoleDomain.CPPhysicsParams}
-	 *            object specifying the physics to use for movement
-	 * @return the normal force
+	 * @return the resulting max speed that is set.
 	 */
-	protected static double getNormForce(double a0, double av0, double a_2,
-			CPPhysicsParams physParams) {
-		double norm = ((physParams.cartMass + physParams.poleMass) * physParams.gravity)
-				- (physParams.poleMass * physParams.halfPoleLength * (a_2
-						* Math.sin(a0) + (av0 * av0 * Math.cos(a0))));
-		return norm;
+	public double setMaxCartSpeedToMaxWithMovementFromOneSideToOther() {
+
+		// using simplified mechanics
+		double cartAcceleration = this.physParams.movementForceMag
+				/ (this.physParams.cartMass + this.physParams.poleMass);
+
+		// time to go from one end to the other
+		double t = Math.sqrt(2 * (2 * this.physParams.halfTrackLength)
+				/ cartAcceleration);
+
+		// final time
+		double vf = cartAcceleration * t;
+
+		return vf;
 	}
 
 	/**
-	 * Returns the second order x position derivative for the corrected model.
-	 * 
-	 * @param xv0
-	 *            the cart velocity
-	 * @param a0
-	 *            the pole angle
-	 * @param av0
-	 *            the pole angle velocity
-	 * @param n
-	 *            the normal force
-	 * @param f
-	 *            the force applied to the cart
-	 * @param a2
-	 *            the second order angle derivative
-	 * @param physParams
-	 *            the
-	 *            {@link burlap.domain.singleagent.cartpole.CartPoleDomain.CPPhysicsParams}
-	 *            object specifying the physics to use for movement
-	 * @return the second order x position derivative
+	 * Sets to use the correct physics model by Florian.
 	 */
-	protected static double getX2ndDeriv(double xv0, double a0, double av0,
-			double n, double f, double a2, CPPhysicsParams physParams) {
-
-		double sMass = physParams.cartMass + physParams.poleMass;
-
-		double sint = Math.sin(a0);
-		double cost = Math.cos(a0);
-
-		double xnum = f
-				+ (physParams.poleMass * physParams.halfPoleLength * ((av0
-						* av0 * sint) - (a2 * cost)))
-				- (physParams.cartFriction * n * Math.signum(n * xv0));
-
-		double x_2 = xnum / sMass;
-
-		return x_2;
-
+	public void setToCorrectModel() {
+		this.physParams.gravity = Math.abs(this.physParams.gravity);
+		this.physParams.useCorrectModel = true;
 	}
 
 	/**
-	 * A movement action which applies force in the specified direction.
-	 * 
-	 * @author James MacGlashan
-	 * 
+	 * Sets to the use the classic model by Barto, Sutton, and Anderson, which
+	 * has incorrect friction forces and gravity in the wrong direction
 	 */
-	protected static class MovementAction extends
-			SimpleAction.SimpleDeterministicAction implements FullActionModel {
-
-		CPPhysicsParams physParams;
-
-		/**
-		 * The direction of force that this action applies
-		 */
-		double dir;
-
-		/**
-		 * Initializes.
-		 * 
-		 * @param name
-		 *            the name of the action.
-		 * @param domain
-		 *            the domain object to which this action will be associated.
-		 * @param dir
-		 *            the direction of force applied to the cart.
-		 * @param physParams
-		 *            the
-		 *            {@link burlap.domain.singleagent.cartpole.CartPoleDomain.CPPhysicsParams}
-		 *            object specifying the physics to use for movement
-		 */
-		public MovementAction(String name, Domain domain, double dir,
-				CPPhysicsParams physParams) {
-			super(name, domain);
-			this.dir = dir;
-			this.physParams = physParams;
-		}
-
-		@Override
-		protected State performActionHelper(State s,
-				GroundedAction groundedAction) {
-			if (physParams.useCorrectModel) {
-				return CartPoleDomain.moveCorrectModel(s, this.dir,
-						this.physParams);
-			}
-			return CartPoleDomain
-					.moveClassicModel(s, this.dir, this.physParams);
-		}
-
+	public void setToIncorrectClassicModel() {
+		this.physParams.gravity = Math.abs(this.physParams.gravity) * -1;
+		this.physParams.useCorrectModel = false;
 	}
 
 	/**
-	 * A default terminal function for this domain. Terminates when cart reaches
-	 * end of track of angle between pole and vertical axis is greater than 12
-	 * degrees (about 0.2 radians).
-	 * 
-	 * @author James MacGlashan
-	 * 
+	 * Sets to use the classic model by Barto, Sutton, and Anderson which has
+	 * incorrect friction forces, but will use correct gravity.
 	 */
-	public static class CartPoleTerminalFunction implements TerminalFunction {
-
-		/**
-		 * The maximum pole angle to cause termination/failure.
-		 */
-		double maxAbsoluteAngle = 12. * (Math.PI / 180.);
-
-		/**
-		 * Initializes with default max angle of 12 degrees (about 0.2 radians)
-		 */
-		public CartPoleTerminalFunction() {
-			// do nothing
-		}
-
-		/**
-		 * Initializes with a max pole angle as specified in radians
-		 * 
-		 * @param maxAbsoluteAngleInRadians
-		 *            the maximum pole angle that causes task
-		 *            termination/failure.
-		 */
-		public CartPoleTerminalFunction(double maxAbsoluteAngleInRadians) {
-			this.maxAbsoluteAngle = maxAbsoluteAngleInRadians;
-		}
-
-		@Override
-		public boolean isTerminal(State s) {
-
-			ObjectInstance cartpole = s.getFirstObjectOfClass(CLASSCARTPOLE);
-			double x = cartpole.getRealValForAttribute(ATTX);
-			Attribute xatt = cartpole.getObjectClass().getAttribute(ATTX);
-			double xmin = xatt.lowerLim;
-			double xmax = xatt.upperLim;
-
-			if (x <= xmin || x >= xmax) {
-				return true;
-			}
-
-			double a = cartpole.getRealValForAttribute(ATTANGLE);
-			if (Math.abs(a) >= maxAbsoluteAngle) {
-				return true;
-			}
-
-			return false;
-		}
-
-	}
-
-	/**
-	 * A default reward function for this task. Returns 0 everywhere except at
-	 * fail conditions, which return -1 and are defined by the agent reaching
-	 * the end of the track or by the angle of the pole being grater than some
-	 * threshold (default 12 degrees or about 0.2 radians).
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class CartPoleRewardFunction implements RewardFunction {
-
-		/**
-		 * The maximum pole angle to cause failure.
-		 */
-		double maxAbsoluteAngle = 12. * (Math.PI / 180.);
-
-		/**
-		 * Initializes with max pole angle threshold of 12 degrees (about 0.2
-		 * radians)
-		 */
-		public CartPoleRewardFunction() {
-			// do nothing
-		}
-
-		/**
-		 * Initializes with a max pole angle as specified in radians
-		 * 
-		 * @param maxAbsoluteAngleInRadians
-		 *            the maximum pole angle that causes task failure.
-		 */
-		public CartPoleRewardFunction(double maxAbsoluteAngleInRadians) {
-			this.maxAbsoluteAngle = maxAbsoluteAngleInRadians;
-		}
-
-		@Override
-		public double reward(State s, GroundedAction a, State sprime) {
-
-			ObjectInstance cartpole = sprime
-					.getFirstObjectOfClass(CLASSCARTPOLE);
-			double x = cartpole.getRealValForAttribute(ATTX);
-			Attribute xatt = cartpole.getObjectClass().getAttribute(ATTX);
-			double xmin = xatt.lowerLim;
-			double xmax = xatt.upperLim;
-
-			double failReward = -1;
-
-			if (x <= xmin || x >= xmax) {
-				return failReward;
-			}
-
-			double ang = cartpole.getRealValForAttribute(ATTANGLE);
-			if (Math.abs(ang) >= maxAbsoluteAngle) {
-				return failReward;
-			}
-
-			return 0.;
-		}
-
-	}
-
-	/**
-	 * Launches an interactive visualize in which key 'a' applies a force in the
-	 * left direction and key 'd' applies force in the right direction. The
-	 * corrected physics model is used.
-	 * 
-	 * @param args
-	 *            ignored.
-	 */
-	public static void main(String[] args) {
-		CartPoleDomain dgen = new CartPoleDomain();
-
-		Domain domain = dgen.generateDomain();
-
-		State s = CartPoleDomain.getInitialState(domain);
-
-		VisualExplorer exp = new VisualExplorer(domain,
-				CartPoleVisualizer.getCartPoleVisualizer(), s);
-		exp.addKeyAction("a", ACTIONLEFT);
-		exp.addKeyAction("d", ACTIONRIGHT);
-
-		exp.initGUI();
-
+	public void setToIncorrectClassicModelWithCorrectGravity() {
+		this.physParams.gravity = Math.abs(this.physParams.gravity);
+		this.physParams.useCorrectModel = false;
 	}
 
 }

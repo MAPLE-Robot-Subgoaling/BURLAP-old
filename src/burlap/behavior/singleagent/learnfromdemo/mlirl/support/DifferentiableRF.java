@@ -1,10 +1,10 @@
 package burlap.behavior.singleagent.learnfromdemo.mlirl.support;
 
+import java.util.Random;
+
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
-
-import java.util.Random;
 
 /**
  * An abstract class for defining differentiable reward functions.
@@ -24,6 +24,27 @@ public abstract class DifferentiableRF implements RewardFunction {
 	protected int dim;
 
 	/**
+	 * Creates a copy of this reward function. The parameters of the copy can be
+	 * modified without affecting the parameters this source reward function.
+	 * 
+	 * @return a copy of this reward function
+	 */
+	public DifferentiableRF copy() {
+		DifferentiableRF c = this.copyHelper();
+		c.setParameters(this.parameters.clone());
+		return c;
+	}
+
+	/**
+	 * A helper method for making a copy of this reward function. THe parameters
+	 * and dimensionality do not have to be copied, because they will be copied
+	 * in the public {@link #copy()} method.
+	 * 
+	 * @return a copy of this reward function.
+	 */
+	protected abstract DifferentiableRF copyHelper();
+
+	/**
 	 * Returns the gradient of the reward function for the given state
 	 * transition.
 	 * 
@@ -36,23 +57,6 @@ public abstract class DifferentiableRF implements RewardFunction {
 	 * @return the gradient of the reward function for the given transition.
 	 */
 	public abstract double[] getGradient(State s, GroundedAction ga, State sp);
-
-	public void setParameters(double[] parameters) {
-		this.parameters = parameters;
-		this.dim = parameters.length;
-	}
-
-	/**
-	 * Sets the value of a given parameter.
-	 * 
-	 * @param i
-	 *            which parameter to set
-	 * @param p
-	 *            the value of the parameter
-	 */
-	public void setParameter(int i, double p) {
-		this.parameters[i] = p;
-	}
 
 	/**
 	 * Returns the parameter dimensionality
@@ -92,24 +96,20 @@ public abstract class DifferentiableRF implements RewardFunction {
 	}
 
 	/**
-	 * A helper method for making a copy of this reward function. THe parameters
-	 * and dimensionality do not have to be copied, because they will be copied
-	 * in the public {@link #copy()} method.
+	 * Sets the value of a given parameter.
 	 * 
-	 * @return a copy of this reward function.
+	 * @param i
+	 *            which parameter to set
+	 * @param p
+	 *            the value of the parameter
 	 */
-	protected abstract DifferentiableRF copyHelper();
+	public void setParameter(int i, double p) {
+		this.parameters[i] = p;
+	}
 
-	/**
-	 * Creates a copy of this reward function. The parameters of the copy can be
-	 * modified without affecting the parameters this source reward function.
-	 * 
-	 * @return a copy of this reward function
-	 */
-	public DifferentiableRF copy() {
-		DifferentiableRF c = this.copyHelper();
-		c.setParameters(this.parameters.clone());
-		return c;
+	public void setParameters(double[] parameters) {
+		this.parameters = parameters;
+		this.dim = parameters.length;
 	}
 
 	@Override

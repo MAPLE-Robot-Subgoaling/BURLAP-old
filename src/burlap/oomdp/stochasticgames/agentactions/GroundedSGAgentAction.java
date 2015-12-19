@@ -80,6 +80,11 @@ public abstract class GroundedSGAgentAction implements AbstractGroundedAction {
 		this.action = a;
 	}
 
+	@Override
+	public String actionName() {
+		return this.action.actionName;
+	}
+
 	/**
 	 * Returns whether this action is applicable (satisfies the preconditions)
 	 * in the given input {@link burlap.oomdp.core.states.State}
@@ -92,6 +97,44 @@ public abstract class GroundedSGAgentAction implements AbstractGroundedAction {
 	 */
 	public boolean applicableInState(State s) {
 		return this.action.applicableInState(s, this);
+	}
+
+	@Override
+	public abstract GroundedSGAgentAction copy();
+
+	@Override
+	public boolean equals(Object other) {
+
+		if (this == other) {
+			return true;
+		}
+
+		if (!(other instanceof GroundedSGAgentAction)) {
+			return false;
+		}
+
+		GroundedSGAgentAction go = (GroundedSGAgentAction) other;
+
+		if (!this.actingAgent.equals(go.actingAgent)) {
+			return false;
+		}
+
+		if (!this.action.actionName.equals(go.action.actionName)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		String shortName = this.actingAgent + "::" + this.actionName();
+		return shortName.hashCode();
+	}
+
+	@Override
+	public boolean isParameterized() {
+		return this.action.isParameterized();
 	}
 
 	/**
@@ -128,49 +171,6 @@ public abstract class GroundedSGAgentAction implements AbstractGroundedAction {
 		}
 
 		return buf.toString();
-	}
-
-	@Override
-	public boolean equals(Object other) {
-
-		if (this == other) {
-			return true;
-		}
-
-		if (!(other instanceof GroundedSGAgentAction)) {
-			return false;
-		}
-
-		GroundedSGAgentAction go = (GroundedSGAgentAction) other;
-
-		if (!this.actingAgent.equals(go.actingAgent)) {
-			return false;
-		}
-
-		if (!this.action.actionName.equals(go.action.actionName)) {
-			return false;
-		}
-
-		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		String shortName = this.actingAgent + "::" + this.actionName();
-		return shortName.hashCode();
-	}
-
-	@Override
-	public String actionName() {
-		return this.action.actionName;
-	}
-
-	@Override
-	public abstract GroundedSGAgentAction copy();
-
-	@Override
-	public boolean isParameterized() {
-		return this.action.isParameterized();
 	}
 
 }

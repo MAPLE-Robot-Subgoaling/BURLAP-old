@@ -26,11 +26,17 @@ import com.google.common.collect.ImmutableList;
 public final class ImmutableObjectInstance extends OOMDPObjectInstance
 		implements ObjectInstance, Iterable<Value> {
 
-	private final ObjectClass obClass; // object class to which this object
-										// belongs
+	private static ImmutableObjectInstance construct(ObjectClass obClass,
+			String name, List<Value> values, boolean identifierIndependent) {
+		return new ImmutableObjectInstance(obClass, name,
+				ImmutableList.copyOf(values), 0, identifierIndependent);
+	}
+										private final ObjectClass obClass; // object class to which this object
+	// belongs
 	private final String name; // name of the object for disambiguation
 	private final ImmutableList<Value> values; // the values for each attribute
 	private final int hashCode;
+
 	private final boolean identifierIndependent;
 
 	/**
@@ -48,6 +54,16 @@ public final class ImmutableObjectInstance extends OOMDPObjectInstance
 		this.values = ImmutableList.copyOf(this.initializeValueObjects());
 		this.hashCode = 0;
 		this.identifierIndependent = false;
+	}
+
+	public ImmutableObjectInstance(ObjectClass obClass, String name,
+			ImmutableList<Value> newValues, int hashCode,
+			boolean identifierIndependent) {
+		this.obClass = obClass;
+		this.name = name;
+		this.values = newValues;
+		this.hashCode = hashCode;
+		this.identifierIndependent = identifierIndependent;
 	}
 
 	/**
@@ -76,16 +92,6 @@ public final class ImmutableObjectInstance extends OOMDPObjectInstance
 
 	}
 
-	public ImmutableObjectInstance(ObjectClass obClass, String name,
-			ImmutableList<Value> newValues, int hashCode,
-			boolean identifierIndependent) {
-		this.obClass = obClass;
-		this.name = name;
-		this.values = newValues;
-		this.hashCode = hashCode;
-		this.identifierIndependent = identifierIndependent;
-	}
-
 	public ImmutableObjectInstance(String name,
 			ImmutableObjectInstance objectInstance) {
 		this.obClass = objectInstance.obClass;
@@ -96,157 +102,24 @@ public final class ImmutableObjectInstance extends OOMDPObjectInstance
 	}
 
 	/**
-	 * Creates and returns a new object instance that is a deep copy of this
-	 * object instance's values.
-	 * 
-	 * @return a new object instance that is a deep copy of this object
-	 *         instance's values (the name and object class reference are a
-	 *         shallow copy)
-	 */
-	public ImmutableObjectInstance copy() {
-		return new ImmutableObjectInstance(this);
-	}
-
-	private static ImmutableObjectInstance construct(ObjectClass obClass,
-			String name, List<Value> values, boolean identifierIndependent) {
-		return new ImmutableObjectInstance(obClass, name,
-				ImmutableList.copyOf(values), 0, identifierIndependent);
-	}
-
-	/**
-	 * Creates new value object assignments for each of this object instance
-	 * class's attributes.
-	 */
-	public List<Value> initializeValueObjects() {
-
-		List<Value> values = new ArrayList<Value>(obClass.numAttributes());
-		for (Attribute att : obClass.attributeList) {
-			values.add(att.valueConstructor());
-		}
-		return values;
-	}
-
-	/**
-	 * Sets the name of this object instance.
-	 * 
-	 * @param name
-	 *            the name for this object instance.
-	 */
-	public ImmutableObjectInstance setName(String name) {
-		return ImmutableObjectInstance.construct(this.obClass, name,
-				this.values, this.identifierIndependent);
-	}
-
-	public ImmutableObjectInstance setHashCode(int code,
-			boolean identifierIndependent) {
-		return new ImmutableObjectInstance(this.obClass, name, this.values,
-				code, identifierIndependent);
-	}
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
+	 * Adds all relational targets to the attribute attName for this object
+	 * instance. For a single-target relational attribute, the value that is
+	 * ultimately set depends on the iteration order of iterable.
 	 * 
 	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the string rep value to which the attribute of this object
-	 *            instance should be set.
+	 *            the name of the relational attribute that will have a
+	 *            relational target added/set
+	 * @param targets
+	 *            the names of the object references that are to be added as a
+	 *            targets.
 	 */
-	public ImmutableObjectInstance setValue(String attName, String v) {
+	@Override
+	public ImmutableObjectInstance addAllRelationalTargets(String attName,
+			Collection<String> targets) {
 		List<Value> values = new ArrayList<Value>(this.values);
 		int ind = obClass.attributeIndex(attName);
 		Value value = values.get(ind);
-		values.set(ind, value.setValue(v));
-		return ImmutableObjectInstance.construct(this.obClass, this.name,
-				values, this.identifierIndependent);
-
-	}
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the double rep value to which the attribute of this object
-	 *            instance should be set.
-	 */
-	public ImmutableObjectInstance setValue(String attName, double v) {
-		List<Value> values = new ArrayList<Value>(this.values);
-		int ind = obClass.attributeIndex(attName);
-		Value value = values.get(ind);
-		values.set(ind, value.setValue(v));
-		return ImmutableObjectInstance.construct(this.obClass, this.name,
-				values, this.identifierIndependent);
-	}
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the int rep value to which the attribute of this object
-	 *            instance should be set.
-	 */
-	public ImmutableObjectInstance setValue(String attName, int v) {
-		Value[] arry = this.values.toArray(new Value[this.values.size()]);
-		int ind = obClass.attributeIndex(attName);
-		arry[ind] = arry[ind].setValue(v);
-		return ImmutableObjectInstance.construct(obClass, name,
-				ImmutableList.copyOf(arry), this.identifierIndependent);
-	}
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the int rep value to which the attribute of this object
-	 *            instance should be set.
-	 */
-	public ImmutableObjectInstance setValue(String attName, boolean v) {
-		List<Value> values = new ArrayList<Value>(this.values);
-		int ind = obClass.attributeIndex(attName);
-		Value value = values.get(ind);
-		values.set(ind, value.setValue(v));
-		return ImmutableObjectInstance.construct(this.obClass, this.name,
-				values, this.identifierIndependent);
-	}
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the int array rep value to which the attribute of this object
-	 *            instance should be set.
-	 */
-	public ImmutableObjectInstance setValue(String attName, int[] v) {
-		List<Value> values = new ArrayList<Value>(this.values);
-		int ind = obClass.attributeIndex(attName);
-		Value value = values.get(ind);
-		values.set(ind, value.setValue(v));
-		return ImmutableObjectInstance.construct(this.obClass, this.name,
-				values, this.identifierIndependent);
-	}
-
-	/**
-	 * Sets the value of the attribute named attName for this object instance.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value is to be set.
-	 * @param v
-	 *            the double array rep value to which the attribute of this
-	 *            object instance should be set.
-	 */
-	public ImmutableObjectInstance setValue(String attName, double[] v) {
-		List<Value> values = new ArrayList<Value>(this.values);
-		int ind = obClass.attributeIndex(attName);
-		Value value = values.get(ind);
-		values.set(ind, value.setValue(v));
+		values.set(ind, value.addAllRelationalTargets(targets));
 		return ImmutableObjectInstance.construct(this.obClass, this.name,
 				values, this.identifierIndependent);
 	}
@@ -263,6 +136,7 @@ public final class ImmutableObjectInstance extends OOMDPObjectInstance
 	 *            the name of the object reference that is to be added as a
 	 *            target.
 	 */
+	@Override
 	public ImmutableObjectInstance addRelationalTarget(String attName,
 			String target) {
 		List<Value> values = new ArrayList<Value>(this.values);
@@ -273,26 +147,16 @@ public final class ImmutableObjectInstance extends OOMDPObjectInstance
 				values, this.identifierIndependent);
 	}
 
-	/**
-	 * Adds all relational targets to the attribute attName for this object
-	 * instance. For a single-target relational attribute, the value that is
-	 * ultimately set depends on the iteration order of iterable.
-	 * 
-	 * @param attName
-	 *            the name of the relational attribute that will have a
-	 *            relational target added/set
-	 * @param targets
-	 *            the names of the object references that are to be added as a
-	 *            targets.
-	 */
-	public ImmutableObjectInstance addAllRelationalTargets(String attName,
-			Collection<String> targets) {
-		List<Value> values = new ArrayList<Value>(this.values);
-		int ind = obClass.attributeIndex(attName);
-		Value value = values.get(ind);
-		values.set(ind, value.addAllRelationalTargets(targets));
-		return ImmutableObjectInstance.construct(this.obClass, this.name,
-				values, this.identifierIndependent);
+	@Override
+	public StringBuilder buildObjectDescription(StringBuilder builder) {
+		builder = builder.append(name).append(" (").append(this.getClassName())
+				.append(")");
+		for (Value v : values) {
+			builder = builder.append("\n\t").append(v.attName()).append(":\t");
+			builder = v.buildStringVal(builder);
+		}
+
+		return builder;
 	}
 
 	/**
@@ -301,6 +165,7 @@ public final class ImmutableObjectInstance extends OOMDPObjectInstance
 	 * 
 	 * @param attName
 	 */
+	@Override
 	public ImmutableObjectInstance clearRelationalTargets(String attName) {
 		List<Value> values = new ArrayList<Value>(this.values);
 		int ind = obClass.attributeIndex(attName);
@@ -311,122 +176,33 @@ public final class ImmutableObjectInstance extends OOMDPObjectInstance
 	}
 
 	/**
-	 * Removes an object target from the specified relational attribute.
+	 * Creates and returns a new object instance that is a deep copy of this
+	 * object instance's values.
 	 * 
-	 * @param attName
-	 *            the name of the relational attribute from which the target
-	 *            should be removed.
-	 * @param target
-	 *            the target to remove from the relational attribute value.
+	 * @return a new object instance that is a deep copy of this object
+	 *         instance's values (the name and object class reference are a
+	 *         shallow copy)
 	 */
-	public ImmutableObjectInstance removeRelationalTarget(String attName,
-			String target) {
-		List<Value> values = new ArrayList<Value>(this.values);
-		int ind = obClass.attributeIndex(attName);
-		Value value = values.get(ind);
-		values.set(ind, value.removeRelationalTarget(target));
-		return ImmutableObjectInstance.construct(this.obClass, this.name,
-				values, this.identifierIndependent);
+	@Override
+	public ImmutableObjectInstance copy() {
+		return new ImmutableObjectInstance(this);
 	}
 
-	/**
-	 * Returns the name identifier of this object instance
-	 * 
-	 * @return the name identifier of this object instance
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * Returns this object instance's object class
-	 * 
-	 * @return this object instance's object class
-	 */
-	public ObjectClass getObjectClass() {
-		return obClass;
-	}
-
-	/**
-	 * Returns the name of this object instance's object class
-	 * 
-	 * @return the name of this object instance's object class
-	 */
-	public String getClassName() {
-		return obClass.name;
-	}
-
-	/**
-	 * Returns the Value object assignment for the attribute named attName
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return the Value object assignment for the attribute named attName
-	 */
-	public Value getValueForAttribute(String attName) {
-		int ind = obClass.attributeIndex(attName);
-		return values.get(ind);
-	}
-
-	/**
-	 * Returns the double value assignment for the real-valued attribute named
-	 * attName. Will throw a runtime exception is the attribute named attName is
-	 * not of type REAL or REALUNBOUNDED
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return the double value assignment for the real-valued attribute named
-	 *         attName.
-	 */
-	public double getRealValForAttribute(String attName) {
-		int ind = obClass.attributeIndex(attName);
-		return values.get(ind).getRealVal();
-	}
-
-	/**
-	 * Returns the double value for the attribute named attType. This method
-	 * differs from the {@link #getRealValForAttribute(String)} method because
-	 * it will cast the int values for non real attributes to double values and
-	 * will not throw an exception. Note that if this method is called on
-	 * relational attributes, it will return 0., where as attributes like
-	 * {@link AttributeType#INT} and {@link AttributeType#DISC} will cast their
-	 * int values to doubles.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return a double value assignment for the attribute; casting occurs if
-	 *         the attribute is not real-valued.
-	 */
-	public double getNumericValForAttribute(String attName) {
-		int ind = obClass.attributeIndex(attName);
-		return values.get(ind).getNumericRepresentation();
-	}
-
-	/**
-	 * Returns the string value representation for the attribute named attName.
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return the string value assignment for the attribute named attName.
-	 */
-	public String getStringValForAttribute(String attName) {
-		int ind = obClass.attributeIndex(attName);
-		return values.get(ind).getStringVal();
-	}
-
-	/**
-	 * Returns the int value assignment for the discrete-valued attribute named
-	 * attName. Will throw a runtime exception is the attribute named attName is
-	 * not of type DISC
-	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned
-	 * @return the int value assignment for the discrete-valued attribute named
-	 *         attName.
-	 */
-	public int getIntValForAttribute(String attName) {
-		int ind = obClass.attributeIndex(attName);
-		return values.get(ind).getDiscVal();
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof ImmutableObjectInstance)) {
+			return false;
+		}
+		ImmutableObjectInstance op = (ImmutableObjectInstance) obj;
+		if (!this.identifierIndependent) {
+			if (!op.name.equals(name)) {
+				return false;
+			}
+		}
+		return this.valueEquals(op);
 	}
 
 	/**
@@ -440,6 +216,7 @@ public final class ImmutableObjectInstance extends OOMDPObjectInstance
 	 * @return the set of all object instance targets (indicated by their object
 	 *         instance name) for the relational-valued attribute named attName.
 	 */
+	@Override
 	public Set<String> getAllRelationalTargets(String attName) {
 		int ind = obClass.attributeIndex(attName);
 		return values.get(ind).getAllRelationalTargets();
@@ -454,22 +231,20 @@ public final class ImmutableObjectInstance extends OOMDPObjectInstance
 	 * @return true if the value for the attribute evaluates to true, false
 	 *         otherwise.
 	 */
+	@Override
 	public boolean getBooleanValForAttribute(String attName) {
 		int ind = obClass.attributeIndex(attName);
 		return values.get(ind).getBooleanValue();
 	}
 
 	/**
-	 * Returns the int array value of the attribute (only defined for int array
-	 * attributes).
+	 * Returns the name of this object instance's object class
 	 * 
-	 * @param attName
-	 *            the name of the attribute whose value should be returned.
-	 * @return the int array value.
+	 * @return the name of this object instance's object class
 	 */
-	public int[] getIntArrayValForAttribute(String attName) {
-		int ind = obClass.attributeIndex(attName);
-		return values.get(ind).getIntArray().clone();
+	@Override
+	public String getClassName() {
+		return obClass.name;
 	}
 
 	/**
@@ -480,36 +255,10 @@ public final class ImmutableObjectInstance extends OOMDPObjectInstance
 	 *            the name of the attribute whose value should be returned.
 	 * @return the int array value.
 	 */
+	@Override
 	public double[] getDoubleArrayValForAttribute(String attName) {
 		int ind = obClass.attributeIndex(attName);
 		return values.get(ind).getDoubleArray().clone();
-	}
-
-	/**
-	 * Returns the list of value object assignments to all of this object
-	 * instance's attributes.
-	 * 
-	 * @return the list of value object assignments to all of this object
-	 *         instance's attributes.
-	 */
-	public List<Value> getValues() {
-		return this.values;
-	}
-
-	public StringBuilder buildObjectDescription(StringBuilder builder) {
-		builder = builder.append(name).append(" (").append(this.getClassName())
-				.append(")");
-		for (Value v : values) {
-			builder = builder.append("\n\t").append(v.attName()).append(":\t");
-			builder = v.buildStringVal(builder);
-		}
-
-		return builder;
-	}
-
-	@Override
-	public String toString() {
-		return this.getObjectDescription();
 	}
 
 	/**
@@ -531,6 +280,46 @@ public final class ImmutableObjectInstance extends OOMDPObjectInstance
 		}
 
 		return obsFeatureVec;
+	}
+
+	/**
+	 * Returns the int array value of the attribute (only defined for int array
+	 * attributes).
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned.
+	 * @return the int array value.
+	 */
+	@Override
+	public int[] getIntArrayValForAttribute(String attName) {
+		int ind = obClass.attributeIndex(attName);
+		return values.get(ind).getIntArray().clone();
+	}
+
+	/**
+	 * Returns the int value assignment for the discrete-valued attribute named
+	 * attName. Will throw a runtime exception is the attribute named attName is
+	 * not of type DISC
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return the int value assignment for the discrete-valued attribute named
+	 *         attName.
+	 */
+	@Override
+	public int getIntValForAttribute(String attName) {
+		int ind = obClass.attributeIndex(attName);
+		return values.get(ind).getDiscVal();
+	}
+
+	/**
+	 * Returns the name identifier of this object instance
+	 * 
+	 * @return the name identifier of this object instance
+	 */
+	@Override
+	public String getName() {
+		return name;
 	}
 
 	/**
@@ -565,76 +354,34 @@ public final class ImmutableObjectInstance extends OOMDPObjectInstance
 
 	}
 
+	/**
+	 * Returns the double value for the attribute named attType. This method
+	 * differs from the {@link #getRealValForAttribute(String)} method because
+	 * it will cast the int values for non real attributes to double values and
+	 * will not throw an exception. Note that if this method is called on
+	 * relational attributes, it will return 0., where as attributes like
+	 * {@link AttributeType#INT} and {@link AttributeType#DISC} will cast their
+	 * int values to doubles.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return a double value assignment for the attribute; casting occurs if
+	 *         the attribute is not real-valued.
+	 */
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (!(obj instanceof ImmutableObjectInstance)) {
-			return false;
-		}
-		ImmutableObjectInstance op = (ImmutableObjectInstance) obj;
-		if (!this.identifierIndependent) {
-			if (!op.name.equals(name)) {
-				return false;
-			}
-		}
-		return this.valueEquals(op);
+	public double getNumericValForAttribute(String attName) {
+		int ind = obClass.attributeIndex(attName);
+		return values.get(ind).getNumericRepresentation();
 	}
 
 	/**
-	 * Returns true if the value assignments in this object instance are the
-	 * same as they are in the target object instance.
+	 * Returns this object instance's object class
 	 * 
-	 * @param obj
-	 *            the object instance against which this object instance should
-	 *            be compared.
-	 * @return true if this object instance and obj have identical value
-	 *         assignments; false otherwise.
+	 * @return this object instance's object class
 	 */
-	public boolean valueEquals(ObjectInstance obj) {
-		if (this == obj) {
-			return true;
-		}
-
-		if (!obj.getObjectClass().equals(this.obClass)) {
-			return false;
-		}
-
-		List<Value> objValues = obj.getValues();
-		for (int i = 0; i < this.values.size(); i++) {
-			Value v = this.values.get(i);
-			Value ov = objValues.get(i);
-			if (!v.equals(ov)) {
-				return false;
-			}
-		}
-
-		return true;
-
-	}
-
-	public boolean isHashed() {
-		return this.hashCode != 0;
-	}
-
 	@Override
-	public int hashCode() {
-		if (this.hashCode == 0) {
-			return super.hashCode();
-		}
-		return this.hashCode;
-	}
-
-	@Override
-	public List<String> unsetAttributes() {
-		LinkedList<String> unsetAtts = new LinkedList<String>();
-		for (Value v : this.values) {
-			if (!v.valueHasBeenSet()) {
-				unsetAtts.add(v.attName());
-			}
-		}
-		return unsetAtts;
+	public ObjectClass getObjectClass() {
+		return obClass;
 	}
 
 	@Override
@@ -656,8 +403,288 @@ public final class ImmutableObjectInstance extends OOMDPObjectInstance
 		return builder.toString();
 	}
 
+	/**
+	 * Returns the double value assignment for the real-valued attribute named
+	 * attName. Will throw a runtime exception is the attribute named attName is
+	 * not of type REAL or REALUNBOUNDED
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return the double value assignment for the real-valued attribute named
+	 *         attName.
+	 */
+	@Override
+	public double getRealValForAttribute(String attName) {
+		int ind = obClass.attributeIndex(attName);
+		return values.get(ind).getRealVal();
+	}
+
+	/**
+	 * Returns the string value representation for the attribute named attName.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return the string value assignment for the attribute named attName.
+	 */
+	@Override
+	public String getStringValForAttribute(String attName) {
+		int ind = obClass.attributeIndex(attName);
+		return values.get(ind).getStringVal();
+	}
+
+	/**
+	 * Returns the Value object assignment for the attribute named attName
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value should be returned
+	 * @return the Value object assignment for the attribute named attName
+	 */
+	@Override
+	public Value getValueForAttribute(String attName) {
+		int ind = obClass.attributeIndex(attName);
+		return values.get(ind);
+	}
+
+	/**
+	 * Returns the list of value object assignments to all of this object
+	 * instance's attributes.
+	 * 
+	 * @return the list of value object assignments to all of this object
+	 *         instance's attributes.
+	 */
+	@Override
+	public List<Value> getValues() {
+		return this.values;
+	}
+
+	@Override
+	public int hashCode() {
+		if (this.hashCode == 0) {
+			return super.hashCode();
+		}
+		return this.hashCode;
+	}
+
+	/**
+	 * Creates new value object assignments for each of this object instance
+	 * class's attributes.
+	 */
+	public List<Value> initializeValueObjects() {
+
+		List<Value> values = new ArrayList<Value>(obClass.numAttributes());
+		for (Attribute att : obClass.attributeList) {
+			values.add(att.valueConstructor());
+		}
+		return values;
+	}
+
+	public boolean isHashed() {
+		return this.hashCode != 0;
+	}
+
 	@Override
 	public Iterator<Value> iterator() {
 		return this.values.iterator();
+	}
+
+	/**
+	 * Removes an object target from the specified relational attribute.
+	 * 
+	 * @param attName
+	 *            the name of the relational attribute from which the target
+	 *            should be removed.
+	 * @param target
+	 *            the target to remove from the relational attribute value.
+	 */
+	@Override
+	public ImmutableObjectInstance removeRelationalTarget(String attName,
+			String target) {
+		List<Value> values = new ArrayList<Value>(this.values);
+		int ind = obClass.attributeIndex(attName);
+		Value value = values.get(ind);
+		values.set(ind, value.removeRelationalTarget(target));
+		return ImmutableObjectInstance.construct(this.obClass, this.name,
+				values, this.identifierIndependent);
+	}
+
+	public ImmutableObjectInstance setHashCode(int code,
+			boolean identifierIndependent) {
+		return new ImmutableObjectInstance(this.obClass, name, this.values,
+				code, identifierIndependent);
+	}
+
+	/**
+	 * Sets the name of this object instance.
+	 * 
+	 * @param name
+	 *            the name for this object instance.
+	 */
+	@Override
+	public ImmutableObjectInstance setName(String name) {
+		return ImmutableObjectInstance.construct(this.obClass, name,
+				this.values, this.identifierIndependent);
+	}
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the int rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	@Override
+	public ImmutableObjectInstance setValue(String attName, boolean v) {
+		List<Value> values = new ArrayList<Value>(this.values);
+		int ind = obClass.attributeIndex(attName);
+		Value value = values.get(ind);
+		values.set(ind, value.setValue(v));
+		return ImmutableObjectInstance.construct(this.obClass, this.name,
+				values, this.identifierIndependent);
+	}
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the double rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	@Override
+	public ImmutableObjectInstance setValue(String attName, double v) {
+		List<Value> values = new ArrayList<Value>(this.values);
+		int ind = obClass.attributeIndex(attName);
+		Value value = values.get(ind);
+		values.set(ind, value.setValue(v));
+		return ImmutableObjectInstance.construct(this.obClass, this.name,
+				values, this.identifierIndependent);
+	}
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the double array rep value to which the attribute of this
+	 *            object instance should be set.
+	 */
+	@Override
+	public ImmutableObjectInstance setValue(String attName, double[] v) {
+		List<Value> values = new ArrayList<Value>(this.values);
+		int ind = obClass.attributeIndex(attName);
+		Value value = values.get(ind);
+		values.set(ind, value.setValue(v));
+		return ImmutableObjectInstance.construct(this.obClass, this.name,
+				values, this.identifierIndependent);
+	}
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the int rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	@Override
+	public ImmutableObjectInstance setValue(String attName, int v) {
+		Value[] arry = this.values.toArray(new Value[this.values.size()]);
+		int ind = obClass.attributeIndex(attName);
+		arry[ind] = arry[ind].setValue(v);
+		return ImmutableObjectInstance.construct(obClass, name,
+				ImmutableList.copyOf(arry), this.identifierIndependent);
+	}
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the int array rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	@Override
+	public ImmutableObjectInstance setValue(String attName, int[] v) {
+		List<Value> values = new ArrayList<Value>(this.values);
+		int ind = obClass.attributeIndex(attName);
+		Value value = values.get(ind);
+		values.set(ind, value.setValue(v));
+		return ImmutableObjectInstance.construct(this.obClass, this.name,
+				values, this.identifierIndependent);
+	}
+
+	/**
+	 * Sets the value of the attribute named attName for this object instance.
+	 * 
+	 * @param attName
+	 *            the name of the attribute whose value is to be set.
+	 * @param v
+	 *            the string rep value to which the attribute of this object
+	 *            instance should be set.
+	 */
+	@Override
+	public ImmutableObjectInstance setValue(String attName, String v) {
+		List<Value> values = new ArrayList<Value>(this.values);
+		int ind = obClass.attributeIndex(attName);
+		Value value = values.get(ind);
+		values.set(ind, value.setValue(v));
+		return ImmutableObjectInstance.construct(this.obClass, this.name,
+				values, this.identifierIndependent);
+
+	}
+
+	@Override
+	public String toString() {
+		return this.getObjectDescription();
+	}
+
+	@Override
+	public List<String> unsetAttributes() {
+		LinkedList<String> unsetAtts = new LinkedList<String>();
+		for (Value v : this.values) {
+			if (!v.valueHasBeenSet()) {
+				unsetAtts.add(v.attName());
+			}
+		}
+		return unsetAtts;
+	}
+
+	/**
+	 * Returns true if the value assignments in this object instance are the
+	 * same as they are in the target object instance.
+	 * 
+	 * @param obj
+	 *            the object instance against which this object instance should
+	 *            be compared.
+	 * @return true if this object instance and obj have identical value
+	 *         assignments; false otherwise.
+	 */
+	@Override
+	public boolean valueEquals(ObjectInstance obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!obj.getObjectClass().equals(this.obClass)) {
+			return false;
+		}
+
+		List<Value> objValues = obj.getValues();
+		for (int i = 0; i < this.values.size(); i++) {
+			Value v = this.values.get(i);
+			Value ov = objValues.get(i);
+			if (!v.equals(ov)) {
+				return false;
+			}
+		}
+
+		return true;
+
 	}
 }

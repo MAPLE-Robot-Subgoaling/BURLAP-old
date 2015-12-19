@@ -19,39 +19,6 @@ import burlap.oomdp.stateserialization.SerializableStateFactory;
 public class SerializableMountainCarStateFactory implements
 		SerializableStateFactory {
 
-	@Override
-	public SerializableState serialize(State s) {
-		return new SerializableMountainCarState(s);
-	}
-
-	@Override
-	public Class<?> getGeneratedClass() {
-		return SerializableMountainCarState.class;
-	}
-
-	public static class SerializableMountainCarState extends SerializableState {
-
-		public String stringRep;
-
-		public SerializableMountainCarState() {
-		}
-
-		public SerializableMountainCarState(State s) {
-			super(s);
-		}
-
-		@Override
-		public void serialize(State s) {
-			this.stringRep = stateToString(s);
-		}
-
-		@Override
-		public State deserialize(Domain domain) {
-			return stringToState(domain, this.stringRep);
-		}
-
-	}
-
 	public static class MountainCarStateParser implements StateParser {
 		Domain domain;
 
@@ -69,6 +36,29 @@ public class SerializableMountainCarStateFactory implements
 			return SerializableMountainCarStateFactory.stringToState(domain,
 					str);
 		}
+	}
+
+	public static class SerializableMountainCarState extends SerializableState {
+
+		public String stringRep;
+
+		public SerializableMountainCarState() {
+		}
+
+		public SerializableMountainCarState(State s) {
+			super(s);
+		}
+
+		@Override
+		public State deserialize(Domain domain) {
+			return stringToState(domain, this.stringRep);
+		}
+
+		@Override
+		public void serialize(State s) {
+			this.stringRep = stateToString(s);
+		}
+
 	}
 
 	public static String stateToString(State s) {
@@ -93,5 +83,15 @@ public class SerializableMountainCarStateFactory implements
 		s.addObject(agent);
 
 		return s;
+	}
+
+	@Override
+	public Class<?> getGeneratedClass() {
+		return SerializableMountainCarState.class;
+	}
+
+	@Override
+	public SerializableState serialize(State s) {
+		return new SerializableMountainCarState(s);
 	}
 }

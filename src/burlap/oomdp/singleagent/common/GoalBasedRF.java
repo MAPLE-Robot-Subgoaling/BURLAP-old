@@ -2,8 +2,8 @@ package burlap.oomdp.singleagent.common;
 
 import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
 import burlap.oomdp.auxiliary.stateconditiontest.TFGoalCondition;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
@@ -112,6 +112,10 @@ public class GoalBasedRF implements RewardFunction {
 		this(new TFGoalCondition(tf), goalReward, defaultReward);
 	}
 
+	public double getDefaultReward() {
+		return defaultReward;
+	}
+
 	/**
 	 * Returns the goal condition for this reward function.
 	 * 
@@ -125,18 +129,6 @@ public class GoalBasedRF implements RewardFunction {
 		return goalReward;
 	}
 
-	public void setGoalReward(double goalReward) {
-		this.goalReward = goalReward;
-	}
-
-	public double getDefaultReward() {
-		return defaultReward;
-	}
-
-	public void setDefaultReward(double defaultReward) {
-		this.defaultReward = defaultReward;
-	}
-
 	@Override
 	public double reward(State s, GroundedAction a, State sprime) {
 
@@ -145,6 +137,14 @@ public class GoalBasedRF implements RewardFunction {
 		}
 
 		return defaultReward;
+	}
+
+	public void setDefaultReward(double defaultReward) {
+		this.defaultReward = defaultReward;
+	}
+
+	public void setGoalReward(double goalReward) {
+		this.goalReward = goalReward;
 	}
 
 }

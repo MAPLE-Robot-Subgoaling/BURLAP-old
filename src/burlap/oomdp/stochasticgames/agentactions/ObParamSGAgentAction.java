@@ -1,12 +1,11 @@
 package burlap.oomdp.stochasticgames.agentactions;
 
-import burlap.oomdp.core.AbstractGroundedAction;
+import java.util.ArrayList;
+import java.util.List;
+
 import burlap.oomdp.core.AbstractObjectParameterizedGroundedAction;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.stochasticgames.SGDomain;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * If your {@link burlap.oomdp.stochasticgames.agentactions.SGAgentAction}
@@ -38,7 +37,130 @@ import java.util.List;
  */
 public abstract class ObParamSGAgentAction extends SGAgentAction {
 
+	public static class GroundedObParamSGAgentAction extends
+			GroundedSGAgentAction implements
+			AbstractObjectParameterizedGroundedAction {
+
+		public String[] params;
+
+		public GroundedObParamSGAgentAction(String actingAgent, SGAgentAction a) {
+			super(actingAgent, a);
+		}
+
+		public GroundedObParamSGAgentAction(String actingAgent,
+				SGAgentAction a, String[] p) {
+			super(actingAgent, a);
+			this.params = p;
+		}
+
+		@Override
+		public boolean actionDomainIsObjectIdentifierIndependent() {
+			return ((ObParamSGAgentAction) this.action)
+					.parametersAreObjectIdentifierIndependent();
+		}
+
+		@Override
+		public GroundedSGAgentAction copy() {
+			return new GroundedObParamSGAgentAction(this.actingAgent,
+					this.action, this.params.clone());
+		}
+
+		@Override
+		public boolean equals(Object other) {
+
+			if (this == other) {
+				return true;
+			}
+
+			if (!(other instanceof GroundedObParamSGAgentAction)) {
+				return false;
+			}
+
+			GroundedObParamSGAgentAction go = (GroundedObParamSGAgentAction) other;
+
+			if (!this.actingAgent.equals(go.actingAgent)) {
+				return false;
+			}
+
+			if (!this.action.actionName.equals(go.action.actionName)) {
+				return false;
+			}
+
+			String[] rclasses = ((ObParamSGAgentAction) this.action).parameterOrderGroups;
+
+			for (int i = 0; i < this.params.length; i++) {
+				String p = this.params[i];
+				String replaceClass = rclasses[i];
+				boolean foundMatch = false;
+				for (int j = 0; j < go.params.length; j++) {
+					if (p.equals(go.params[j])
+							&& replaceClass.equals(rclasses[j])) {
+						foundMatch = true;
+						break;
+					}
+				}
+				if (!foundMatch) {
+					return false;
+				}
+
+			}
+
+			return true;
+		}
+
+		@Override
+		public String[] getObjectParameters() {
+			return params;
+		}
+
+		@Override
+		public String[] getParametersAsString() {
+			return this.params;
+		}
+
+		@Override
+		public void initParamsWithStringRep(String[] params) {
+			this.params = params;
+		}
+
+		/**
+		 * Returns a string specifying the action name and parameters used in
+		 * this GroundedSingleAction.
+		 * 
+		 * @return a string specifying the action name and parameters used in
+		 *         this GroundedSingleAction.
+		 */
+		@Override
+		public String justActionString() {
+			StringBuffer buf = new StringBuffer();
+			buf.append(action.actionName);
+			for (int i = 0; i < params.length; i++) {
+				buf.append(" ").append(params[i]);
+			}
+
+			return buf.toString();
+
+		}
+
+		@Override
+		public void setObjectParameters(String[] params) {
+			this.params = params;
+		}
+
+		@Override
+		public String toString() {
+			StringBuffer buf = new StringBuffer();
+			buf.append(actingAgent).append(":");
+			buf.append(action.actionName);
+			for (int i = 0; i < params.length; i++) {
+				buf.append(" ").append(params[i]);
+			}
+
+			return buf.toString();
+		}
+	}
 	public String[] parameterTypes;
+
 	public String[] parameterOrderGroups;
 
 	/**
@@ -87,18 +209,6 @@ public abstract class ObParamSGAgentAction extends SGAgentAction {
 	}
 
 	@Override
-	public boolean isParameterized() {
-		return this.parameterTypes.length > 0;
-	}
-
-	public abstract boolean parametersAreObjectIdentifierIndependent();
-
-	@Override
-	public GroundedSGAgentAction getAssociatedGroundedAction(String actingAgent) {
-		return new GroundedObParamSGAgentAction(actingAgent, this);
-	}
-
-	@Override
 	/**
 	 * Returns all possible grounded versions of this single action for a given state and acting agent.
 	 * @param s the state in which the agent would execute this action
@@ -136,127 +246,16 @@ public abstract class ObParamSGAgentAction extends SGAgentAction {
 
 	}
 
-	public static class GroundedObParamSGAgentAction extends
-			GroundedSGAgentAction implements
-			AbstractObjectParameterizedGroundedAction {
-
-		public String[] params;
-
-		public GroundedObParamSGAgentAction(String actingAgent, SGAgentAction a) {
-			super(actingAgent, a);
-		}
-
-		public GroundedObParamSGAgentAction(String actingAgent,
-				SGAgentAction a, String[] p) {
-			super(actingAgent, a);
-			this.params = p;
-		}
-
-		@Override
-		public String[] getObjectParameters() {
-			return params;
-		}
-
-		@Override
-		public void setObjectParameters(String[] params) {
-			this.params = params;
-		}
-
-		@Override
-		public boolean actionDomainIsObjectIdentifierIndependent() {
-			return ((ObParamSGAgentAction) this.action)
-					.parametersAreObjectIdentifierIndependent();
-		}
-
-		@Override
-		public void initParamsWithStringRep(String[] params) {
-			this.params = params;
-		}
-
-		@Override
-		public String[] getParametersAsString() {
-			return this.params;
-		}
-
-		@Override
-		public GroundedSGAgentAction copy() {
-			return new GroundedObParamSGAgentAction(this.actingAgent,
-					this.action, this.params.clone());
-		}
-
-		/**
-		 * Returns a string specifying the action name and parameters used in
-		 * this GroundedSingleAction.
-		 * 
-		 * @return a string specifying the action name and parameters used in
-		 *         this GroundedSingleAction.
-		 */
-		@Override
-		public String justActionString() {
-			StringBuffer buf = new StringBuffer();
-			buf.append(action.actionName);
-			for (int i = 0; i < params.length; i++) {
-				buf.append(" ").append(params[i]);
-			}
-
-			return buf.toString();
-
-		}
-
-		@Override
-		public String toString() {
-			StringBuffer buf = new StringBuffer();
-			buf.append(actingAgent).append(":");
-			buf.append(action.actionName);
-			for (int i = 0; i < params.length; i++) {
-				buf.append(" ").append(params[i]);
-			}
-
-			return buf.toString();
-		}
-
-		@Override
-		public boolean equals(Object other) {
-
-			if (this == other) {
-				return true;
-			}
-
-			if (!(other instanceof GroundedObParamSGAgentAction)) {
-				return false;
-			}
-
-			GroundedObParamSGAgentAction go = (GroundedObParamSGAgentAction) other;
-
-			if (!this.actingAgent.equals(go.actingAgent)) {
-				return false;
-			}
-
-			if (!this.action.actionName.equals(go.action.actionName)) {
-				return false;
-			}
-
-			String[] rclasses = ((ObParamSGAgentAction) this.action).parameterOrderGroups;
-
-			for (int i = 0; i < this.params.length; i++) {
-				String p = this.params[i];
-				String replaceClass = rclasses[i];
-				boolean foundMatch = false;
-				for (int j = 0; j < go.params.length; j++) {
-					if (p.equals(go.params[j])
-							&& replaceClass.equals(rclasses[j])) {
-						foundMatch = true;
-						break;
-					}
-				}
-				if (!foundMatch) {
-					return false;
-				}
-
-			}
-
-			return true;
-		}
+	@Override
+	public GroundedSGAgentAction getAssociatedGroundedAction(String actingAgent) {
+		return new GroundedObParamSGAgentAction(actingAgent, this);
 	}
+
+	@Override
+	public boolean isParameterized() {
+		return this.parameterTypes.length > 0;
+	}
+
+	public abstract boolean parametersAreObjectIdentifierIndependent();
 
 }

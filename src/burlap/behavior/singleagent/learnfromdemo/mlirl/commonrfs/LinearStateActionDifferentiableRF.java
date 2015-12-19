@@ -1,12 +1,12 @@
 package burlap.behavior.singleagent.learnfromdemo.mlirl.commonrfs;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF;
 import burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A class for defining a state-action linear
@@ -110,27 +110,6 @@ public class LinearStateActionDifferentiableRF extends DifferentiableRF {
 		return rf;
 	}
 
-	@Override
-	public double reward(State s, GroundedAction a, State sprime) {
-		double[] sFeatures = this.fvGen.generateFeatureVectorFrom(s);
-		int sIndex = this.actionMap.get(a) * this.numStateFeatures;
-		double sum = 0.;
-		for (int i = sIndex; i < sIndex + this.numStateFeatures; i++) {
-			sum += this.parameters[i] * sFeatures[i - sIndex];
-		}
-		return sum;
-	}
-
-	@Override
-	public double[] getGradient(State s, GroundedAction ga, State sp) {
-		double[] sFeatures = this.fvGen.generateFeatureVectorFrom(s);
-		int sIndex = this.actionMap.get(ga) * this.numStateFeatures;
-		double[] gradient = new double[this.numStateFeatures * this.numActions];
-		this.copyInto(sFeatures, gradient, sIndex);
-
-		return gradient;
-	}
-
 	/**
 	 * The copies the values of source into the target, starting in target index
 	 * position index. For example, target[index] = source[0]; target[index+1] =
@@ -148,6 +127,27 @@ public class LinearStateActionDifferentiableRF extends DifferentiableRF {
 		for (int i = index; i < index + source.length; i++) {
 			target[i] = source[i - index];
 		}
+	}
+
+	@Override
+	public double[] getGradient(State s, GroundedAction ga, State sp) {
+		double[] sFeatures = this.fvGen.generateFeatureVectorFrom(s);
+		int sIndex = this.actionMap.get(ga) * this.numStateFeatures;
+		double[] gradient = new double[this.numStateFeatures * this.numActions];
+		this.copyInto(sFeatures, gradient, sIndex);
+
+		return gradient;
+	}
+
+	@Override
+	public double reward(State s, GroundedAction a, State sprime) {
+		double[] sFeatures = this.fvGen.generateFeatureVectorFrom(s);
+		int sIndex = this.actionMap.get(a) * this.numStateFeatures;
+		double sum = 0.;
+		for (int i = sIndex; i < sIndex + this.numStateFeatures; i++) {
+			sum += this.parameters[i] * sFeatures[i - sIndex];
+		}
+		return sum;
 	}
 
 }

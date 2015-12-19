@@ -1,13 +1,21 @@
 package burlap.behavior.singleagent.vfa.cmac;
 
-import burlap.behavior.singleagent.vfa.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+import burlap.behavior.singleagent.vfa.ActionFeaturesQuery;
+import burlap.behavior.singleagent.vfa.FeatureDatabase;
+import burlap.behavior.singleagent.vfa.StateFeature;
+import burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator;
+import burlap.behavior.singleagent.vfa.ValueFunctionApproximation;
 import burlap.behavior.singleagent.vfa.cmac.CMACFeatureDatabase.TilingArrangement;
 import burlap.behavior.singleagent.vfa.common.LinearVFA;
 import burlap.debugtools.RandomFactory;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
-
-import java.util.*;
 
 /**
  * A feature database using CMACs [1] AKA Tiling Coding for states that are
@@ -40,6 +48,23 @@ import java.util.*;
  * 
  */
 public class FVCMACFeatureDatabase implements FeatureDatabase {
+
+	/**
+	 * A class for associating a {@link GroundedAction} with a feature id.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	protected class ActionFeatureID {
+		public int id;
+		public GroundedAction ga;
+
+		public ActionFeatureID(GroundedAction ga, int id) {
+			this.id = id;
+			this.ga = ga;
+		}
+
+	}
 
 	/**
 	 * The generator that turns OO-MDP state objects into state feature vectors.
@@ -76,39 +101,6 @@ public class FVCMACFeatureDatabase implements FeatureDatabase {
 	 */
 	protected int nextStateFeatureId = 0;
 
-	@Override
-	public FVCMACFeatureDatabase copy() {
-		FVCMACFeatureDatabase cmac = new FVCMACFeatureDatabase(
-				this.featureVectorGenerator);
-		cmac.rand = this.rand;
-		cmac.tilings = new ArrayList<FVTiling>(this.tilings);
-
-		cmac.stateFeatures = new ArrayList<Map<FVTiling.FVTile, Integer>>(
-				this.stateFeatures.size());
-		for (Map<FVTiling.FVTile, Integer> el : this.stateFeatures) {
-			Map<FVTiling.FVTile, Integer> nel = new HashMap<FVTiling.FVTile, Integer>(
-					el);
-			cmac.stateFeatures.add(nel);
-		}
-
-		cmac.stateActionFeatures = new ArrayList<Map<FVTiling.FVTile, List<ActionFeatureID>>>(
-				this.stateActionFeatures.size());
-		for (Map<FVTiling.FVTile, List<ActionFeatureID>> el : this.stateActionFeatures) {
-			Map<FVTiling.FVTile, List<ActionFeatureID>> nel = new HashMap<FVTiling.FVTile, List<ActionFeatureID>>(
-					el.size());
-			for (Map.Entry<FVTiling.FVTile, List<ActionFeatureID>> e : el
-					.entrySet()) {
-				nel.put(e.getKey(),
-						new ArrayList<ActionFeatureID>(e.getValue()));
-			}
-			cmac.stateActionFeatures.add(nel);
-		}
-		cmac.nextActionFeatureId = this.nextActionFeatureId;
-		cmac.nextStateFeatureId = this.nextStateFeatureId;
-
-		return cmac;
-	}
-
 	/**
 	 * Initializes specifying the kind of state feature vector generator to use
 	 * for turning OO-MDP states into feature vectors. The resulting feature
@@ -124,6 +116,60 @@ public class FVCMACFeatureDatabase implements FeatureDatabase {
 		this.tilings = new ArrayList<FVTiling>();
 		this.stateFeatures = new ArrayList<Map<FVTiling.FVTile, Integer>>();
 		this.stateActionFeatures = new ArrayList<Map<FVTiling.FVTile, List<ActionFeatureID>>>();
+
+	}
+
+	/**
+	 * Returns or creates, stores and returns the action feature id for the
+	 * given {@link GroundedAction} in the list of action features. If a a new
+	 * action feature id is created, then the {@link #nextActionFeatureId}
+	 * datamember of this object is incremented.
+	 * 
+	 * @param storedActionFeatures
+	 *            the stores list of action features.
+	 * @param ga
+	 *            the grounded action whose associated feature should be
+	 *            returned (or created, stored, and returned)
+	 * @return the action feature id for this action.
+	 */
+	protected int addOrGetMatchingActionFeatureID(
+			List<ActionFeatureID> storedActionFeatures, GroundedAction ga) {
+		ActionFeatureID id = matchingActionFeature(storedActionFeatures, ga);
+		if (id == null) {
+			id = new ActionFeatureID(ga, this.nextActionFeatureId);
+			storedActionFeatures.add(id);
+			this.nextActionFeatureId++;
+		}
+		return id.id;
+	}
+
+	/**
+	 * Adss a number of tilings where each tile is dependent on *all* the
+	 * dimensions of a state feature vector. The widths parameter specifies the
+	 * width of each tile along that given dimension. If tileArrangement is set
+	 * to {@link TilingArrangement#UNIFORM} then each of the nTilings created
+	 * with will be uniformly spaced across the width of each dimension. If it
+	 * is set to {@link TilingArrangement#RANDOMJITTER} then each tiling will be
+	 * offset by a random amount.
+	 * 
+	 * @param widths
+	 *            the width of tiles along each dimension. This value should be
+	 *            non-zero for each dimension .
+	 * @param nTilings
+	 *            the number of tilings over the specified dimensions to create.
+	 * @param tileArrangement
+	 *            whether the created tiles are uniformally spaced or randomly
+	 *            spaced.
+	 */
+	public void addTilingsForAllDimensionsWithWidths(double[] widths,
+			int nTilings, CMACFeatureDatabase.TilingArrangement tileArrangement) {
+
+		boolean[] dimensionMask = new boolean[widths.length];
+		for (int i = 0; i < dimensionMask.length; i++) {
+			dimensionMask[i] = true;
+		}
+		this.addTilingsForDimensionsAndWidths(dimensionMask, widths, nTilings,
+				tileArrangement);
 
 	}
 
@@ -170,82 +216,56 @@ public class FVCMACFeatureDatabase implements FeatureDatabase {
 
 	}
 
-	/**
-	 * Adss a number of tilings where each tile is dependent on *all* the
-	 * dimensions of a state feature vector. The widths parameter specifies the
-	 * width of each tile along that given dimension. If tileArrangement is set
-	 * to {@link TilingArrangement#UNIFORM} then each of the nTilings created
-	 * with will be uniformly spaced across the width of each dimension. If it
-	 * is set to {@link TilingArrangement#RANDOMJITTER} then each tiling will be
-	 * offset by a random amount.
-	 * 
-	 * @param widths
-	 *            the width of tiles along each dimension. This value should be
-	 *            non-zero for each dimension .
-	 * @param nTilings
-	 *            the number of tilings over the specified dimensions to create.
-	 * @param tileArrangement
-	 *            whether the created tiles are uniformally spaced or randomly
-	 *            spaced.
-	 */
-	public void addTilingsForAllDimensionsWithWidths(double[] widths,
-			int nTilings, CMACFeatureDatabase.TilingArrangement tileArrangement) {
+	@Override
+	public FVCMACFeatureDatabase copy() {
+		FVCMACFeatureDatabase cmac = new FVCMACFeatureDatabase(
+				this.featureVectorGenerator);
+		cmac.rand = this.rand;
+		cmac.tilings = new ArrayList<FVTiling>(this.tilings);
 
-		boolean[] dimensionMask = new boolean[widths.length];
-		for (int i = 0; i < dimensionMask.length; i++) {
-			dimensionMask[i] = true;
+		cmac.stateFeatures = new ArrayList<Map<FVTiling.FVTile, Integer>>(
+				this.stateFeatures.size());
+		for (Map<FVTiling.FVTile, Integer> el : this.stateFeatures) {
+			Map<FVTiling.FVTile, Integer> nel = new HashMap<FVTiling.FVTile, Integer>(
+					el);
+			cmac.stateFeatures.add(nel);
 		}
-		this.addTilingsForDimensionsAndWidths(dimensionMask, widths, nTilings,
-				tileArrangement);
 
+		cmac.stateActionFeatures = new ArrayList<Map<FVTiling.FVTile, List<ActionFeatureID>>>(
+				this.stateActionFeatures.size());
+		for (Map<FVTiling.FVTile, List<ActionFeatureID>> el : this.stateActionFeatures) {
+			Map<FVTiling.FVTile, List<ActionFeatureID>> nel = new HashMap<FVTiling.FVTile, List<ActionFeatureID>>(
+					el.size());
+			for (Map.Entry<FVTiling.FVTile, List<ActionFeatureID>> e : el
+					.entrySet()) {
+				nel.put(e.getKey(),
+						new ArrayList<ActionFeatureID>(e.getValue()));
+			}
+			cmac.stateActionFeatures.add(nel);
+		}
+		cmac.nextActionFeatureId = this.nextActionFeatureId;
+		cmac.nextStateFeatureId = this.nextStateFeatureId;
+
+		return cmac;
 	}
 
 	@Override
-	public List<StateFeature> getStateFeatures(State s) {
+	public void freezeDatabaseState(boolean toggle) {
+		// do nothing
 
-		double[] input = this.featureVectorGenerator
-				.generateFeatureVectorFrom(s);
-		List<StateFeature> features = new ArrayList<StateFeature>();
-		for (int i = 0; i < this.tilings.size(); i++) {
-			FVTiling tiling = this.tilings.get(i);
-			Map<FVTiling.FVTile, Integer> tileFeatureMap = this.stateFeatures
-					.get(i);
-
-			FVTiling.FVTile tile = tiling.getFVTile(input);
-			int f = this.getOrGenerateFeature(tileFeatureMap, tile);
-			StateFeature sf = new StateFeature(f, 1.);
-			features.add(sf);
-
-		}
-
-		return features;
-	}
-
-	@Override
-	public int numberOfFeatures() {
-		return Math.max(this.nextActionFeatureId, this.nextStateFeatureId);
 	}
 
 	/**
-	 * Returns the stored feature id or creates, stores and returns one. If a
-	 * feature id is created, then the {@link #nextStateFeatureId} data member
-	 * of this object is incremented.
+	 * After all the tiling specifications have been set, this method can be
+	 * called to produce a linear VFA object.
 	 * 
-	 * @param tileFeatureMap
-	 *            the map from tiles to feature ids
-	 * @param tile
-	 *            the tile for which a feature id is returned.
-	 * @return the feature id for the tile.
+	 * @param defaultWeightValue
+	 *            the default value weights for the CMAC features will use.
+	 * @return a linear ValueFunctionApproximation object that uses this feature
+	 *         database
 	 */
-	protected int getOrGenerateFeature(
-			Map<FVTiling.FVTile, Integer> tileFeatureMap, FVTiling.FVTile tile) {
-		Integer stored = tileFeatureMap.get(tile);
-		if (stored == null) {
-			stored = this.nextStateFeatureId;
-			tileFeatureMap.put(tile, stored);
-			this.nextStateFeatureId++;
-		}
-		return stored;
+	public ValueFunctionApproximation generateVFA(double defaultWeightValue) {
+		return new LinearVFA(this, defaultWeightValue);
 	}
 
 	@Override
@@ -307,46 +327,75 @@ public class FVCMACFeatureDatabase implements FeatureDatabase {
 	}
 
 	/**
-	 * Returns or creates, stores and returns the action feature id for the
-	 * given {@link GroundedAction} in the list of action features. If a a new
-	 * action feature id is created, then the {@link #nextActionFeatureId}
-	 * datamember of this object is incremented.
+	 * Returns the stored feature id or creates, stores and returns one. If a
+	 * feature id is created, then the {@link #nextStateFeatureId} data member
+	 * of this object is incremented.
 	 * 
-	 * @param storedActionFeatures
-	 *            the stores list of action features.
-	 * @param ga
-	 *            the grounded action whose associated feature should be
-	 *            returned (or created, stored, and returned)
-	 * @return the action feature id for this action.
+	 * @param tileFeatureMap
+	 *            the map from tiles to feature ids
+	 * @param tile
+	 *            the tile for which a feature id is returned.
+	 * @return the feature id for the tile.
 	 */
-	protected int addOrGetMatchingActionFeatureID(
-			List<ActionFeatureID> storedActionFeatures, GroundedAction ga) {
-		ActionFeatureID id = matchingActionFeature(storedActionFeatures, ga);
-		if (id == null) {
-			id = new ActionFeatureID(ga, this.nextActionFeatureId);
-			storedActionFeatures.add(id);
-			this.nextActionFeatureId++;
+	protected int getOrGenerateFeature(
+			Map<FVTiling.FVTile, Integer> tileFeatureMap, FVTiling.FVTile tile) {
+		Integer stored = tileFeatureMap.get(tile);
+		if (stored == null) {
+			stored = this.nextStateFeatureId;
+			tileFeatureMap.put(tile, stored);
+			this.nextStateFeatureId++;
 		}
-		return id.id;
-	}
-
-	/**
-	 * After all the tiling specifications have been set, this method can be
-	 * called to produce a linear VFA object.
-	 * 
-	 * @param defaultWeightValue
-	 *            the default value weights for the CMAC features will use.
-	 * @return a linear ValueFunctionApproximation object that uses this feature
-	 *         database
-	 */
-	public ValueFunctionApproximation generateVFA(double defaultWeightValue) {
-		return new LinearVFA(this, defaultWeightValue);
+		return stored;
 	}
 
 	@Override
-	public void freezeDatabaseState(boolean toggle) {
-		// do nothing
+	public List<StateFeature> getStateFeatures(State s) {
 
+		double[] input = this.featureVectorGenerator
+				.generateFeatureVectorFrom(s);
+		List<StateFeature> features = new ArrayList<StateFeature>();
+		for (int i = 0; i < this.tilings.size(); i++) {
+			FVTiling tiling = this.tilings.get(i);
+			Map<FVTiling.FVTile, Integer> tileFeatureMap = this.stateFeatures
+					.get(i);
+
+			FVTiling.FVTile tile = tiling.getFVTile(input);
+			int f = this.getOrGenerateFeature(tileFeatureMap, tile);
+			StateFeature sf = new StateFeature(f, 1.);
+			features.add(sf);
+
+		}
+
+		return features;
+	}
+
+	/**
+	 * Returns the {@link ActionFeatureID} with an equivalent
+	 * {@link GroundedAction} in the given list or null if there is none.
+	 * 
+	 * @param actionFeatures
+	 *            the list of {@link ActionFeatureID} objects to search.
+	 * @param forAction
+	 *            the {@link GroundedAction} for which a match is to be found.
+	 * @return the {@link ActionFeatureID} with an equivalent
+	 *         {@link GroundedAction} in the given list or null if there is
+	 *         none.
+	 */
+	protected ActionFeatureID matchingActionFeature(
+			List<ActionFeatureID> actionFeatures, GroundedAction forAction) {
+
+		for (ActionFeatureID aid : actionFeatures) {
+			if (aid.ga.equals(forAction)) {
+				return aid;
+			}
+		}
+
+		return null;
+	}
+
+	@Override
+	public int numberOfFeatures() {
+		return Math.max(this.nextActionFeatureId, this.nextStateFeatureId);
 	}
 
 	/**
@@ -403,47 +452,6 @@ public class FVCMACFeatureDatabase implements FeatureDatabase {
 		}
 
 		return offset;
-	}
-
-	/**
-	 * Returns the {@link ActionFeatureID} with an equivalent
-	 * {@link GroundedAction} in the given list or null if there is none.
-	 * 
-	 * @param actionFeatures
-	 *            the list of {@link ActionFeatureID} objects to search.
-	 * @param forAction
-	 *            the {@link GroundedAction} for which a match is to be found.
-	 * @return the {@link ActionFeatureID} with an equivalent
-	 *         {@link GroundedAction} in the given list or null if there is
-	 *         none.
-	 */
-	protected ActionFeatureID matchingActionFeature(
-			List<ActionFeatureID> actionFeatures, GroundedAction forAction) {
-
-		for (ActionFeatureID aid : actionFeatures) {
-			if (aid.ga.equals(forAction)) {
-				return aid;
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * A class for associating a {@link GroundedAction} with a feature id.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	protected class ActionFeatureID {
-		public int id;
-		public GroundedAction ga;
-
-		public ActionFeatureID(GroundedAction ga, int id) {
-			this.id = id;
-			this.ga = ga;
-		}
-
 	}
 
 }

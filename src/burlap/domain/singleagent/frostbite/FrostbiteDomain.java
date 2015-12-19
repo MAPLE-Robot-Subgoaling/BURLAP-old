@@ -1,8 +1,16 @@
 package burlap.domain.singleagent.frostbite;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 import burlap.debugtools.RandomFactory;
 import burlap.oomdp.auxiliary.DomainGenerator;
-import burlap.oomdp.core.*;
+import burlap.oomdp.core.Attribute;
+import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.ObjectClass;
+import burlap.oomdp.core.PropositionalFunction;
+import burlap.oomdp.core.TransitionProbability;
 import burlap.oomdp.core.objects.MutableObjectInstance;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.MutableState;
@@ -13,10 +21,6 @@ import burlap.oomdp.singleagent.SADomain;
 import burlap.oomdp.singleagent.common.SimpleAction;
 import burlap.oomdp.singleagent.explorer.VisualExplorer;
 import burlap.oomdp.visualizer.Visualizer;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 /**
  * A simplified version of the classic Atari Frostbite domain. In this game, the
@@ -39,6 +43,247 @@ import java.util.Random;
  */
 public class FrostbiteDomain implements DomainGenerator {
 
+	public class ActionIdle extends SimpleAction.SimpleDeterministicAction
+			implements FullActionModel {
+
+		/**
+		 * Initializes the idle action.
+		 * 
+		 * @param name
+		 *            the name of the action
+		 * @param domain
+		 *            the domain of the action.
+		 */
+		public ActionIdle(String name, Domain domain) {
+			super(name, domain);
+		}
+
+		@Override
+		protected State performActionHelper(State st,
+				GroundedAction groundedAction) {
+			FrostbiteDomain.this.move(st, 0, 0);
+			return st;
+		}
+
+	}
+	public class IglooBuiltPF extends PropositionalFunction {
+		/**
+		 * Initializes to be evaluated on an agent object.
+		 * 
+		 * @param name
+		 *            the name of the propositional function
+		 * @param domain
+		 *            the domain of the propositional function
+		 */
+		public IglooBuiltPF(String name, Domain domain) {
+			super(name, domain, new String[] { IGLOOCLASS });
+		}
+
+		@Override
+		public boolean isTrue(State st, String... params) {
+			ObjectInstance igloo = st.getObject(params[0]);
+
+			int building = igloo.getIntValForAttribute(BUILDINGATTNAME);
+			return building >= buildingStepsToWin;
+		}
+	}
+
+	public class InWaterPF extends PropositionalFunction {
+		/**
+		 * Initializes to be evaluated on an agent object.
+		 * 
+		 * @param name
+		 *            the name of the propositional function
+		 * @param domain
+		 *            the domain of the propositional function
+		 */
+		public InWaterPF(String name, Domain domain) {
+			super(name, domain, new String[] { AGENTCLASS });
+		}
+
+		@Override
+		public boolean isTrue(State st, String... params) {
+
+			ObjectInstance agent = st.getObject(params[0]);
+			int ah = agent.getIntValForAttribute(HEIGHTATTNAME);
+
+			if (ah != 0)
+				return false;
+
+			// Agent is on a platform
+			if (getLandedPlatformSpeed(st) != 0)
+				return false;
+
+			int ay = agent.getIntValForAttribute(YATTNAME) + agentSize / 2;
+			return ay >= gameIceHeight;
+		}
+	}
+
+	/**
+	 * An action class for moving the agent.
+	 */
+	public class MovementAction extends SimpleAction implements FullActionModel {
+
+		/**
+		 * Probabilities of the actual direction the agent will go
+		 */
+		protected double[] directionProbs;
+
+		/**
+		 * Random object for sampling distribution
+		 */
+		protected Random rand;
+
+		/**
+		 * Initializes for the given name, domain and actually direction
+		 * probabilities the agent will go
+		 * 
+		 * @param name
+		 *            name of the action
+		 * @param domain
+		 *            the domain of the action
+		 * @param directions
+		 *            the probability for each direction (index 0,1,2,3
+		 *            corresponds to north,south,east,west, respectively).
+		 */
+		public MovementAction(String name, Domain domain, double[] directions) {
+			super(name, domain);
+			this.directionProbs = directions.clone();
+			this.rand = RandomFactory.getMapped(0);
+		}
+
+		@Override
+		public List<TransitionProbability> getTransitions(State st,
+				GroundedAction groundedAction) {
+
+			List<TransitionProbability> transitions = new ArrayList<TransitionProbability>();
+			for (int i = 0; i < directionProbs.length; i++) {
+				double p = directionProbs[i];
+				if (p == 0.) {
+					continue; // cannot transition in this direction
+				}
+				State ns = st.copy();
+				int[] dcomps = FrostbiteDomain.this
+						.movementDirectionFromIndex(i);
+				FrostbiteDomain.this.move(ns, dcomps[0], dcomps[1]);
+
+				// make sure this direction doesn't actually stay in the same
+				// place and replicate another no-op
+				boolean isNew = true;
+				for (TransitionProbability tp : transitions) {
+					if (tp.s.equals(ns)) {
+						isNew = false;
+						tp.p += p;
+						break;
+					}
+				}
+
+				if (isNew) {
+					TransitionProbability tp = new TransitionProbability(ns, p);
+					transitions.add(tp);
+				}
+
+			}
+
+			return transitions;
+		}
+
+		@Override
+		protected State performActionHelper(State st,
+				GroundedAction groundedAction) {
+
+			double roll = rand.nextDouble();
+			double curSum = 0.;
+			int dir = 0;
+			for (int i = 0; i < directionProbs.length; i++) {
+				curSum += directionProbs[i];
+				if (roll < curSum) {
+					dir = i;
+					break;
+				}
+			}
+
+			int[] dcomps = FrostbiteDomain.this.movementDirectionFromIndex(dir);
+			FrostbiteDomain.this.move(st, dcomps[0], dcomps[1]);
+
+			return st;
+		}
+	}
+	public class OnIcePF extends PropositionalFunction {
+		/**
+		 * Initializes to be evaluated on an agent object.
+		 * 
+		 * @param name
+		 *            the name of the propositional function
+		 * @param domain
+		 *            the domain of the propositional function
+		 */
+		public OnIcePF(String name, Domain domain) {
+			super(name, domain, new String[] { AGENTCLASS });
+		}
+
+		@Override
+		public boolean isTrue(State st, String... params) {
+			ObjectInstance agent = st.getObject(params[0]);
+
+			int ay = agent.getIntValForAttribute(YATTNAME) + agentSize / 2;
+			return ay < gameIceHeight;
+		}
+	}
+	public class OnPlatformPF extends PropositionalFunction {
+		/**
+		 * Initializes to be evaluated on an agent object and platform object.
+		 * 
+		 * @param name
+		 *            the name of the propositional function
+		 * @param domain
+		 *            the domain of the propositional function
+		 */
+		public OnPlatformPF(String name, Domain domain) {
+			super(name, domain, new String[] { AGENTCLASS, PLATFORMCLASS });
+		}
+
+		@Override
+		public boolean isTrue(State st, String... params) {
+
+			ObjectInstance agent = st.getObject(params[0]);
+			ObjectInstance platform = st.getObject(params[1]);
+
+			int x = platform.getIntValForAttribute(XATTNAME);
+			int y = platform.getIntValForAttribute(YATTNAME);
+			int s = platform.getIntValForAttribute(SIZEATTNAME);
+
+			int ax = agent.getIntValForAttribute(XATTNAME) + agentSize / 2;
+			int ay = agent.getIntValForAttribute(YATTNAME) + agentSize / 2;
+			int ah = agent.getIntValForAttribute(HEIGHTATTNAME);
+
+			if (ah != 0) {
+				return false;
+			}
+
+			return pointInPlatform(ax, ay, x, y, s);
+		}
+	}
+
+	public class PlatformActivePF extends PropositionalFunction {
+		/**
+		 * Initializes to be evaluated on an agent object and platform object.
+		 * 
+		 * @param name
+		 *            the name of the propositional function
+		 * @param domain
+		 *            the domain of the propositional function
+		 */
+		public PlatformActivePF(String name, Domain domain) {
+			super(name, domain, new String[] { PLATFORMCLASS });
+		}
+
+		@Override
+		public boolean isTrue(State st, String... params) {
+			ObjectInstance platform = st.getObject(params[0]);
+			return platform.getBooleanValForAttribute(ACTIVATEDATTNAME);
+		}
+	}
 	/**
 	 * Constant for the name of the x position attribute.
 	 */
@@ -52,7 +297,6 @@ public class FrostbiteDomain implements DomainGenerator {
 	 * Attribute name for height
 	 */
 	public static final String HEIGHTATTNAME = "height";
-
 	/**
 	 * Constant for the name of the size of a frozen platform
 	 */
@@ -65,11 +309,11 @@ public class FrostbiteDomain implements DomainGenerator {
 	 * Constant for the name of the activated status of a platform
 	 */
 	public static final String ACTIVATEDATTNAME = "activated";
-
 	/**
 	 * Constant for the name of the agent OO-MDP class
 	 */
 	public static final String AGENTCLASS = "agent";
+
 	/**
 	 * Constant for the name of the igloo OO-MDP class
 	 */
@@ -78,7 +322,6 @@ public class FrostbiteDomain implements DomainGenerator {
 	 * Constant for the name of the obstacle OO-MDP class
 	 */
 	public static final String PLATFORMCLASS = "platform";
-
 	/**
 	 * Constant for the name of the north action
 	 */
@@ -95,11 +338,11 @@ public class FrostbiteDomain implements DomainGenerator {
 	 * Constant for the name of the west action
 	 */
 	public static final String ACTIONWEST = "west";
+
 	/**
 	 * Constant for the name of the west action
 	 */
 	public static final String ACTIONIDLE = "idle";
-
 	/**
 	 * Constant for the name of the propositional function
 	 * "agent is on platform"
@@ -125,7 +368,6 @@ public class FrostbiteDomain implements DomainGenerator {
 	 * Constant to adjust the scale of the game
 	 */
 	private static final int SCALE = 5;
-
 	/**
 	 * Game parameters
 	 */
@@ -136,30 +378,45 @@ public class FrostbiteDomain implements DomainGenerator {
 	private static final int stepSize = 2 * SCALE;
 	private static final int jumpSpeed = jumpSize / 4;
 	private static final int platformSpeed = 1 * SCALE;
+
 	private static int numberPlatformRow = 4;
+
 	private static int numberPlatformCol = 4;
+
 	private static int agentSize = 8 * SCALE;
+
 	private static int platformSize = 15 * SCALE;
+
 	private static int spaceBetweenPlatforms = 26 * SCALE;
+
 	private static boolean visualizingDomain = false;
-	protected int buildingStepsToWin = 16;
 
 	/**
-	 * Matrix specifying the transition dynamics in terms of movement
-	 * directions. The first index indicates the action direction attempted
-	 * (ordered north, south, east, west) the second index indicates the actual
-	 * resulting direction the agent will go (assuming there is no wall in the
-	 * way). The value is the probability of that outcome. The existence of
-	 * walls does not affect the probability of the direction the agent will
-	 * actually go, but if a wall is in the way, it will affect the outcome. For
-	 * instance, if the agent selects north, but there is a 0.2 probability of
-	 * actually going east and there is a wall to the east, then with 0.2
-	 * probability, the agent will stay in place.
+	 * Creates a state with one agent, one igloo, and 4 rows of 4 platforms. The
+	 * object values are uninitialised and will have to be set manually or with
+	 * methods like {@link #setAgent(burlap.oomdp.core.states.State, int, int)}.
+	 * 
+	 * @param domain
+	 *            the domain of the state to generate
+	 * @return a state object
 	 */
-	protected double[][] transitionDynamics;
+	public static State getCleanState(Domain domain) {
 
-	public FrostbiteDomain() {
-		setDeterministicTransitionDynamics();
+		State s = new MutableState();
+
+		ObjectInstance agent = new MutableObjectInstance(
+				domain.getObjectClass(AGENTCLASS), AGENTCLASS + "0");
+		s.addObject(agent);
+		ObjectInstance igloo = new MutableObjectInstance(
+				domain.getObjectClass(IGLOOCLASS), IGLOOCLASS + "0");
+		s.addObject(igloo);
+
+		for (int i = 0; i < numberPlatformRow; i++)
+			setPlatformRow(domain, s, i);
+
+		setAgent(s, platformSize / 2 + agentSize / 2, gameIceHeight - jumpSize
+				/ 2);
+		return s;
 	}
 
 	/**
@@ -172,9 +429,9 @@ public class FrostbiteDomain implements DomainGenerator {
 	 */
 	public static void main(String[] args) {
 		FrostbiteDomain fd = new FrostbiteDomain();
-		fd.visualizingDomain = true;
+		FrostbiteDomain.visualizingDomain = true;
 		Domain d = fd.generateDomain();
-		State s = fd.getCleanState(d);
+		State s = FrostbiteDomain.getCleanState(d);
 
 		Visualizer vis = FrostbiteVisualizer.getVisualizer(fd);
 		VisualExplorer exp = new VisualExplorer(d, vis, s);
@@ -293,57 +550,56 @@ public class FrostbiteDomain implements DomainGenerator {
 		}
 	}
 
+	protected int buildingStepsToWin = 16;
+
 	/**
-	 * Creates a state with one agent, one igloo, and 4 rows of 4 platforms. The
-	 * object values are uninitialised and will have to be set manually or with
-	 * methods like {@link #setAgent(burlap.oomdp.core.states.State, int, int)}.
-	 * 
-	 * @param domain
-	 *            the domain of the state to generate
-	 * @return a state object
+	 * Matrix specifying the transition dynamics in terms of movement
+	 * directions. The first index indicates the action direction attempted
+	 * (ordered north, south, east, west) the second index indicates the actual
+	 * resulting direction the agent will go (assuming there is no wall in the
+	 * way). The value is the probability of that outcome. The existence of
+	 * walls does not affect the probability of the direction the agent will
+	 * actually go, but if a wall is in the way, it will affect the outcome. For
+	 * instance, if the agent selects north, but there is a 0.2 probability of
+	 * actually going east and there is a wall to the east, then with 0.2
+	 * probability, the agent will stay in place.
 	 */
-	public static State getCleanState(Domain domain) {
+	protected double[][] transitionDynamics;
 
-		State s = new MutableState();
+	int moveStep = 0;
 
-		ObjectInstance agent = new MutableObjectInstance(
-				domain.getObjectClass(AGENTCLASS), AGENTCLASS + "0");
-		s.addObject(agent);
-		ObjectInstance igloo = new MutableObjectInstance(
-				domain.getObjectClass(IGLOOCLASS), IGLOOCLASS + "0");
-		s.addObject(igloo);
-
-		for (int i = 0; i < numberPlatformRow; i++)
-			setPlatformRow(domain, s, i);
-
-		setAgent(s, platformSize / 2 + agentSize / 2, gameIceHeight - jumpSize
-				/ 2);
-		return s;
+	public FrostbiteDomain() {
+		setDeterministicTransitionDynamics();
 	}
 
 	/**
-	 * Returns the agent size
+	 * Activates platforms on which the user has landed (and the rest of the
+	 * row).
 	 * 
-	 * @return the agent size
+	 * @param s
+	 *            State on which to activate the platforms
 	 */
-	public int getAgentSize() {
-		return agentSize;
-	}
+	private void activatePlatforms(State s) {
+		ObjectInstance agent = s.getObjectsOfClass(AGENTCLASS).get(0);
+		int ax = agent.getIntValForAttribute(XATTNAME) + agentSize / 2;
+		int ay = agent.getIntValForAttribute(YATTNAME) + agentSize / 2;
+		List<ObjectInstance> platforms = s.getObjectsOfClass(PLATFORMCLASS);
+		for (int i = 0; i < platforms.size(); i++) {
+			ObjectInstance platform = platforms.get(i);
+			if (!platform.getBooleanValForAttribute(ACTIVATEDATTNAME))
 
-	/**
-	 * Will set the domain to use deterministic action transitions.
-	 */
-	public void setDeterministicTransitionDynamics() {
-		int na = 4;
-		transitionDynamics = new double[na][na];
-		for (int i = 0; i < na; i++) {
-			for (int j = 0; j < na; j++) {
-				if (i != j) {
-					transitionDynamics[i][j] = 0.;
-				} else {
-					transitionDynamics[i][j] = 1.;
+				if (pointInPlatform(ax, ay,
+						platform.getIntValForAttribute(XATTNAME),
+						platform.getIntValForAttribute(YATTNAME),
+						platform.getIntValForAttribute(SIZEATTNAME))) {
+					for (int j = numberPlatformCol * (i / numberPlatformCol); j < numberPlatformCol
+							* (1 + i / numberPlatformCol); j++)
+						platforms.get(j).setValue(ACTIVATEDATTNAME, true);
+					ObjectInstance igloo = s.getFirstObjectOfClass(IGLOOCLASS);
+					igloo.setValue(BUILDINGATTNAME,
+							igloo.getIntValForAttribute(BUILDINGATTNAME) + 1);
+					break;
 				}
-			}
 		}
 	}
 
@@ -415,42 +671,39 @@ public class FrostbiteDomain implements DomainGenerator {
 	}
 
 	/**
-	 * Returns the change in x and y position for a given direction number.
+	 * Returns the agent size
 	 * 
-	 * @param i
-	 *            the direction number (0,1,2,3 indicates north,south,east,west,
-	 *            respectively)
-	 * @return the change in direction for x and y; the first index of the
-	 *         returned double is change in x, the second index is change in y.
+	 * @return the agent size
 	 */
-	protected int[] movementDirectionFromIndex(int i) {
-
-		int[] result = null;
-
-		switch (i) {
-		case 0:
-			result = new int[] { 0, 1 };
-			break;
-
-		case 1:
-			result = new int[] { 0, -1 };
-			break;
-
-		case 2:
-			result = new int[] { 1, 0 };
-			break;
-
-		case 3:
-			result = new int[] { -1, 0 };
-
-		default:
-			break;
-		}
-
-		return result;
+	public int getAgentSize() {
+		return agentSize;
 	}
 
-	int moveStep = 0;
+	/**
+	 * Checks whether the player is on a platform and return its platform speed
+	 * if so.
+	 * 
+	 * @param s
+	 *            State on which the check is made
+	 * @return 0 if the player is not on a platform. Otherwise returns the
+	 *         platform speed of the platform the player is on.
+	 */
+	private int getLandedPlatformSpeed(State s) {
+		ObjectInstance agent = s.getObjectsOfClass(AGENTCLASS).get(0);
+		int ax = agent.getIntValForAttribute(XATTNAME) + agentSize / 2;
+		int ay = agent.getIntValForAttribute(YATTNAME) + agentSize / 2;
+		List<ObjectInstance> platforms = s.getObjectsOfClass(PLATFORMCLASS);
+		for (int i = 0; i < platforms.size(); i++) {
+			ObjectInstance platform = platforms.get(i);
+			if (pointInPlatform(ax, ay,
+					platform.getIntValForAttribute(XATTNAME),
+					platform.getIntValForAttribute(YATTNAME),
+					platform.getIntValForAttribute(SIZEATTNAME)))
+				return ((i / numberPlatformCol) % 2 == 0) ? platformSpeed
+						: -platformSpeed;
+		}
+		return 0;
+	}
 
 	/**
 	 * Attempts to move the agent into the given position, taking into account
@@ -525,111 +778,39 @@ public class FrostbiteDomain implements DomainGenerator {
 	}
 
 	/**
-	 * Executes update step on state. Handles everything that is not player
-	 * specific.
+	 * Returns the change in x and y position for a given direction number.
 	 * 
-	 * @param s
-	 *            the state to apply the update step on
+	 * @param i
+	 *            the direction number (0,1,2,3 indicates north,south,east,west,
+	 *            respectively)
+	 * @return the change in direction for x and y; the first index of the
+	 *         returned double is change in x, the second index is change in y.
 	 */
-	private void update(State s, int leftToJump, boolean justLanded,
-			int platformSpeedOnAgent) {
-		// Move the platforms
-		List<ObjectInstance> platforms = s.getObjectsOfClass(PLATFORMCLASS);
-		for (int i = 0; i < platforms.size(); i++) {
-			int directionL = ((i / numberPlatformCol) % 2 == 0) ? 1 : -1;
-			int x = platforms.get(i).getIntValForAttribute(XATTNAME)
-					+ directionL * platformSpeed;
-			if (x < 0)
-				x += gameWidth;
-			platforms.get(i).setValue(XATTNAME, x % gameWidth);
+	protected int[] movementDirectionFromIndex(int i) {
+
+		int[] result = null;
+
+		switch (i) {
+		case 0:
+			result = new int[] { 0, 1 };
+			break;
+
+		case 1:
+			result = new int[] { 0, -1 };
+			break;
+
+		case 2:
+			result = new int[] { 1, 0 };
+			break;
+
+		case 3:
+			result = new int[] { -1, 0 };
+
+		default:
+			break;
 		}
 
-		// Player landed
-		if (leftToJump == 0) {
-			// Just landed: Potentially activate some platforms
-			if (justLanded)
-				activatePlatforms(s);
-
-			// Termination conditions (only used to test the domain)
-			if (visualizingDomain) {
-				ObjectInstance agent = s.getObjectsOfClass(AGENTCLASS).get(0);
-				int ay = agent.getIntValForAttribute(YATTNAME) + agentSize / 2;
-				ObjectInstance igloo = s.getObjectsOfClass(IGLOOCLASS).get(0);
-				int building = igloo.getIntValForAttribute(BUILDINGATTNAME);
-				if (platformSpeedOnAgent == 0 && ay > gameIceHeight) {
-					System.out.println("Game over.");
-					System.exit(0);
-				} else if (ay <= gameIceHeight
-						&& building >= buildingStepsToWin) {
-					System.out.println("You won.");
-					System.exit(0);
-				}
-			}
-		}
-
-		// If all platforms are active, deactivate them
-		for (int i = 0; i < platforms.size(); i++)
-			if (!platforms.get(i).getBooleanValForAttribute(ACTIVATEDATTNAME))
-				return;
-		for (int i = 0; i < platforms.size(); i++)
-			platforms.get(i).setValue(ACTIVATEDATTNAME, false);
-	}
-
-	/**
-	 * Activates platforms on which the user has landed (and the rest of the
-	 * row).
-	 * 
-	 * @param s
-	 *            State on which to activate the platforms
-	 */
-	private void activatePlatforms(State s) {
-		ObjectInstance agent = s.getObjectsOfClass(AGENTCLASS).get(0);
-		int ax = agent.getIntValForAttribute(XATTNAME) + agentSize / 2;
-		int ay = agent.getIntValForAttribute(YATTNAME) + agentSize / 2;
-		List<ObjectInstance> platforms = s.getObjectsOfClass(PLATFORMCLASS);
-		for (int i = 0; i < platforms.size(); i++) {
-			ObjectInstance platform = platforms.get(i);
-			if (!platform.getBooleanValForAttribute(ACTIVATEDATTNAME))
-
-				if (pointInPlatform(ax, ay,
-						platform.getIntValForAttribute(XATTNAME),
-						platform.getIntValForAttribute(YATTNAME),
-						platform.getIntValForAttribute(SIZEATTNAME))) {
-					for (int j = numberPlatformCol * (i / numberPlatformCol); j < numberPlatformCol
-							* (1 + i / numberPlatformCol); j++)
-						platforms.get(j).setValue(ACTIVATEDATTNAME, true);
-					ObjectInstance igloo = s.getFirstObjectOfClass(IGLOOCLASS);
-					igloo.setValue(BUILDINGATTNAME,
-							igloo.getIntValForAttribute(BUILDINGATTNAME) + 1);
-					break;
-				}
-		}
-	}
-
-	/**
-	 * Checks whether the player is on a platform and return its platform speed
-	 * if so.
-	 * 
-	 * @param s
-	 *            State on which the check is made
-	 * @return 0 if the player is not on a platform. Otherwise returns the
-	 *         platform speed of the platform the player is on.
-	 */
-	private int getLandedPlatformSpeed(State s) {
-		ObjectInstance agent = s.getObjectsOfClass(AGENTCLASS).get(0);
-		int ax = agent.getIntValForAttribute(XATTNAME) + agentSize / 2;
-		int ay = agent.getIntValForAttribute(YATTNAME) + agentSize / 2;
-		List<ObjectInstance> platforms = s.getObjectsOfClass(PLATFORMCLASS);
-		for (int i = 0; i < platforms.size(); i++) {
-			ObjectInstance platform = platforms.get(i);
-			if (pointInPlatform(ax, ay,
-					platform.getIntValForAttribute(XATTNAME),
-					platform.getIntValForAttribute(YATTNAME),
-					platform.getIntValForAttribute(SIZEATTNAME)))
-				return ((i / numberPlatformCol) % 2 == 0) ? platformSpeed
-						: -platformSpeed;
-		}
-		return 0;
+		return result;
 	}
 
 	/**
@@ -679,248 +860,71 @@ public class FrostbiteDomain implements DomainGenerator {
 	}
 
 	/**
-	 * An action class for moving the agent.
+	 * Will set the domain to use deterministic action transitions.
 	 */
-	public class MovementAction extends SimpleAction implements FullActionModel {
-
-		/**
-		 * Probabilities of the actual direction the agent will go
-		 */
-		protected double[] directionProbs;
-
-		/**
-		 * Random object for sampling distribution
-		 */
-		protected Random rand;
-
-		/**
-		 * Initializes for the given name, domain and actually direction
-		 * probabilities the agent will go
-		 * 
-		 * @param name
-		 *            name of the action
-		 * @param domain
-		 *            the domain of the action
-		 * @param directions
-		 *            the probability for each direction (index 0,1,2,3
-		 *            corresponds to north,south,east,west, respectively).
-		 */
-		public MovementAction(String name, Domain domain, double[] directions) {
-			super(name, domain);
-			this.directionProbs = directions.clone();
-			this.rand = RandomFactory.getMapped(0);
-		}
-
-		@Override
-		protected State performActionHelper(State st,
-				GroundedAction groundedAction) {
-
-			double roll = rand.nextDouble();
-			double curSum = 0.;
-			int dir = 0;
-			for (int i = 0; i < directionProbs.length; i++) {
-				curSum += directionProbs[i];
-				if (roll < curSum) {
-					dir = i;
-					break;
+	public void setDeterministicTransitionDynamics() {
+		int na = 4;
+		transitionDynamics = new double[na][na];
+		for (int i = 0; i < na; i++) {
+			for (int j = 0; j < na; j++) {
+				if (i != j) {
+					transitionDynamics[i][j] = 0.;
+				} else {
+					transitionDynamics[i][j] = 1.;
 				}
 			}
+		}
+	}
 
-			int[] dcomps = FrostbiteDomain.this.movementDirectionFromIndex(dir);
-			FrostbiteDomain.this.move(st, dcomps[0], dcomps[1]);
-
-			return st;
+	/**
+	 * Executes update step on state. Handles everything that is not player
+	 * specific.
+	 * 
+	 * @param s
+	 *            the state to apply the update step on
+	 */
+	private void update(State s, int leftToJump, boolean justLanded,
+			int platformSpeedOnAgent) {
+		// Move the platforms
+		List<ObjectInstance> platforms = s.getObjectsOfClass(PLATFORMCLASS);
+		for (int i = 0; i < platforms.size(); i++) {
+			int directionL = ((i / numberPlatformCol) % 2 == 0) ? 1 : -1;
+			int x = platforms.get(i).getIntValForAttribute(XATTNAME)
+					+ directionL * platformSpeed;
+			if (x < 0)
+				x += gameWidth;
+			platforms.get(i).setValue(XATTNAME, x % gameWidth);
 		}
 
-		@Override
-		public List<TransitionProbability> getTransitions(State st,
-				GroundedAction groundedAction) {
+		// Player landed
+		if (leftToJump == 0) {
+			// Just landed: Potentially activate some platforms
+			if (justLanded)
+				activatePlatforms(s);
 
-			List<TransitionProbability> transitions = new ArrayList<TransitionProbability>();
-			for (int i = 0; i < directionProbs.length; i++) {
-				double p = directionProbs[i];
-				if (p == 0.) {
-					continue; // cannot transition in this direction
+			// Termination conditions (only used to test the domain)
+			if (visualizingDomain) {
+				ObjectInstance agent = s.getObjectsOfClass(AGENTCLASS).get(0);
+				int ay = agent.getIntValForAttribute(YATTNAME) + agentSize / 2;
+				ObjectInstance igloo = s.getObjectsOfClass(IGLOOCLASS).get(0);
+				int building = igloo.getIntValForAttribute(BUILDINGATTNAME);
+				if (platformSpeedOnAgent == 0 && ay > gameIceHeight) {
+					System.out.println("Game over.");
+					System.exit(0);
+				} else if (ay <= gameIceHeight
+						&& building >= buildingStepsToWin) {
+					System.out.println("You won.");
+					System.exit(0);
 				}
-				State ns = st.copy();
-				int[] dcomps = FrostbiteDomain.this
-						.movementDirectionFromIndex(i);
-				FrostbiteDomain.this.move(ns, dcomps[0], dcomps[1]);
-
-				// make sure this direction doesn't actually stay in the same
-				// place and replicate another no-op
-				boolean isNew = true;
-				for (TransitionProbability tp : transitions) {
-					if (tp.s.equals(ns)) {
-						isNew = false;
-						tp.p += p;
-						break;
-					}
-				}
-
-				if (isNew) {
-					TransitionProbability tp = new TransitionProbability(ns, p);
-					transitions.add(tp);
-				}
-
 			}
-
-			return transitions;
-		}
-	}
-
-	public class ActionIdle extends SimpleAction.SimpleDeterministicAction
-			implements FullActionModel {
-
-		/**
-		 * Initializes the idle action.
-		 * 
-		 * @param name
-		 *            the name of the action
-		 * @param domain
-		 *            the domain of the action.
-		 */
-		public ActionIdle(String name, Domain domain) {
-			super(name, domain);
 		}
 
-		@Override
-		protected State performActionHelper(State st,
-				GroundedAction groundedAction) {
-			FrostbiteDomain.this.move(st, 0, 0);
-			return st;
-		}
-
-	}
-
-	public class OnPlatformPF extends PropositionalFunction {
-		/**
-		 * Initializes to be evaluated on an agent object and platform object.
-		 * 
-		 * @param name
-		 *            the name of the propositional function
-		 * @param domain
-		 *            the domain of the propositional function
-		 */
-		public OnPlatformPF(String name, Domain domain) {
-			super(name, domain, new String[] { AGENTCLASS, PLATFORMCLASS });
-		}
-
-		@Override
-		public boolean isTrue(State st, String... params) {
-
-			ObjectInstance agent = st.getObject(params[0]);
-			ObjectInstance platform = st.getObject(params[1]);
-
-			int x = platform.getIntValForAttribute(XATTNAME);
-			int y = platform.getIntValForAttribute(YATTNAME);
-			int s = platform.getIntValForAttribute(SIZEATTNAME);
-
-			int ax = agent.getIntValForAttribute(XATTNAME) + agentSize / 2;
-			int ay = agent.getIntValForAttribute(YATTNAME) + agentSize / 2;
-			int ah = agent.getIntValForAttribute(HEIGHTATTNAME);
-
-			if (ah != 0) {
-				return false;
-			}
-
-			return pointInPlatform(ax, ay, x, y, s);
-		}
-	}
-
-	public class PlatformActivePF extends PropositionalFunction {
-		/**
-		 * Initializes to be evaluated on an agent object and platform object.
-		 * 
-		 * @param name
-		 *            the name of the propositional function
-		 * @param domain
-		 *            the domain of the propositional function
-		 */
-		public PlatformActivePF(String name, Domain domain) {
-			super(name, domain, new String[] { PLATFORMCLASS });
-		}
-
-		@Override
-		public boolean isTrue(State st, String... params) {
-			ObjectInstance platform = st.getObject(params[0]);
-			return platform.getBooleanValForAttribute(ACTIVATEDATTNAME);
-		}
-	}
-
-	public class InWaterPF extends PropositionalFunction {
-		/**
-		 * Initializes to be evaluated on an agent object.
-		 * 
-		 * @param name
-		 *            the name of the propositional function
-		 * @param domain
-		 *            the domain of the propositional function
-		 */
-		public InWaterPF(String name, Domain domain) {
-			super(name, domain, new String[] { AGENTCLASS });
-		}
-
-		@Override
-		public boolean isTrue(State st, String... params) {
-
-			ObjectInstance agent = st.getObject(params[0]);
-			int ah = agent.getIntValForAttribute(HEIGHTATTNAME);
-
-			if (ah != 0)
-				return false;
-
-			// Agent is on a platform
-			if (getLandedPlatformSpeed(st) != 0)
-				return false;
-
-			int ay = agent.getIntValForAttribute(YATTNAME) + agentSize / 2;
-			return ay >= gameIceHeight;
-		}
-	}
-
-	public class OnIcePF extends PropositionalFunction {
-		/**
-		 * Initializes to be evaluated on an agent object.
-		 * 
-		 * @param name
-		 *            the name of the propositional function
-		 * @param domain
-		 *            the domain of the propositional function
-		 */
-		public OnIcePF(String name, Domain domain) {
-			super(name, domain, new String[] { AGENTCLASS });
-		}
-
-		@Override
-		public boolean isTrue(State st, String... params) {
-			ObjectInstance agent = st.getObject(params[0]);
-
-			int ay = agent.getIntValForAttribute(YATTNAME) + agentSize / 2;
-			return ay < gameIceHeight;
-		}
-	}
-
-	public class IglooBuiltPF extends PropositionalFunction {
-		/**
-		 * Initializes to be evaluated on an agent object.
-		 * 
-		 * @param name
-		 *            the name of the propositional function
-		 * @param domain
-		 *            the domain of the propositional function
-		 */
-		public IglooBuiltPF(String name, Domain domain) {
-			super(name, domain, new String[] { IGLOOCLASS });
-		}
-
-		@Override
-		public boolean isTrue(State st, String... params) {
-			ObjectInstance igloo = st.getObject(params[0]);
-
-			int building = igloo.getIntValForAttribute(BUILDINGATTNAME);
-			return building >= buildingStepsToWin;
-		}
+		// If all platforms are active, deactivate them
+		for (int i = 0; i < platforms.size(); i++)
+			if (!platforms.get(i).getBooleanValForAttribute(ACTIVATEDATTNAME))
+				return;
+		for (int i = 0; i < platforms.size(); i++)
+			platforms.get(i).setValue(ACTIVATEDATTNAME, false);
 	}
 
 }

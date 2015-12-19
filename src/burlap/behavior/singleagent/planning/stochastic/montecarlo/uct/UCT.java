@@ -9,24 +9,24 @@ import java.util.Random;
 import java.util.Set;
 
 import burlap.behavior.policy.GreedyQPolicy;
-import burlap.behavior.singleagent.planning.Planner;
-import burlap.behavior.valuefunction.QValue;
-import burlap.behavior.singleagent.options.Option;
 import burlap.behavior.singleagent.MDPSolver;
-import burlap.behavior.valuefunction.QFunction;
-import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
+import burlap.behavior.singleagent.options.Option;
+import burlap.behavior.singleagent.planning.Planner;
 import burlap.behavior.singleagent.planning.stochastic.montecarlo.uct.UCTActionNode.UCTActionConstructor;
 import burlap.behavior.singleagent.planning.stochastic.montecarlo.uct.UCTStateNode.UCTStateConstructor;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
+import burlap.behavior.valuefunction.QFunction;
+import burlap.behavior.valuefunction.QValue;
 import burlap.debugtools.DPrint;
 import burlap.debugtools.RandomFactory;
+import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * An implementation of UCT [1]. This class can be augmented with a goal state
@@ -115,20 +115,177 @@ public class UCT extends MDPSolver implements Planner, QFunction {
 
 	}
 
-	protected void UCTInit(Domain domain, RewardFunction rf,
-			TerminalFunction tf, double gamma,
-			HashableStateFactory hashingFactory, int horizon, int nRollouts,
-			int explorationBias) {
+	/**
+	 * Adds a {@link UCTStateNode} to the UCT tree
+	 * 
+	 * @param snode
+	 *            the {@link UCTStateNode} to add
+	 */
+	protected void addNodeToIndexTree(UCTStateNode snode) {
 
-		this.solverInit(domain, rf, tf, gamma, hashingFactory);
-		this.maxHorizon = horizon;
-		this.maxRollOutsFromRoot = nRollouts;
-		this.explorationBias = explorationBias;
+		while (stateDepthIndex.size() <= snode.depth) {
+			stateDepthIndex.add(new HashMap<HashableState, UCTStateNode>());
+		}
 
-		goalCondition = null;
+		stateDepthIndex.get(snode.depth).put(snode.state, snode);
 
-		rand = RandomFactory.getMapped(589449);
+		List<UCTStateNode> depthNodes = statesToStateNodes.get(snode.state);
+		if (depthNodes == null) {
+			depthNodes = new ArrayList<UCTStateNode>();
+			statesToStateNodes.put(snode.state, depthNodes);
+		}
 
+		depthNodes.add(snode);
+
+		treeSize++;
+
+	}
+
+	/**
+	 * Returns the {@link UCTActionNode} with the highest average sample
+	 * Q-value. Ties are broken by returning the first {@link UCTActionNode}
+	 * with the highest value.
+	 * 
+	 * @param snode
+	 *            the {@link UCTStateNode} to query
+	 * @return the {@link UCTActionNode} with the highest average sample Q-value
+	 */
+	protected UCTActionNode bestReturnAction(UCTStateNode snode) {
+
+		double maxQ = Double.NEGATIVE_INFINITY;
+		UCTActionNode choice = null;
+
+		for (UCTActionNode anode : snode.actionNodes) {
+
+			// only select nodes that have been visited
+			if (anode.n > 0 && anode.averageReturn() > maxQ) {
+				maxQ = anode.averageReturn();
+				choice = anode;
+			}
+
+		}
+
+		return choice;
+
+	}
+
+	/**
+	 * Returns the upper confidence Q-value for a given state node and action
+	 * node.
+	 * 
+	 * @param snode
+	 *            the state node
+	 * @param anode
+	 *            the action node
+	 * @return the upper confidence Q-value
+	 */
+	protected double computeUCTQ(UCTStateNode snode, UCTActionNode anode) {
+		return anode.averageReturn() + this.explorationQBoost(snode.n, anode.n);
+	}
+
+	/**
+	 * Returns true if the sample returns for any actions are different
+	 * 
+	 * @param snode
+	 *            the node to check for an action preference
+	 * @return true if the sample returns for any actions are different; false
+	 *         otherwise or if there is only one action to take.
+	 */
+	protected boolean containsActionPreference(UCTStateNode snode) {
+
+		if (snode == null) {
+			return false;
+		}
+
+		UCTActionNode lastNode = null;
+		boolean multipleChoices = false;
+		for (UCTActionNode anode : snode.actionNodes) {
+
+			// only select nodes that have been visited
+			if (anode.n > 0) {
+				if (lastNode != null) {
+					if (anode.averageReturn() != lastNode.averageReturn()) {
+						return true;
+					}
+					multipleChoices = true;
+				}
+
+				lastNode = anode;
+			}
+
+		}
+
+		if (multipleChoices) {
+			return false;
+		}
+
+		return true; // there was only once choice so it's not ill defined
+
+	}
+
+	/**
+	 * Returns the extra value added to the average sample Q-value that is sued
+	 * to produce the upper confidence Q-value.
+	 * 
+	 * @param ns
+	 *            the number of times the state node has been visited
+	 * @param na
+	 *            the number of times the action node has been visited
+	 * @return the extra value added to the average sample Q-value that is sued
+	 *         to produce the upper confidence Q-value.
+	 */
+	protected double explorationQBoost(int ns, int na) {
+		return explorationBias * Math.sqrt(Math.log(ns) / na);
+	}
+
+	@Override
+	public QValue getQ(State s, AbstractGroundedAction a) {
+
+		// if we haven't done any planning, then do so now
+		if (this.root == null) {
+			this.planFromState(s);
+		}
+
+		// if the root node isn't the query state, then replan
+		HashableState sh = this.hashingFactory.hashState(s);
+		if (!sh.equals(this.root.state)) {
+			this.resetSolver();
+			this.planFromState(s);
+		}
+
+		GroundedAction ga = (GroundedAction) a;
+		for (UCTActionNode act : this.root.actionNodes) {
+			if (act.action.equals(ga)) {
+				return new QValue(s, ga, act.averageReturn());
+			}
+		}
+
+		throw new RuntimeException("UCT does not know about action: "
+				+ a.toString() + "; cannot return Q-value for it");
+	}
+
+	@Override
+	public List<QValue> getQs(State s) {
+
+		// if we haven't done any planning, then do so now
+		if (this.root == null) {
+			this.planFromState(s);
+		}
+
+		// if the root node isn't the query state, then replan
+		HashableState sh = this.hashingFactory.hashState(s);
+		if (!sh.equals(this.root.state)) {
+			this.resetSolver();
+			this.planFromState(s);
+		}
+
+		// compute the Q-values
+		List<QValue> qs = new ArrayList<QValue>(this.root.actionNodes.size());
+		for (UCTActionNode act : this.root.actionNodes) {
+			qs.add(new QValue(s, act.action, act.averageReturn()));
+		}
+
+		return qs;
 	}
 
 	/**
@@ -140,17 +297,12 @@ public class UCT extends MDPSolver implements Planner, QFunction {
 		return root;
 	}
 
-	/**
-	 * Tells the valueFunction to stop planning if a goal state is ever found.
-	 * 
-	 * @param gc
-	 *            a
-	 *            {@link burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest}
-	 *            object used to specify goal states (whereever it evaluates as
-	 *            true).
+	/*
+	 * Initializes data members; should be called before {@link
+	 * treeRollOut(UCTStateNode, int, int)}
 	 */
-	public void useGoalConditionStopCriteria(StateConditionTest gc) {
-		this.goalCondition = gc;
+	protected void initializeRollOut() {
+		foundGoalOnRollout = false;
 	}
 
 	/**
@@ -214,59 +366,24 @@ public class UCT extends MDPSolver implements Planner, QFunction {
 
 	}
 
-	@Override
-	public List<QValue> getQs(State s) {
+	/**
+	 * Returns the {@link UCTStateNode} for the given (hashed) state at the
+	 * given depth.
+	 * 
+	 * @param sh
+	 *            the state whose node should be returned
+	 * @param d
+	 *            the depth of the state
+	 * @return the corresponding {@link UCTStateNode}
+	 */
+	protected UCTStateNode queryTreeIndex(HashableState sh, int d) {
 
-		// if we haven't done any planning, then do so now
-		if (this.root == null) {
-			this.planFromState(s);
+		if (d >= stateDepthIndex.size()) {
+			return null;
 		}
 
-		// if the root node isn't the query state, then replan
-		HashableState sh = this.hashingFactory.hashState(s);
-		if (!sh.equals(this.root.state)) {
-			this.resetSolver();
-			this.planFromState(s);
-		}
+		return stateDepthIndex.get(d).get(sh);
 
-		// compute the Q-values
-		List<QValue> qs = new ArrayList<QValue>(this.root.actionNodes.size());
-		for (UCTActionNode act : this.root.actionNodes) {
-			qs.add(new QValue(s, act.action, act.averageReturn()));
-		}
-
-		return qs;
-	}
-
-	@Override
-	public QValue getQ(State s, AbstractGroundedAction a) {
-
-		// if we haven't done any planning, then do so now
-		if (this.root == null) {
-			this.planFromState(s);
-		}
-
-		// if the root node isn't the query state, then replan
-		HashableState sh = this.hashingFactory.hashState(s);
-		if (!sh.equals(this.root.state)) {
-			this.resetSolver();
-			this.planFromState(s);
-		}
-
-		GroundedAction ga = (GroundedAction) a;
-		for (UCTActionNode act : this.root.actionNodes) {
-			if (act.action.equals(ga)) {
-				return new QValue(s, ga, act.averageReturn());
-			}
-		}
-
-		throw new RuntimeException("UCT does not know about action: "
-				+ a.toString() + "; cannot return Q-value for it");
-	}
-
-	@Override
-	public double value(State s) {
-		return QFunction.QFunctionHelper.getOptimalValue(this, s, this.tf);
 	}
 
 	@Override
@@ -278,12 +395,89 @@ public class UCT extends MDPSolver implements Planner, QFunction {
 		this.numRollOutsFromRoot = 0;
 	}
 
-	/*
-	 * Initializes data members; should be called before {@link
-	 * treeRollOut(UCTStateNode, int, int)}
+	/**
+	 * Selections which action to take. Unexplored actions from the node are
+	 * selected first. If all actions have been explored, then the action with
+	 * the highest upper confidence Q-value is selected, ties are broken
+	 * randomly.
+	 * 
+	 * @param snode
+	 *            the UCT node from which to select an action.
+	 * @return the {@link UCTActionNode} to be taken.
 	 */
-	protected void initializeRollOut() {
-		foundGoalOnRollout = false;
+	protected UCTActionNode selectActionNode(UCTStateNode snode) {
+
+		List<UCTActionNode> candidates = new ArrayList<UCTActionNode>();
+
+		boolean untriedNodes = false;
+		double maxUCTQ = Double.NEGATIVE_INFINITY;
+
+		for (UCTActionNode an : snode.actionNodes) {
+
+			if (!untriedNodes) {
+				if (an.n == 0) {
+					untriedNodes = true;
+					candidates.clear();
+					candidates.add(an);
+				} else {
+					double UCTQ = this.computeUCTQ(snode, an);
+					if (UCTQ > maxUCTQ) {
+						candidates.clear();
+						candidates.add(an);
+						maxUCTQ = UCTQ;
+					} else if (UCTQ == maxUCTQ) {
+						candidates.add(an);
+					}
+				}
+			} else if (an.n == 0) {
+				candidates.add(an);
+			}
+
+		}
+
+		// only one thing to do
+		if (candidates.size() == 1) {
+			return candidates.get(0);
+		}
+
+		// if there are untried actions, try the most interesting first
+		if (untriedNodes) {
+			List<UCTActionNode> candidates2 = new ArrayList<UCTActionNode>(
+					candidates.size());
+			for (UCTActionNode anode : candidates) {
+				HashableState sample = this.stateHash(anode.action
+						.executeIn(snode.state.s));
+				if (!uniqueStatesInTree.contains(sample)) {
+					candidates2.add(anode);
+				}
+			}
+			if (candidates2.size() > 0) {
+				candidates = candidates2;
+			}
+		}
+
+		return candidates.get(rand.nextInt(candidates.size()));
+
+	}
+
+	/**
+	 * Returns true if rollouts and planning should cease. Planning will stop if
+	 * the valueFunction is told to terminate upon finding a goal and one was
+	 * found, or if the maximum number of rollouts have already been performed.
+	 * 
+	 * @return true if rollouts and planning should cease; false otherwise.
+	 */
+	public boolean stopPlanning() {
+		if (foundGoal) {
+			return true;
+		}
+		if (maxRollOutsFromRoot == -1) {
+			return false;
+		}
+		if (numRollOutsFromRoot < maxRollOutsFromRoot) {
+			return false;
+		}
+		return true;
 	}
 
 	/**
@@ -390,232 +584,38 @@ public class UCT extends MDPSolver implements Planner, QFunction {
 		return sampledReturn;
 	}
 
-	/**
-	 * Returns true if rollouts and planning should cease. Planning will stop if
-	 * the valueFunction is told to terminate upon finding a goal and one was
-	 * found, or if the maximum number of rollouts have already been performed.
-	 * 
-	 * @return true if rollouts and planning should cease; false otherwise.
-	 */
-	public boolean stopPlanning() {
-		if (foundGoal) {
-			return true;
-		}
-		if (maxRollOutsFromRoot == -1) {
-			return false;
-		}
-		if (numRollOutsFromRoot < maxRollOutsFromRoot) {
-			return false;
-		}
-		return true;
-	}
+	protected void UCTInit(Domain domain, RewardFunction rf,
+			TerminalFunction tf, double gamma,
+			HashableStateFactory hashingFactory, int horizon, int nRollouts,
+			int explorationBias) {
 
-	/**
-	 * Selections which action to take. Unexplored actions from the node are
-	 * selected first. If all actions have been explored, then the action with
-	 * the highest upper confidence Q-value is selected, ties are broken
-	 * randomly.
-	 * 
-	 * @param snode
-	 *            the UCT node from which to select an action.
-	 * @return the {@link UCTActionNode} to be taken.
-	 */
-	protected UCTActionNode selectActionNode(UCTStateNode snode) {
+		this.solverInit(domain, rf, tf, gamma, hashingFactory);
+		this.maxHorizon = horizon;
+		this.maxRollOutsFromRoot = nRollouts;
+		this.explorationBias = explorationBias;
 
-		List<UCTActionNode> candidates = new ArrayList<UCTActionNode>();
+		goalCondition = null;
 
-		boolean untriedNodes = false;
-		double maxUCTQ = Double.NEGATIVE_INFINITY;
-
-		for (UCTActionNode an : snode.actionNodes) {
-
-			if (!untriedNodes) {
-				if (an.n == 0) {
-					untriedNodes = true;
-					candidates.clear();
-					candidates.add(an);
-				} else {
-					double UCTQ = this.computeUCTQ(snode, an);
-					if (UCTQ > maxUCTQ) {
-						candidates.clear();
-						candidates.add(an);
-						maxUCTQ = UCTQ;
-					} else if (UCTQ == maxUCTQ) {
-						candidates.add(an);
-					}
-				}
-			} else if (an.n == 0) {
-				candidates.add(an);
-			}
-
-		}
-
-		// only one thing to do
-		if (candidates.size() == 1) {
-			return candidates.get(0);
-		}
-
-		// if there are untried actions, try the most interesting first
-		if (untriedNodes) {
-			List<UCTActionNode> candidates2 = new ArrayList<UCTActionNode>(
-					candidates.size());
-			for (UCTActionNode anode : candidates) {
-				HashableState sample = this.stateHash(anode.action
-						.executeIn(snode.state.s));
-				if (!uniqueStatesInTree.contains(sample)) {
-					candidates2.add(anode);
-				}
-			}
-			if (candidates2.size() > 0) {
-				candidates = candidates2;
-			}
-		}
-
-		return candidates.get(rand.nextInt(candidates.size()));
+		rand = RandomFactory.getMapped(589449);
 
 	}
 
 	/**
-	 * Returns the upper confidence Q-value for a given state node and action
-	 * node.
+	 * Tells the valueFunction to stop planning if a goal state is ever found.
 	 * 
-	 * @param snode
-	 *            the state node
-	 * @param anode
-	 *            the action node
-	 * @return the upper confidence Q-value
+	 * @param gc
+	 *            a
+	 *            {@link burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest}
+	 *            object used to specify goal states (whereever it evaluates as
+	 *            true).
 	 */
-	protected double computeUCTQ(UCTStateNode snode, UCTActionNode anode) {
-		return anode.averageReturn() + this.explorationQBoost(snode.n, anode.n);
+	public void useGoalConditionStopCriteria(StateConditionTest gc) {
+		this.goalCondition = gc;
 	}
 
-	/**
-	 * Returns the extra value added to the average sample Q-value that is sued
-	 * to produce the upper confidence Q-value.
-	 * 
-	 * @param ns
-	 *            the number of times the state node has been visited
-	 * @param na
-	 *            the number of times the action node has been visited
-	 * @return the extra value added to the average sample Q-value that is sued
-	 *         to produce the upper confidence Q-value.
-	 */
-	protected double explorationQBoost(int ns, int na) {
-		return explorationBias * Math.sqrt(Math.log(ns) / (double) na);
-	}
-
-	/**
-	 * Returns the {@link UCTStateNode} for the given (hashed) state at the
-	 * given depth.
-	 * 
-	 * @param sh
-	 *            the state whose node should be returned
-	 * @param d
-	 *            the depth of the state
-	 * @return the corresponding {@link UCTStateNode}
-	 */
-	protected UCTStateNode queryTreeIndex(HashableState sh, int d) {
-
-		if (d >= stateDepthIndex.size()) {
-			return null;
-		}
-
-		return stateDepthIndex.get(d).get(sh);
-
-	}
-
-	/**
-	 * Adds a {@link UCTStateNode} to the UCT tree
-	 * 
-	 * @param snode
-	 *            the {@link UCTStateNode} to add
-	 */
-	protected void addNodeToIndexTree(UCTStateNode snode) {
-
-		while (stateDepthIndex.size() <= snode.depth) {
-			stateDepthIndex.add(new HashMap<HashableState, UCTStateNode>());
-		}
-
-		stateDepthIndex.get(snode.depth).put(snode.state, snode);
-
-		List<UCTStateNode> depthNodes = statesToStateNodes.get(snode.state);
-		if (depthNodes == null) {
-			depthNodes = new ArrayList<UCTStateNode>();
-			statesToStateNodes.put(snode.state, depthNodes);
-		}
-
-		depthNodes.add(snode);
-
-		treeSize++;
-
-	}
-
-	/**
-	 * Returns the {@link UCTActionNode} with the highest average sample
-	 * Q-value. Ties are broken by returning the first {@link UCTActionNode}
-	 * with the highest value.
-	 * 
-	 * @param snode
-	 *            the {@link UCTStateNode} to query
-	 * @return the {@link UCTActionNode} with the highest average sample Q-value
-	 */
-	protected UCTActionNode bestReturnAction(UCTStateNode snode) {
-
-		double maxQ = Double.NEGATIVE_INFINITY;
-		UCTActionNode choice = null;
-
-		for (UCTActionNode anode : snode.actionNodes) {
-
-			// only select nodes that have been visited
-			if (anode.n > 0 && anode.averageReturn() > maxQ) {
-				maxQ = anode.averageReturn();
-				choice = anode;
-			}
-
-		}
-
-		return choice;
-
-	}
-
-	/**
-	 * Returns true if the sample returns for any actions are different
-	 * 
-	 * @param snode
-	 *            the node to check for an action preference
-	 * @return true if the sample returns for any actions are different; false
-	 *         otherwise or if there is only one action to take.
-	 */
-	protected boolean containsActionPreference(UCTStateNode snode) {
-
-		if (snode == null) {
-			return false;
-		}
-
-		UCTActionNode lastNode = null;
-		boolean multipleChoices = false;
-		for (UCTActionNode anode : snode.actionNodes) {
-
-			// only select nodes that have been visited
-			if (anode.n > 0) {
-				if (lastNode != null) {
-					if (anode.averageReturn() != lastNode.averageReturn()) {
-						return true;
-					}
-					multipleChoices = true;
-				}
-
-				lastNode = anode;
-			}
-
-		}
-
-		if (multipleChoices) {
-			return false;
-		}
-
-		return true; // there was only once choice so it's not ill defined
-
+	@Override
+	public double value(State s) {
+		return QFunction.QFunctionHelper.getOptimalValue(this, s, this.tf);
 	}
 
 }

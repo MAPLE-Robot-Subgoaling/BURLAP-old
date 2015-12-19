@@ -1,13 +1,13 @@
 package burlap.domain.singleagent.frostbite;
 
+import java.util.List;
+
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.legacy.StateParser;
 import burlap.oomdp.stateserialization.SerializableState;
 import burlap.oomdp.stateserialization.SerializableStateFactory;
-
-import java.util.List;
 
 /**
  * A {@link burlap.oomdp.stateserialization.SerializableStateFactory} for simple
@@ -18,39 +18,6 @@ import java.util.List;
  */
 public class SerializableFrostbiteStateFactory implements
 		SerializableStateFactory {
-
-	@Override
-	public SerializableState serialize(State s) {
-		return new SerializableFrostbiteState(s);
-	}
-
-	@Override
-	public Class<?> getGeneratedClass() {
-		return SerializableFrostbiteState.class;
-	}
-
-	public static class SerializableFrostbiteState extends SerializableState {
-
-		public String stringRep;
-
-		public SerializableFrostbiteState() {
-		}
-
-		public SerializableFrostbiteState(State s) {
-			super(s);
-		}
-
-		@Override
-		public void serialize(State s) {
-			this.stringRep = stateToString(s);
-		}
-
-		@Override
-		public State deserialize(Domain domain) {
-			return stringToState(domain, this.stringRep);
-		}
-
-	}
 
 	public static class FrostbiteStateParser implements StateParser {
 
@@ -69,6 +36,29 @@ public class SerializableFrostbiteStateFactory implements
 		public State stringToState(String str) {
 			return SerializableFrostbiteStateFactory.stringToState(domain, str);
 		}
+	}
+
+	public static class SerializableFrostbiteState extends SerializableState {
+
+		public String stringRep;
+
+		public SerializableFrostbiteState() {
+		}
+
+		public SerializableFrostbiteState(State s) {
+			super(s);
+		}
+
+		@Override
+		public State deserialize(Domain domain) {
+			return stringToState(domain, this.stringRep);
+		}
+
+		@Override
+		public void serialize(State s) {
+			this.stringRep = stateToString(s);
+		}
+
 	}
 
 	public static String stateToString(State s) {
@@ -128,6 +118,16 @@ public class SerializableFrostbiteStateFactory implements
 					Boolean.parseBoolean(oComps[3]));
 		}
 		return s;
+	}
+
+	@Override
+	public Class<?> getGeneratedClass() {
+		return SerializableFrostbiteState.class;
+	}
+
+	@Override
+	public SerializableState serialize(State s) {
+		return new SerializableFrostbiteState(s);
 	}
 
 }

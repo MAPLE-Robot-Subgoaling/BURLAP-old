@@ -9,14 +9,14 @@ import burlap.behavior.learningrate.ConstantLR;
 import burlap.behavior.learningrate.LearningRate;
 import burlap.behavior.singleagent.learning.actorcritic.Actor;
 import burlap.behavior.singleagent.learning.actorcritic.CritiqueResult;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.datastructures.BoltzmannDistribution;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * And Actor component whose policy is defined by a Boltzmann distribution over
@@ -28,6 +28,83 @@ import burlap.oomdp.singleagent.GroundedAction;
  * 
  */
 public class BoltzmannActor extends Actor {
+
+	/**
+	 * Defines an Action preference; a pair consisting of a GroundedAction and a
+	 * double representing the preference for that action.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	class ActionPreference {
+
+		/**
+		 * The action being evaluated.
+		 */
+		public GroundedAction ga;
+
+		/**
+		 * the preference for action ga.
+		 */
+		public double preference;
+
+		/**
+		 * Initializes for a given action and preference for that action.
+		 * 
+		 * @param ga
+		 *            the action to be evaluated.
+		 * @param preference
+		 *            the preference for the action ga.
+		 */
+		public ActionPreference(GroundedAction ga, double preference) {
+			this.ga = ga;
+			this.preference = preference;
+		}
+
+	}
+
+	/**
+	 * A class for storing action preferences for the possible actions
+	 * applicable in a given state.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	class PolicyNode {
+
+		/**
+		 * A hashed state object.
+		 */
+		public HashableState sh;
+
+		/**
+		 * The action preferences for actions applicable in sh.
+		 */
+		public List<ActionPreference> preferences;
+
+		/**
+		 * Initializes with an empty list of action preferences for the given
+		 * input state sh.
+		 * 
+		 * @param sh
+		 *            the input state for which this PolicyNode will be created.
+		 */
+		public PolicyNode(HashableState sh) {
+			this.sh = sh;
+			this.preferences = new ArrayList<BoltzmannActor.ActionPreference>();
+		}
+
+		/**
+		 * Adds an action preference for this state.
+		 * 
+		 * @param pr
+		 *            the action preference to add.
+		 */
+		public void addPreference(ActionPreference pr) {
+			this.preferences.add(pr);
+		}
+
+	}
 
 	/**
 	 * The domain in which this agent will act
@@ -97,33 +174,6 @@ public class BoltzmannActor extends Actor {
 
 	}
 
-	/**
-	 * Sets the learning rate function to use.
-	 * 
-	 * @param lr
-	 *            the learning rate function to use.
-	 */
-	public void setLearningRate(LearningRate lr) {
-		this.learningRate = lr;
-	}
-
-	@Override
-	public void updateFromCritqique(CritiqueResult critqiue) {
-
-		HashableState sh = this.hashingFactory.hashState(critqiue.getS());
-		PolicyNode node = this.getNode(sh);
-
-		double learningRate = this.learningRate.pollLearningRate(
-				this.totalNumberOfSteps, sh.s, critqiue.getA());
-
-		ActionPreference pref = this.getMatchingPreference(sh, critqiue.getA(),
-				node);
-		pref.preference += learningRate * critqiue.getCritique();
-
-		this.totalNumberOfSteps++;
-
-	}
-
 	@Override
 	public void addNonDomainReferencedAction(Action a) {
 
@@ -184,53 +234,6 @@ public class BoltzmannActor extends Actor {
 	}
 
 	/**
-	 * Returns the policy node that stores the action preferences for state.
-	 * 
-	 * @param sh
-	 *            The (hashed) state of the {@link BoltzmannActor.PolicyNode} to
-	 *            return
-	 * @return the {@link BoltzmannActor.PolicyNode} object for the given input
-	 *         state.
-	 */
-	protected PolicyNode getNode(HashableState sh) {
-
-		// List <GroundedAction> gas =
-		// sh.s.getAllGroundedActionsFor(this.actions);
-		List<GroundedAction> gas = Action
-				.getAllApplicableGroundedActionsFromActionList(this.actions,
-						sh.s);
-
-		PolicyNode node = this.preferences.get(sh);
-		if (node == null) {
-			node = new PolicyNode(sh);
-			for (GroundedAction ga : gas) {
-				node.addPreference(new ActionPreference(ga, 0.0));
-			}
-			this.preferences.put(sh, node);
-		}
-
-		return node;
-
-	}
-
-	@Override
-	public boolean isStochastic() {
-		return true;
-	}
-
-	@Override
-	public boolean isDefinedFor(State s) {
-		return true; // can always create equal-probable action preferences for
-						// a new state
-	}
-
-	@Override
-	public void resetData() {
-		this.preferences.clear();
-		this.learningRate.resetDecay();
-	}
-
-	/**
 	 * Returns the stored {@link BoltzmannActor.ActionPreference} that is stored
 	 * in a policy node. If actions are parameterized and the domain is not name
 	 * dependent, then a matching between the input state and stored state is
@@ -266,79 +269,76 @@ public class BoltzmannActor extends Actor {
 	}
 
 	/**
-	 * A class for storing action preferences for the possible actions
-	 * applicable in a given state.
+	 * Returns the policy node that stores the action preferences for state.
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @param sh
+	 *            The (hashed) state of the {@link BoltzmannActor.PolicyNode} to
+	 *            return
+	 * @return the {@link BoltzmannActor.PolicyNode} object for the given input
+	 *         state.
 	 */
-	class PolicyNode {
+	protected PolicyNode getNode(HashableState sh) {
 
-		/**
-		 * A hashed state object.
-		 */
-		public HashableState sh;
+		// List <GroundedAction> gas =
+		// sh.s.getAllGroundedActionsFor(this.actions);
+		List<GroundedAction> gas = Action
+				.getAllApplicableGroundedActionsFromActionList(this.actions,
+						sh.s);
 
-		/**
-		 * The action preferences for actions applicable in sh.
-		 */
-		public List<ActionPreference> preferences;
-
-		/**
-		 * Initializes with an empty list of action preferences for the given
-		 * input state sh.
-		 * 
-		 * @param sh
-		 *            the input state for which this PolicyNode will be created.
-		 */
-		public PolicyNode(HashableState sh) {
-			this.sh = sh;
-			this.preferences = new ArrayList<BoltzmannActor.ActionPreference>();
+		PolicyNode node = this.preferences.get(sh);
+		if (node == null) {
+			node = new PolicyNode(sh);
+			for (GroundedAction ga : gas) {
+				node.addPreference(new ActionPreference(ga, 0.0));
+			}
+			this.preferences.put(sh, node);
 		}
 
-		/**
-		 * Adds an action preference for this state.
-		 * 
-		 * @param pr
-		 *            the action preference to add.
-		 */
-		public void addPreference(ActionPreference pr) {
-			this.preferences.add(pr);
-		}
+		return node;
 
 	}
 
+	@Override
+	public boolean isDefinedFor(State s) {
+		return true; // can always create equal-probable action preferences for
+						// a new state
+	}
+
+	@Override
+	public boolean isStochastic() {
+		return true;
+	}
+
+	@Override
+	public void resetData() {
+		this.preferences.clear();
+		this.learningRate.resetDecay();
+	}
+
 	/**
-	 * Defines an Action preference; a pair consisting of a GroundedAction and a
-	 * double representing the preference for that action.
+	 * Sets the learning rate function to use.
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @param lr
+	 *            the learning rate function to use.
 	 */
-	class ActionPreference {
+	public void setLearningRate(LearningRate lr) {
+		this.learningRate = lr;
+	}
 
-		/**
-		 * The action being evaluated.
-		 */
-		public GroundedAction ga;
+	@Override
+	public void updateFromCritqique(CritiqueResult critqiue) {
 
-		/**
-		 * the preference for action ga.
-		 */
-		public double preference;
+		HashableState sh = this.hashingFactory.hashState(critqiue.getS());
+		PolicyNode node = this.getNode(sh);
 
-		/**
-		 * Initializes for a given action and preference for that action.
-		 * 
-		 * @param ga
-		 *            the action to be evaluated.
-		 * @param preference
-		 *            the preference for the action ga.
-		 */
-		public ActionPreference(GroundedAction ga, double preference) {
-			this.ga = ga;
-			this.preference = preference;
-		}
+		double learningRate = this.learningRate.pollLearningRate(
+				this.totalNumberOfSteps, sh.s, critqiue.getA());
+
+		ActionPreference pref = this.getMatchingPreference(sh, critqiue.getA(),
+				node);
+		pref.preference += learningRate * critqiue.getCritique();
+
+		this.totalNumberOfSteps++;
 
 	}
 

@@ -1,12 +1,27 @@
 package burlap.tutorials.bd;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.List;
+
 import burlap.oomdp.auxiliary.DomainGenerator;
-import burlap.oomdp.core.*;
+import burlap.oomdp.core.Attribute;
+import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.ObjectClass;
+import burlap.oomdp.core.PropositionalFunction;
+import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.TransitionProbability;
 import burlap.oomdp.core.objects.MutableObjectInstance;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.MutableState;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.singleagent.*;
+import burlap.oomdp.singleagent.FullActionModel;
+import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.singleagent.SADomain;
 import burlap.oomdp.singleagent.common.SimpleAction;
 import burlap.oomdp.singleagent.environment.SimulatedEnvironment;
 import burlap.oomdp.singleagent.explorer.VisualExplorer;
@@ -15,102 +30,155 @@ import burlap.oomdp.visualizer.StateRenderLayer;
 import burlap.oomdp.visualizer.StaticPainter;
 import burlap.oomdp.visualizer.Visualizer;
 
-import java.awt.*;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Rectangle2D;
-import java.util.*;
-import java.util.List;
-
 public class ExampleGridWorld implements DomainGenerator {
 
-	public static final String ATTX = "x";
-	public static final String ATTY = "y";
+	public class AgentPainter implements ObjectPainter {
 
-	public static final String CLASSAGENT = "agent";
-	public static final String CLASSLOCATION = "location";
+		@Override
+		public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
+				float cWidth, float cHeight) {
 
-	public static final String ACTIONNORTH = "north";
-	public static final String ACTIONSOUTH = "south";
-	public static final String ACTIONEAST = "east";
-	public static final String ACTIONWEST = "west";
+			// agent will be filled in gray
+			g2.setColor(Color.GRAY);
 
-	public static final String PFAT = "at";
+			// set up floats for the width and height of our domain
+			float fWidth = ExampleGridWorld.this.map.length;
+			float fHeight = ExampleGridWorld.this.map[0].length;
 
-	// ordered so first dimension is x
-	protected int[][] map = new int[][] { { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
-			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-			{ 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
-			{ 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
-			{ 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
-			{ 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1 },
-			{ 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
-			{ 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
-			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-			{ 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
-			{ 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 }, };
+			// determine the width of a single cell on our canvas
+			// such that the whole map can be painted
+			float width = cWidth / fWidth;
+			float height = cHeight / fHeight;
 
-	@Override
-	public Domain generateDomain() {
+			int ax = ob.getIntValForAttribute(ATTX);
+			int ay = ob.getIntValForAttribute(ATTY);
 
-		SADomain domain = new SADomain();
+			// left coordinate of cell on our canvas
+			float rx = ax * width;
 
-		Attribute xatt = new Attribute(domain, ATTX,
-				Attribute.AttributeType.INT);
-		xatt.setLims(0, 10);
+			// top coordinate of cell on our canvas
+			// coordinate system adjustment because the java canvas
+			// origin is in the top left instead of the bottom right
+			float ry = cHeight - height - ay * height;
 
-		Attribute yatt = new Attribute(domain, ATTY,
-				Attribute.AttributeType.INT);
-		yatt.setLims(0, 10);
+			// paint the rectangle
+			g2.fill(new Ellipse2D.Float(rx, ry, width, height));
 
-		ObjectClass agentClass = new ObjectClass(domain, CLASSAGENT);
-		agentClass.addAttribute(xatt);
-		agentClass.addAttribute(yatt);
+		}
 
-		ObjectClass locationClass = new ObjectClass(domain, CLASSLOCATION);
-		locationClass.addAttribute(xatt);
-		locationClass.addAttribute(yatt);
+	}
+	protected class AtLocation extends PropositionalFunction {
 
-		new Movement(ACTIONNORTH, domain, 0);
-		new Movement(ACTIONSOUTH, domain, 1);
-		new Movement(ACTIONEAST, domain, 2);
-		new Movement(ACTIONWEST, domain, 3);
+		public AtLocation(Domain domain) {
+			super(PFAT, domain, new String[] { CLASSAGENT, CLASSLOCATION });
+		}
 
-		new AtLocation(domain);
+		@Override
+		public boolean isTrue(State s, String... params) {
+			ObjectInstance agent = s.getObject(params[0]);
+			ObjectInstance location = s.getObject(params[1]);
 
-		return domain;
+			int ax = agent.getIntValForAttribute(ATTX);
+			int ay = agent.getIntValForAttribute(ATTY);
+
+			int lx = location.getIntValForAttribute(ATTX);
+			int ly = location.getIntValForAttribute(ATTY);
+
+			return ax == lx && ay == ly;
+		}
+
 	}
 
-	public static State getExampleState(Domain domain) {
-		State s = new MutableState();
-		ObjectInstance agent = new MutableObjectInstance(
-				domain.getObjectClass(CLASSAGENT), "agent0");
-		agent.setValue(ATTX, 0);
-		agent.setValue(ATTY, 0);
+	public static class ExampleRF implements RewardFunction {
 
-		ObjectInstance location = new MutableObjectInstance(
-				domain.getObjectClass(CLASSLOCATION), "location0");
-		location.setValue(ATTX, 10);
-		location.setValue(ATTY, 10);
+		int goalX;
+		int goalY;
 
-		s.addObject(agent);
-		s.addObject(location);
+		public ExampleRF(int goalX, int goalY) {
+			this.goalX = goalX;
+			this.goalY = goalY;
+		}
 
-		return s;
+		@Override
+		public double reward(State s, GroundedAction a, State sprime) {
+
+			// get location of agent in next state
+			ObjectInstance agent = sprime.getFirstObjectOfClass(CLASSAGENT);
+			int ax = agent.getIntValForAttribute(ATTX);
+			int ay = agent.getIntValForAttribute(ATTY);
+
+			// are they at goal location?
+			if (ax == this.goalX && ay == this.goalY) {
+				return 100.;
+			}
+
+			return -1;
+		}
+
+	}
+	public static class ExampleTF implements TerminalFunction {
+
+		int goalX;
+		int goalY;
+
+		public ExampleTF(int goalX, int goalY) {
+			this.goalX = goalX;
+			this.goalY = goalY;
+		}
+
+		@Override
+		public boolean isTerminal(State s) {
+
+			// get location of agent in next state
+			ObjectInstance agent = s.getFirstObjectOfClass(CLASSAGENT);
+			int ax = agent.getIntValForAttribute(ATTX);
+			int ay = agent.getIntValForAttribute(ATTY);
+
+			// are they at goal location?
+			if (ax == this.goalX && ay == this.goalY) {
+				return true;
+			}
+
+			return false;
+		}
+
 	}
 
-	public StateRenderLayer getStateRenderLayer() {
-		StateRenderLayer rl = new StateRenderLayer();
-		rl.addStaticPainter(new WallPainter());
-		rl.addObjectClassPainter(CLASSLOCATION, new LocationPainter());
-		rl.addObjectClassPainter(CLASSAGENT, new AgentPainter());
+	public class LocationPainter implements ObjectPainter {
 
-		return rl;
+		@Override
+		public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
+				float cWidth, float cHeight) {
+
+			// agent will be filled in blue
+			g2.setColor(Color.BLUE);
+
+			// set up floats for the width and height of our domain
+			float fWidth = ExampleGridWorld.this.map.length;
+			float fHeight = ExampleGridWorld.this.map[0].length;
+
+			// determine the width of a single cell on our canvas
+			// such that the whole map can be painted
+			float width = cWidth / fWidth;
+			float height = cHeight / fHeight;
+
+			int ax = ob.getIntValForAttribute(ATTX);
+			int ay = ob.getIntValForAttribute(ATTY);
+
+			// left coordinate of cell on our canvas
+			float rx = ax * width;
+
+			// top coordinate of cell on our canvas
+			// coordinate system adjustment because the java canvas
+			// origin is in the top left instead of the bottom right
+			float ry = cHeight - height - ay * height;
+
+			// paint the rectangle
+			g2.fill(new Rectangle2D.Float(rx, ry, width, height));
+
+		}
+
 	}
-
-	public Visualizer getVisualizer() {
-		return new Visualizer(this.getStateRenderLayer());
-	}
-
 	protected class Movement extends SimpleAction implements FullActionModel {
 
 		// 0: north; 1: south; 2:east; 3: west
@@ -125,37 +193,6 @@ public class ExampleGridWorld implements DomainGenerator {
 					directionProbs[i] = 0.2 / 3.;
 				}
 			}
-		}
-
-		@Override
-		protected State performActionHelper(State s,
-				GroundedAction groundedAction) {
-			// get agent and current position
-			ObjectInstance agent = s.getFirstObjectOfClass(CLASSAGENT);
-			int curX = agent.getIntValForAttribute(ATTX);
-			int curY = agent.getIntValForAttribute(ATTY);
-
-			// sample directon with random roll
-			double r = Math.random();
-			double sumProb = 0.;
-			int dir = 0;
-			for (int i = 0; i < this.directionProbs.length; i++) {
-				sumProb += this.directionProbs[i];
-				if (r < sumProb) {
-					dir = i;
-					break; // found direction
-				}
-			}
-
-			// get resulting position
-			int[] newPos = this.moveResult(curX, curY, dir);
-
-			// set the new position
-			agent.setValue(ATTX, newPos[0]);
-			agent.setValue(ATTY, newPos[1]);
-
-			// return the state we just modified
-			return s;
 		}
 
 		@Override
@@ -234,30 +271,38 @@ public class ExampleGridWorld implements DomainGenerator {
 
 		}
 
-	}
-
-	protected class AtLocation extends PropositionalFunction {
-
-		public AtLocation(Domain domain) {
-			super(PFAT, domain, new String[] { CLASSAGENT, CLASSLOCATION });
-		}
-
 		@Override
-		public boolean isTrue(State s, String... params) {
-			ObjectInstance agent = s.getObject(params[0]);
-			ObjectInstance location = s.getObject(params[1]);
+		protected State performActionHelper(State s,
+				GroundedAction groundedAction) {
+			// get agent and current position
+			ObjectInstance agent = s.getFirstObjectOfClass(CLASSAGENT);
+			int curX = agent.getIntValForAttribute(ATTX);
+			int curY = agent.getIntValForAttribute(ATTY);
 
-			int ax = agent.getIntValForAttribute(ATTX);
-			int ay = agent.getIntValForAttribute(ATTY);
+			// sample directon with random roll
+			double r = Math.random();
+			double sumProb = 0.;
+			int dir = 0;
+			for (int i = 0; i < this.directionProbs.length; i++) {
+				sumProb += this.directionProbs[i];
+				if (r < sumProb) {
+					dir = i;
+					break; // found direction
+				}
+			}
 
-			int lx = location.getIntValForAttribute(ATTX);
-			int ly = location.getIntValForAttribute(ATTY);
+			// get resulting position
+			int[] newPos = this.moveResult(curX, curY, dir);
 
-			return ax == lx && ay == ly;
+			// set the new position
+			agent.setValue(ATTX, newPos[0]);
+			agent.setValue(ATTY, newPos[1]);
+
+			// return the state we just modified
+			return s;
 		}
 
 	}
-
 	public class WallPainter implements StaticPainter {
 
 		@Override
@@ -303,133 +348,40 @@ public class ExampleGridWorld implements DomainGenerator {
 		}
 
 	}
+	public static final String ATTX = "x";
 
-	public class AgentPainter implements ObjectPainter {
+	public static final String ATTY = "y";
 
-		@Override
-		public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
-				float cWidth, float cHeight) {
+	public static final String CLASSAGENT = "agent";
 
-			// agent will be filled in gray
-			g2.setColor(Color.GRAY);
+	public static final String CLASSLOCATION = "location";
 
-			// set up floats for the width and height of our domain
-			float fWidth = ExampleGridWorld.this.map.length;
-			float fHeight = ExampleGridWorld.this.map[0].length;
+	public static final String ACTIONNORTH = "north";
 
-			// determine the width of a single cell on our canvas
-			// such that the whole map can be painted
-			float width = cWidth / fWidth;
-			float height = cHeight / fHeight;
+	public static final String ACTIONSOUTH = "south";
 
-			int ax = ob.getIntValForAttribute(ATTX);
-			int ay = ob.getIntValForAttribute(ATTY);
+	public static final String ACTIONEAST = "east";
 
-			// left coordinate of cell on our canvas
-			float rx = ax * width;
+	public static final String ACTIONWEST = "west";
 
-			// top coordinate of cell on our canvas
-			// coordinate system adjustment because the java canvas
-			// origin is in the top left instead of the bottom right
-			float ry = cHeight - height - ay * height;
+	public static final String PFAT = "at";
 
-			// paint the rectangle
-			g2.fill(new Ellipse2D.Float(rx, ry, width, height));
+	public static State getExampleState(Domain domain) {
+		State s = new MutableState();
+		ObjectInstance agent = new MutableObjectInstance(
+				domain.getObjectClass(CLASSAGENT), "agent0");
+		agent.setValue(ATTX, 0);
+		agent.setValue(ATTY, 0);
 
-		}
+		ObjectInstance location = new MutableObjectInstance(
+				domain.getObjectClass(CLASSLOCATION), "location0");
+		location.setValue(ATTX, 10);
+		location.setValue(ATTY, 10);
 
-	}
+		s.addObject(agent);
+		s.addObject(location);
 
-	public class LocationPainter implements ObjectPainter {
-
-		@Override
-		public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
-				float cWidth, float cHeight) {
-
-			// agent will be filled in blue
-			g2.setColor(Color.BLUE);
-
-			// set up floats for the width and height of our domain
-			float fWidth = ExampleGridWorld.this.map.length;
-			float fHeight = ExampleGridWorld.this.map[0].length;
-
-			// determine the width of a single cell on our canvas
-			// such that the whole map can be painted
-			float width = cWidth / fWidth;
-			float height = cHeight / fHeight;
-
-			int ax = ob.getIntValForAttribute(ATTX);
-			int ay = ob.getIntValForAttribute(ATTY);
-
-			// left coordinate of cell on our canvas
-			float rx = ax * width;
-
-			// top coordinate of cell on our canvas
-			// coordinate system adjustment because the java canvas
-			// origin is in the top left instead of the bottom right
-			float ry = cHeight - height - ay * height;
-
-			// paint the rectangle
-			g2.fill(new Rectangle2D.Float(rx, ry, width, height));
-
-		}
-
-	}
-
-	public static class ExampleRF implements RewardFunction {
-
-		int goalX;
-		int goalY;
-
-		public ExampleRF(int goalX, int goalY) {
-			this.goalX = goalX;
-			this.goalY = goalY;
-		}
-
-		@Override
-		public double reward(State s, GroundedAction a, State sprime) {
-
-			// get location of agent in next state
-			ObjectInstance agent = sprime.getFirstObjectOfClass(CLASSAGENT);
-			int ax = agent.getIntValForAttribute(ATTX);
-			int ay = agent.getIntValForAttribute(ATTY);
-
-			// are they at goal location?
-			if (ax == this.goalX && ay == this.goalY) {
-				return 100.;
-			}
-
-			return -1;
-		}
-
-	}
-
-	public static class ExampleTF implements TerminalFunction {
-
-		int goalX;
-		int goalY;
-
-		public ExampleTF(int goalX, int goalY) {
-			this.goalX = goalX;
-			this.goalY = goalY;
-		}
-
-		@Override
-		public boolean isTerminal(State s) {
-
-			// get location of agent in next state
-			ObjectInstance agent = s.getFirstObjectOfClass(CLASSAGENT);
-			int ax = agent.getIntValForAttribute(ATTX);
-			int ay = agent.getIntValForAttribute(ATTY);
-
-			// are they at goal location?
-			if (ax == this.goalX && ay == this.goalY) {
-				return true;
-			}
-
-			return false;
-		}
-
+		return s;
 	}
 
 	public static void main(String[] args) {
@@ -458,6 +410,63 @@ public class ExampleGridWorld implements DomainGenerator {
 
 		exp.initGUI();
 
+	}
+
+	// ordered so first dimension is x
+	protected int[][] map = new int[][] { { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+			{ 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
+			{ 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
+			{ 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
+			{ 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1 },
+			{ 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
+			{ 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+			{ 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
+			{ 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 }, };
+
+	@Override
+	public Domain generateDomain() {
+
+		SADomain domain = new SADomain();
+
+		Attribute xatt = new Attribute(domain, ATTX,
+				Attribute.AttributeType.INT);
+		xatt.setLims(0, 10);
+
+		Attribute yatt = new Attribute(domain, ATTY,
+				Attribute.AttributeType.INT);
+		yatt.setLims(0, 10);
+
+		ObjectClass agentClass = new ObjectClass(domain, CLASSAGENT);
+		agentClass.addAttribute(xatt);
+		agentClass.addAttribute(yatt);
+
+		ObjectClass locationClass = new ObjectClass(domain, CLASSLOCATION);
+		locationClass.addAttribute(xatt);
+		locationClass.addAttribute(yatt);
+
+		new Movement(ACTIONNORTH, domain, 0);
+		new Movement(ACTIONSOUTH, domain, 1);
+		new Movement(ACTIONEAST, domain, 2);
+		new Movement(ACTIONWEST, domain, 3);
+
+		new AtLocation(domain);
+
+		return domain;
+	}
+
+	public StateRenderLayer getStateRenderLayer() {
+		StateRenderLayer rl = new StateRenderLayer();
+		rl.addStaticPainter(new WallPainter());
+		rl.addObjectClassPainter(CLASSLOCATION, new LocationPainter());
+		rl.addObjectClassPainter(CLASSAGENT, new AgentPainter());
+
+		return rl;
+	}
+
+	public Visualizer getVisualizer() {
+		return new Visualizer(this.getStateRenderLayer());
 	}
 
 }

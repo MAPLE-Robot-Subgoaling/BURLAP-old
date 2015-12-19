@@ -13,6 +13,24 @@ import burlap.oomdp.singleagent.RewardFunction;
 public interface TaskSettableEnvironment extends Environment {
 
 	/**
+	 * Returns the {@link burlap.oomdp.singleagent.RewardFunction} this
+	 * {@link burlap.oomdp.singleagent.environment.Environment} uses to
+	 * determine rewards.
+	 * 
+	 * @return a {@link burlap.oomdp.singleagent.RewardFunction}
+	 */
+	RewardFunction getRf();
+
+	/**
+	 * Returns the {@link burlap.oomdp.core.TerminalFunction} this
+	 * {@link burlap.oomdp.singleagent.environment.Environment} uses to
+	 * determine terminal states
+	 * 
+	 * @return a {@link burlap.oomdp.core.TerminalFunction}
+	 */
+	TerminalFunction getTf();
+
+	/**
 	 * Sets the {@link burlap.oomdp.singleagent.RewardFunction} of this
 	 * {@link burlap.oomdp.singleagent.environment.Environment} to the specified
 	 * reward function.
@@ -33,23 +51,5 @@ public interface TaskSettableEnvironment extends Environment {
 	 *            {@link burlap.oomdp.singleagent.environment.Environment}.
 	 */
 	void setTf(TerminalFunction tf);
-
-	/**
-	 * Returns the {@link burlap.oomdp.singleagent.RewardFunction} this
-	 * {@link burlap.oomdp.singleagent.environment.Environment} uses to
-	 * determine rewards.
-	 * 
-	 * @return a {@link burlap.oomdp.singleagent.RewardFunction}
-	 */
-	RewardFunction getRf();
-
-	/**
-	 * Returns the {@link burlap.oomdp.core.TerminalFunction} this
-	 * {@link burlap.oomdp.singleagent.environment.Environment} uses to
-	 * determine terminal states
-	 * 
-	 * @return a {@link burlap.oomdp.core.TerminalFunction}
-	 */
-	TerminalFunction getTf();
 
 }

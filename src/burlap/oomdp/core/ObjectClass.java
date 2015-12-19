@@ -1,6 +1,9 @@
 package burlap.oomdp.core;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Object classes are part of the OO-MDP definition and define the kinds of
@@ -44,6 +47,45 @@ public class ObjectClass {
 	}
 
 	/**
+	 * Adds an attribute to define this object class
+	 * 
+	 * @param att
+	 *            the attribute to add
+	 */
+	public void addAttribute(Attribute att) {
+
+		// only add if it is new
+		if (this.hasAttribute(att)) {
+			return;
+		}
+
+		int ind = attributeList.size();
+
+		attributeList.add(att);
+		attributeMap.put(att.name, att);
+		attributeIndex.put(att.name, ind);
+
+	}
+
+	/**
+	 * Returns the internally stored index of the attribute with the given name.
+	 * A runtime exception is thrown if this object class is not defined by an
+	 * attribute named attName
+	 * 
+	 * @param attName
+	 *            the name of the attribute for which to get the index
+	 * @return the index of the attribute with name attName
+	 */
+	public int attributeIndex(String attName) {
+		Integer ind = attributeIndex.get(attName);
+		if (ind != null) {
+			return ind;
+		}
+		throw new RuntimeException("The attribute " + attName
+				+ " is not defined for this object class (" + this.name + ")");
+	}
+
+	/**
 	 * Will create and return a new ObjectClass object with copies of this
 	 * object class' attributes
 	 * 
@@ -73,45 +115,6 @@ public class ObjectClass {
 	}
 
 	/**
-	 * Sets the attributes used to define this object class
-	 * 
-	 * @param atts
-	 *            the attributes to define this object class
-	 */
-	public void setAttributes(List<Attribute> atts) {
-
-		attributeList.clear();
-		attributeMap.clear();
-		attributeIndex.clear();
-
-		for (Attribute att : atts) {
-			this.addAttribute(att);
-		}
-
-	}
-
-	/**
-	 * Adds an attribute to define this object class
-	 * 
-	 * @param att
-	 *            the attribute to add
-	 */
-	public void addAttribute(Attribute att) {
-
-		// only add if it is new
-		if (this.hasAttribute(att)) {
-			return;
-		}
-
-		int ind = attributeList.size();
-
-		attributeList.add(att);
-		attributeMap.put(att.name, att);
-		attributeIndex.put(att.name, ind);
-
-	}
-
-	/**
 	 * Return whether this object class is defined by the given attribute
 	 * 
 	 * @param att
@@ -137,30 +140,30 @@ public class ObjectClass {
 	}
 
 	/**
-	 * Returns the internally stored index of the attribute with the given name.
-	 * A runtime exception is thrown if this object class is not defined by an
-	 * attribute named attName
-	 * 
-	 * @param attName
-	 *            the name of the attribute for which to get the index
-	 * @return the index of the attribute with name attName
-	 */
-	public int attributeIndex(String attName) {
-		Integer ind = attributeIndex.get(attName);
-		if (ind != null) {
-			return ind;
-		}
-		throw new RuntimeException("The attribute " + attName
-				+ " is not defined for this object class (" + this.name + ")");
-	}
-
-	/**
 	 * Returns the number of attributes that define this object class.
 	 * 
 	 * @return the number of attributes that define this object class.
 	 */
 	public int numAttributes() {
 		return attributeList.size();
+	}
+
+	/**
+	 * Sets the attributes used to define this object class
+	 * 
+	 * @param atts
+	 *            the attributes to define this object class
+	 */
+	public void setAttributes(List<Attribute> atts) {
+
+		attributeList.clear();
+		attributeMap.clear();
+		attributeIndex.clear();
+
+		for (Attribute att : atts) {
+			this.addAttribute(att);
+		}
+
 	}
 
 }

@@ -19,12 +19,40 @@ public class TestGridWorld {
 	Domain domain;
 	GridWorldDomain gw;
 
-	@Before
-	public void setup() {
-		this.gw = new GridWorldDomain(11, 11);
-		gw.setMapToFourRooms();
-		gw.setProbSucceedTransitionDynamics(1.0);
-		this.domain = gw.generateDomain(); // generate the grid world domain
+	public void assertPFs(State s, boolean[] expectedValues) {
+		PropositionalFunction atLocation = domain
+				.getPropFunction(GridWorldDomain.PFATLOCATION);
+		List<GroundedProp> gpAt = atLocation.getAllGroundedPropsForState(s);
+		Assert.assertEquals(1, gpAt.size());
+		Assert.assertEquals(expectedValues[0], gpAt.get(0).isTrue(s));
+
+		PropositionalFunction pfWallNorth = domain
+				.getPropFunction(GridWorldDomain.PFWALLNORTH);
+		List<GroundedProp> gpWallNorth = pfWallNorth
+				.getAllGroundedPropsForState(s);
+		Assert.assertEquals(1, gpWallNorth.size());
+		Assert.assertEquals(expectedValues[1], gpWallNorth.get(0).isTrue(s));
+
+		PropositionalFunction pfWallSouth = domain
+				.getPropFunction(GridWorldDomain.PFWALLSOUTH);
+		List<GroundedProp> gpWallSouth = pfWallSouth
+				.getAllGroundedPropsForState(s);
+		Assert.assertEquals(1, gpWallSouth.size());
+		Assert.assertEquals(expectedValues[2], gpWallSouth.get(0).isTrue(s));
+
+		PropositionalFunction pfWallEast = domain
+				.getPropFunction(GridWorldDomain.PFWALLEAST);
+		List<GroundedProp> gpWallEast = pfWallEast
+				.getAllGroundedPropsForState(s);
+		Assert.assertEquals(1, gpWallEast.size());
+		Assert.assertEquals(expectedValues[3], gpWallEast.get(0).isTrue(s));
+
+		PropositionalFunction pfWallWest = domain
+				.getPropFunction(GridWorldDomain.PFWALLWEST);
+		List<GroundedProp> gpWallWest = pfWallWest
+				.getAllGroundedPropsForState(s);
+		Assert.assertEquals(1, gpWallWest.size());
+		Assert.assertEquals(expectedValues[4], gpWallWest.get(0).isTrue(s));
 
 	}
 
@@ -37,6 +65,21 @@ public class TestGridWorld {
 
 	public Domain getDomain() {
 		return this.domain;
+	}
+
+	@Before
+	public void setup() {
+		this.gw = new GridWorldDomain(11, 11);
+		gw.setMapToFourRooms();
+		gw.setProbSucceedTransitionDynamics(1.0);
+		this.domain = gw.generateDomain(); // generate the grid world domain
+
+	}
+
+	@After
+	public void teardown() {
+		this.domain = null;
+		this.gw = null;
 	}
 
 	@Test
@@ -106,49 +149,6 @@ public class TestGridWorld {
 		s = east.executeIn(s);
 		s = east.executeIn(s);
 		this.assertPFs(s, new boolean[] { true, true, false, true, false });
-	}
-
-	@After
-	public void teardown() {
-		this.domain = null;
-		this.gw = null;
-	}
-
-	public void assertPFs(State s, boolean[] expectedValues) {
-		PropositionalFunction atLocation = domain
-				.getPropFunction(GridWorldDomain.PFATLOCATION);
-		List<GroundedProp> gpAt = atLocation.getAllGroundedPropsForState(s);
-		Assert.assertEquals(1, gpAt.size());
-		Assert.assertEquals(expectedValues[0], gpAt.get(0).isTrue(s));
-
-		PropositionalFunction pfWallNorth = domain
-				.getPropFunction(GridWorldDomain.PFWALLNORTH);
-		List<GroundedProp> gpWallNorth = pfWallNorth
-				.getAllGroundedPropsForState(s);
-		Assert.assertEquals(1, gpWallNorth.size());
-		Assert.assertEquals(expectedValues[1], gpWallNorth.get(0).isTrue(s));
-
-		PropositionalFunction pfWallSouth = domain
-				.getPropFunction(GridWorldDomain.PFWALLSOUTH);
-		List<GroundedProp> gpWallSouth = pfWallSouth
-				.getAllGroundedPropsForState(s);
-		Assert.assertEquals(1, gpWallSouth.size());
-		Assert.assertEquals(expectedValues[2], gpWallSouth.get(0).isTrue(s));
-
-		PropositionalFunction pfWallEast = domain
-				.getPropFunction(GridWorldDomain.PFWALLEAST);
-		List<GroundedProp> gpWallEast = pfWallEast
-				.getAllGroundedPropsForState(s);
-		Assert.assertEquals(1, gpWallEast.size());
-		Assert.assertEquals(expectedValues[3], gpWallEast.get(0).isTrue(s));
-
-		PropositionalFunction pfWallWest = domain
-				.getPropFunction(GridWorldDomain.PFWALLWEST);
-		List<GroundedProp> gpWallWest = pfWallWest
-				.getAllGroundedPropsForState(s);
-		Assert.assertEquals(1, gpWallWest.size());
-		Assert.assertEquals(expectedValues[4], gpWallWest.get(0).isTrue(s));
-
 	}
 
 }

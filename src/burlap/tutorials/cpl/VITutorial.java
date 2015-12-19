@@ -1,5 +1,12 @@
 package burlap.tutorials.cpl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import burlap.behavior.policy.GreedyQPolicy;
 import burlap.behavior.policy.Policy;
 import burlap.behavior.singleagent.EpisodeAnalysis;
@@ -27,130 +34,7 @@ import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.statehashing.SimpleHashableStateFactory;
 import burlap.oomdp.visualizer.Visualizer;
 
-import java.util.*;
-
 public class VITutorial extends MDPSolver implements Planner, QFunction {
-
-	protected Map<HashableState, Double> valueFunction;
-	protected ValueFunctionInitialization vinit;
-	protected int numIterations;
-
-	public VITutorial(Domain domain, RewardFunction rf, TerminalFunction tf,
-			double gamma, HashableStateFactory hashingFactory,
-			ValueFunctionInitialization vinit, int numIterations) {
-		this.solverInit(domain, rf, tf, gamma, hashingFactory);
-		this.vinit = vinit;
-		this.numIterations = numIterations;
-		this.valueFunction = new HashMap<HashableState, Double>();
-	}
-
-	@Override
-	public double value(State s) {
-		Double d = this.valueFunction.get(hashingFactory.hashState(s));
-		if (d == null) {
-			return vinit.value(s);
-		}
-		return d;
-	}
-
-	@Override
-	public List<QValue> getQs(State s) {
-		List<GroundedAction> applicableActions = this.getAllGroundedActions(s);
-		List<QValue> qs = new ArrayList<QValue>(applicableActions.size());
-		for (GroundedAction ga : applicableActions) {
-			qs.add(this.getQ(s, ga));
-		}
-		return qs;
-	}
-
-	@Override
-	public QValue getQ(State s, AbstractGroundedAction a) {
-
-		// type cast to the type we're using
-		GroundedAction ga = (GroundedAction) a;
-
-		// what are the possible outcomes?
-		List<TransitionProbability> tps = ga.getTransitions(s);
-
-		// aggregate over each possible outcome
-		double q = 0.;
-		for (TransitionProbability tp : tps) {
-			// what is reward for this transition?
-			double r = this.rf.reward(s, ga, tp.s);
-
-			// what is the value for the next state?
-			double vp = this.valueFunction.get(this.hashingFactory
-					.hashState(tp.s));
-
-			// add contribution weighted by transition probabiltiy and
-			// discounting the next state
-			q += tp.p * (r + this.gamma * vp);
-		}
-
-		// create Q-value wrapper
-		QValue qValue = new QValue(s, ga, q);
-
-		return qValue;
-	}
-
-	protected double bellmanEquation(State s) {
-
-		if (this.tf.isTerminal(s)) {
-			return 0.;
-		}
-
-		List<QValue> qs = this.getQs(s);
-		double maxQ = Double.NEGATIVE_INFINITY;
-		for (QValue q : qs) {
-			maxQ = Math.max(maxQ, q.q);
-		}
-		return maxQ;
-	}
-
-	@Override
-	public GreedyQPolicy planFromState(State initialState) {
-
-		HashableState hashedInitialState = this.hashingFactory
-				.hashState(initialState);
-		if (this.valueFunction.containsKey(hashedInitialState)) {
-			return new GreedyQPolicy(this); // already performed planning here!
-		}
-
-		// if the state is new, then find all reachable states from it first
-		this.performReachabilityFrom(initialState);
-
-		// now perform multiple iterations over the whole state space
-		for (int i = 0; i < this.numIterations; i++) {
-			// iterate over each state
-			for (HashableState sh : this.valueFunction.keySet()) {
-				// update its value using the bellman equation
-				this.valueFunction.put(sh, this.bellmanEquation(sh.s));
-			}
-		}
-
-		return new GreedyQPolicy(this);
-
-	}
-
-	@Override
-	public void resetSolver() {
-
-	}
-
-	public void performReachabilityFrom(State seedState) {
-
-		Set<HashableState> hashedStates = StateReachability
-				.getReachableHashedStates(seedState, (SADomain) this.domain,
-						this.hashingFactory);
-
-		// initialize the value function for all states
-		for (HashableState hs : hashedStates) {
-			if (!this.valueFunction.containsKey(hs)) {
-				this.valueFunction.put(hs, this.vinit.value(hs.s));
-			}
-		}
-
-	}
 
 	public static void main(String[] args) {
 
@@ -194,6 +78,127 @@ public class VITutorial extends MDPSolver implements Planner, QFunction {
 		Visualizer v = GridWorldVisualizer.getVisualizer(gwd.getMap());
 		new EpisodeSequenceVisualizer(v, domain, Arrays.asList(ea));
 
+	}
+	protected Map<HashableState, Double> valueFunction;
+	protected ValueFunctionInitialization vinit;
+
+	protected int numIterations;
+
+	public VITutorial(Domain domain, RewardFunction rf, TerminalFunction tf,
+			double gamma, HashableStateFactory hashingFactory,
+			ValueFunctionInitialization vinit, int numIterations) {
+		this.solverInit(domain, rf, tf, gamma, hashingFactory);
+		this.vinit = vinit;
+		this.numIterations = numIterations;
+		this.valueFunction = new HashMap<HashableState, Double>();
+	}
+
+	protected double bellmanEquation(State s) {
+
+		if (this.tf.isTerminal(s)) {
+			return 0.;
+		}
+
+		List<QValue> qs = this.getQs(s);
+		double maxQ = Double.NEGATIVE_INFINITY;
+		for (QValue q : qs) {
+			maxQ = Math.max(maxQ, q.q);
+		}
+		return maxQ;
+	}
+
+	@Override
+	public QValue getQ(State s, AbstractGroundedAction a) {
+
+		// type cast to the type we're using
+		GroundedAction ga = (GroundedAction) a;
+
+		// what are the possible outcomes?
+		List<TransitionProbability> tps = ga.getTransitions(s);
+
+		// aggregate over each possible outcome
+		double q = 0.;
+		for (TransitionProbability tp : tps) {
+			// what is reward for this transition?
+			double r = this.rf.reward(s, ga, tp.s);
+
+			// what is the value for the next state?
+			double vp = this.valueFunction.get(this.hashingFactory
+					.hashState(tp.s));
+
+			// add contribution weighted by transition probabiltiy and
+			// discounting the next state
+			q += tp.p * (r + this.gamma * vp);
+		}
+
+		// create Q-value wrapper
+		QValue qValue = new QValue(s, ga, q);
+
+		return qValue;
+	}
+
+	@Override
+	public List<QValue> getQs(State s) {
+		List<GroundedAction> applicableActions = this.getAllGroundedActions(s);
+		List<QValue> qs = new ArrayList<QValue>(applicableActions.size());
+		for (GroundedAction ga : applicableActions) {
+			qs.add(this.getQ(s, ga));
+		}
+		return qs;
+	}
+
+	public void performReachabilityFrom(State seedState) {
+
+		Set<HashableState> hashedStates = StateReachability
+				.getReachableHashedStates(seedState, (SADomain) this.domain,
+						this.hashingFactory);
+
+		// initialize the value function for all states
+		for (HashableState hs : hashedStates) {
+			if (!this.valueFunction.containsKey(hs)) {
+				this.valueFunction.put(hs, this.vinit.value(hs.s));
+			}
+		}
+
+	}
+
+	@Override
+	public GreedyQPolicy planFromState(State initialState) {
+
+		HashableState hashedInitialState = this.hashingFactory
+				.hashState(initialState);
+		if (this.valueFunction.containsKey(hashedInitialState)) {
+			return new GreedyQPolicy(this); // already performed planning here!
+		}
+
+		// if the state is new, then find all reachable states from it first
+		this.performReachabilityFrom(initialState);
+
+		// now perform multiple iterations over the whole state space
+		for (int i = 0; i < this.numIterations; i++) {
+			// iterate over each state
+			for (HashableState sh : this.valueFunction.keySet()) {
+				// update its value using the bellman equation
+				this.valueFunction.put(sh, this.bellmanEquation(sh.s));
+			}
+		}
+
+		return new GreedyQPolicy(this);
+
+	}
+
+	@Override
+	public void resetSolver() {
+
+	}
+
+	@Override
+	public double value(State s) {
+		Double d = this.valueFunction.get(hashingFactory.hashState(s));
+		if (d == null) {
+			return vinit.value(s);
+		}
+		return d;
 	}
 
 }

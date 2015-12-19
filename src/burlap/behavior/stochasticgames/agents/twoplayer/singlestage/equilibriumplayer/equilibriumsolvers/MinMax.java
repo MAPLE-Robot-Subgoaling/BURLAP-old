@@ -15,15 +15,15 @@ import burlap.behavior.stochasticgames.solvers.MinMaxSolver;
 public class MinMax extends BimatrixEquilibriumSolver {
 
 	@Override
-	public double[] computeRowStrategy(double[][] rowPayoff,
-			double[][] colPayoff) {
-		return MinMaxSolver.getRowPlayersStrategy(rowPayoff);
-	}
-
-	@Override
 	public double[] computeColStrategy(double[][] rowPayoff,
 			double[][] colPayoff) {
 		return MinMaxSolver.getColPlayersStrategy(colPayoff);
+	}
+
+	@Override
+	public double[] computeRowStrategy(double[][] rowPayoff,
+			double[][] colPayoff) {
+		return MinMaxSolver.getRowPlayersStrategy(rowPayoff);
 	}
 
 }

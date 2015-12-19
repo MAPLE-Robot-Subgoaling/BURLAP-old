@@ -2,8 +2,8 @@ package burlap.behavior.stochasticgames.agents.madp;
 
 import burlap.behavior.stochasticgames.PolicyFromJointPolicy;
 import burlap.behavior.stochasticgames.madynamicprogramming.MADynamicProgramming;
-import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.AgentFactory;
+import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.SGDomain;
 
 /**
@@ -19,6 +19,25 @@ public class MADPPlanAgentFactory implements AgentFactory {
 	protected SGDomain domain;
 	protected MADPPlannerFactory plannerFactory;
 	protected PolicyFromJointPolicy policy;
+
+	/**
+	 * Initializes
+	 * 
+	 * @param domain
+	 *            the domain for the agents
+	 * @param plannerFactory
+	 *            the valueFunction factory that will be used to generate a
+	 *            valueFunction for the agents
+	 * @param policy
+	 *            the policy that will be copied and supplied to all generated
+	 *            objects
+	 */
+	public MADPPlanAgentFactory(SGDomain domain,
+			MADPPlannerFactory plannerFactory, PolicyFromJointPolicy policy) {
+		this.domain = domain;
+		this.plannerFactory = plannerFactory;
+		this.policy = policy;
+	}
 
 	/**
 	 * Initializes.
@@ -37,25 +56,6 @@ public class MADPPlanAgentFactory implements AgentFactory {
 		this.domain = domain;
 		this.plannerFactory = new MADPPlannerFactory.ConstantMADPPlannerFactory(
 				planner);
-		this.policy = policy;
-	}
-
-	/**
-	 * Initializes
-	 * 
-	 * @param domain
-	 *            the domain for the agents
-	 * @param plannerFactory
-	 *            the valueFunction factory that will be used to generate a
-	 *            valueFunction for the agents
-	 * @param policy
-	 *            the policy that will be copied and supplied to all generated
-	 *            objects
-	 */
-	public MADPPlanAgentFactory(SGDomain domain,
-			MADPPlannerFactory plannerFactory, PolicyFromJointPolicy policy) {
-		this.domain = domain;
-		this.plannerFactory = plannerFactory;
 		this.policy = policy;
 	}
 

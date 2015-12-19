@@ -14,8 +14,32 @@ import java.util.Comparator;
 public class AlphanumericSorting implements Comparator {
 
 	/**
+	 * Testing the alphanumeric sorting
+	 */
+	public static void main(String[] args) {
+		String[] alphaNumericStringArray = new String[] { "NUM10071",
+				"NUM9999", "9997", "9998", "9996", "9996F", "0001", "01", "1",
+				"001" };
+
+		/*
+		 * Arrays.sort method can take an unsorted array and a comparator to
+		 * give a final sorted array.
+		 * 
+		 * The sorting is done according to the comparator that we have
+		 * provided.
+		 */
+		Arrays.sort(alphaNumericStringArray, new AlphanumericSorting());
+
+		for (int i = 0; i < alphaNumericStringArray.length; i++) {
+			System.out.println(alphaNumericStringArray[i]);
+		}
+
+	}
+
+	/**
 	 * The compare method that compares the alphanumeric strings
 	 */
+	@Override
 	public int compare(Object firstObjToCompare, Object secondObjToCompare) {
 		String firstString = removePadding(firstObjToCompare.toString());
 		String secondString = removePadding(secondObjToCompare.toString());
@@ -100,29 +124,6 @@ public class AlphanumericSorting implements Comparator {
 			result = string;
 		}
 		return result;
-	}
-
-	/**
-	 * Testing the alphanumeric sorting
-	 */
-	public static void main(String[] args) {
-		String[] alphaNumericStringArray = new String[] { "NUM10071",
-				"NUM9999", "9997", "9998", "9996", "9996F", "0001", "01", "1",
-				"001" };
-
-		/*
-		 * Arrays.sort method can take an unsorted array and a comparator to
-		 * give a final sorted array.
-		 * 
-		 * The sorting is done according to the comparator that we have
-		 * provided.
-		 */
-		Arrays.sort(alphaNumericStringArray, new AlphanumericSorting());
-
-		for (int i = 0; i < alphaNumericStringArray.length; i++) {
-			System.out.println(alphaNumericStringArray[i]);
-		}
-
 	}
 
 }

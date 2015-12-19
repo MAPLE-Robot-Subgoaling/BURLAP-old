@@ -2,15 +2,15 @@ package burlap.behavior.stochasticgames.agents.madp;
 
 import java.util.Map;
 
-import burlap.behavior.valuefunction.ValueFunctionInitialization;
-import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.behavior.stochasticgames.madynamicprogramming.MADynamicProgramming;
 import burlap.behavior.stochasticgames.madynamicprogramming.SGBackupOperator;
 import burlap.behavior.stochasticgames.madynamicprogramming.dpplanners.MAValueIteration;
+import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.oomdp.core.TerminalFunction;
-import burlap.oomdp.stochasticgames.SGAgentType;
+import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.stochasticgames.JointActionModel;
 import burlap.oomdp.stochasticgames.JointReward;
+import burlap.oomdp.stochasticgames.SGAgentType;
 import burlap.oomdp.stochasticgames.SGDomain;
 
 /**
@@ -25,17 +25,6 @@ import burlap.oomdp.stochasticgames.SGDomain;
  * 
  */
 public interface MADPPlannerFactory {
-
-	/**
-	 * returns an
-	 * {@link burlap.behavior.stochasticgames.madynamicprogramming.MADynamicProgramming}
-	 * reference to use for planning.
-	 * 
-	 * @return an
-	 *         {@link burlap.behavior.stochasticgames.madynamicprogramming.MADynamicProgramming}
-	 *         reference to use for planning.
-	 */
-	public MADynamicProgramming getPlannerInstance();
 
 	/**
 	 * {@link burlap.behavior.stochasticgames.madynamicprogramming.MADynamicProgramming}
@@ -60,6 +49,11 @@ public interface MADPPlannerFactory {
 			this.plannerReferece = plannerRefernece;
 		}
 
+		@Override
+		public MADynamicProgramming getPlannerInstance() {
+			return this.plannerReferece;
+		}
+
 		/**
 		 * Changes the valueFunction reference
 		 * 
@@ -68,11 +62,6 @@ public interface MADPPlannerFactory {
 		 */
 		public void setPlannerReference(MADynamicProgramming plannerReference) {
 			this.plannerReferece = plannerReference;
-		}
-
-		@Override
-		public MADynamicProgramming getPlannerInstance() {
-			return this.plannerReferece;
 		}
 
 	}
@@ -294,5 +283,16 @@ public interface MADPPlannerFactory {
 		}
 
 	}
+
+	/**
+	 * returns an
+	 * {@link burlap.behavior.stochasticgames.madynamicprogramming.MADynamicProgramming}
+	 * reference to use for planning.
+	 * 
+	 * @return an
+	 *         {@link burlap.behavior.stochasticgames.madynamicprogramming.MADynamicProgramming}
+	 *         reference to use for planning.
+	 */
+	public MADynamicProgramming getPlannerInstance();
 
 }

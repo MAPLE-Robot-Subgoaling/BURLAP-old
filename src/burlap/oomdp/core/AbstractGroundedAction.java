@@ -32,11 +32,13 @@ public interface AbstractGroundedAction {
 	AbstractGroundedAction copy();
 
 	/**
-	 * Returns true if this action uses parameters
+	 * Returns an array of string representations of this
+	 * {@link burlap.oomdp.core.AbstractGroundedAction}'s parameters
 	 * 
-	 * @return true if this action uses parameters; false otherwise
+	 * @return an array of string representations of this
+	 *         {@link burlap.oomdp.core.AbstractGroundedAction}'s parameters
 	 */
-	boolean isParameterized();
+	String[] getParametersAsString();
 
 	/**
 	 * Initializes the parameter values of this
@@ -51,12 +53,10 @@ public interface AbstractGroundedAction {
 	void initParamsWithStringRep(String[] params);
 
 	/**
-	 * Returns an array of string representations of this
-	 * {@link burlap.oomdp.core.AbstractGroundedAction}'s parameters
+	 * Returns true if this action uses parameters
 	 * 
-	 * @return an array of string representations of this
-	 *         {@link burlap.oomdp.core.AbstractGroundedAction}'s parameters
+	 * @return true if this action uses parameters; false otherwise
 	 */
-	String[] getParametersAsString();
+	boolean isParameterized();
 
 }

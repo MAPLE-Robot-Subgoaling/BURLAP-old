@@ -1,10 +1,11 @@
 package burlap.oomdp.statehashing;
 
-import burlap.oomdp.core.values.Value;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+import burlap.oomdp.core.values.Value;
 
 /**
  * A factory for producing {@link burlap.oomdp.statehashing.HashableState}
@@ -40,6 +41,20 @@ public class DiscretizingHashableStateFactory extends
 		SimpleHashableStateFactory {
 
 	/**
+	 * Returns int result of num / mult; that is, (int)(num / mult).
+	 * 
+	 * @param mult
+	 *            the multiple
+	 * @param num
+	 *            the number
+	 * @return the int result of num / mult
+	 */
+	protected static int intMultiples(double mult, double num) {
+		int div = (int) (num / mult);
+		return div;
+	}
+
+	/**
 	 * The multiples to use for specific attributes
 	 */
 	protected Map<String, Double> attributeWiseMultiples = new HashMap<String, Double>();
@@ -49,33 +64,6 @@ public class DiscretizingHashableStateFactory extends
 	 * been specifically set.
 	 */
 	protected double defaultMultiple;
-
-	/**
-	 * Initializes with object identifier independence and no hash code caching.
-	 * 
-	 * @param defaultMultiple
-	 *            The default multiple to use for any continuous attributes that
-	 *            have not been specifically set.
-	 */
-	public DiscretizingHashableStateFactory(double defaultMultiple) {
-		this.defaultMultiple = defaultMultiple;
-	}
-
-	/**
-	 * Initializes with non hash code caching
-	 * 
-	 * @param identifierIndependent
-	 *            if true then state evaluations are object identifier
-	 *            independent; if false then dependent.
-	 * @param defaultMultiple
-	 *            The default multiple to use for any continuous attributes that
-	 *            have not been specifically set.
-	 */
-	public DiscretizingHashableStateFactory(boolean identifierIndependent,
-			double defaultMultiple) {
-		super(identifierIndependent);
-		this.defaultMultiple = defaultMultiple;
-	}
 
 	/**
 	 * Initializes.
@@ -98,6 +86,33 @@ public class DiscretizingHashableStateFactory extends
 	}
 
 	/**
+	 * Initializes with non hash code caching
+	 * 
+	 * @param identifierIndependent
+	 *            if true then state evaluations are object identifier
+	 *            independent; if false then dependent.
+	 * @param defaultMultiple
+	 *            The default multiple to use for any continuous attributes that
+	 *            have not been specifically set.
+	 */
+	public DiscretizingHashableStateFactory(boolean identifierIndependent,
+			double defaultMultiple) {
+		super(identifierIndependent);
+		this.defaultMultiple = defaultMultiple;
+	}
+
+	/**
+	 * Initializes with object identifier independence and no hash code caching.
+	 * 
+	 * @param defaultMultiple
+	 *            The default multiple to use for any continuous attributes that
+	 *            have not been specifically set.
+	 */
+	public DiscretizingHashableStateFactory(double defaultMultiple) {
+		this.defaultMultiple = defaultMultiple;
+	}
+
+	/**
 	 * Sets the multiple to use for discretization for the attribute with the
 	 * specified name. See the documentation of this class for more information
 	 * on how the multiple works. In short, continuous values will be floored to
@@ -113,20 +128,6 @@ public class DiscretizingHashableStateFactory extends
 	public void addFloorDiscretizingMultipleFor(String attributeName,
 			double nearestMultipleValue) {
 		this.attributeWiseMultiples.put(attributeName, nearestMultipleValue);
-	}
-
-	/**
-	 * Sets the default multiple to use for continuous attributes that do not
-	 * have specific multiples set for them. See the documentation of this class
-	 * for more information on how the multiple works. In short, continuous
-	 * values will be floored to the greatest value that is a multiple of the
-	 * multiple given and less than or equal to the true value.
-	 * 
-	 * @param defaultMultiple
-	 *            the default multiple to which values are floored
-	 */
-	public void setDefaultFloorDiscretizingMultiple(double defaultMultiple) {
-		this.defaultMultiple = defaultMultiple;
 	}
 
 	@Override
@@ -152,6 +153,20 @@ public class DiscretizingHashableStateFactory extends
 		} else {
 			super.appendHashcodeForValue(hashCodeBuilder, v);
 		}
+	}
+
+	/**
+	 * Sets the default multiple to use for continuous attributes that do not
+	 * have specific multiples set for them. See the documentation of this class
+	 * for more information on how the multiple works. In short, continuous
+	 * values will be floored to the greatest value that is a multiple of the
+	 * multiple given and less than or equal to the true value.
+	 * 
+	 * @param defaultMultiple
+	 *            the default multiple to which values are floored
+	 */
+	public void setDefaultFloorDiscretizingMultiple(double defaultMultiple) {
+		this.defaultMultiple = defaultMultiple;
 	}
 
 	/**
@@ -194,20 +209,6 @@ public class DiscretizingHashableStateFactory extends
 			return v1.equals(v2);
 		}
 
-	}
-
-	/**
-	 * Returns int result of num / mult; that is, (int)(num / mult).
-	 * 
-	 * @param mult
-	 *            the multiple
-	 * @param num
-	 *            the number
-	 * @return the int result of num / mult
-	 */
-	protected static int intMultiples(double mult, double num) {
-		int div = (int) (num / mult);
-		return div;
 	}
 
 }

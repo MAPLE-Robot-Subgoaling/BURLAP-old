@@ -4,11 +4,11 @@ import java.util.Map;
 
 import burlap.behavior.policy.Policy;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.AgentFactory;
-import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 import burlap.oomdp.stochasticgames.JointAction;
+import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.SGDomain;
+import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 
 /**
  * A class for an agent who makes decisions by following a specified strategy
@@ -21,6 +21,30 @@ import burlap.oomdp.stochasticgames.SGDomain;
  * 
  */
 public class SetStrategySGAgent extends SGAgent {
+
+	public static class SetStrategyAgentFactory implements AgentFactory {
+
+		/**
+		 * The strategy this agent will follow
+		 */
+		protected Policy policy;
+
+		/**
+		 * The domain in which the agent will play
+		 */
+		protected SGDomain domain;
+
+		public SetStrategyAgentFactory(SGDomain domain, Policy policy) {
+			this.policy = policy;
+			this.domain = domain;
+		}
+
+		@Override
+		public SGAgent generateAgent() {
+			return new SetStrategySGAgent(domain, policy);
+		}
+
+	}
 
 	/**
 	 * The policy encoding the strategy this agent will follow
@@ -46,6 +70,10 @@ public class SetStrategySGAgent extends SGAgent {
 	}
 
 	@Override
+	public void gameTerminated() {
+	}
+
+	@Override
 	public GroundedSGAgentAction getAction(State s) {
 		GroundedSGAgentAction actSelection = (GroundedSGAgentAction) this.policy
 				.getAction(s);
@@ -56,34 +84,6 @@ public class SetStrategySGAgent extends SGAgent {
 	@Override
 	public void observeOutcome(State s, JointAction jointAction,
 			Map<String, Double> jointReward, State sprime, boolean isTerminal) {
-	}
-
-	@Override
-	public void gameTerminated() {
-	}
-
-	public static class SetStrategyAgentFactory implements AgentFactory {
-
-		/**
-		 * The strategy this agent will follow
-		 */
-		protected Policy policy;
-
-		/**
-		 * The domain in which the agent will play
-		 */
-		protected SGDomain domain;
-
-		public SetStrategyAgentFactory(SGDomain domain, Policy policy) {
-			this.policy = policy;
-			this.domain = domain;
-		}
-
-		@Override
-		public SGAgent generateAgent() {
-			return new SetStrategySGAgent(domain, policy);
-		}
-
 	}
 
 }

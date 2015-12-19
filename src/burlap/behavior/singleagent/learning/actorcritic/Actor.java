@@ -21,16 +21,6 @@ import burlap.oomdp.singleagent.Action;
 public abstract class Actor extends Policy {
 
 	/**
-	 * Causes this object to update its behavior is response to a critique of
-	 * its behavior.
-	 * 
-	 * @param critqiue
-	 *            the critique of the agents behavior represented by a
-	 *            {@link CritiqueResult} object
-	 */
-	public abstract void updateFromCritqique(CritiqueResult critqiue);
-
-	/**
 	 * This method allows the actor to utilize actions that are not apart of the
 	 * domain definition.
 	 * 
@@ -45,5 +35,15 @@ public abstract class Actor extends Policy {
 	 * learning can be begin anew.
 	 */
 	public abstract void resetData();
+
+	/**
+	 * Causes this object to update its behavior is response to a critique of
+	 * its behavior.
+	 * 
+	 * @param critqiue
+	 *            the critique of the agents behavior represented by a
+	 *            {@link CritiqueResult} object
+	 */
+	public abstract void updateFromCritqique(CritiqueResult critqiue);
 
 }

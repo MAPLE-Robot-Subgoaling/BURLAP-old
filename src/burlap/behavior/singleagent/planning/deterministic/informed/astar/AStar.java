@@ -3,17 +3,17 @@ package burlap.behavior.singleagent.planning.deterministic.informed.astar;
 import java.util.HashMap;
 import java.util.Map;
 
-import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
 import burlap.behavior.singleagent.planning.deterministic.informed.BestFirst;
 import burlap.behavior.singleagent.planning.deterministic.informed.Heuristic;
 import burlap.behavior.singleagent.planning.deterministic.informed.PrioritizedSearchNode;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.datastructures.HashIndexedHeap;
 import burlap.oomdp.auxiliary.common.NullTermination;
+import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * An implementation of A*. The typical "costs" of A* should be represented by
@@ -78,31 +78,6 @@ public class AStar extends BestFirst {
 	}
 
 	@Override
-	public void prePlanPrep() {
-		cumulatedRewardMap = new HashMap<HashableState, Double>();
-	}
-
-	@Override
-	public void postPlanPrep() {
-		cumulatedRewardMap = null; // clear to free memory
-	}
-
-	@Override
-	public void insertIntoOpen(
-			HashIndexedHeap<PrioritizedSearchNode> openQueue,
-			PrioritizedSearchNode psn) {
-		super.insertIntoOpen(openQueue, psn);
-		cumulatedRewardMap.put(psn.s, lastComputedCumR);
-	}
-
-	@Override
-	public void updateOpen(HashIndexedHeap<PrioritizedSearchNode> openQueue,
-			PrioritizedSearchNode openPSN, PrioritizedSearchNode npsn) {
-		super.updateOpen(openQueue, openPSN, npsn);
-		cumulatedRewardMap.put(npsn.s, lastComputedCumR);
-	}
-
-	@Override
 	public double computeF(PrioritizedSearchNode parentNode,
 			GroundedAction generatingAction, HashableState successorState) {
 		double cumR = 0.;
@@ -118,6 +93,31 @@ public class AStar extends BestFirst {
 		double F = cumR + H;
 
 		return F;
+	}
+
+	@Override
+	public void insertIntoOpen(
+			HashIndexedHeap<PrioritizedSearchNode> openQueue,
+			PrioritizedSearchNode psn) {
+		super.insertIntoOpen(openQueue, psn);
+		cumulatedRewardMap.put(psn.s, lastComputedCumR);
+	}
+
+	@Override
+	public void postPlanPrep() {
+		cumulatedRewardMap = null; // clear to free memory
+	}
+
+	@Override
+	public void prePlanPrep() {
+		cumulatedRewardMap = new HashMap<HashableState, Double>();
+	}
+
+	@Override
+	public void updateOpen(HashIndexedHeap<PrioritizedSearchNode> openQueue,
+			PrioritizedSearchNode openPSN, PrioritizedSearchNode npsn) {
+		super.updateOpen(openQueue, openPSN, npsn);
+		cumulatedRewardMap.put(npsn.s, lastComputedCumR);
 	}
 
 }

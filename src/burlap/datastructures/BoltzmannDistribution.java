@@ -80,107 +80,6 @@ public class BoltzmannDistribution {
 	}
 
 	/**
-	 * Returns the input preferences
-	 * 
-	 * @return the input preferences
-	 */
-	public double[] getPreferences() {
-		return this.preferences;
-	}
-
-	/**
-	 * Returns the temperature parameter
-	 * 
-	 * @return the temperature parameter
-	 */
-	public double getTemperature() {
-		return this.temperature;
-	}
-
-	/**
-	 * Returns the number of elements on which there are preferences
-	 * 
-	 * @return the number of elements on which there are preferences
-	 */
-	public int preferenceLength() {
-		return this.preferences.length;
-	}
-
-	/**
-	 * Returns the output probability distribution. This method computes the
-	 * probabilities lazily and only when needed.
-	 * 
-	 * @return the output probability distribution
-	 */
-	public double[] getProbabilities() {
-		if (this.needsUpdate) {
-			this.computeProbs();
-		}
-
-		return this.probs;
-	}
-
-	/**
-	 * Sets the temperature value to use.
-	 * 
-	 * @param t
-	 *            a value on 0 < temperature < +infinity
-	 */
-	public void setTemperature(double t) {
-		this.temperature = t;
-		this.needsUpdate = true;
-	}
-
-	/**
-	 * Sets the preference for the ith elemnt
-	 * 
-	 * @param i
-	 *            which element to set
-	 * @param p
-	 *            the preference for that element
-	 */
-	public void setPreference(int i, double p) {
-		this.preferences[i] = p;
-		this.needsUpdate = true;
-	}
-
-	/**
-	 * Sets the input preferences
-	 * 
-	 * @param preferences
-	 *            the input preferences
-	 */
-	public void setPreferences(double[] preferences) {
-		this.preferences = preferences.clone();
-		this.needsUpdate = true;
-	}
-
-	/**
-	 * Samples the output probability distribution.
-	 * 
-	 * @return the index of the sampled element
-	 */
-	public int sample() {
-
-		if (this.needsUpdate) {
-			this.computeProbs();
-		}
-
-		double r = this.rand.nextDouble();
-		double sum = 0.;
-		for (int i = 0; i < this.probs.length; i++) {
-			sum += this.probs[i];
-			if (r < sum) {
-				return i;
-			}
-		}
-
-		throw new RuntimeErrorException(new Error(
-				"Error in sample; Boltzmann distribution did not sum to 1"));
-
-	}
-
-	/**
 	 * Computes the probability distribution. This method uses the log sum exp
 	 * trick to avoid overflow issues.
 	 */
@@ -216,6 +115,38 @@ public class BoltzmannDistribution {
 	}
 
 	/**
+	 * Returns the input preferences
+	 * 
+	 * @return the input preferences
+	 */
+	public double[] getPreferences() {
+		return this.preferences;
+	}
+
+	/**
+	 * Returns the output probability distribution. This method computes the
+	 * probabilities lazily and only when needed.
+	 * 
+	 * @return the output probability distribution
+	 */
+	public double[] getProbabilities() {
+		if (this.needsUpdate) {
+			this.computeProbs();
+		}
+
+		return this.probs;
+	}
+
+	/**
+	 * Returns the temperature parameter
+	 * 
+	 * @return the temperature parameter
+	 */
+	public double getTemperature() {
+		return this.temperature;
+	}
+
+	/**
 	 * Returns the maximum temperature normalized preference
 	 * 
 	 * @return the maximum temperature normalized preference
@@ -226,6 +157,75 @@ public class BoltzmannDistribution {
 			max = Math.max(max, this.tempNormalized[i]);
 		}
 		return max;
+	}
+
+	/**
+	 * Returns the number of elements on which there are preferences
+	 * 
+	 * @return the number of elements on which there are preferences
+	 */
+	public int preferenceLength() {
+		return this.preferences.length;
+	}
+
+	/**
+	 * Samples the output probability distribution.
+	 * 
+	 * @return the index of the sampled element
+	 */
+	public int sample() {
+
+		if (this.needsUpdate) {
+			this.computeProbs();
+		}
+
+		double r = this.rand.nextDouble();
+		double sum = 0.;
+		for (int i = 0; i < this.probs.length; i++) {
+			sum += this.probs[i];
+			if (r < sum) {
+				return i;
+			}
+		}
+
+		throw new RuntimeErrorException(new Error(
+				"Error in sample; Boltzmann distribution did not sum to 1"));
+
+	}
+
+	/**
+	 * Sets the preference for the ith elemnt
+	 * 
+	 * @param i
+	 *            which element to set
+	 * @param p
+	 *            the preference for that element
+	 */
+	public void setPreference(int i, double p) {
+		this.preferences[i] = p;
+		this.needsUpdate = true;
+	}
+
+	/**
+	 * Sets the input preferences
+	 * 
+	 * @param preferences
+	 *            the input preferences
+	 */
+	public void setPreferences(double[] preferences) {
+		this.preferences = preferences.clone();
+		this.needsUpdate = true;
+	}
+
+	/**
+	 * Sets the temperature value to use.
+	 * 
+	 * @param t
+	 *            a value on 0 < temperature < +infinity
+	 */
+	public void setTemperature(double t) {
+		this.temperature = t;
+		this.needsUpdate = true;
 	}
 
 }

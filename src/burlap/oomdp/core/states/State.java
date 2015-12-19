@@ -1,11 +1,11 @@
 package burlap.oomdp.core.states;
 
-import burlap.oomdp.core.objects.ObjectInstance;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import burlap.oomdp.core.objects.ObjectInstance;
 
 /**
  * A State instance is used to define the state of an environment or an
@@ -48,11 +48,12 @@ import java.util.Set;
 public interface State {
 
 	/**
-	 * Returns a copy of this state, if mutable the copy should be deep.
+	 * Adds the collection of objects to the state
 	 * 
-	 * @return a copy of this state.
+	 * @param objects
+	 * @return the modified state
 	 */
-	State copy();
+	State addAllObjects(Collection<ObjectInstance> objects);
 
 	/**
 	 * Adds object instance o to this state.
@@ -64,64 +65,82 @@ public interface State {
 	State addObject(ObjectInstance o);
 
 	/**
-	 * Adds the collection of objects to the state
+	 * Returns a copy of this state, if mutable the copy should be deep.
 	 * 
-	 * @param objects
-	 * @return the modified state
+	 * @return a copy of this state.
 	 */
-	State addAllObjects(Collection<ObjectInstance> objects);
+	State copy();
 
 	/**
-	 * Removes the object instance with the name oname from this state.
+	 * Returns the list of observable and hidden object instances in this state.
+	 * 
+	 * @return the list of observable and hidden object instances in this state.
+	 */
+	List<ObjectInstance> getAllObjects();
+
+	/**
+	 * Returns a list of list of object instances, grouped by object class
+	 * 
+	 * @return a list of list of object instances, grouped by object class
+	 */
+	List<List<ObjectInstance>> getAllObjectsByClass();
+
+	/**
+	 * Returns a mapping from object instance names to the list of attributes
+	 * names that have unset values.
+	 * 
+	 * @return a mapping from object instance names to the list of attributes
+	 *         names that have unset values.
+	 */
+	Map<String, List<String>> getAllUnsetAttributes();
+
+	/**
+	 * Returns a string representation of this state using observable and hidden
+	 * object instances.
+	 * 
+	 * @return a string representation of this state using observable and hidden
+	 *         object instances.
+	 */
+	String getCompleteStateDescription();
+
+	/**
+	 * Returns a string description of the state with unset attribute values
+	 * listed as null. This avoids runtime exceptions when attributes are unset
+	 * and informs you which they are.
+	 * 
+	 * @return a string description of the state with unset attribute values
+	 *         listed as null.
+	 */
+	String getCompleteStateDescriptionWithUnsetAttributesAsNull();
+
+	/**
+	 * Returns the first indexed object of the object class named oclass
+	 * 
+	 * @param oclass
+	 *            the name of the object class for which the first indexed
+	 *            object should be returned.
+	 * @return the first indexed object of the object class named oclass
+	 */
+	ObjectInstance getFirstObjectOfClass(String oclass);
+
+	/**
+	 * Returns the object in this state with the name oname
 	 * 
 	 * @param oname
-	 *            the name of the object instance to remove.
-	 * @return the modified state
+	 *            the name of the object instance to return
+	 * @return the object instance with the name oname or null if there is no
+	 *         object in this state named oname
 	 */
-	State removeObject(String oname);
-
-	<T> State setObjectsValue(String objectName, String attName, T value);
-
-	/**
-	 * Removes the object instance o from this state.
-	 * 
-	 * @param o
-	 *            the object instance to remove from this state.
-	 * @return the modified state
-	 */
-	State removeObject(ObjectInstance o);
+	ObjectInstance getObject(String oname);
 
 	/**
-	 * Removes the collection of objects from the state
+	 * Returns a set of of the object class names for all object classes that
+	 * have instantiated objects in this state.
 	 * 
-	 * @param objects
-	 * @return the modified state
+	 * @return a set of of the object class names for all object classes that
+	 *         have instantiated objects in this state.
 	 */
-	State removeAllObjects(Collection<ObjectInstance> objects);
-
-	/**
-	 * Renames the identifier for the object instance currently named
-	 * originalName with the name newName.
-	 * 
-	 * @param originalName
-	 *            the original name of the object instance to be renamed in this
-	 *            state
-	 * @param newName
-	 *            the new name of the object instance
-	 * @return the modified state
-	 */
-	State renameObject(String originalName, String newName);
-
-	/**
-	 * Renames the identifier for object instance o in this state to newName.
-	 * 
-	 * @param o
-	 *            the object instance to rename in this state
-	 * @param newName
-	 *            the new name of the object instance
-	 * @return the modified state
-	 */
-	State renameObject(ObjectInstance o, String newName);
+	Set<String> getObjectClassesPresent();
 
 	/**
 	 * This method computes a matching from objects in the receiver to
@@ -147,30 +166,6 @@ public interface State {
 			boolean enforceStateExactness);
 
 	/**
-	 * Returns the number of object instances in this state.
-	 * 
-	 * @return the number of object instances in this state.
-	 */
-	int numTotalObjects();
-
-	/**
-	 * Returns the object in this state with the name oname
-	 * 
-	 * @param oname
-	 *            the name of the object instance to return
-	 * @return the object instance with the name oname or null if there is no
-	 *         object in this state named oname
-	 */
-	ObjectInstance getObject(String oname);
-
-	/**
-	 * Returns the list of observable and hidden object instances in this state.
-	 * 
-	 * @return the list of observable and hidden object instances in this state.
-	 */
-	List<ObjectInstance> getAllObjects();
-
-	/**
 	 * Returns all objects that belong to the object class named oclass
 	 * 
 	 * @param oclass
@@ -179,60 +174,6 @@ public interface State {
 	 * @return all objects that belong to the object class named oclass
 	 */
 	List<ObjectInstance> getObjectsOfClass(String oclass);
-
-	/**
-	 * Returns the first indexed object of the object class named oclass
-	 * 
-	 * @param oclass
-	 *            the name of the object class for which the first indexed
-	 *            object should be returned.
-	 * @return the first indexed object of the object class named oclass
-	 */
-	ObjectInstance getFirstObjectOfClass(String oclass);
-
-	/**
-	 * Returns a set of of the object class names for all object classes that
-	 * have instantiated objects in this state.
-	 * 
-	 * @return a set of of the object class names for all object classes that
-	 *         have instantiated objects in this state.
-	 */
-	Set<String> getObjectClassesPresent();
-
-	/**
-	 * Returns a list of list of object instances, grouped by object class
-	 * 
-	 * @return a list of list of object instances, grouped by object class
-	 */
-	List<List<ObjectInstance>> getAllObjectsByClass();
-
-	/**
-	 * Returns a string representation of this state using observable and hidden
-	 * object instances.
-	 * 
-	 * @return a string representation of this state using observable and hidden
-	 *         object instances.
-	 */
-	String getCompleteStateDescription();
-
-	/**
-	 * Returns a mapping from object instance names to the list of attributes
-	 * names that have unset values.
-	 * 
-	 * @return a mapping from object instance names to the list of attributes
-	 *         names that have unset values.
-	 */
-	Map<String, List<String>> getAllUnsetAttributes();
-
-	/**
-	 * Returns a string description of the state with unset attribute values
-	 * listed as null. This avoids runtime exceptions when attributes are unset
-	 * and informs you which they are.
-	 * 
-	 * @return a string description of the state with unset attribute values
-	 *         listed as null.
-	 */
-	String getCompleteStateDescriptionWithUnsetAttributesAsNull();
 
 	/**
 	 * Given an array of parameter object classes and an array of their
@@ -251,5 +192,64 @@ public interface State {
 	 */
 	List<List<String>> getPossibleBindingsGivenParamOrderGroups(
 			String[] paramClasses, String[] paramOrderGroups);
+
+	/**
+	 * Returns the number of object instances in this state.
+	 * 
+	 * @return the number of object instances in this state.
+	 */
+	int numTotalObjects();
+
+	/**
+	 * Removes the collection of objects from the state
+	 * 
+	 * @param objects
+	 * @return the modified state
+	 */
+	State removeAllObjects(Collection<ObjectInstance> objects);
+
+	/**
+	 * Removes the object instance o from this state.
+	 * 
+	 * @param o
+	 *            the object instance to remove from this state.
+	 * @return the modified state
+	 */
+	State removeObject(ObjectInstance o);
+
+	/**
+	 * Removes the object instance with the name oname from this state.
+	 * 
+	 * @param oname
+	 *            the name of the object instance to remove.
+	 * @return the modified state
+	 */
+	State removeObject(String oname);
+
+	/**
+	 * Renames the identifier for object instance o in this state to newName.
+	 * 
+	 * @param o
+	 *            the object instance to rename in this state
+	 * @param newName
+	 *            the new name of the object instance
+	 * @return the modified state
+	 */
+	State renameObject(ObjectInstance o, String newName);
+
+	/**
+	 * Renames the identifier for the object instance currently named
+	 * originalName with the name newName.
+	 * 
+	 * @param originalName
+	 *            the original name of the object instance to be renamed in this
+	 *            state
+	 * @param newName
+	 *            the new name of the object instance
+	 * @return the modified state
+	 */
+	State renameObject(String originalName, String newName);
+
+	<T> State setObjectsValue(String objectName, String attName, T value);
 
 }

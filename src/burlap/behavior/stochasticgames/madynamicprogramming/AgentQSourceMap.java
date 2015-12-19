@@ -18,17 +18,6 @@ import burlap.oomdp.stochasticgames.SGAgent;
 public interface AgentQSourceMap {
 
 	/**
-	 * Returns a QSource which can be used to query the Q-values of a given
-	 * agent.
-	 * 
-	 * @param agentName
-	 *            the name of the agent for which Q-values will be queried.
-	 * @return A {@link QSourceForSingleAgent} object that allows the Q-values
-	 *         for a single agent to be queried.
-	 */
-	public QSourceForSingleAgent agentQSource(String agentName);
-
-	/**
 	 * An implementation of the {@link AgentQSourceMap} in which the sources are
 	 * specified by a hash map.
 	 * 
@@ -49,6 +38,11 @@ public interface AgentQSourceMap {
 			this.qSourceMapping = qSourceMapping;
 		}
 
+		@Override
+		public QSourceForSingleAgent agentQSource(String agentName) {
+			return this.qSourceMapping.get(agentName);
+		}
+
 		/**
 		 * Sets the Q-source hash map to be used.
 		 * 
@@ -58,11 +52,6 @@ public interface AgentQSourceMap {
 		public void setQSourceMap(
 				Map<String, QSourceForSingleAgent> qSourceMapping) {
 			this.qSourceMapping = qSourceMapping;
-		}
-
-		@Override
-		public QSourceForSingleAgent agentQSource(String agentName) {
-			return this.qSourceMapping.get(agentName);
 		}
 
 	}
@@ -107,6 +96,11 @@ public interface AgentQSourceMap {
 			}
 		}
 
+		@Override
+		public QSourceForSingleAgent agentQSource(String agentName) {
+			return this.qSourceMapping.get(agentName).getMyQSource();
+		}
+
 		/**
 		 * Initializes with a list of agents that each keep their own Q_source.
 		 * 
@@ -121,11 +115,17 @@ public interface AgentQSourceMap {
 			}
 		}
 
-		@Override
-		public QSourceForSingleAgent agentQSource(String agentName) {
-			return this.qSourceMapping.get(agentName).getMyQSource();
-		}
-
 	}
+
+	/**
+	 * Returns a QSource which can be used to query the Q-values of a given
+	 * agent.
+	 * 
+	 * @param agentName
+	 *            the name of the agent for which Q-values will be queried.
+	 * @return A {@link QSourceForSingleAgent} object that allows the Q-values
+	 *         for a single agent to be queried.
+	 */
+	public QSourceForSingleAgent agentQSource(String agentName);
 
 }

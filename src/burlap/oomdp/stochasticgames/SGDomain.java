@@ -1,10 +1,15 @@
 package burlap.oomdp.stochasticgames;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
-
-import java.util.*;
 
 /**
  * This class is used to define Stochastic Games Domains. This class extends the
@@ -39,14 +44,35 @@ public class SGDomain extends Domain {
 		singleActionMap = new HashMap<String, SGAgentAction>();
 	}
 
-	/**
-	 * Sets the joint action model associated with this domain.
-	 * 
-	 * @param jam
-	 *            the joint action model to associate with this domain.
-	 */
-	public void setJointActionModel(JointActionModel jam) {
-		this.jam = jam;
+	@Override
+	public void addAction(Action act) {
+		throw new UnsupportedOperationException(
+				"Stochastic Games domain cannot add actions designed for single agent formalisms");
+	}
+
+	@Override
+	public void addSGAgentAction(SGAgentAction sa) {
+		if (!this.singleActionMap.containsKey(sa.actionName)) {
+			agentActions.add(sa);
+			singleActionMap.put(sa.actionName, sa);
+		}
+	}
+
+	@Override
+	public Action getAction(String name) {
+		throw new UnsupportedOperationException(
+				"Stochastic Games domain does not contain any action for single agent formalisms");
+	}
+
+	@Override
+	public List<Action> getActions() {
+		throw new UnsupportedOperationException(
+				"Stochastic Games domain does not contain any action for single agent formalisms");
+	}
+
+	@Override
+	public List<SGAgentAction> getAgentActions() {
+		return new ArrayList<SGAgentAction>(agentActions);
 	}
 
 	/**
@@ -59,16 +85,8 @@ public class SGDomain extends Domain {
 	}
 
 	@Override
-	public void addSGAgentAction(SGAgentAction sa) {
-		if (!this.singleActionMap.containsKey(sa.actionName)) {
-			agentActions.add(sa);
-			singleActionMap.put(sa.actionName, sa);
-		}
-	}
-
-	@Override
-	public List<SGAgentAction> getAgentActions() {
-		return new ArrayList<SGAgentAction>(agentActions);
+	public SGAgentAction getSGAgentAction(String name) {
+		return singleActionMap.get(name);
 	}
 
 	@Override
@@ -77,31 +95,18 @@ public class SGDomain extends Domain {
 	}
 
 	@Override
-	public SGAgentAction getSGAgentAction(String name) {
-		return singleActionMap.get(name);
-	}
-
-	@Override
-	public void addAction(Action act) {
-		throw new UnsupportedOperationException(
-				"Stochastic Games domain cannot add actions designed for single agent formalisms");
-	}
-
-	@Override
-	public List<Action> getActions() {
-		throw new UnsupportedOperationException(
-				"Stochastic Games domain does not contain any action for single agent formalisms");
-	}
-
-	@Override
-	public Action getAction(String name) {
-		throw new UnsupportedOperationException(
-				"Stochastic Games domain does not contain any action for single agent formalisms");
-	}
-
-	@Override
 	protected Domain newInstance() {
 		return new SGDomain();
+	}
+
+	/**
+	 * Sets the joint action model associated with this domain.
+	 * 
+	 * @param jam
+	 *            the joint action model to associate with this domain.
+	 */
+	public void setJointActionModel(JointActionModel jam) {
+		this.jam = jam;
 	}
 
 }

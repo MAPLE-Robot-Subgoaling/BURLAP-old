@@ -27,43 +27,6 @@ import burlap.oomdp.visualizer.Visualizer;
 public class GGVisualizer {
 
 	/**
-	 * Generates a visualizer for a grid game
-	 * 
-	 * @param maxX
-	 *            the width of the playing field
-	 * @param maxY
-	 *            the height of the playing field
-	 * @return a visualizer for the grid game
-	 */
-	public static Visualizer getVisualizer(int maxX, int maxY) {
-
-		Visualizer v = new Visualizer();
-
-		List<Color> agentColors = new ArrayList<Color>();
-		agentColors.add(Color.green);
-		agentColors.add(Color.blue);
-		agentColors.add(Color.magenta);
-		agentColors.add(Color.orange);
-
-		List<Color> goalColors = new ArrayList<Color>();
-		goalColors.add(Color.gray);
-		for (Color c : agentColors) {
-			goalColors.add(c.darker().darker());
-		}
-
-		v.addObjectClassPainter(GridGame.CLASSGOAL, new CellPainter(maxX, maxY,
-				goalColors, 0));
-		v.addObjectClassPainter(GridGame.CLASSAGENT, new CellPainter(maxX,
-				maxY, agentColors, 1));
-		v.addObjectClassPainter(GridGame.CLASSDIMVWALL, new WallPainter(maxX,
-				maxY, true));
-		v.addObjectClassPainter(GridGame.CLASSDIMHWALL, new WallPainter(maxX,
-				maxY, false));
-
-		return v;
-	}
-
-	/**
 	 * A painter that can be used for either agent objects or goal objects.
 	 * 
 	 * @author James MacGlashan
@@ -229,6 +192,43 @@ public class GGVisualizer {
 
 		}
 
+	}
+
+	/**
+	 * Generates a visualizer for a grid game
+	 * 
+	 * @param maxX
+	 *            the width of the playing field
+	 * @param maxY
+	 *            the height of the playing field
+	 * @return a visualizer for the grid game
+	 */
+	public static Visualizer getVisualizer(int maxX, int maxY) {
+
+		Visualizer v = new Visualizer();
+
+		List<Color> agentColors = new ArrayList<Color>();
+		agentColors.add(Color.green);
+		agentColors.add(Color.blue);
+		agentColors.add(Color.magenta);
+		agentColors.add(Color.orange);
+
+		List<Color> goalColors = new ArrayList<Color>();
+		goalColors.add(Color.gray);
+		for (Color c : agentColors) {
+			goalColors.add(c.darker().darker());
+		}
+
+		v.addObjectClassPainter(GridGame.CLASSGOAL, new CellPainter(maxX, maxY,
+				goalColors, 0));
+		v.addObjectClassPainter(GridGame.CLASSAGENT, new CellPainter(maxX,
+				maxY, agentColors, 1));
+		v.addObjectClassPainter(GridGame.CLASSDIMVWALL, new WallPainter(maxX,
+				maxY, true));
+		v.addObjectClassPainter(GridGame.CLASSDIMHWALL, new WallPainter(maxX,
+				maxY, false));
+
+		return v;
 	}
 
 }

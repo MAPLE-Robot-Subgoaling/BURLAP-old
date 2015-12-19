@@ -1,8 +1,5 @@
 package burlap.oomdp.core.values;
 
-import java.util.Collection;
-import java.util.Set;
-
 import burlap.oomdp.core.Attribute;
 
 /**
@@ -25,42 +22,19 @@ public class IntArrayValue extends OOMDPValue implements Value {
 		this.intArray = null;
 	}
 
-	public IntArrayValue(IntArrayValue v) {
-		super(v);
-		IntArrayValue iaValue = (IntArrayValue) v;
-		if (iaValue.intArray != null) {
-			this.intArray = iaValue.intArray.clone();
-		} else {
-			this.intArray = null;
-		}
-	}
-
 	public IntArrayValue(Attribute attribute, int[] intArray) {
 		super(attribute);
 		this.intArray = intArray;
 	}
 
-	@Override
-	public Value copy() {
-		return new IntArrayValue(this);
-	}
-
-	@Override
-	public boolean valueHasBeenSet() {
-		return this.intArray != null;
-	}
-
-	@Override
-	public Value setValue(String v) {
-		if (v.startsWith("\"") && v.endsWith("\"")) {
-			v = v.substring(1, v.length());
+	public IntArrayValue(IntArrayValue v) {
+		super(v);
+		IntArrayValue iaValue = v;
+		if (iaValue.intArray != null) {
+			this.intArray = iaValue.intArray.clone();
+		} else {
+			this.intArray = null;
 		}
-		String[] comps = v.split(",");
-		int[] intArray = new int[comps.length];
-		for (int i = 0; i < comps.length; i++) {
-			intArray[i] = Integer.parseInt(comps[i]);
-		}
-		return new IntArrayValue(this.attribute, intArray);
 	}
 
 	@Override
@@ -75,38 +49,8 @@ public class IntArrayValue extends OOMDPValue implements Value {
 	}
 
 	@Override
-	public double getNumericRepresentation() {
-		int sum = 0;
-		for (int v : this.intArray) {
-			sum *= 31;
-			sum += v;
-		}
-		return sum;
-	}
-
-	@Override
-	public Value setValue(int[] intArray) {
-		return new IntArrayValue(this.attribute, intArray);
-	}
-
-	@Override
-	public Value setValue(double[] doubleArray) {
-		throw new UnsupportedOperationException(
-				"Cannot set int array value to double array value.");
-	}
-
-	@Override
-	public int[] getIntArray() {
-		return this.intArray;
-	}
-
-	@Override
-	public double[] getDoubleArray() {
-		double[] doubleArray = new double[this.intArray.length];
-		for (int i = 0; i < doubleArray.length; i++) {
-			doubleArray[i] = this.intArray[i];
-		}
-		return doubleArray;
+	public Value copy() {
+		return new IntArrayValue(this);
 	}
 
 	@Override
@@ -136,6 +80,59 @@ public class IntArrayValue extends OOMDPValue implements Value {
 
 		return true;
 
+	}
+
+	@Override
+	public double[] getDoubleArray() {
+		double[] doubleArray = new double[this.intArray.length];
+		for (int i = 0; i < doubleArray.length; i++) {
+			doubleArray[i] = this.intArray[i];
+		}
+		return doubleArray;
+	}
+
+	@Override
+	public int[] getIntArray() {
+		return this.intArray;
+	}
+
+	@Override
+	public double getNumericRepresentation() {
+		int sum = 0;
+		for (int v : this.intArray) {
+			sum *= 31;
+			sum += v;
+		}
+		return sum;
+	}
+
+	@Override
+	public Value setValue(double[] doubleArray) {
+		throw new UnsupportedOperationException(
+				"Cannot set int array value to double array value.");
+	}
+
+	@Override
+	public Value setValue(int[] intArray) {
+		return new IntArrayValue(this.attribute, intArray);
+	}
+
+	@Override
+	public Value setValue(String v) {
+		if (v.startsWith("\"") && v.endsWith("\"")) {
+			v = v.substring(1, v.length());
+		}
+		String[] comps = v.split(",");
+		int[] intArray = new int[comps.length];
+		for (int i = 0; i < comps.length; i++) {
+			intArray[i] = Integer.parseInt(comps[i]);
+		}
+		return new IntArrayValue(this.attribute, intArray);
+	}
+
+	@Override
+	public boolean valueHasBeenSet() {
+		return this.intArray != null;
 	}
 
 }

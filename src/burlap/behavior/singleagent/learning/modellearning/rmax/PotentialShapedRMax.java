@@ -3,24 +3,24 @@ package burlap.behavior.singleagent.learning.modellearning.rmax;
 import java.util.LinkedList;
 import java.util.List;
 
-import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.policy.Policy;
+import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.MDPSolver;
 import burlap.behavior.singleagent.learning.LearningAgent;
 import burlap.behavior.singleagent.learning.modellearning.Model;
 import burlap.behavior.singleagent.learning.modellearning.ModelLearningPlanner;
 import burlap.behavior.singleagent.learning.modellearning.ModeledDomainGenerator;
 import burlap.behavior.singleagent.learning.modellearning.modelplanners.VIModelLearningPlanner;
 import burlap.behavior.singleagent.learning.modellearning.models.TabularModel;
-import burlap.behavior.singleagent.MDPSolver;
 import burlap.behavior.singleagent.shaping.potential.PotentialFunction;
-import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.environment.Environment;
 import burlap.oomdp.singleagent.environment.EnvironmentOutcome;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * Potential Shaped RMax [1] is a generalization of RMax in which a
@@ -43,6 +43,139 @@ import burlap.oomdp.singleagent.environment.EnvironmentOutcome;
  * 
  */
 public class PotentialShapedRMax extends MDPSolver implements LearningAgent {
+
+	/**
+	 * This class is a special version of a potential shaped reward function
+	 * that does not remove the potential value for transitions to states with
+	 * uknown action transitions that are followed. This is accomplished by
+	 * returning a value of zero when the fictious RMax state is recached,
+	 * rather than subtracting off the previous states potential.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	protected class PotentialShapedRMaxRF implements RewardFunction {
+
+		/**
+		 * The source reward function
+		 */
+		protected RewardFunction sourceRF;
+
+		/**
+		 * The state potential function
+		 */
+		protected PotentialFunction potential;
+
+		/**
+		 * Initializes.
+		 * 
+		 * @param sourceRF
+		 *            the source reward function to which the potential is
+		 *            added.
+		 * @param potential
+		 *            the state potential function
+		 */
+		public PotentialShapedRMaxRF(RewardFunction sourceRF,
+				PotentialFunction potential) {
+			this.sourceRF = sourceRF;
+			this.potential = potential;
+		}
+
+		@Override
+		public double reward(State s, GroundedAction a, State sprime) {
+			double nextStatePotential = 0.;
+			if (!PotentialShapedRMax.this.model.getModelTF().isTerminal(sprime)) {
+				nextStatePotential = this.potential.potentialValue(sprime);
+			}
+
+			return this.sourceRF.reward(s, a, sprime)
+					+ (PotentialShapedRMax.this.gamma * nextStatePotential)
+					- this.potential.potentialValue(s);
+
+		}
+
+	}
+
+	/**
+	 * A Terminal function that treats transitions to RMax fictious nodes as
+	 * terminal states as well as what the model reports as terminal states.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class PotentialShapedRMaxTerminal implements TerminalFunction {
+
+		/**
+		 * The modeled terminal function
+		 */
+		TerminalFunction sourceModelTF;
+
+		/**
+		 * Initializes with a modeled terminal function
+		 * 
+		 * @param sourceModelTF
+		 *            the model terminal function.
+		 */
+		public PotentialShapedRMaxTerminal(TerminalFunction sourceModelTF) {
+			this.sourceModelTF = sourceModelTF;
+		}
+
+		@Override
+		public boolean isTerminal(State s) {
+			// states with unmodeled transitions are terminal states; bias will
+			// be captured by the potential function
+			if (!PotentialShapedRMax.this.model.stateTransitionsAreModeled(s)) {
+				return true;
+			}
+
+			return this.sourceModelTF.isTerminal(s);
+		}
+
+	}
+
+	/**
+	 * A potential function for vanilla RMax; all states have a potential value
+	 * of R_max/(1-gamma)
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class RMaxPotential implements PotentialFunction {
+
+		/**
+		 * The vmax value
+		 */
+		double vmax;
+
+		/**
+		 * Initializes using the given maximum value function value
+		 * 
+		 * @param vMax
+		 *            the maximum value function value
+		 */
+		public RMaxPotential(double vMax) {
+			this.vmax = vMax;
+		}
+
+		/**
+		 * Initializes for a given maximum reward and discount factor. Sets
+		 * potential for all states to rMax/(1-gamma)
+		 * 
+		 * @param rMax
+		 *            the maximum possible reward
+		 * @param gamma
+		 *            the discount factor.
+		 */
+		public RMaxPotential(double rMax, double gamma) {
+			this.vmax = rMax / (1. - gamma);
+		}
+
+		@Override
+		public double potentialValue(State s) {
+			return this.vmax;
+		}
+
+	}
 
 	/**
 	 * The model of the world that is being learned.
@@ -208,6 +341,20 @@ public class PotentialShapedRMax extends MDPSolver implements LearningAgent {
 
 	}
 
+	protected Policy createUnmodeledFavoredPolicy() {
+		return new UnmodeledFavoredPolicy(
+				this.modelPlanner.modelPlannedPolicy(), this.model,
+				this.modeledDomain.getActions());
+	}
+
+	public List<EpisodeAnalysis> getAllStoredLearningEpisodes() {
+		return episodeHistory;
+	}
+
+	public EpisodeAnalysis getLastLearningEpisode() {
+		return episodeHistory.getLast();
+	}
+
 	/**
 	 * Returns the model learning algorithm being used.
 	 * 
@@ -228,16 +375,6 @@ public class PotentialShapedRMax extends MDPSolver implements LearningAgent {
 	}
 
 	/**
-	 * Returns the planning algorithm used on the model that can be iteratively
-	 * updated as the model changes.
-	 * 
-	 * @return the planning algorithm used on the model
-	 */
-	public ModelLearningPlanner getModelPlanner() {
-		return modelPlanner;
-	}
-
-	/**
 	 * Returns the model reward function. This is expected to have larger values
 	 * for unknown states.
 	 * 
@@ -255,6 +392,23 @@ public class PotentialShapedRMax extends MDPSolver implements LearningAgent {
 	 */
 	public TerminalFunction getModeledTerminalFunction() {
 		return modeledTerminalFunction;
+	}
+
+	/**
+	 * Returns the planning algorithm used on the model that can be iteratively
+	 * updated as the model changes.
+	 * 
+	 * @return the planning algorithm used on the model
+	 */
+	public ModelLearningPlanner getModelPlanner() {
+		return modelPlanner;
+	}
+
+	@Override
+	public void resetSolver() {
+		this.model.resetModel();
+		this.modelPlanner.resetSolver();
+		this.episodeHistory.clear();
 	}
 
 	@Override
@@ -308,166 +462,12 @@ public class PotentialShapedRMax extends MDPSolver implements LearningAgent {
 
 	}
 
-	protected Policy createUnmodeledFavoredPolicy() {
-		return new UnmodeledFavoredPolicy(
-				this.modelPlanner.modelPlannedPolicy(), this.model,
-				this.modeledDomain.getActions());
-	}
-
-	public EpisodeAnalysis getLastLearningEpisode() {
-		return episodeHistory.getLast();
-	}
-
 	public void setNumEpisodesToStore(int numEps) {
 		if (numEps > 0) {
 			numEpisodesToStore = numEps;
 		} else {
 			numEpisodesToStore = 1;
 		}
-	}
-
-	public List<EpisodeAnalysis> getAllStoredLearningEpisodes() {
-		return episodeHistory;
-	}
-
-	@Override
-	public void resetSolver() {
-		this.model.resetModel();
-		this.modelPlanner.resetSolver();
-		this.episodeHistory.clear();
-	}
-
-	/**
-	 * A Terminal function that treats transitions to RMax fictious nodes as
-	 * terminal states as well as what the model reports as terminal states.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public class PotentialShapedRMaxTerminal implements TerminalFunction {
-
-		/**
-		 * The modeled terminal function
-		 */
-		TerminalFunction sourceModelTF;
-
-		/**
-		 * Initializes with a modeled terminal function
-		 * 
-		 * @param sourceModelTF
-		 *            the model terminal function.
-		 */
-		public PotentialShapedRMaxTerminal(TerminalFunction sourceModelTF) {
-			this.sourceModelTF = sourceModelTF;
-		}
-
-		@Override
-		public boolean isTerminal(State s) {
-			// states with unmodeled transitions are terminal states; bias will
-			// be captured by the potential function
-			if (!PotentialShapedRMax.this.model.stateTransitionsAreModeled(s)) {
-				return true;
-			}
-
-			return this.sourceModelTF.isTerminal(s);
-		}
-
-	}
-
-	/**
-	 * A potential function for vanilla RMax; all states have a potential value
-	 * of R_max/(1-gamma)
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class RMaxPotential implements PotentialFunction {
-
-		/**
-		 * The vmax value
-		 */
-		double vmax;
-
-		/**
-		 * Initializes for a given maximum reward and discount factor. Sets
-		 * potential for all states to rMax/(1-gamma)
-		 * 
-		 * @param rMax
-		 *            the maximum possible reward
-		 * @param gamma
-		 *            the discount factor.
-		 */
-		public RMaxPotential(double rMax, double gamma) {
-			this.vmax = rMax / (1. - gamma);
-		}
-
-		/**
-		 * Initializes using the given maximum value function value
-		 * 
-		 * @param vMax
-		 *            the maximum value function value
-		 */
-		public RMaxPotential(double vMax) {
-			this.vmax = vMax;
-		}
-
-		@Override
-		public double potentialValue(State s) {
-			return this.vmax;
-		}
-
-	}
-
-	/**
-	 * This class is a special version of a potential shaped reward function
-	 * that does not remove the potential value for transitions to states with
-	 * uknown action transitions that are followed. This is accomplished by
-	 * returning a value of zero when the fictious RMax state is recached,
-	 * rather than subtracting off the previous states potential.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	protected class PotentialShapedRMaxRF implements RewardFunction {
-
-		/**
-		 * The source reward function
-		 */
-		protected RewardFunction sourceRF;
-
-		/**
-		 * The state potential function
-		 */
-		protected PotentialFunction potential;
-
-		/**
-		 * Initializes.
-		 * 
-		 * @param sourceRF
-		 *            the source reward function to which the potential is
-		 *            added.
-		 * @param potential
-		 *            the state potential function
-		 */
-		public PotentialShapedRMaxRF(RewardFunction sourceRF,
-				PotentialFunction potential) {
-			this.sourceRF = sourceRF;
-			this.potential = potential;
-		}
-
-		@Override
-		public double reward(State s, GroundedAction a, State sprime) {
-			double nextStatePotential = 0.;
-			if (!PotentialShapedRMax.this.model.getModelTF().isTerminal(sprime)) {
-				nextStatePotential = this.potential.potentialValue(sprime);
-			}
-
-			return this.sourceRF.reward(s, a, sprime)
-					+ (PotentialShapedRMax.this.gamma * nextStatePotential)
-					- this.potential.potentialValue(s);
-
-		}
-
 	}
 
 }

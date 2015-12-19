@@ -3,13 +3,13 @@ package burlap.behavior.singleagent.learning.actorcritic;
 import java.util.LinkedList;
 import java.util.List;
 
-import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.policy.Policy;
-import burlap.behavior.singleagent.learning.LearningAgent;
+import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.MDPSolver;
+import burlap.behavior.singleagent.learning.LearningAgent;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
@@ -119,6 +119,32 @@ public class ActorCritic extends MDPSolver implements LearningAgent {
 		this.solverInit(domain, null, null, gamma, null);
 	}
 
+	@Override
+	public void addNonDomainReferencedAction(Action a) {
+		super.addNonDomainReferencedAction(a);
+		this.actor.addNonDomainReferencedAction(a);
+		this.critic.addNonDomainReferencedAction(a);
+
+	}
+
+	public List<EpisodeAnalysis> getAllStoredLearningEpisodes() {
+		return this.episodeHistory;
+	}
+
+	public EpisodeAnalysis getLastLearningEpisode() {
+		return episodeHistory.getLast();
+	}
+
+	/**
+	 * Returns the policy/actor of this learning algorithm. Note that all
+	 * {@link Actor} objects are also Policy objects.
+	 * 
+	 * @return the policy/actor of this learning algorithm.
+	 */
+	public Policy getPolicy() {
+		return this.actor;
+	}
+
 	/**
 	 * Sets the {@link burlap.oomdp.singleagent.RewardFunction},
 	 * {@link burlap.oomdp.core.TerminalFunction}, and the number of simulated
@@ -143,12 +169,27 @@ public class ActorCritic extends MDPSolver implements LearningAgent {
 		this.numEpisodesForPlanning = numEpisodesForPlanning;
 	}
 
-	@Override
-	public void addNonDomainReferencedAction(Action a) {
-		super.addNonDomainReferencedAction(a);
-		this.actor.addNonDomainReferencedAction(a);
-		this.critic.addNonDomainReferencedAction(a);
+	public void planFromState(State initialState) {
 
+		if (this.rf == null || this.tf == null) {
+			throw new RuntimeException(
+					"QLearning (and its subclasses) cannot execute planFromState because the reward function and/or terminal function for planning have not been set. Use the initializeForPlanning method to set them.");
+		}
+
+		SimulatedEnvironment env = new SimulatedEnvironment(this.domain,
+				this.rf, this.tf, initialState);
+
+		for (int i = 0; i < numEpisodesForPlanning; i++) {
+			this.runLearningEpisode(env, this.maxEpisodeSize);
+		}
+	}
+
+	@Override
+	public void resetSolver() {
+		this.episodeHistory.clear();
+		this.mapToStateIndex.clear();
+		this.actor.resetData();
+		this.critic.resetData();
 	}
 
 	@Override
@@ -196,49 +237,8 @@ public class ActorCritic extends MDPSolver implements LearningAgent {
 
 	}
 
-	public EpisodeAnalysis getLastLearningEpisode() {
-		return episodeHistory.getLast();
-	}
-
 	public void setNumEpisodesToStore(int numEps) {
 		this.numEpisodesToStore = numEps;
-	}
-
-	public List<EpisodeAnalysis> getAllStoredLearningEpisodes() {
-		return this.episodeHistory;
-	}
-
-	public void planFromState(State initialState) {
-
-		if (this.rf == null || this.tf == null) {
-			throw new RuntimeException(
-					"QLearning (and its subclasses) cannot execute planFromState because the reward function and/or terminal function for planning have not been set. Use the initializeForPlanning method to set them.");
-		}
-
-		SimulatedEnvironment env = new SimulatedEnvironment(this.domain,
-				this.rf, this.tf, initialState);
-
-		for (int i = 0; i < numEpisodesForPlanning; i++) {
-			this.runLearningEpisode(env, this.maxEpisodeSize);
-		}
-	}
-
-	@Override
-	public void resetSolver() {
-		this.episodeHistory.clear();
-		this.mapToStateIndex.clear();
-		this.actor.resetData();
-		this.critic.resetData();
-	}
-
-	/**
-	 * Returns the policy/actor of this learning algorithm. Note that all
-	 * {@link Actor} objects are also Policy objects.
-	 * 
-	 * @return the policy/actor of this learning algorithm.
-	 */
-	public Policy getPolicy() {
-		return this.actor;
 	}
 
 }

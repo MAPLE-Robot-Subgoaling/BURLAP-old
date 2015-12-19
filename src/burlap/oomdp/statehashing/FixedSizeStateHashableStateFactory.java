@@ -1,12 +1,12 @@
 package burlap.oomdp.statehashing;
 
+import java.util.BitSet;
+import java.util.Iterator;
+
 import burlap.oomdp.core.objects.ImmutableObjectInstance;
 import burlap.oomdp.core.states.FixedSizeImmutableState;
 import burlap.oomdp.core.states.ImmutableStateInterface;
 import burlap.oomdp.core.states.State;
-
-import java.util.BitSet;
-import java.util.Iterator;
 
 /**
  * This is a hash factory specifically for FixedSizeImmutableStates. It allows
@@ -21,7 +21,32 @@ import java.util.Iterator;
  */
 public class FixedSizeStateHashableStateFactory extends
 		ImmutableStateHashableStateFactory {
+	private static Iterator<ImmutableObjectInstance> iterator(
+			final FixedSizeImmutableState state, final BitSet mask) {
+		return new Iterator<ImmutableObjectInstance>() {
+			int next = mask.nextSetBit(0);
+
+			@Override
+			public boolean hasNext() {
+				return next >= 0;
+			}
+
+			@Override
+			public ImmutableObjectInstance next() {
+				ImmutableObjectInstance obj = (ImmutableObjectInstance) state
+						.getObject(next);
+				next = mask.nextSetBit(next + 1);
+				return obj;
+			}
+
+			@Override
+			public void remove() {
+				throw new RuntimeException("What are you even doing?");
+			}
+		};
+	}
 	private final BitSet objectMask;
+
 	private final FixedSizeImmutableState initialState;
 
 	public FixedSizeStateHashableStateFactory(boolean identifierIndependent,
@@ -30,6 +55,43 @@ public class FixedSizeStateHashableStateFactory extends
 		this.objectMask = new BitSet(initialState.numTotalObjects());
 		this.objectMask.set(0, initialState.numTotalObjects(), true);
 		this.initialState = initialState;
+	}
+
+	/**
+	 * Because the objects are assumed to be in a fixed order. If the equality
+	 * comparison is name dependent you don't need to check equality among any
+	 * other objects, just the ones used in the comparison.
+	 * 
+	 * @param s1
+	 *            first {@link burlap.oomdp.core.states.ImmutableState} to
+	 *            compare
+	 * @param s2
+	 *            second {@link burlap.oomdp.core.states.ImmutableState} o
+	 *            compare
+	 * @return true or false
+	 */
+	protected boolean identifierDependentEquals(ImmutableStateInterface s1,
+			ImmutableStateInterface s2) {
+		if (!(s1 instanceof FixedSizeImmutableState)
+				|| !(s2 instanceof FixedSizeImmutableState)) {
+			throw new RuntimeException(
+					"This state needs to be a FixedSize state");
+		}
+		FixedSizeImmutableState fs1 = (FixedSizeImmutableState) s1;
+		FixedSizeImmutableState fs2 = (FixedSizeImmutableState) s2;
+
+		Iterator<ImmutableObjectInstance> it1 = iterator(fs1, this.objectMask);
+		Iterator<ImmutableObjectInstance> it2 = iterator(fs2, this.objectMask);
+
+		while (it1.hasNext()) {
+			ImmutableObjectInstance ob1 = it1.next();
+			ImmutableObjectInstance ob2 = it2.next();
+			if (!ob1.equals(ob2)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -91,67 +153,5 @@ public class FixedSizeStateHashableStateFactory extends
 		}
 
 		return identifierDependentEquals(iS1, iS2);
-	}
-
-	/**
-	 * Because the objects are assumed to be in a fixed order. If the equality
-	 * comparison is name dependent you don't need to check equality among any
-	 * other objects, just the ones used in the comparison.
-	 * 
-	 * @param s1
-	 *            first {@link burlap.oomdp.core.states.ImmutableState} to
-	 *            compare
-	 * @param s2
-	 *            second {@link burlap.oomdp.core.states.ImmutableState} o
-	 *            compare
-	 * @return true or false
-	 */
-	protected boolean identifierDependentEquals(ImmutableStateInterface s1,
-			ImmutableStateInterface s2) {
-		if (!(s1 instanceof FixedSizeImmutableState)
-				|| !(s2 instanceof FixedSizeImmutableState)) {
-			throw new RuntimeException(
-					"This state needs to be a FixedSize state");
-		}
-		FixedSizeImmutableState fs1 = (FixedSizeImmutableState) s1;
-		FixedSizeImmutableState fs2 = (FixedSizeImmutableState) s2;
-
-		Iterator<ImmutableObjectInstance> it1 = iterator(fs1, this.objectMask);
-		Iterator<ImmutableObjectInstance> it2 = iterator(fs2, this.objectMask);
-
-		while (it1.hasNext()) {
-			ImmutableObjectInstance ob1 = it1.next();
-			ImmutableObjectInstance ob2 = it2.next();
-			if (!ob1.equals(ob2)) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	private static Iterator<ImmutableObjectInstance> iterator(
-			final FixedSizeImmutableState state, final BitSet mask) {
-		return new Iterator<ImmutableObjectInstance>() {
-			int next = mask.nextSetBit(0);
-
-			@Override
-			public boolean hasNext() {
-				return next >= 0;
-			}
-
-			@Override
-			public ImmutableObjectInstance next() {
-				ImmutableObjectInstance obj = (ImmutableObjectInstance) state
-						.getObject(next);
-				next = mask.nextSetBit(next + 1);
-				return obj;
-			}
-
-			@Override
-			public void remove() {
-				throw new RuntimeException("What are you even doing?");
-			}
-		};
 	}
 }

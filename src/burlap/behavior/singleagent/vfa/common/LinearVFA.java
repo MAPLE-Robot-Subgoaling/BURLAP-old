@@ -1,13 +1,20 @@
 package burlap.behavior.singleagent.vfa.common;
 
-import burlap.behavior.singleagent.vfa.*;
-import burlap.oomdp.core.states.State;
-import burlap.oomdp.singleagent.GroundedAction;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import burlap.behavior.singleagent.vfa.ActionApproximationResult;
+import burlap.behavior.singleagent.vfa.ActionFeaturesQuery;
+import burlap.behavior.singleagent.vfa.ApproximationResult;
+import burlap.behavior.singleagent.vfa.FeatureDatabase;
+import burlap.behavior.singleagent.vfa.FunctionWeight;
+import burlap.behavior.singleagent.vfa.StateFeature;
+import burlap.behavior.singleagent.vfa.ValueFunctionApproximation;
+import burlap.behavior.singleagent.vfa.WeightGradient;
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.singleagent.GroundedAction;
 
 /**
  * This class is used for general purpose linear VFA. It only needs to be
@@ -77,45 +84,18 @@ public class LinearVFA implements ValueFunctionApproximation {
 	}
 
 	@Override
-	public ApproximationResult getStateValue(State s) {
+	public LinearVFA copy() {
 
-		List<StateFeature> features = featureDatabase.getStateFeatures(s);
-		return this.getApproximationResultFrom(features);
-	}
-
-	@Override
-	public List<ActionApproximationResult> getStateActionValues(State s,
-			List<GroundedAction> gas) {
-
-		List<ActionFeaturesQuery> featureSets = this.featureDatabase
-				.getActionFeaturesSets(s, gas);
-		List<ActionApproximationResult> results = new ArrayList<ActionApproximationResult>(
-				featureSets.size());
-
-		for (ActionFeaturesQuery afq : featureSets) {
-
-			ApproximationResult r = this
-					.getApproximationResultFrom(afq.features);
-			ActionApproximationResult aar = new ActionApproximationResult(
-					afq.queryAction, r);
-			results.add(aar);
-
+		LinearVFA vfa = new LinearVFA(this.featureDatabase.copy(),
+				this.defaultWeight);
+		vfa.weights = new HashMap<Integer, FunctionWeight>(this.weights.size());
+		for (Map.Entry<Integer, FunctionWeight> e : this.weights.entrySet()) {
+			FunctionWeight fw = e.getValue();
+			vfa.weights.put(e.getKey(),
+					new FunctionWeight(fw.weightId(), fw.weightValue()));
 		}
 
-		return results;
-	}
-
-	@Override
-	public WeightGradient getWeightGradient(
-			ApproximationResult approximationResult) {
-
-		WeightGradient gradient = new WeightGradient(
-				approximationResult.stateFeatures.size());
-		for (StateFeature sf : approximationResult.stateFeatures) {
-			gradient.put(sf.id, sf.value);
-		}
-
-		return gradient;
+		return vfa;
 	}
 
 	/**
@@ -153,6 +133,58 @@ public class LinearVFA implements ValueFunctionApproximation {
 	}
 
 	@Override
+	public FunctionWeight getFunctionWeight(int featureId) {
+		return this.weights.get(featureId);
+	}
+
+	@Override
+	public List<ActionApproximationResult> getStateActionValues(State s,
+			List<GroundedAction> gas) {
+
+		List<ActionFeaturesQuery> featureSets = this.featureDatabase
+				.getActionFeaturesSets(s, gas);
+		List<ActionApproximationResult> results = new ArrayList<ActionApproximationResult>(
+				featureSets.size());
+
+		for (ActionFeaturesQuery afq : featureSets) {
+
+			ApproximationResult r = this
+					.getApproximationResultFrom(afq.features);
+			ActionApproximationResult aar = new ActionApproximationResult(
+					afq.queryAction, r);
+			results.add(aar);
+
+		}
+
+		return results;
+	}
+
+	@Override
+	public ApproximationResult getStateValue(State s) {
+
+		List<StateFeature> features = featureDatabase.getStateFeatures(s);
+		return this.getApproximationResultFrom(features);
+	}
+
+	@Override
+	public WeightGradient getWeightGradient(
+			ApproximationResult approximationResult) {
+
+		WeightGradient gradient = new WeightGradient(
+				approximationResult.stateFeatures.size());
+		for (StateFeature sf : approximationResult.stateFeatures) {
+			gradient.put(sf.id, sf.value);
+		}
+
+		return gradient;
+	}
+
+	@Override
+	public int numFeatures() {
+		return this.featureDatabase.numberOfFeatures();
+	}
+
+	@Override
 	public void resetWeights() {
 		this.weights.clear();
 	}
@@ -166,30 +198,5 @@ public class LinearVFA implements ValueFunctionApproximation {
 		} else {
 			fw.setWeight(w);
 		}
-	}
-
-	@Override
-	public int numFeatures() {
-		return this.featureDatabase.numberOfFeatures();
-	}
-
-	@Override
-	public FunctionWeight getFunctionWeight(int featureId) {
-		return this.weights.get(featureId);
-	}
-
-	@Override
-	public LinearVFA copy() {
-
-		LinearVFA vfa = new LinearVFA(this.featureDatabase.copy(),
-				this.defaultWeight);
-		vfa.weights = new HashMap<Integer, FunctionWeight>(this.weights.size());
-		for (Map.Entry<Integer, FunctionWeight> e : this.weights.entrySet()) {
-			FunctionWeight fw = e.getValue();
-			vfa.weights.put(e.getKey(),
-					new FunctionWeight(fw.weightId(), fw.weightValue()));
-		}
-
-		return vfa;
 	}
 }

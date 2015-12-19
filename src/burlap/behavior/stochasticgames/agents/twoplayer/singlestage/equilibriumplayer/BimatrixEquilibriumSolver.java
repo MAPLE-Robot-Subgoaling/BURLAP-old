@@ -33,6 +33,23 @@ public abstract class BimatrixEquilibriumSolver {
 	public static double doubleEpislon = 1e-8;
 
 	/**
+	 * Returns true if |a - b| < {@link #doubleEpislon}; false otherwise.
+	 * 
+	 * @param a
+	 *            first input
+	 * @param b
+	 *            second input
+	 * @return true if |a - b| < {@link #doubleEpislon}; false otherwise.
+	 */
+	protected static boolean doubleEquality(double a, double b) {
+		double diff = Math.abs(a - b);
+		if (diff < doubleEpislon) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * The last cached row player strategy
 	 */
 	protected double[] lastRowStrategy = null;
@@ -51,77 +68,6 @@ public abstract class BimatrixEquilibriumSolver {
 	 * The last cached column player payoff matrix
 	 */
 	protected double[][] lastColPlayerPayoff = null;
-
-	/**
-	 * Solves and caches the solution for the given bimatrix. If the given
-	 * bimatrix is the same as the last bimatrix solved by this object (if there
-	 * was one), then nothing is computed and the same solution is returned.
-	 * 
-	 * @param rowPayoff
-	 *            the row player payoff matrix
-	 * @param colPayoff
-	 *            the column player payoff matrix
-	 */
-	public void solve(double[][] rowPayoff, double[][] colPayoff) {
-		if (!this.bimatrixEqualsLast(rowPayoff, colPayoff)) {
-			this.lastRowPlayerPayoff = rowPayoff;
-			this.lastColPlayerPayoff = colPayoff;
-			this.lastRowStrategy = computeRowStrategy(rowPayoff, colPayoff);
-			this.lastColsStrategy = computeColStrategy(rowPayoff, colPayoff);
-		}
-	}
-
-	/**
-	 * Returns the last row player strategy computed by the
-	 * {@link #solve(double[][], double[][])} method. The strategy is
-	 * represented as a double array where a[i] is the probability of action i
-	 * being selected.
-	 * 
-	 * @return the last row player strategy.
-	 */
-	public double[] getLastComputedRowStrategy() {
-		return this.lastRowStrategy;
-	}
-
-	/**
-	 * Returns the last column player strategy computed by the
-	 * {@link #solve(double[][], double[][])} method. The strategy is
-	 * represented as a double array where a[i] is the probability of action i
-	 * being selected.
-	 * 
-	 * @return the last column player strategy.
-	 */
-	public double[] getLastComputedColStrategy() {
-		return this.lastColsStrategy;
-	}
-
-	/**
-	 * Computes and returns the row player strategy for the given bimatrix game.
-	 * The strategy is represented as a double array where a[i] is the
-	 * probability of action i being selected.
-	 * 
-	 * @param rowPayoff
-	 *            the row player payoffs.
-	 * @param colPayoff
-	 *            the column player payoffs.
-	 * @return the row player strategy.
-	 */
-	public abstract double[] computeRowStrategy(double[][] rowPayoff,
-			double[][] colPayoff);
-
-	/**
-	 * Computes and returns the column player strategy for the given bimatrix
-	 * game. The strategy is represented as a double array where a[i] is the
-	 * probability of action i being selected.
-	 * 
-	 * @param rowPayoff
-	 *            the row player payoffs.
-	 * @param colPayoff
-	 *            the column player payoffs.
-	 * @return the column player strategy.
-	 */
-	public abstract double[] computeColStrategy(double[][] rowPayoff,
-			double[][] colPayoff);
 
 	/**
 	 * Tests whether the inputed bimatrix is equal to the last bimatrix cached
@@ -167,19 +113,73 @@ public abstract class BimatrixEquilibriumSolver {
 	}
 
 	/**
-	 * Returns true if |a - b| < {@link #doubleEpislon}; false otherwise.
+	 * Computes and returns the column player strategy for the given bimatrix
+	 * game. The strategy is represented as a double array where a[i] is the
+	 * probability of action i being selected.
 	 * 
-	 * @param a
-	 *            first input
-	 * @param b
-	 *            second input
-	 * @return true if |a - b| < {@link #doubleEpislon}; false otherwise.
+	 * @param rowPayoff
+	 *            the row player payoffs.
+	 * @param colPayoff
+	 *            the column player payoffs.
+	 * @return the column player strategy.
 	 */
-	protected static boolean doubleEquality(double a, double b) {
-		double diff = Math.abs(a - b);
-		if (diff < doubleEpislon) {
-			return true;
+	public abstract double[] computeColStrategy(double[][] rowPayoff,
+			double[][] colPayoff);
+
+	/**
+	 * Computes and returns the row player strategy for the given bimatrix game.
+	 * The strategy is represented as a double array where a[i] is the
+	 * probability of action i being selected.
+	 * 
+	 * @param rowPayoff
+	 *            the row player payoffs.
+	 * @param colPayoff
+	 *            the column player payoffs.
+	 * @return the row player strategy.
+	 */
+	public abstract double[] computeRowStrategy(double[][] rowPayoff,
+			double[][] colPayoff);
+
+	/**
+	 * Returns the last column player strategy computed by the
+	 * {@link #solve(double[][], double[][])} method. The strategy is
+	 * represented as a double array where a[i] is the probability of action i
+	 * being selected.
+	 * 
+	 * @return the last column player strategy.
+	 */
+	public double[] getLastComputedColStrategy() {
+		return this.lastColsStrategy;
+	}
+
+	/**
+	 * Returns the last row player strategy computed by the
+	 * {@link #solve(double[][], double[][])} method. The strategy is
+	 * represented as a double array where a[i] is the probability of action i
+	 * being selected.
+	 * 
+	 * @return the last row player strategy.
+	 */
+	public double[] getLastComputedRowStrategy() {
+		return this.lastRowStrategy;
+	}
+
+	/**
+	 * Solves and caches the solution for the given bimatrix. If the given
+	 * bimatrix is the same as the last bimatrix solved by this object (if there
+	 * was one), then nothing is computed and the same solution is returned.
+	 * 
+	 * @param rowPayoff
+	 *            the row player payoff matrix
+	 * @param colPayoff
+	 *            the column player payoff matrix
+	 */
+	public void solve(double[][] rowPayoff, double[][] colPayoff) {
+		if (!this.bimatrixEqualsLast(rowPayoff, colPayoff)) {
+			this.lastRowPlayerPayoff = rowPayoff;
+			this.lastColPlayerPayoff = colPayoff;
+			this.lastRowStrategy = computeRowStrategy(rowPayoff, colPayoff);
+			this.lastColsStrategy = computeColStrategy(rowPayoff, colPayoff);
 		}
-		return false;
 	}
 }

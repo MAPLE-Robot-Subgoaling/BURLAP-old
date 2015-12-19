@@ -8,13 +8,13 @@ import java.util.Set;
 import burlap.behavior.singleagent.MDPSolver;
 import burlap.behavior.singleagent.planning.Planner;
 import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * This class extends the OOMDPlanner to provide the interface and common
@@ -33,6 +33,23 @@ import burlap.oomdp.singleagent.RewardFunction;
  * 
  */
 public abstract class DeterministicPlanner extends MDPSolver implements Planner {
+
+	/**
+	 * Exception class for indicating that a solution failed to be found by the
+	 * planning algorithm.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class PlanningFailedException extends RuntimeException {
+
+		private static final long serialVersionUID = 1L;
+
+		public PlanningFailedException() {
+			super("Planning failed to find the goal state");
+		}
+
+	}
 
 	/**
 	 * This State condition test should return true for goal states and false
@@ -80,59 +97,6 @@ public abstract class DeterministicPlanner extends MDPSolver implements Planner 
 
 	}
 
-	@Override
-	public void resetSolver() {
-		this.mapToStateIndex.clear();
-		this.internalPolicy.clear();
-	}
-
-	/**
-	 * Returns whether the valueFunction has a plan solution from the provided
-	 * state.
-	 * 
-	 * @param s
-	 *            the state to test whether a plan solution currently exists.
-	 * @return true if a plan solution from the given state exists; false
-	 *         otherwise.
-	 */
-	public boolean hasCachedPlanForState(State s) {
-		HashableState sh = this.stateHash(s);
-		HashableState indexSH = mapToStateIndex.get(sh);
-
-		return indexSH != null;
-	}
-
-	/**
-	 * Returns the action suggested by the valueFunction for the given state. If
-	 * a plan including this state has not already been computed, the
-	 * valueFunction will be called from this state to find one.
-	 * 
-	 * @param s
-	 *            the state for which the suggested action is to be returned.
-	 * @return The suggested action for the given state.
-	 */
-	public GroundedAction querySelectedActionForState(State s) {
-
-		HashableState sh = this.stateHash(s);
-		HashableState indexSH = mapToStateIndex.get(sh);
-		if (indexSH == null) {
-			this.planFromState(s);
-			return internalPolicy.get(sh); // no need to translate because if
-											// the state didn't exist then it
-											// got indexed with this state's rep
-		}
-
-		// otherwise it's already computed
-		GroundedAction res = internalPolicy.get(sh);
-
-		// do object matching from returned result to this query state and
-		// return result
-		res = (GroundedAction) res.translateParameters(indexSH.s, sh.s);
-
-		return res;
-
-	}
-
 	/**
 	 * Encodes a solution path found by the valueFunction into this class's
 	 * internal policy structure. If a state was visited more than once in the
@@ -164,6 +128,22 @@ public abstract class DeterministicPlanner extends MDPSolver implements Planner 
 
 			curNode = curNode.backPointer;
 		}
+	}
+
+	/**
+	 * Returns whether the valueFunction has a plan solution from the provided
+	 * state.
+	 * 
+	 * @param s
+	 *            the state to test whether a plan solution currently exists.
+	 * @return true if a plan solution from the given state exists; false
+	 *         otherwise.
+	 */
+	public boolean hasCachedPlanForState(State s) {
+		HashableState sh = this.stateHash(s);
+		HashableState indexSH = mapToStateIndex.get(sh);
+
+		return indexSH != null;
 	}
 
 	/**
@@ -218,20 +198,40 @@ public abstract class DeterministicPlanner extends MDPSolver implements Planner 
 	}
 
 	/**
-	 * Exception class for indicating that a solution failed to be found by the
-	 * planning algorithm.
+	 * Returns the action suggested by the valueFunction for the given state. If
+	 * a plan including this state has not already been computed, the
+	 * valueFunction will be called from this state to find one.
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @param s
+	 *            the state for which the suggested action is to be returned.
+	 * @return The suggested action for the given state.
 	 */
-	public class PlanningFailedException extends RuntimeException {
+	public GroundedAction querySelectedActionForState(State s) {
 
-		private static final long serialVersionUID = 1L;
-
-		public PlanningFailedException() {
-			super("Planning failed to find the goal state");
+		HashableState sh = this.stateHash(s);
+		HashableState indexSH = mapToStateIndex.get(sh);
+		if (indexSH == null) {
+			this.planFromState(s);
+			return internalPolicy.get(sh); // no need to translate because if
+											// the state didn't exist then it
+											// got indexed with this state's rep
 		}
 
+		// otherwise it's already computed
+		GroundedAction res = internalPolicy.get(sh);
+
+		// do object matching from returned result to this query state and
+		// return result
+		res = res.translateParameters(indexSH.s, sh.s);
+
+		return res;
+
+	}
+
+	@Override
+	public void resetSolver() {
+		this.mapToStateIndex.clear();
+		this.internalPolicy.clear();
 	}
 
 }

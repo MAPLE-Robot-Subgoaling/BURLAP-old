@@ -3,10 +3,10 @@ package burlap.behavior.learningrate;
 import java.util.HashMap;
 import java.util.Map;
 
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.states.State;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * Implements a learning rate decay schedule where the learning rate at time t
@@ -28,6 +28,60 @@ import burlap.oomdp.core.states.State;
  * 
  */
 public class SoftTimeInverseDecayLR implements LearningRate {
+
+	/**
+	 * A class for storing a mutable int value object
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	protected class MutableInt {
+		int mi;
+		int lastPollTime = -1;
+
+		public MutableInt(int mi) {
+			this.mi = mi;
+		}
+	}
+
+	/**
+	 * A class for storing a time index for a state, or a time index for each
+	 * action for a given state
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	protected class StateWiseTimeIndex {
+		int timeIndex;
+		Map<String, MutableInt> actionLearningRates = null;
+		int lastPollTime = -1;
+
+		public StateWiseTimeIndex() {
+			this.timeIndex = 1;
+			if (useStateActionWise) {
+				this.actionLearningRates = new HashMap<String, MutableInt>();
+			}
+		}
+
+		/**
+		 * Returns the mutable int entry for the time index for the action for
+		 * the state with which this object is associated.
+		 * 
+		 * @param ga
+		 *            the input action for which the learning rate is returned.
+		 * @return the mutable int entry for the time index for the action for
+		 *         the state with which this object is associated.
+		 */
+		public MutableInt getActionTimeIndexEntry(AbstractGroundedAction ga) {
+			MutableInt entry = this.actionLearningRates.get(ga);
+			if (entry == null) {
+				entry = new MutableInt(1);
+				this.actionLearningRates.put(ga.actionName(), entry);
+			}
+			return entry;
+		}
+
+	}
 
 	/**
 	 * The initial learning rate value at time 0
@@ -124,40 +178,6 @@ public class SoftTimeInverseDecayLR implements LearningRate {
 	/**
 	 * Initializes with an initial learning rate and decay constant shift (n_0)
 	 * for a state or state-action (or state feature-action) dependent learning
-	 * rate. Minimum learning rate that can be returned will be
-	 * Double.MIN_NORMAL. If this learning rate function is to be used for state
-	 * state features, rather than states, then the hashing factory can be null;
-	 * 
-	 * @param initialLearningRate
-	 *            the initial learning rate for each state or state-action
-	 * @param decayConstantShift
-	 *            the constant added to the inver time decay schedule (n_0).
-	 *            That is; learning rate time time t is alpha_0 * (n_0 + 1) /
-	 *            (n_0 + t)
-	 * @param hashingFactory
-	 *            how to hash and compare states
-	 * @param useSeparateLRPerStateAction
-	 *            whether to have an independent learning rate for each
-	 *            state-action pair, rather than just each state
-	 */
-	public SoftTimeInverseDecayLR(double initialLearningRate,
-			double decayConstantShift, HashableStateFactory hashingFactory,
-			boolean useSeparateLRPerStateAction) {
-
-		this.initialLearningRate = initialLearningRate;
-		this.decayConstantShift = decayConstantShift;
-
-		this.useStateWise = true;
-		this.useStateActionWise = useSeparateLRPerStateAction;
-		this.hashingFactory = hashingFactory;
-		this.stateWiseMap = new HashMap<HashableState, StateWiseTimeIndex>();
-		this.featureWiseMap = new HashMap<Integer, StateWiseTimeIndex>();
-
-	}
-
-	/**
-	 * Initializes with an initial learning rate and decay constant shift (n_0)
-	 * for a state or state-action (or state feature-action) dependent learning
 	 * rate that will decay to a value no smaller than minimumLearningRate If
 	 * this learning rate function is to be used for state state features,
 	 * rather than states, then the hashing factory can be null;
@@ -193,6 +213,99 @@ public class SoftTimeInverseDecayLR implements LearningRate {
 
 	}
 
+	/**
+	 * Initializes with an initial learning rate and decay constant shift (n_0)
+	 * for a state or state-action (or state feature-action) dependent learning
+	 * rate. Minimum learning rate that can be returned will be
+	 * Double.MIN_NORMAL. If this learning rate function is to be used for state
+	 * state features, rather than states, then the hashing factory can be null;
+	 * 
+	 * @param initialLearningRate
+	 *            the initial learning rate for each state or state-action
+	 * @param decayConstantShift
+	 *            the constant added to the inver time decay schedule (n_0).
+	 *            That is; learning rate time time t is alpha_0 * (n_0 + 1) /
+	 *            (n_0 + t)
+	 * @param hashingFactory
+	 *            how to hash and compare states
+	 * @param useSeparateLRPerStateAction
+	 *            whether to have an independent learning rate for each
+	 *            state-action pair, rather than just each state
+	 */
+	public SoftTimeInverseDecayLR(double initialLearningRate,
+			double decayConstantShift, HashableStateFactory hashingFactory,
+			boolean useSeparateLRPerStateAction) {
+
+		this.initialLearningRate = initialLearningRate;
+		this.decayConstantShift = decayConstantShift;
+
+		this.useStateWise = true;
+		this.useStateActionWise = useSeparateLRPerStateAction;
+		this.hashingFactory = hashingFactory;
+		this.stateWiseMap = new HashMap<HashableState, StateWiseTimeIndex>();
+		this.featureWiseMap = new HashMap<Integer, StateWiseTimeIndex>();
+
+	}
+
+	/**
+	 * Returns the learning rate data structure for the given state feature. An
+	 * entry will be created if it does not already exist.
+	 * 
+	 * @param featureId
+	 *            the state feature id to get a learning rate time index for
+	 * @return the learning rate data structure for the given state feature
+	 */
+	protected StateWiseTimeIndex getFeatureWiseTimeIndex(int featureId) {
+		StateWiseTimeIndex slr = this.featureWiseMap.get(featureId);
+		if (slr == null) {
+			slr = new StateWiseTimeIndex();
+			this.featureWiseMap.put(featureId, slr);
+		}
+		return slr;
+	}
+
+	/**
+	 * Returns the learning rate data structure for the given state. An entry
+	 * will be created if it does not already exist.
+	 * 
+	 * @param s
+	 *            the state to get a learning rate time index for
+	 * @return the learning rate data structure for the given state feature
+	 */
+	protected StateWiseTimeIndex getStateWiseTimeIndex(State s) {
+		HashableState sh = this.hashingFactory.hashState(s);
+		StateWiseTimeIndex slr = this.stateWiseMap.get(sh);
+		if (slr == null) {
+			slr = new StateWiseTimeIndex();
+			this.stateWiseMap.put(sh, slr);
+		}
+		return slr;
+	}
+
+	protected double learningRate(int time) {
+		double r = 0.;
+		if (time == 0) {
+			r = this.initialLearningRate;
+		} else {
+			r = this.initialLearningRate
+					* ((this.decayConstantShift + 1) / (this.decayConstantShift + time));
+		}
+		r = Math.max(r, this.minimumLR);
+		return r;
+	}
+
+	@Override
+	public double peekAtLearningRate(int featureId) {
+		if (!useStateWise) {
+			return this.learningRate(this.universalTime);
+		}
+
+		StateWiseTimeIndex slr = this.getFeatureWiseTimeIndex(featureId);
+
+		return this.learningRate(slr.timeIndex);
+
+	}
+
 	@Override
 	public double peekAtLearningRate(State s, AbstractGroundedAction ga) {
 		if (!useStateWise) {
@@ -205,6 +318,28 @@ public class SoftTimeInverseDecayLR implements LearningRate {
 		}
 
 		return this.learningRate(slr.getActionTimeIndexEntry(ga).mi);
+	}
+
+	@Override
+	public double pollLearningRate(int agentTime, int featureId) {
+		if (!useStateWise) {
+			double oldVal = this.learningRate(this.universalTime);
+			if (agentTime > this.lastPollTime) {
+				this.universalTime++;
+				this.lastPollTime = agentTime;
+			}
+			return oldVal;
+		}
+
+		StateWiseTimeIndex slr = this.getFeatureWiseTimeIndex(featureId);
+
+		double oldVal = this.learningRate(slr.timeIndex);
+		if (agentTime > slr.lastPollTime) {
+			slr.timeIndex++;
+			slr.lastPollTime = agentTime;
+		}
+		return oldVal;
+
 	}
 
 	@Override
@@ -239,146 +374,11 @@ public class SoftTimeInverseDecayLR implements LearningRate {
 	}
 
 	@Override
-	public double peekAtLearningRate(int featureId) {
-		if (!useStateWise) {
-			return this.learningRate(this.universalTime);
-		}
-
-		StateWiseTimeIndex slr = this.getFeatureWiseTimeIndex(featureId);
-
-		return this.learningRate(slr.timeIndex);
-
-	}
-
-	@Override
-	public double pollLearningRate(int agentTime, int featureId) {
-		if (!useStateWise) {
-			double oldVal = this.learningRate(this.universalTime);
-			if (agentTime > this.lastPollTime) {
-				this.universalTime++;
-				this.lastPollTime = agentTime;
-			}
-			return oldVal;
-		}
-
-		StateWiseTimeIndex slr = this.getFeatureWiseTimeIndex(featureId);
-
-		double oldVal = this.learningRate(slr.timeIndex);
-		if (agentTime > slr.lastPollTime) {
-			slr.timeIndex++;
-			slr.lastPollTime = agentTime;
-		}
-		return oldVal;
-
-	}
-
-	@Override
 	public void resetDecay() {
 		this.universalTime = 1;
 		this.stateWiseMap.clear();
 		this.featureWiseMap.clear();
 
-	}
-
-	protected double learningRate(int time) {
-		double r = 0.;
-		if (time == 0) {
-			r = this.initialLearningRate;
-		} else {
-			r = this.initialLearningRate
-					* ((this.decayConstantShift + 1) / (this.decayConstantShift + time));
-		}
-		r = Math.max(r, this.minimumLR);
-		return r;
-	}
-
-	/**
-	 * Returns the learning rate data structure for the given state. An entry
-	 * will be created if it does not already exist.
-	 * 
-	 * @param s
-	 *            the state to get a learning rate time index for
-	 * @return the learning rate data structure for the given state feature
-	 */
-	protected StateWiseTimeIndex getStateWiseTimeIndex(State s) {
-		HashableState sh = this.hashingFactory.hashState(s);
-		StateWiseTimeIndex slr = this.stateWiseMap.get(sh);
-		if (slr == null) {
-			slr = new StateWiseTimeIndex();
-			this.stateWiseMap.put(sh, slr);
-		}
-		return slr;
-	}
-
-	/**
-	 * Returns the learning rate data structure for the given state feature. An
-	 * entry will be created if it does not already exist.
-	 * 
-	 * @param featureId
-	 *            the state feature id to get a learning rate time index for
-	 * @return the learning rate data structure for the given state feature
-	 */
-	protected StateWiseTimeIndex getFeatureWiseTimeIndex(int featureId) {
-		StateWiseTimeIndex slr = this.featureWiseMap.get(featureId);
-		if (slr == null) {
-			slr = new StateWiseTimeIndex();
-			this.featureWiseMap.put(featureId, slr);
-		}
-		return slr;
-	}
-
-	/**
-	 * A class for storing a time index for a state, or a time index for each
-	 * action for a given state
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	protected class StateWiseTimeIndex {
-		int timeIndex;
-		Map<String, MutableInt> actionLearningRates = null;
-		int lastPollTime = -1;
-
-		public StateWiseTimeIndex() {
-			this.timeIndex = 1;
-			if (useStateActionWise) {
-				this.actionLearningRates = new HashMap<String, MutableInt>();
-			}
-		}
-
-		/**
-		 * Returns the mutable int entry for the time index for the action for
-		 * the state with which this object is associated.
-		 * 
-		 * @param ga
-		 *            the input action for which the learning rate is returned.
-		 * @return the mutable int entry for the time index for the action for
-		 *         the state with which this object is associated.
-		 */
-		public MutableInt getActionTimeIndexEntry(AbstractGroundedAction ga) {
-			MutableInt entry = this.actionLearningRates.get(ga);
-			if (entry == null) {
-				entry = new MutableInt(1);
-				this.actionLearningRates.put(ga.actionName(), entry);
-			}
-			return entry;
-		}
-
-	}
-
-	/**
-	 * A class for storing a mutable int value object
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	protected class MutableInt {
-		int mi;
-		int lastPollTime = -1;
-
-		public MutableInt(int mi) {
-			this.mi = mi;
-		}
 	}
 
 }

@@ -4,21 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import burlap.behavior.singleagent.auxiliary.StateEnumerator;
-import burlap.oomdp.singleagent.FullActionModel;
-import burlap.oomdp.singleagent.GroundedAction;
-import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Attribute.AttributeType;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectClass;
-import burlap.oomdp.core.objects.ObjectInstance;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TransitionProbability;
 import burlap.oomdp.core.objects.MutableObjectInstance;
+import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.MutableState;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
+import burlap.oomdp.singleagent.FullActionModel;
+import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.SADomain;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * In general, it is suggested algorithms be designed to work with either
@@ -37,6 +37,109 @@ import burlap.oomdp.singleagent.SADomain;
  * 
  */
 public class TabulatedDomainWrapper implements DomainGenerator {
+
+	/**
+	 * An action wrapper that coverts a tabularized state into the source domain
+	 * state, perform the corresponding source domain action on it getting the
+	 * resulting source domain state and returns the tabularized version of the
+	 * resulting source domain state. Also wraps the preconditions and
+	 * transition dynamics of the source domain action in similar ways.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class ActionWrapper extends Action implements FullActionModel {
+
+		protected Action srcAction;
+
+		/**
+		 * Constructs
+		 * 
+		 * @param domain
+		 *            the tabularized domain
+		 * @param action
+		 *            the source domain action to be wrapped
+		 */
+		public ActionWrapper(Domain domain, Action action) {
+			super(action.getName(), domain);
+			this.srcAction = action;
+		}
+
+		@Override
+		public boolean applicableInState(State s, GroundedAction groundedAction) {
+			return srcAction.applicableInState(
+					TabulatedDomainWrapper.this.getSourceDomainState(s),
+					groundedAction);
+		}
+
+		@Override
+		public List<GroundedAction> getAllApplicableGroundedActions(State s) {
+			List<GroundedAction> sourceSet = srcAction
+					.getAllApplicableGroundedActions(s);
+			// adjust pointer to this action wrapper
+			for (GroundedAction ga : sourceSet) {
+				ga.action = this;
+			}
+			return sourceSet;
+		}
+
+		@Override
+		public GroundedAction getAssociatedGroundedAction() {
+			GroundedAction ga = srcAction.getAssociatedGroundedAction();
+			ga.action = this;
+			return ga;
+		}
+
+		@Override
+		public List<TransitionProbability> getTransitions(State s,
+				GroundedAction groundedAction) {
+
+			if (!(srcAction instanceof FullActionModel)) {
+				throw new RuntimeException("Cannot return the transitions for "
+						+ srcAction.getName()
+						+ " because it does not implement FullActionModel");
+			}
+
+			State srcState = TabulatedDomainWrapper.this
+					.getSourceDomainState(s);
+			List<TransitionProbability> srcTPs = ((FullActionModel) this.srcAction)
+					.getTransitions(srcState, groundedAction);
+			List<TransitionProbability> tabTPs = new ArrayList<TransitionProbability>(
+					srcTPs.size());
+			for (TransitionProbability stp : srcTPs) {
+				TransitionProbability ttp = new TransitionProbability(
+						TabulatedDomainWrapper.this.getTabularizedState(stp.s),
+						stp.p);
+				tabTPs.add(ttp);
+			}
+
+			return tabTPs;
+		}
+
+		@Override
+		public boolean isParameterized() {
+			return srcAction.isParameterized();
+		}
+
+		@Override
+		public boolean isPrimitive() {
+			return srcAction.isPrimitive();
+		}
+
+		@Override
+		protected State performActionHelper(State s,
+				GroundedAction groundedAction) {
+
+			State srcState = TabulatedDomainWrapper.this
+					.getSourceDomainState(s);
+			State srcNextState = srcAction.performAction(srcState,
+					groundedAction);
+			State tabState = TabulatedDomainWrapper.this
+					.getTabularizedState(srcNextState);
+
+			return tabState;
+		}
+	}
 
 	/**
 	 * The single attribute name for identifying states
@@ -110,18 +213,6 @@ public class TabulatedDomainWrapper implements DomainGenerator {
 	}
 
 	/**
-	 * Returns the state id for a state beloning to the input source domain
-	 * 
-	 * @param s
-	 *            the source domain state
-	 * @return the state id
-	 */
-	public int getStateId(State s) {
-		return s.getFirstObjectOfClass(CLASSSTATE).getIntValForAttribute(
-				ATTSTATE);
-	}
-
-	/**
 	 * Returns the source domain state associated with the tabularized state
 	 * 
 	 * @param s
@@ -131,6 +222,18 @@ public class TabulatedDomainWrapper implements DomainGenerator {
 	public State getSourceDomainState(State s) {
 		int id = this.getStateId(s);
 		return this.enumerator.getStateForEnumerationId(id);
+	}
+
+	/**
+	 * Returns the state id for a state beloning to the input source domain
+	 * 
+	 * @param s
+	 *            the source domain state
+	 * @return the state id
+	 */
+	public int getStateId(State s) {
+		return s.getFirstObjectOfClass(CLASSSTATE).getIntValForAttribute(
+				ATTSTATE);
 	}
 
 	/**
@@ -148,109 +251,6 @@ public class TabulatedDomainWrapper implements DomainGenerator {
 		o.setValue(ATTSTATE, id);
 		ts.addObject(o);
 		return ts;
-	}
-
-	/**
-	 * An action wrapper that coverts a tabularized state into the source domain
-	 * state, perform the corresponding source domain action on it getting the
-	 * resulting source domain state and returns the tabularized version of the
-	 * resulting source domain state. Also wraps the preconditions and
-	 * transition dynamics of the source domain action in similar ways.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public class ActionWrapper extends Action implements FullActionModel {
-
-		protected Action srcAction;
-
-		/**
-		 * Constructs
-		 * 
-		 * @param domain
-		 *            the tabularized domain
-		 * @param action
-		 *            the source domain action to be wrapped
-		 */
-		public ActionWrapper(Domain domain, Action action) {
-			super(action.getName(), domain);
-			this.srcAction = action;
-		}
-
-		@Override
-		public boolean applicableInState(State s, GroundedAction groundedAction) {
-			return srcAction.applicableInState(
-					TabulatedDomainWrapper.this.getSourceDomainState(s),
-					groundedAction);
-		}
-
-		@Override
-		protected State performActionHelper(State s,
-				GroundedAction groundedAction) {
-
-			State srcState = TabulatedDomainWrapper.this
-					.getSourceDomainState(s);
-			State srcNextState = srcAction.performAction(srcState,
-					groundedAction);
-			State tabState = TabulatedDomainWrapper.this
-					.getTabularizedState(srcNextState);
-
-			return tabState;
-		}
-
-		@Override
-		public List<TransitionProbability> getTransitions(State s,
-				GroundedAction groundedAction) {
-
-			if (!(srcAction instanceof FullActionModel)) {
-				throw new RuntimeException("Cannot return the transitions for "
-						+ srcAction.getName()
-						+ " because it does not implement FullActionModel");
-			}
-
-			State srcState = TabulatedDomainWrapper.this
-					.getSourceDomainState(s);
-			List<TransitionProbability> srcTPs = ((FullActionModel) this.srcAction)
-					.getTransitions(srcState, groundedAction);
-			List<TransitionProbability> tabTPs = new ArrayList<TransitionProbability>(
-					srcTPs.size());
-			for (TransitionProbability stp : srcTPs) {
-				TransitionProbability ttp = new TransitionProbability(
-						TabulatedDomainWrapper.this.getTabularizedState(stp.s),
-						stp.p);
-				tabTPs.add(ttp);
-			}
-
-			return tabTPs;
-		}
-
-		@Override
-		public boolean isPrimitive() {
-			return srcAction.isPrimitive();
-		}
-
-		@Override
-		public boolean isParameterized() {
-			return srcAction.isParameterized();
-		}
-
-		@Override
-		public GroundedAction getAssociatedGroundedAction() {
-			GroundedAction ga = srcAction.getAssociatedGroundedAction();
-			ga.action = this;
-			return ga;
-		}
-
-		@Override
-		public List<GroundedAction> getAllApplicableGroundedActions(State s) {
-			List<GroundedAction> sourceSet = srcAction
-					.getAllApplicableGroundedActions(s);
-			// adjust pointer to this action wrapper
-			for (GroundedAction ga : sourceSet) {
-				ga.action = this;
-			}
-			return sourceSet;
-		}
 	}
 
 }

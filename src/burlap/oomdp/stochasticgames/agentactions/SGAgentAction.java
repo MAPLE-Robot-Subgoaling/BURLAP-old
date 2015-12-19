@@ -100,7 +100,29 @@ import burlap.oomdp.stochasticgames.SGDomain;
  */
 public abstract class SGAgentAction {
 
+	/**
+	 * Returns all possible grounded versions of the provided list of
+	 * SingleAction objects that an agent can take in the given state.
+	 * 
+	 * @param s
+	 *            the state in which to execute actions
+	 * @param actingAgent
+	 *            the agent who will be executing the actions
+	 * @param actions
+	 *            the list of actions that to get the grounded version for
+	 * @return all possible grounded versions of the provided list of
+	 *         SingleAction objects
+	 */
+	public static List<GroundedSGAgentAction> getAllApplicableGroundedActionsFromActionList(
+			State s, String actingAgent, List<SGAgentAction> actions) {
+		List<GroundedSGAgentAction> res = new ArrayList<GroundedSGAgentAction>();
+		for (SGAgentAction sa : actions) {
+			res.addAll(sa.getAllApplicableGroundedActions(s, actingAgent));
+		}
+		return res;
+	}
 	public String actionName;
+
 	public SGDomain domain;
 
 	/**
@@ -132,12 +154,28 @@ public abstract class SGAgentAction {
 	 */
 	public abstract boolean applicableInState(State s, GroundedSGAgentAction gsa);
 
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof SGAgentAction)) {
+			return false;
+		}
+
+		return ((SGAgentAction) o).actionName.equals(actionName);
+	}
+
 	/**
-	 * Returns true if this action is parameterized.
+	 * Returns all possible grounded versions of this single action for a given
+	 * state and acting agent.
 	 * 
-	 * @return true if this action is parameterized; false otherwise.
+	 * @param s
+	 *            the state in which the agent would execute this action
+	 * @param actingAgent
+	 *            the agent who would execute the action
+	 * @return all possible grounded versions of this single action for a given
+	 *         state and acting agent.
 	 */
-	public abstract boolean isParameterized();
+	public abstract List<GroundedSGAgentAction> getAllApplicableGroundedActions(
+			State s, String actingAgent);
 
 	/**
 	 * Returns a
@@ -157,54 +195,16 @@ public abstract class SGAgentAction {
 	public abstract GroundedSGAgentAction getAssociatedGroundedAction(
 			String actingAgent);
 
-	/**
-	 * Returns all possible grounded versions of this single action for a given
-	 * state and acting agent.
-	 * 
-	 * @param s
-	 *            the state in which the agent would execute this action
-	 * @param actingAgent
-	 *            the agent who would execute the action
-	 * @return all possible grounded versions of this single action for a given
-	 *         state and acting agent.
-	 */
-	public abstract List<GroundedSGAgentAction> getAllApplicableGroundedActions(
-			State s, String actingAgent);
-
-	/**
-	 * Returns all possible grounded versions of the provided list of
-	 * SingleAction objects that an agent can take in the given state.
-	 * 
-	 * @param s
-	 *            the state in which to execute actions
-	 * @param actingAgent
-	 *            the agent who will be executing the actions
-	 * @param actions
-	 *            the list of actions that to get the grounded version for
-	 * @return all possible grounded versions of the provided list of
-	 *         SingleAction objects
-	 */
-	public static List<GroundedSGAgentAction> getAllApplicableGroundedActionsFromActionList(
-			State s, String actingAgent, List<SGAgentAction> actions) {
-		List<GroundedSGAgentAction> res = new ArrayList<GroundedSGAgentAction>();
-		for (SGAgentAction sa : actions) {
-			res.addAll(sa.getAllApplicableGroundedActions(s, actingAgent));
-		}
-		return res;
-	}
-
 	@Override
 	public int hashCode() {
 		return actionName.hashCode();
 	}
 
-	@Override
-	public boolean equals(Object o) {
-		if (!(o instanceof SGAgentAction)) {
-			return false;
-		}
-
-		return ((SGAgentAction) o).actionName.equals(actionName);
-	}
+	/**
+	 * Returns true if this action is parameterized.
+	 * 
+	 * @return true if this action is parameterized; false otherwise.
+	 */
+	public abstract boolean isParameterized();
 
 }

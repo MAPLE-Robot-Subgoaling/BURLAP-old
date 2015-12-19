@@ -17,39 +17,6 @@ import burlap.oomdp.stateserialization.SerializableStateFactory;
 public class SerializableCartPoleStateFactory implements
 		SerializableStateFactory {
 
-	@Override
-	public SerializableState serialize(State s) {
-		return new SerializableCartPoleState(s);
-	}
-
-	@Override
-	public Class<?> getGeneratedClass() {
-		return SerializableCartPoleState.class;
-	}
-
-	public static class SerializableCartPoleState extends SerializableState {
-
-		public String stringRep;
-
-		public SerializableCartPoleState() {
-		}
-
-		public SerializableCartPoleState(State s) {
-			super(s);
-		}
-
-		@Override
-		public void serialize(State s) {
-			this.stringRep = stateToString(s);
-		}
-
-		@Override
-		public State deserialize(Domain domain) {
-			return stringToState(domain, this.stringRep);
-		}
-
-	}
-
 	public static class CartPoleStateParser implements StateParser {
 
 		Domain domain;
@@ -67,6 +34,29 @@ public class SerializableCartPoleStateFactory implements
 		public State stringToState(String str) {
 			return SerializableCartPoleStateFactory.stringToState(domain, str);
 		}
+	}
+
+	public static class SerializableCartPoleState extends SerializableState {
+
+		public String stringRep;
+
+		public SerializableCartPoleState() {
+		}
+
+		public SerializableCartPoleState(State s) {
+			super(s);
+		}
+
+		@Override
+		public State deserialize(Domain domain) {
+			return stringToState(domain, this.stringRep);
+		}
+
+		@Override
+		public void serialize(State s) {
+			this.stringRep = stateToString(s);
+		}
+
 	}
 
 	public static String stateToString(State s) {
@@ -92,5 +82,15 @@ public class SerializableCartPoleStateFactory implements
 		double av = Double.parseDouble(comps[3]);
 
 		return CartPoleDomain.getInitialState(domain, x, xv, a, av);
+	}
+
+	@Override
+	public Class<?> getGeneratedClass() {
+		return SerializableCartPoleState.class;
+	}
+
+	@Override
+	public SerializableState serialize(State s) {
+		return new SerializableCartPoleState(s);
 	}
 }

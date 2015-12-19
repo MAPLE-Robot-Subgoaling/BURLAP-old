@@ -5,9 +5,9 @@ import java.util.Random;
 
 import burlap.debugtools.RandomFactory;
 import burlap.oomdp.core.AbstractGroundedAction;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.core.TransitionProbability;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.environment.EnvironmentOutcome;
@@ -49,28 +49,18 @@ public abstract class Model {
 	public abstract TerminalFunction getModelTF();
 
 	/**
-	 * Indicates whether this model "knows" how the transition dynamics from the
-	 * given input state and action work.
+	 * Returns this model's transition probabilities for the given source state
+	 * and action
 	 * 
 	 * @param s
-	 *            the state that is checked
+	 *            the source state
 	 * @param ga
-	 *            the action to take in state s
-	 * @return true if the transition dynamics from the input state and action
-	 *         are "known;" false otherwise.
+	 *            an action taken in the source state
+	 * @return the list of the possible transition probabilities; should sum to
+	 *         1 and states will probability zero do *not* have to be included.
 	 */
-	public abstract boolean transitionIsModeled(State s, GroundedAction ga);
-
-	/**
-	 * Indicates whether this model "knows" the transition dynamics from the
-	 * given input state for all applicable actions.
-	 * 
-	 * @param s
-	 *            the state that is checked.
-	 * @return true if the transition dynamics for all actions are "known;"
-	 *         false otherwise.
-	 */
-	public abstract boolean stateTransitionsAreModeled(State s);
+	public abstract List<TransitionProbability> getTransitionProbabilities(
+			State s, GroundedAction ga);
 
 	/**
 	 * Returns a list specifying the actions for which the transition dynamics
@@ -83,6 +73,11 @@ public abstract class Model {
 	 */
 	public abstract List<AbstractGroundedAction> getUnmodeledActionsForState(
 			State s);
+
+	/**
+	 * Resets the model data so that learning can begin anew.
+	 */
+	public abstract void resetModel();
 
 	/**
 	 * A method to sample this model's transition dynamics for the given state
@@ -114,18 +109,58 @@ public abstract class Model {
 	public abstract State sampleModelHelper(State s, GroundedAction ga);
 
 	/**
-	 * Returns this model's transition probabilities for the given source state
-	 * and action
+	 * Will return a sampled outcome state by calling the
+	 * {@link #getTransitionProbabilities(State, GroundedAction)} method and
+	 * randomly drawing a state according to its distribution
 	 * 
 	 * @param s
-	 *            the source state
+	 *            a source state
 	 * @param ga
-	 *            an action taken in the source state
-	 * @return the list of the possible transition probabilities; should sum to
-	 *         1 and states will probability zero do *not* have to be included.
+	 *            the action taken in the source state
+	 * @return a sampled outcome state
 	 */
-	public abstract List<TransitionProbability> getTransitionProbabilities(
-			State s, GroundedAction ga);
+	protected State sampleTransitionFromTransitionProbabilities(State s,
+			GroundedAction ga) {
+
+		List<TransitionProbability> tps = this
+				.getTransitionProbabilities(s, ga);
+		double sum = 0.;
+		double r = rand.nextDouble();
+		for (TransitionProbability tp : tps) {
+			sum += tp.p;
+			if (r < sum) {
+				return tp.s;
+			}
+		}
+
+		throw new RuntimeException(
+				"Transition probabilities did not sum to 1; they summed to: "
+						+ sum);
+	}
+
+	/**
+	 * Indicates whether this model "knows" the transition dynamics from the
+	 * given input state for all applicable actions.
+	 * 
+	 * @param s
+	 *            the state that is checked.
+	 * @return true if the transition dynamics for all actions are "known;"
+	 *         false otherwise.
+	 */
+	public abstract boolean stateTransitionsAreModeled(State s);
+
+	/**
+	 * Indicates whether this model "knows" how the transition dynamics from the
+	 * given input state and action work.
+	 * 
+	 * @param s
+	 *            the state that is checked
+	 * @param ga
+	 *            the action to take in state s
+	 * @return true if the transition dynamics from the input state and action
+	 *         are "known;" false otherwise.
+	 */
+	public abstract boolean transitionIsModeled(State s, GroundedAction ga);
 
 	/**
 	 * Updates this model with respect to the observed
@@ -158,40 +193,5 @@ public abstract class Model {
 	 */
 	public abstract void updateModel(State s, GroundedAction ga, State sprime,
 			double r, boolean sprimeIsTerminal);
-
-	/**
-	 * Resets the model data so that learning can begin anew.
-	 */
-	public abstract void resetModel();
-
-	/**
-	 * Will return a sampled outcome state by calling the
-	 * {@link #getTransitionProbabilities(State, GroundedAction)} method and
-	 * randomly drawing a state according to its distribution
-	 * 
-	 * @param s
-	 *            a source state
-	 * @param ga
-	 *            the action taken in the source state
-	 * @return a sampled outcome state
-	 */
-	protected State sampleTransitionFromTransitionProbabilities(State s,
-			GroundedAction ga) {
-
-		List<TransitionProbability> tps = this
-				.getTransitionProbabilities(s, ga);
-		double sum = 0.;
-		double r = rand.nextDouble();
-		for (TransitionProbability tp : tps) {
-			sum += tp.p;
-			if (r < sum) {
-				return tp.s;
-			}
-		}
-
-		throw new RuntimeException(
-				"Transition probabilities did not sum to 1; they summed to: "
-						+ sum);
-	}
 
 }

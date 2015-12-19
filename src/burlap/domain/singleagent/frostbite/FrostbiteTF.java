@@ -2,8 +2,8 @@ package burlap.domain.singleagent.frostbite;
 
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.PropositionalFunction;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 
 /**
  * @author Phillipe Morere

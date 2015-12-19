@@ -17,50 +17,7 @@ import burlap.oomdp.core.Attribute;
  */
 public interface Value {
 
-	/**
-	 * Creates a deep copy of this value object.
-	 * 
-	 * @return a deep copy of this value object.
-	 */
-	Value copy();
-
-	String attName();
-
-	Attribute getAttribute();
-
-	/**
-	 * Returns whether the value has been set to a meaningful value. Unset
-	 * values typically happen when a new object instance has been created by
-	 * not had its values set. Leaving values unset will result in exceptions
-	 * being thrown to prevent errors in underspecified states.
-	 * 
-	 * @return true if the value has been set; false if not.
-	 */
-	boolean valueHasBeenSet();
-
-	/**
-	 * Sets the internal value representation using an int value
-	 * 
-	 * @param v
-	 *            the int value assignment
-	 */
-	Value setValue(int v);
-
-	/**
-	 * Sets the internal value representation using a double value
-	 * 
-	 * @param v
-	 *            the double value assignment
-	 */
-	Value setValue(double v);
-
-	/**
-	 * Sets the internal value representation using a string value
-	 * 
-	 * @param v
-	 *            the string value assignment
-	 */
-	Value setValue(String v);
+	Value addAllRelationalTargets(Collection<String> targets);
 
 	/**
 	 * adds a relational target for the object instance named t
@@ -70,12 +27,82 @@ public interface Value {
 	 */
 	Value addRelationalTarget(String t);
 
-	Value addAllRelationalTargets(Collection<String> targets);
+	String attName();
+
+	StringBuilder buildStringVal(StringBuilder builder);
 
 	/**
 	 * Removes any relational targets for this attribute
 	 */
 	Value clearRelationTargets();
+
+	/**
+	 * Creates a deep copy of this value object.
+	 * 
+	 * @return a deep copy of this value object.
+	 */
+	Value copy();
+
+	/**
+	 * Returns the ordered set of all relational targets of this object. The set
+	 * will be empty if the value is not set to any relational targets.
+	 * 
+	 * @return the ordered set of all relational targets of this object.
+	 */
+	Set<String> getAllRelationalTargets();
+
+	Attribute getAttribute();
+
+	/**
+	 * Returns the boolean value of this attibute. For int values, this means 0
+	 * = false and all other values = true.
+	 * 
+	 * @return the boolean value of this attribute.
+	 */
+	boolean getBooleanValue();
+
+	/**
+	 * Returns the discrete integer value of this Value object
+	 * 
+	 * @return the discrete integer value of this Value object
+	 */
+	int getDiscVal();
+
+	/**
+	 * Returns a double array value
+	 * 
+	 * @return a double array value.
+	 */
+	double[] getDoubleArray();
+
+	/**
+	 * Returns an int array value
+	 * 
+	 * @return an int array value
+	 */
+	int[] getIntArray();
+
+	/**
+	 * Returns a numeric double representation of this value. If the value is
+	 * discerete, the int will be type cast as a double.
+	 * 
+	 * @return a numeric double representation of this value
+	 */
+	double getNumericRepresentation();
+
+	/**
+	 * Returns the real-valued double value of this Value object
+	 * 
+	 * @return the real-valued double value of this Value object
+	 */
+	double getRealVal();
+
+	/**
+	 * Returns the string value of this Value object
+	 * 
+	 * @return the string value of this Value object
+	 */
+	String getStringVal();
 
 	/**
 	 * Removes a specific relational target from the relational value in
@@ -100,12 +127,12 @@ public interface Value {
 	Value setValue(boolean v);
 
 	/**
-	 * Sets the int array value.
+	 * Sets the internal value representation using a double value
 	 * 
-	 * @param intArray
-	 *            the int array value to set.
+	 * @param v
+	 *            the double value assignment
 	 */
-	Value setValue(int[] intArray);
+	Value setValue(double v);
 
 	/**
 	 * Sets the double array value.
@@ -116,64 +143,37 @@ public interface Value {
 	Value setValue(double[] doubleArray);
 
 	/**
-	 * Returns the discrete integer value of this Value object
+	 * Sets the internal value representation using an int value
 	 * 
-	 * @return the discrete integer value of this Value object
+	 * @param v
+	 *            the int value assignment
 	 */
-	int getDiscVal();
+	Value setValue(int v);
 
 	/**
-	 * Returns the real-valued double value of this Value object
+	 * Sets the int array value.
 	 * 
-	 * @return the real-valued double value of this Value object
+	 * @param intArray
+	 *            the int array value to set.
 	 */
-	double getRealVal();
+	Value setValue(int[] intArray);
 
 	/**
-	 * Returns the string value of this Value object
+	 * Sets the internal value representation using a string value
 	 * 
-	 * @return the string value of this Value object
+	 * @param v
+	 *            the string value assignment
 	 */
-	String getStringVal();
-
-	StringBuilder buildStringVal(StringBuilder builder);
-
-	/**
-	 * Returns the ordered set of all relational targets of this object. The set
-	 * will be empty if the value is not set to any relational targets.
-	 * 
-	 * @return the ordered set of all relational targets of this object.
-	 */
-	Set<String> getAllRelationalTargets();
+	Value setValue(String v);
 
 	/**
-	 * Returns the boolean value of this attibute. For int values, this means 0
-	 * = false and all other values = true.
+	 * Returns whether the value has been set to a meaningful value. Unset
+	 * values typically happen when a new object instance has been created by
+	 * not had its values set. Leaving values unset will result in exceptions
+	 * being thrown to prevent errors in underspecified states.
 	 * 
-	 * @return the boolean value of this attribute.
+	 * @return true if the value has been set; false if not.
 	 */
-	boolean getBooleanValue();
-
-	/**
-	 * Returns an int array value
-	 * 
-	 * @return an int array value
-	 */
-	int[] getIntArray();
-
-	/**
-	 * Returns a double array value
-	 * 
-	 * @return a double array value.
-	 */
-	double[] getDoubleArray();
-
-	/**
-	 * Returns a numeric double representation of this value. If the value is
-	 * discerete, the int will be type cast as a double.
-	 * 
-	 * @return a numeric double representation of this value
-	 */
-	double getNumericRepresentation();
+	boolean valueHasBeenSet();
 
 }

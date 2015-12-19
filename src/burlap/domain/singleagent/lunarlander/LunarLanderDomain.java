@@ -7,11 +7,11 @@ import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectClass;
-import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.PropositionalFunction;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.objects.MutableObjectInstance;
+import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.MutableState;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.FullActionModel;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.SADomain;
@@ -55,6 +55,449 @@ import burlap.oomdp.visualizer.Visualizer;
  * 
  */
 public class LunarLanderDomain implements DomainGenerator {
+
+	/**
+	 * An action class for having the agent idle (its current velocity and the
+	 * force of gravity will be all that acts on the lander).
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class ActionIdle extends SimpleAction.SimpleDeterministicAction
+			implements FullActionModel {
+
+		LLPhysicsParams physParams;
+
+		/**
+		 * Initializes the idle action.
+		 * 
+		 * @param name
+		 *            the name of the action
+		 * @param domain
+		 *            the domain of the action.
+		 */
+		public ActionIdle(String name, Domain domain, LLPhysicsParams physParams) {
+			super(name, domain);
+			this.physParams = physParams;
+		}
+
+		public LLPhysicsParams getPhysParams() {
+			return physParams;
+		}
+
+		@Override
+		protected State performActionHelper(State st,
+				GroundedAction groundedAction) {
+			updateMotion(st, 0.0, this.physParams);
+			return st;
+		}
+
+		public void setPhysParams(LLPhysicsParams physParams) {
+			this.physParams = physParams;
+		}
+	}
+
+	/**
+	 * An action class for exerting a thrust.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class ActionThrust extends SimpleAction.SimpleDeterministicAction
+			implements FullActionModel {
+
+		protected double thrustValue;
+		LLPhysicsParams physParams;
+
+		/**
+		 * Initializes a thrust action for a given thrust force
+		 * 
+		 * @param name
+		 *            the name of the action
+		 * @param domain
+		 *            the domain of the action
+		 * @param thrustValue
+		 *            the force of thrust for this thrust action
+		 */
+		public ActionThrust(String name, Domain domain, double thrustValue,
+				LLPhysicsParams physParams) {
+			super(name, domain);
+			this.thrustValue = thrustValue;
+			this.physParams = physParams;
+		}
+
+		public LLPhysicsParams getPhysParams() {
+			return physParams;
+		}
+
+		public double getThrustValue() {
+			return thrustValue;
+		}
+
+		@Override
+		protected State performActionHelper(State st,
+				GroundedAction groundedAction) {
+			updateMotion(st, thrustValue, this.physParams);
+			return st;
+		}
+
+		public void setPhysParams(LLPhysicsParams physParams) {
+			this.physParams = physParams;
+		}
+
+		public void setThrustValue(double thrustValue) {
+			this.thrustValue = thrustValue;
+		}
+	}
+
+	/**
+	 * An action class for turning the lander
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class ActionTurn extends SimpleAction.SimpleDeterministicAction
+			implements FullActionModel {
+
+		LLPhysicsParams physParams;
+		double dir;
+
+		/**
+		 * Creates a turn action for the indicated direction.
+		 * 
+		 * @param name
+		 *            the name of the action
+		 * @param domain
+		 *            the domain in which the action exists
+		 * @param dir
+		 *            the direction this action will turn; +1 for clockwise, -1
+		 *            for counterclockwise.
+		 */
+		public ActionTurn(String name, Domain domain, double dir,
+				LLPhysicsParams physParams) {
+			super(name, domain);
+			this.dir = dir;
+			this.physParams = physParams;
+		}
+
+		public LLPhysicsParams getPhysParams() {
+			return physParams;
+		}
+
+		@Override
+		protected State performActionHelper(State st,
+				GroundedAction groundedAction) {
+			incAngle(st, dir, this.physParams);
+			updateMotion(st, 0.0, this.physParams);
+			return st;
+		}
+
+		public void setPhysParams(LLPhysicsParams physParams) {
+			this.physParams = physParams;
+		}
+	}
+
+	/**
+	 * A class for holding the physics parameters
+	 */
+	public static class LLPhysicsParams {
+
+		/**
+		 * The force of gravity
+		 */
+		protected double gravity = -0.2;
+
+		/**
+		 * The minimum x value of the world
+		 */
+		protected double xmin = 0.;
+
+		/**
+		 * The maximum x value of the world
+		 */
+		protected double xmax = 100.;
+
+		/**
+		 * The minimum y value of the world
+		 */
+		protected double ymin = 0.;
+
+		/**
+		 * The maximum y value of the world
+		 */
+		protected double ymax = 50.;
+
+		/**
+		 * The maximum speed in any velocity component that the agent can move
+		 */
+		protected double vmax = 4.;
+
+		/**
+		 * The maximum angle the lander can be rotated in either the clockwise
+		 * or counterclockwise direction
+		 */
+		protected double angmax = Math.PI / 4.;
+
+		/**
+		 * The change in orientation angle the lander makes when a turn/rotate
+		 * action is taken
+		 */
+		protected double anginc = Math.PI / 20.;
+
+		public LLPhysicsParams copy() {
+
+			LLPhysicsParams c = new LLPhysicsParams();
+
+			c.gravity = this.gravity;
+			c.xmin = this.xmin;
+			c.xmax = this.xmax;
+			c.ymin = this.ymin;
+			c.ymax = this.ymax;
+			c.vmax = this.vmax;
+			c.angmax = this.angmax;
+			c.anginc = this.anginc;
+
+			return c;
+
+		}
+
+		public double getAnginc() {
+			return anginc;
+		}
+
+		public double getAngmax() {
+			return angmax;
+		}
+
+		public double getGravity() {
+			return gravity;
+		}
+
+		public double getVmax() {
+			return vmax;
+		}
+
+		public double getXmax() {
+			return xmax;
+		}
+
+		public double getXmin() {
+			return xmin;
+		}
+
+		public double getYmax() {
+			return ymax;
+		}
+
+		public double getYmin() {
+			return ymin;
+		}
+
+		public void setAnginc(double anginc) {
+			this.anginc = anginc;
+		}
+
+		public void setAngmax(double angmax) {
+			this.angmax = angmax;
+		}
+
+		public void setGravity(double gravity) {
+			this.gravity = gravity;
+		}
+
+		public void setVmax(double vmax) {
+			this.vmax = vmax;
+		}
+
+		public void setXmax(double xmax) {
+			this.xmax = xmax;
+		}
+
+		public void setXmin(double xmin) {
+			this.xmin = xmin;
+		}
+
+		public void setYmax(double ymax) {
+			this.ymax = ymax;
+		}
+
+		public void setYmin(double ymin) {
+			this.ymin = ymin;
+		}
+	}
+
+	/**
+	 * A propositional function that evaluates to true if the agent has landed
+	 * on the top surface of a landing pad.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class OnPadPF extends PropositionalFunction {
+
+		/**
+		 * Initializes to be evaluated on an agent object and landing pad
+		 * object.
+		 * 
+		 * @param name
+		 *            the name of the propositional function
+		 * @param domain
+		 *            the domain of the propositional function
+		 */
+		public OnPadPF(String name, Domain domain) {
+			super(name, domain, new String[] { AGENTCLASS, PADCLASS });
+		}
+
+		@Override
+		public boolean isTrue(State st, String... params) {
+
+			ObjectInstance agent = st.getObject(params[0]);
+			ObjectInstance pad = st.getObject(params[1]);
+
+			double l = pad.getRealValForAttribute(LATTNAME);
+			double r = pad.getRealValForAttribute(RATTNAME);
+			double t = pad.getRealValForAttribute(TATTNAME);
+
+			double x = agent.getRealValForAttribute(XATTNAME);
+			double y = agent.getRealValForAttribute(YATTNAME);
+
+			// on pad means landed on surface, so y should be equal to top
+			if (x > l && x < r && y == t) {
+				return true;
+			}
+
+			return false;
+		}
+
+	}
+
+	/**
+	 * A propositional function that evaluates to true if the agent is touching
+	 * the ground.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class TouchGroundPF extends PropositionalFunction {
+
+		/**
+		 * Initializes to be evaluated on an agent object.
+		 * 
+		 * @param name
+		 *            the name of the propositional function
+		 * @param domain
+		 *            the domain of the propositional function
+		 */
+		public TouchGroundPF(String name, Domain domain) {
+			super(name, domain, new String[] { AGENTCLASS });
+		}
+
+		@Override
+		public boolean isTrue(State st, String... params) {
+
+			ObjectInstance agent = st.getObject(params[0]);
+			double y = agent.getRealValForAttribute(YATTNAME);
+			double ymin = agent.getObjectClass().domain.getAttribute(YATTNAME).lowerLim;
+
+			if (y == ymin) {
+				return true;
+			}
+
+			return false;
+		}
+
+	}
+
+	/**
+	 * A propositional function that evaluates to true if the agent is touching
+	 * any part of the landing pad, including its side boundaries. This means
+	 * this can evaluate to true even if the agent has not landed on the landing
+	 * pad.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class TouchPadPF extends PropositionalFunction {
+
+		/**
+		 * Initializes to be evaluated on an agent object and landing pad
+		 * object.
+		 * 
+		 * @param name
+		 *            the name of the propositional function
+		 * @param domain
+		 *            the domain of the propositional function
+		 */
+		public TouchPadPF(String name, Domain domain) {
+			super(name, domain, new String[] { AGENTCLASS, PADCLASS });
+		}
+
+		@Override
+		public boolean isTrue(State st, String... params) {
+
+			ObjectInstance agent = st.getObject(params[0]);
+			ObjectInstance pad = st.getObject(params[1]);
+
+			double l = pad.getRealValForAttribute(LATTNAME);
+			double r = pad.getRealValForAttribute(RATTNAME);
+			double b = pad.getRealValForAttribute(BATTNAME);
+			double t = pad.getRealValForAttribute(TATTNAME);
+
+			double x = agent.getRealValForAttribute(XATTNAME);
+			double y = agent.getRealValForAttribute(YATTNAME);
+
+			// on pad means landed on surface, so y should be equal to top
+			if (x >= l && x < r && y >= b && y <= t) {
+				return true;
+			}
+
+			return false;
+		}
+
+	}
+
+	/**
+	 * A propositional function that evaluates to true if the agent is touching
+	 * any part of an obstacle, including its side boundaries.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class TouchSurfacePF extends PropositionalFunction {
+
+		/**
+		 * Initializes to be evaluated on an agent object and obstacle object.
+		 * 
+		 * @param name
+		 *            the name of the propositional function
+		 * @param domain
+		 *            the domain of the propositional function
+		 */
+		public TouchSurfacePF(String name, Domain domain) {
+			super(name, domain, new String[] { AGENTCLASS, OBSTACLECLASS });
+		}
+
+		@Override
+		public boolean isTrue(State st, String... params) {
+
+			ObjectInstance agent = st.getObject(params[0]);
+			ObjectInstance o = st.getObject(params[1]);
+			double x = agent.getRealValForAttribute(XATTNAME);
+			double y = agent.getRealValForAttribute(YATTNAME);
+
+			double l = o.getRealValForAttribute(LATTNAME);
+			double r = o.getRealValForAttribute(RATTNAME);
+			double b = o.getRealValForAttribute(BATTNAME);
+			double t = o.getRealValForAttribute(TATTNAME);
+
+			if (x >= l && x <= r && y >= b && y <= t) {
+				return true;
+			}
+
+			return false;
+		}
+
+	}
 
 	/**
 	 * Constant for the name of the x position attribute.
@@ -171,142 +614,143 @@ public class LunarLanderDomain implements DomainGenerator {
 	public static final String PFONGROUND = "onGround"; // landed on ground
 
 	/**
-	 * List of the thrust forces for each thrust action
+	 * Creates a state with one agent/lander, one landing pad, and no number of
+	 * obstacles. The attribute values of these objects will be uninitialized
+	 * and will need to be set either manually or with this class's methods like
+	 * {@link #setAgent(burlap.oomdp.core.states.State, double, double, double)}
+	 * .
+	 * 
+	 * @param domain
+	 *            the domain of the state to generate
+	 * @param no
+	 *            the number of obstacle objects to create
+	 * @return a state object
 	 */
-	protected List<Double> thrustValues;
+	public static State getCleanState(Domain domain, int no) {
+
+		State s = new MutableState();
+
+		ObjectInstance agent = new MutableObjectInstance(
+				domain.getObjectClass(AGENTCLASS), AGENTCLASS + "0");
+		s.addObject(agent);
+
+		ObjectInstance pad = new MutableObjectInstance(
+				domain.getObjectClass(PADCLASS), PADCLASS + "0");
+		s.addObject(pad);
+
+		for (int i = 0; i < no; i++) {
+			ObjectInstance obst = new MutableObjectInstance(
+					domain.getObjectClass(OBSTACLECLASS), OBSTACLECLASS + i);
+			s.addObject(obst);
+		}
+
+		return s;
+
+	}
 
 	/**
-	 * An object for holding the physics parameters of this domain.
+	 * Turns the lander in the direction indicated by the domains defined change
+	 * in angle for turn actions.
+	 * 
+	 * @param s
+	 *            the state in which the lander's angle should be changed
+	 * @param dir
+	 *            the direction to turn; +1 is clockwise, -1 is counterclockwise
 	 */
-	protected LLPhysicsParams physParams = new LLPhysicsParams();
+	protected static void incAngle(State s, double dir,
+			LLPhysicsParams physParams) {
+
+		ObjectInstance agent = s.getObjectsOfClass(AGENTCLASS).get(0);
+		double curA = agent.getRealValForAttribute(AATTNAME);
+
+		double newa = curA + (dir * physParams.anginc);
+		if (newa > physParams.angmax) {
+			newa = physParams.angmax;
+		} else if (newa < -physParams.angmax) {
+			newa = -physParams.angmax;
+		}
+
+		agent.setValue(AATTNAME, newa);
+
+	}
 
 	/**
-	 * A class for holding the physics parameters
+	 * This method will launch a visual explorer for the lunar lander domain. It
+	 * will use the default physics, start the agent on the left side of the
+	 * world with a landing pad on the right and an obstacle in between. The
+	 * agent is controlled with the following keys: <br/>
+	 * w: heavy thrust<br/>
+	 * s: weak thrust<br/>
+	 * a: turn/rotate counterclockwise<br/>
+	 * d: turn/rotate clockwise<br/>
+	 * x: idle (drift for one time step)
+	 * <p/>
+	 * If you pass the main method "t" as an argument, a terminal explorer will
+	 * be used instead of a visual explorer.
+	 * 
+	 * @param args
+	 *            optionally pass "t" asn argument to use a terminal explorer
+	 *            instead of a visual explorer.
 	 */
-	public static class LLPhysicsParams {
+	public static void main(String[] args) {
 
-		/**
-		 * The force of gravity
+		LunarLanderDomain lld = new LunarLanderDomain();
+		Domain domain = lld.generateDomain();
+
+		State clean = getCleanState(domain, 0);
+
+		/*
+		 * //these commented items just have different task configuration; just
+		 * choose one lld.setAgent(clean, 0., 5, 0.); lld.setObstacle(clean, 0,
+		 * 30., 45., 0., 20.); lld.setPad(clean, 75., 95., 0., 10.);
 		 */
-		protected double gravity = -0.2;
 
-		/**
-		 * The minimum x value of the world
+		/*
+		 * lld.setAgent(clean, 0., 5, 0.); lld.setObstacle(clean, 0, 20., 40.,
+		 * 0., 20.); lld.setPad(clean, 65., 85., 0., 10.);
 		 */
-		protected double xmin = 0.;
 
-		/**
-		 * The maximum x value of the world
-		 */
-		protected double xmax = 100.;
+		setAgent(clean, 0., 5, 0.);
+		// setObstacle(clean, 0, 20., 50., 0., 20.);
+		setPad(clean, 80., 95., 0., 10.);
 
-		/**
-		 * The minimum y value of the world
-		 */
-		protected double ymin = 0.;
+		int expMode = 1;
 
-		/**
-		 * The maximum y value of the world
-		 */
-		protected double ymax = 50.;
+		if (args.length > 0) {
+			if (args[0].equals("v")) {
+				expMode = 1;
+			} else if (args[0].equals("t")) {
+				expMode = 0;
+			}
+		}
 
-		/**
-		 * The maximum speed in any velocity component that the agent can move
-		 */
-		protected double vmax = 4.;
+		if (expMode == 0) {
 
-		/**
-		 * The maximum angle the lander can be rotated in either the clockwise
-		 * or counterclockwise direction
-		 */
-		protected double angmax = Math.PI / 4.;
+			TerminalExplorer te = new TerminalExplorer(domain, clean);
 
-		/**
-		 * The change in orientation angle the lander makes when a turn/rotate
-		 * action is taken
-		 */
-		protected double anginc = Math.PI / 20.;
+			te.addActionShortHand("a", ACTIONTURNL);
+			te.addActionShortHand("d", ACTIONTURNR);
+			te.addActionShortHand("w", ACTIONTHRUST + 0);
+			te.addActionShortHand("s", ACTIONTHRUST + 1);
+			te.addActionShortHand("x", ACTIONIDLE);
 
-		public LLPhysicsParams copy() {
+			te.explore();
 
-			LLPhysicsParams c = new LLPhysicsParams();
+		} else if (expMode == 1) {
 
-			c.gravity = this.gravity;
-			c.xmin = this.xmin;
-			c.xmax = this.xmax;
-			c.ymin = this.ymin;
-			c.ymax = this.ymax;
-			c.vmax = this.vmax;
-			c.angmax = this.angmax;
-			c.anginc = this.anginc;
+			Visualizer vis = LLVisualizer.getVisualizer(lld);
+			VisualExplorer exp = new VisualExplorer(domain, vis, clean);
 
-			return c;
+			exp.addKeyAction("w", ACTIONTHRUST + 0);
+			exp.addKeyAction("s", ACTIONTHRUST + 1);
+			exp.addKeyAction("a", ACTIONTURNL);
+			exp.addKeyAction("d", ACTIONTURNR);
+			exp.addKeyAction("x", ACTIONIDLE);
+
+			exp.initGUI();
 
 		}
 
-		public double getGravity() {
-			return gravity;
-		}
-
-		public void setGravity(double gravity) {
-			this.gravity = gravity;
-		}
-
-		public double getXmin() {
-			return xmin;
-		}
-
-		public void setXmin(double xmin) {
-			this.xmin = xmin;
-		}
-
-		public double getXmax() {
-			return xmax;
-		}
-
-		public void setXmax(double xmax) {
-			this.xmax = xmax;
-		}
-
-		public double getYmin() {
-			return ymin;
-		}
-
-		public void setYmin(double ymin) {
-			this.ymin = ymin;
-		}
-
-		public double getYmax() {
-			return ymax;
-		}
-
-		public void setYmax(double ymax) {
-			this.ymax = ymax;
-		}
-
-		public double getVmax() {
-			return vmax;
-		}
-
-		public void setVmax(double vmax) {
-			this.vmax = vmax;
-		}
-
-		public double getAngmax() {
-			return angmax;
-		}
-
-		public void setAngmax(double angmax) {
-			this.angmax = angmax;
-		}
-
-		public double getAnginc() {
-			return anginc;
-		}
-
-		public void setAnginc(double anginc) {
-			this.anginc = anginc;
-		}
 	}
 
 	/**
@@ -421,385 +865,6 @@ public class LunarLanderDomain implements DomainGenerator {
 		pad.setValue(RATTNAME, r);
 		pad.setValue(BATTNAME, b);
 		pad.setValue(TATTNAME, t);
-	}
-
-	/**
-	 * Initializes with no thrust actions set.
-	 */
-	public LunarLanderDomain() {
-		thrustValues = new ArrayList<Double>();
-	}
-
-	/**
-	 * Adds a thrust action with thrust force t
-	 * 
-	 * @param t
-	 *            the thrust of the thrust force to add
-	 */
-	public void addThrustActionWithThrust(double t) {
-		this.thrustValues.add(t);
-	}
-
-	public LLPhysicsParams getPhysParams() {
-		return physParams;
-	}
-
-	public void setPhysParams(LLPhysicsParams physParams) {
-		this.physParams = physParams;
-	}
-
-	/**
-	 * Sets the gravity of the domain
-	 * 
-	 * @param g
-	 *            the force of gravity
-	 */
-	public void setGravity(double g) {
-		this.physParams.gravity = g;
-	}
-
-	/**
-	 * Returns the minimum x position of the lander (the agent cannot cross this
-	 * boundary)
-	 * 
-	 * @return the minimum x position of the lander (the agent cannot cross this
-	 *         boundary)
-	 */
-	public double getXmin() {
-		return this.physParams.xmin;
-	}
-
-	/**
-	 * Sets the minimum x position of the lander (the agent cannot cross this
-	 * boundary)
-	 * 
-	 * @param xmin
-	 *            the minimum x position of the lander (the agent cannot cross
-	 *            this boundary)
-	 */
-	public void setXmin(double xmin) {
-		this.physParams.xmin = xmin;
-	}
-
-	/**
-	 * Returns the maximum x position of the lander (the agent cannot cross this
-	 * boundary)
-	 * 
-	 * @return the maximum x position of the lander (the agent cannot cross this
-	 *         boundary)
-	 */
-	public double getXmax() {
-		return this.physParams.xmax;
-	}
-
-	/**
-	 * Sets the maximum x position of the lander (the agent cannot cross this
-	 * boundary)
-	 * 
-	 * @param xmax
-	 *            the maximum x position of the lander (the agent cannot cross
-	 *            this boundary)
-	 */
-	public void setXmax(double xmax) {
-		this.physParams.xmax = xmax;
-	}
-
-	/**
-	 * Returns the minimum y position of the lander (the agent cannot cross this
-	 * boundary)
-	 * 
-	 * @return the minimum y position of the lander (the agent cannot cross this
-	 *         boundary)
-	 */
-	public double getYmin() {
-		return this.physParams.ymin;
-	}
-
-	/**
-	 * Sets the minimum y position of the lander (the agent cannot cross this
-	 * boundary)
-	 * 
-	 * @param ymin
-	 *            the minimum y position of the lander (the agent cannot cross
-	 *            this boundary)
-	 */
-	public void setYmin(double ymin) {
-		this.physParams.ymin = ymin;
-	}
-
-	/**
-	 * Returns the maximum y position of the lander (the agent cannot cross this
-	 * boundary)
-	 * 
-	 * @return the maximum y position of the lander (the agent cannot cross this
-	 *         boundary)
-	 */
-	public double getYmax() {
-		return this.physParams.ymax;
-	}
-
-	/**
-	 * Sets the maximum y position of the lander (the agent cannot cross this
-	 * boundary)
-	 * 
-	 * @param ymax
-	 *            the maximum y position of the lander (the agent cannot cross
-	 *            this boundary)
-	 */
-	public void setYmax(double ymax) {
-		this.physParams.ymax = ymax;
-	}
-
-	/**
-	 * Returns the maximum velocity of the agent (the agent cannot move faster
-	 * than this value).
-	 * 
-	 * @return the maximum velocity of the agent (the agent cannot move faster
-	 *         than this value).
-	 */
-	public double getVmax() {
-		return this.physParams.vmax;
-	}
-
-	/**
-	 * Sets the maximum velocity of the agent (the agent cannot move faster than
-	 * this value).
-	 * 
-	 * @param vmax
-	 *            the maximum velocity of the agent (the agent cannot move
-	 *            faster than this value).
-	 */
-	public void setVmax(double vmax) {
-		this.physParams.vmax = vmax;
-	}
-
-	/**
-	 * Returns the maximum rotate angle (in radians) that the lander can be
-	 * rotated from the vertical orientation in either clockwise or
-	 * counterclockwise direction.
-	 * 
-	 * @return the maximum rotate angle (in radians) that the lander can be
-	 *         rotated
-	 */
-	public double getAngmax() {
-		return this.physParams.angmax;
-	}
-
-	/**
-	 * Sets the maximum rotate angle (in radians) that the lander can be rotated
-	 * from the vertical orientation in either clockwise or counterclockwise
-	 * direction.
-	 * 
-	 * @param angmax
-	 *            the maximum rotate angle (in radians) that the lander can be
-	 *            rotated
-	 */
-	public void setAngmax(double angmax) {
-		this.physParams.angmax = angmax;
-	}
-
-	/**
-	 * Returns how many radians the agent will rotate from its current
-	 * orientation when a turn/rotate action is applied
-	 * 
-	 * @return how many radians the agent will rotate from its current
-	 *         orientation when a turn/rotate action is applied
-	 */
-	public double getAnginc() {
-		return this.physParams.anginc;
-	}
-
-	/**
-	 * Sets how many radians the agent will rotate from its current orientation
-	 * when a turn/rotate action is applied
-	 * 
-	 * @param anginc
-	 *            how many radians the agent will rotate from its current
-	 *            orientation when a turn/rotate action is applied
-	 */
-	public void setAnginc(double anginc) {
-		this.physParams.anginc = anginc;
-	}
-
-	/**
-	 * Sets the domain to use a standard set of physics and with a standard set
-	 * of two thrust actions.<br/>
-	 * gravity = -0.2<br/>
-	 * xmin = 0<br/>
-	 * xmax = 100<br/>
-	 * ymin = 0<br/>
-	 * ymax = 50<br/>
-	 * max velocity component speed = 4<br/>
-	 * maximum angle of rotation = pi/4<br/>
-	 * change in angle from turning = pi/20<br/>
-	 * thrust1 force = 0.32<br/>
-	 * thrust2 force = 0.2 (opposite gravity)
-	 */
-	public void setToStandardLunarLander() {
-		this.addStandardThrustActions();
-		this.physParams = new LLPhysicsParams();
-	}
-
-	/**
-	 * Adds two standard thrust actions.<br/>
-	 * thrust1 force = 0.32<br/>
-	 * thrust2 force = 0.2 (opposite gravity)
-	 */
-	public void addStandardThrustActions() {
-		this.thrustValues.add(0.32);
-		this.thrustValues.add(-physParams.gravity);
-	}
-
-	@Override
-	public Domain generateDomain() {
-
-		Domain domain = new SADomain();
-
-		List<Double> thrustValuesTemp = this.thrustValues;
-		if (thrustValuesTemp.size() == 0) {
-			thrustValuesTemp.add(0.32);
-			thrustValuesTemp.add(-physParams.gravity);
-		}
-
-		// create attributes
-		Attribute xatt = new Attribute(domain, XATTNAME,
-				Attribute.AttributeType.REAL);
-		xatt.setLims(physParams.xmin, physParams.xmax);
-
-		Attribute yatt = new Attribute(domain, YATTNAME,
-				Attribute.AttributeType.REAL);
-		yatt.setLims(physParams.ymin, physParams.ymax);
-
-		Attribute vxatt = new Attribute(domain, VXATTNAME,
-				Attribute.AttributeType.REAL);
-		vxatt.setLims(-physParams.vmax, physParams.vmax);
-
-		Attribute vyatt = new Attribute(domain, VYATTNAME,
-				Attribute.AttributeType.REAL);
-		vyatt.setLims(-physParams.vmax, physParams.vmax);
-
-		Attribute aatt = new Attribute(domain, AATTNAME,
-				Attribute.AttributeType.REAL);
-		aatt.setLims(-physParams.angmax, physParams.angmax);
-
-		Attribute latt = new Attribute(domain, LATTNAME,
-				Attribute.AttributeType.REAL);
-		latt.setLims(physParams.xmin, physParams.xmax);
-
-		Attribute ratt = new Attribute(domain, RATTNAME,
-				Attribute.AttributeType.REAL);
-		ratt.setLims(physParams.xmin, physParams.xmax);
-
-		Attribute batt = new Attribute(domain, BATTNAME,
-				Attribute.AttributeType.REAL);
-		batt.setLims(physParams.ymin, physParams.ymax);
-
-		Attribute tatt = new Attribute(domain, TATTNAME,
-				Attribute.AttributeType.REAL);
-		tatt.setLims(physParams.ymin, physParams.ymax);
-
-		// create classes
-		ObjectClass agentclass = new ObjectClass(domain, AGENTCLASS);
-		agentclass.addAttribute(xatt);
-		agentclass.addAttribute(yatt);
-		agentclass.addAttribute(vxatt);
-		agentclass.addAttribute(vyatt);
-		agentclass.addAttribute(aatt);
-
-		ObjectClass obstclss = new ObjectClass(domain, OBSTACLECLASS);
-		obstclss.addAttribute(latt);
-		obstclss.addAttribute(ratt);
-		obstclss.addAttribute(batt);
-		obstclss.addAttribute(tatt);
-
-		ObjectClass padclass = new ObjectClass(domain, PADCLASS);
-		padclass.addAttribute(latt);
-		padclass.addAttribute(ratt);
-		padclass.addAttribute(batt);
-		padclass.addAttribute(tatt);
-
-		// make copy of physics parameters
-		LLPhysicsParams cphys = this.physParams.copy();
-
-		// add actions
-		new ActionTurn(ACTIONTURNL, domain, -1., cphys);
-		new ActionTurn(ACTIONTURNR, domain, 1., cphys);
-		new ActionIdle(ACTIONIDLE, domain, cphys);
-
-		for (int i = 0; i < thrustValuesTemp.size(); i++) {
-			double t = thrustValuesTemp.get(i);
-			new ActionThrust(ACTIONTHRUST + i, domain, t, cphys);
-		}
-
-		// add pfs
-		new OnPadPF(PFONPAD, domain);
-		new TouchPadPF(PFTPAD, domain);
-		new TouchSurfacePF(PFTOUCHSURFACE, domain);
-		new TouchGroundPF(PFONGROUND, domain);
-
-		return domain;
-
-	}
-
-	/**
-	 * Creates a state with one agent/lander, one landing pad, and no number of
-	 * obstacles. The attribute values of these objects will be uninitialized
-	 * and will need to be set either manually or with this class's methods like
-	 * {@link #setAgent(burlap.oomdp.core.states.State, double, double, double)}
-	 * .
-	 * 
-	 * @param domain
-	 *            the domain of the state to generate
-	 * @param no
-	 *            the number of obstacle objects to create
-	 * @return a state object
-	 */
-	public static State getCleanState(Domain domain, int no) {
-
-		State s = new MutableState();
-
-		ObjectInstance agent = new MutableObjectInstance(
-				domain.getObjectClass(AGENTCLASS), AGENTCLASS + "0");
-		s.addObject(agent);
-
-		ObjectInstance pad = new MutableObjectInstance(
-				domain.getObjectClass(PADCLASS), PADCLASS + "0");
-		s.addObject(pad);
-
-		for (int i = 0; i < no; i++) {
-			ObjectInstance obst = new MutableObjectInstance(
-					domain.getObjectClass(OBSTACLECLASS), OBSTACLECLASS + i);
-			s.addObject(obst);
-		}
-
-		return s;
-
-	}
-
-	/**
-	 * Turns the lander in the direction indicated by the domains defined change
-	 * in angle for turn actions.
-	 * 
-	 * @param s
-	 *            the state in which the lander's angle should be changed
-	 * @param dir
-	 *            the direction to turn; +1 is clockwise, -1 is counterclockwise
-	 */
-	protected static void incAngle(State s, double dir,
-			LLPhysicsParams physParams) {
-
-		ObjectInstance agent = s.getObjectsOfClass(AGENTCLASS).get(0);
-		double curA = agent.getRealValForAttribute(AATTNAME);
-
-		double newa = curA + (dir * physParams.anginc);
-		if (newa > physParams.angmax) {
-			newa = physParams.angmax;
-		} else if (newa < -physParams.angmax) {
-			newa = -physParams.angmax;
-		}
-
-		agent.setValue(AATTNAME, newa);
-
 	}
 
 	/**
@@ -951,396 +1016,331 @@ public class LunarLanderDomain implements DomainGenerator {
 	}
 
 	/**
-	 * An action class for turning the lander
-	 * 
-	 * @author James MacGlashan
-	 * 
+	 * List of the thrust forces for each thrust action
 	 */
-	public class ActionTurn extends SimpleAction.SimpleDeterministicAction
-			implements FullActionModel {
+	protected List<Double> thrustValues;
 
-		LLPhysicsParams physParams;
-		double dir;
+	/**
+	 * An object for holding the physics parameters of this domain.
+	 */
+	protected LLPhysicsParams physParams = new LLPhysicsParams();
 
-		/**
-		 * Creates a turn action for the indicated direction.
-		 * 
-		 * @param name
-		 *            the name of the action
-		 * @param domain
-		 *            the domain in which the action exists
-		 * @param dir
-		 *            the direction this action will turn; +1 for clockwise, -1
-		 *            for counterclockwise.
-		 */
-		public ActionTurn(String name, Domain domain, double dir,
-				LLPhysicsParams physParams) {
-			super(name, domain);
-			this.dir = dir;
-			this.physParams = physParams;
-		}
-
-		@Override
-		protected State performActionHelper(State st,
-				GroundedAction groundedAction) {
-			incAngle(st, dir, this.physParams);
-			updateMotion(st, 0.0, this.physParams);
-			return st;
-		}
-
-		public LLPhysicsParams getPhysParams() {
-			return physParams;
-		}
-
-		public void setPhysParams(LLPhysicsParams physParams) {
-			this.physParams = physParams;
-		}
+	/**
+	 * Initializes with no thrust actions set.
+	 */
+	public LunarLanderDomain() {
+		thrustValues = new ArrayList<Double>();
 	}
 
 	/**
-	 * An action class for having the agent idle (its current velocity and the
-	 * force of gravity will be all that acts on the lander).
-	 * 
-	 * @author James MacGlashan
-	 * 
+	 * Adds two standard thrust actions.<br/>
+	 * thrust1 force = 0.32<br/>
+	 * thrust2 force = 0.2 (opposite gravity)
 	 */
-	public class ActionIdle extends SimpleAction.SimpleDeterministicAction
-			implements FullActionModel {
-
-		LLPhysicsParams physParams;
-
-		/**
-		 * Initializes the idle action.
-		 * 
-		 * @param name
-		 *            the name of the action
-		 * @param domain
-		 *            the domain of the action.
-		 */
-		public ActionIdle(String name, Domain domain, LLPhysicsParams physParams) {
-			super(name, domain);
-			this.physParams = physParams;
-		}
-
-		@Override
-		protected State performActionHelper(State st,
-				GroundedAction groundedAction) {
-			updateMotion(st, 0.0, this.physParams);
-			return st;
-		}
-
-		public LLPhysicsParams getPhysParams() {
-			return physParams;
-		}
-
-		public void setPhysParams(LLPhysicsParams physParams) {
-			this.physParams = physParams;
-		}
+	public void addStandardThrustActions() {
+		this.thrustValues.add(0.32);
+		this.thrustValues.add(-physParams.gravity);
 	}
 
 	/**
-	 * An action class for exerting a thrust.
+	 * Adds a thrust action with thrust force t
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @param t
+	 *            the thrust of the thrust force to add
 	 */
-	public class ActionThrust extends SimpleAction.SimpleDeterministicAction
-			implements FullActionModel {
-
-		protected double thrustValue;
-		LLPhysicsParams physParams;
-
-		/**
-		 * Initializes a thrust action for a given thrust force
-		 * 
-		 * @param name
-		 *            the name of the action
-		 * @param domain
-		 *            the domain of the action
-		 * @param thrustValue
-		 *            the force of thrust for this thrust action
-		 */
-		public ActionThrust(String name, Domain domain, double thrustValue,
-				LLPhysicsParams physParams) {
-			super(name, domain);
-			this.thrustValue = thrustValue;
-			this.physParams = physParams;
-		}
-
-		@Override
-		protected State performActionHelper(State st,
-				GroundedAction groundedAction) {
-			updateMotion(st, thrustValue, this.physParams);
-			return st;
-		}
-
-		public double getThrustValue() {
-			return thrustValue;
-		}
-
-		public void setThrustValue(double thrustValue) {
-			this.thrustValue = thrustValue;
-		}
-
-		public LLPhysicsParams getPhysParams() {
-			return physParams;
-		}
-
-		public void setPhysParams(LLPhysicsParams physParams) {
-			this.physParams = physParams;
-		}
+	public void addThrustActionWithThrust(double t) {
+		this.thrustValues.add(t);
 	}
 
-	/**
-	 * A propositional function that evaluates to true if the agent has landed
-	 * on the top surface of a landing pad.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public class OnPadPF extends PropositionalFunction {
+	@Override
+	public Domain generateDomain() {
 
-		/**
-		 * Initializes to be evaluated on an agent object and landing pad
-		 * object.
-		 * 
-		 * @param name
-		 *            the name of the propositional function
-		 * @param domain
-		 *            the domain of the propositional function
-		 */
-		public OnPadPF(String name, Domain domain) {
-			super(name, domain, new String[] { AGENTCLASS, PADCLASS });
+		Domain domain = new SADomain();
+
+		List<Double> thrustValuesTemp = this.thrustValues;
+		if (thrustValuesTemp.size() == 0) {
+			thrustValuesTemp.add(0.32);
+			thrustValuesTemp.add(-physParams.gravity);
 		}
 
-		@Override
-		public boolean isTrue(State st, String... params) {
+		// create attributes
+		Attribute xatt = new Attribute(domain, XATTNAME,
+				Attribute.AttributeType.REAL);
+		xatt.setLims(physParams.xmin, physParams.xmax);
 
-			ObjectInstance agent = st.getObject(params[0]);
-			ObjectInstance pad = st.getObject(params[1]);
+		Attribute yatt = new Attribute(domain, YATTNAME,
+				Attribute.AttributeType.REAL);
+		yatt.setLims(physParams.ymin, physParams.ymax);
 
-			double l = pad.getRealValForAttribute(LATTNAME);
-			double r = pad.getRealValForAttribute(RATTNAME);
-			double t = pad.getRealValForAttribute(TATTNAME);
+		Attribute vxatt = new Attribute(domain, VXATTNAME,
+				Attribute.AttributeType.REAL);
+		vxatt.setLims(-physParams.vmax, physParams.vmax);
 
-			double x = agent.getRealValForAttribute(XATTNAME);
-			double y = agent.getRealValForAttribute(YATTNAME);
+		Attribute vyatt = new Attribute(domain, VYATTNAME,
+				Attribute.AttributeType.REAL);
+		vyatt.setLims(-physParams.vmax, physParams.vmax);
 
-			// on pad means landed on surface, so y should be equal to top
-			if (x > l && x < r && y == t) {
-				return true;
-			}
+		Attribute aatt = new Attribute(domain, AATTNAME,
+				Attribute.AttributeType.REAL);
+		aatt.setLims(-physParams.angmax, physParams.angmax);
 
-			return false;
+		Attribute latt = new Attribute(domain, LATTNAME,
+				Attribute.AttributeType.REAL);
+		latt.setLims(physParams.xmin, physParams.xmax);
+
+		Attribute ratt = new Attribute(domain, RATTNAME,
+				Attribute.AttributeType.REAL);
+		ratt.setLims(physParams.xmin, physParams.xmax);
+
+		Attribute batt = new Attribute(domain, BATTNAME,
+				Attribute.AttributeType.REAL);
+		batt.setLims(physParams.ymin, physParams.ymax);
+
+		Attribute tatt = new Attribute(domain, TATTNAME,
+				Attribute.AttributeType.REAL);
+		tatt.setLims(physParams.ymin, physParams.ymax);
+
+		// create classes
+		ObjectClass agentclass = new ObjectClass(domain, AGENTCLASS);
+		agentclass.addAttribute(xatt);
+		agentclass.addAttribute(yatt);
+		agentclass.addAttribute(vxatt);
+		agentclass.addAttribute(vyatt);
+		agentclass.addAttribute(aatt);
+
+		ObjectClass obstclss = new ObjectClass(domain, OBSTACLECLASS);
+		obstclss.addAttribute(latt);
+		obstclss.addAttribute(ratt);
+		obstclss.addAttribute(batt);
+		obstclss.addAttribute(tatt);
+
+		ObjectClass padclass = new ObjectClass(domain, PADCLASS);
+		padclass.addAttribute(latt);
+		padclass.addAttribute(ratt);
+		padclass.addAttribute(batt);
+		padclass.addAttribute(tatt);
+
+		// make copy of physics parameters
+		LLPhysicsParams cphys = this.physParams.copy();
+
+		// add actions
+		new ActionTurn(ACTIONTURNL, domain, -1., cphys);
+		new ActionTurn(ACTIONTURNR, domain, 1., cphys);
+		new ActionIdle(ACTIONIDLE, domain, cphys);
+
+		for (int i = 0; i < thrustValuesTemp.size(); i++) {
+			double t = thrustValuesTemp.get(i);
+			new ActionThrust(ACTIONTHRUST + i, domain, t, cphys);
 		}
+
+		// add pfs
+		new OnPadPF(PFONPAD, domain);
+		new TouchPadPF(PFTPAD, domain);
+		new TouchSurfacePF(PFTOUCHSURFACE, domain);
+		new TouchGroundPF(PFONGROUND, domain);
+
+		return domain;
 
 	}
 
 	/**
-	 * A propositional function that evaluates to true if the agent is touching
-	 * any part of the landing pad, including its side boundaries. This means
-	 * this can evaluate to true even if the agent has not landed on the landing
-	 * pad.
+	 * Returns how many radians the agent will rotate from its current
+	 * orientation when a turn/rotate action is applied
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @return how many radians the agent will rotate from its current
+	 *         orientation when a turn/rotate action is applied
 	 */
-	public class TouchPadPF extends PropositionalFunction {
-
-		/**
-		 * Initializes to be evaluated on an agent object and landing pad
-		 * object.
-		 * 
-		 * @param name
-		 *            the name of the propositional function
-		 * @param domain
-		 *            the domain of the propositional function
-		 */
-		public TouchPadPF(String name, Domain domain) {
-			super(name, domain, new String[] { AGENTCLASS, PADCLASS });
-		}
-
-		@Override
-		public boolean isTrue(State st, String... params) {
-
-			ObjectInstance agent = st.getObject(params[0]);
-			ObjectInstance pad = st.getObject(params[1]);
-
-			double l = pad.getRealValForAttribute(LATTNAME);
-			double r = pad.getRealValForAttribute(RATTNAME);
-			double b = pad.getRealValForAttribute(BATTNAME);
-			double t = pad.getRealValForAttribute(TATTNAME);
-
-			double x = agent.getRealValForAttribute(XATTNAME);
-			double y = agent.getRealValForAttribute(YATTNAME);
-
-			// on pad means landed on surface, so y should be equal to top
-			if (x >= l && x < r && y >= b && y <= t) {
-				return true;
-			}
-
-			return false;
-		}
-
+	public double getAnginc() {
+		return this.physParams.anginc;
 	}
 
 	/**
-	 * A propositional function that evaluates to true if the agent is touching
-	 * any part of an obstacle, including its side boundaries.
+	 * Returns the maximum rotate angle (in radians) that the lander can be
+	 * rotated from the vertical orientation in either clockwise or
+	 * counterclockwise direction.
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @return the maximum rotate angle (in radians) that the lander can be
+	 *         rotated
 	 */
-	public class TouchSurfacePF extends PropositionalFunction {
+	public double getAngmax() {
+		return this.physParams.angmax;
+	}
 
-		/**
-		 * Initializes to be evaluated on an agent object and obstacle object.
-		 * 
-		 * @param name
-		 *            the name of the propositional function
-		 * @param domain
-		 *            the domain of the propositional function
-		 */
-		public TouchSurfacePF(String name, Domain domain) {
-			super(name, domain, new String[] { AGENTCLASS, OBSTACLECLASS });
-		}
-
-		@Override
-		public boolean isTrue(State st, String... params) {
-
-			ObjectInstance agent = st.getObject(params[0]);
-			ObjectInstance o = st.getObject(params[1]);
-			double x = agent.getRealValForAttribute(XATTNAME);
-			double y = agent.getRealValForAttribute(YATTNAME);
-
-			double l = o.getRealValForAttribute(LATTNAME);
-			double r = o.getRealValForAttribute(RATTNAME);
-			double b = o.getRealValForAttribute(BATTNAME);
-			double t = o.getRealValForAttribute(TATTNAME);
-
-			if (x >= l && x <= r && y >= b && y <= t) {
-				return true;
-			}
-
-			return false;
-		}
-
+	public LLPhysicsParams getPhysParams() {
+		return physParams;
 	}
 
 	/**
-	 * A propositional function that evaluates to true if the agent is touching
-	 * the ground.
+	 * Returns the maximum velocity of the agent (the agent cannot move faster
+	 * than this value).
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @return the maximum velocity of the agent (the agent cannot move faster
+	 *         than this value).
 	 */
-	public class TouchGroundPF extends PropositionalFunction {
-
-		/**
-		 * Initializes to be evaluated on an agent object.
-		 * 
-		 * @param name
-		 *            the name of the propositional function
-		 * @param domain
-		 *            the domain of the propositional function
-		 */
-		public TouchGroundPF(String name, Domain domain) {
-			super(name, domain, new String[] { AGENTCLASS });
-		}
-
-		@Override
-		public boolean isTrue(State st, String... params) {
-
-			ObjectInstance agent = st.getObject(params[0]);
-			double y = agent.getRealValForAttribute(YATTNAME);
-			double ymin = agent.getObjectClass().domain.getAttribute(YATTNAME).lowerLim;
-
-			if (y == ymin) {
-				return true;
-			}
-
-			return false;
-		}
-
+	public double getVmax() {
+		return this.physParams.vmax;
 	}
 
 	/**
-	 * This method will launch a visual explorer for the lunar lander domain. It
-	 * will use the default physics, start the agent on the left side of the
-	 * world with a landing pad on the right and an obstacle in between. The
-	 * agent is controlled with the following keys: <br/>
-	 * w: heavy thrust<br/>
-	 * s: weak thrust<br/>
-	 * a: turn/rotate counterclockwise<br/>
-	 * d: turn/rotate clockwise<br/>
-	 * x: idle (drift for one time step)
-	 * <p/>
-	 * If you pass the main method "t" as an argument, a terminal explorer will
-	 * be used instead of a visual explorer.
+	 * Returns the maximum x position of the lander (the agent cannot cross this
+	 * boundary)
 	 * 
-	 * @param args
-	 *            optionally pass "t" asn argument to use a terminal explorer
-	 *            instead of a visual explorer.
+	 * @return the maximum x position of the lander (the agent cannot cross this
+	 *         boundary)
 	 */
-	public static void main(String[] args) {
+	public double getXmax() {
+		return this.physParams.xmax;
+	}
 
-		LunarLanderDomain lld = new LunarLanderDomain();
-		Domain domain = lld.generateDomain();
+	/**
+	 * Returns the minimum x position of the lander (the agent cannot cross this
+	 * boundary)
+	 * 
+	 * @return the minimum x position of the lander (the agent cannot cross this
+	 *         boundary)
+	 */
+	public double getXmin() {
+		return this.physParams.xmin;
+	}
 
-		State clean = getCleanState(domain, 0);
+	/**
+	 * Returns the maximum y position of the lander (the agent cannot cross this
+	 * boundary)
+	 * 
+	 * @return the maximum y position of the lander (the agent cannot cross this
+	 *         boundary)
+	 */
+	public double getYmax() {
+		return this.physParams.ymax;
+	}
 
-		/*
-		 * //these commented items just have different task configuration; just
-		 * choose one lld.setAgent(clean, 0., 5, 0.); lld.setObstacle(clean, 0,
-		 * 30., 45., 0., 20.); lld.setPad(clean, 75., 95., 0., 10.);
-		 */
+	/**
+	 * Returns the minimum y position of the lander (the agent cannot cross this
+	 * boundary)
+	 * 
+	 * @return the minimum y position of the lander (the agent cannot cross this
+	 *         boundary)
+	 */
+	public double getYmin() {
+		return this.physParams.ymin;
+	}
 
-		/*
-		 * lld.setAgent(clean, 0., 5, 0.); lld.setObstacle(clean, 0, 20., 40.,
-		 * 0., 20.); lld.setPad(clean, 65., 85., 0., 10.);
-		 */
+	/**
+	 * Sets how many radians the agent will rotate from its current orientation
+	 * when a turn/rotate action is applied
+	 * 
+	 * @param anginc
+	 *            how many radians the agent will rotate from its current
+	 *            orientation when a turn/rotate action is applied
+	 */
+	public void setAnginc(double anginc) {
+		this.physParams.anginc = anginc;
+	}
 
-		setAgent(clean, 0., 5, 0.);
-		// setObstacle(clean, 0, 20., 50., 0., 20.);
-		setPad(clean, 80., 95., 0., 10.);
+	/**
+	 * Sets the maximum rotate angle (in radians) that the lander can be rotated
+	 * from the vertical orientation in either clockwise or counterclockwise
+	 * direction.
+	 * 
+	 * @param angmax
+	 *            the maximum rotate angle (in radians) that the lander can be
+	 *            rotated
+	 */
+	public void setAngmax(double angmax) {
+		this.physParams.angmax = angmax;
+	}
 
-		int expMode = 1;
+	/**
+	 * Sets the gravity of the domain
+	 * 
+	 * @param g
+	 *            the force of gravity
+	 */
+	public void setGravity(double g) {
+		this.physParams.gravity = g;
+	}
 
-		if (args.length > 0) {
-			if (args[0].equals("v")) {
-				expMode = 1;
-			} else if (args[0].equals("t")) {
-				expMode = 0;
-			}
-		}
+	public void setPhysParams(LLPhysicsParams physParams) {
+		this.physParams = physParams;
+	}
 
-		if (expMode == 0) {
+	/**
+	 * Sets the domain to use a standard set of physics and with a standard set
+	 * of two thrust actions.<br/>
+	 * gravity = -0.2<br/>
+	 * xmin = 0<br/>
+	 * xmax = 100<br/>
+	 * ymin = 0<br/>
+	 * ymax = 50<br/>
+	 * max velocity component speed = 4<br/>
+	 * maximum angle of rotation = pi/4<br/>
+	 * change in angle from turning = pi/20<br/>
+	 * thrust1 force = 0.32<br/>
+	 * thrust2 force = 0.2 (opposite gravity)
+	 */
+	public void setToStandardLunarLander() {
+		this.addStandardThrustActions();
+		this.physParams = new LLPhysicsParams();
+	}
 
-			TerminalExplorer te = new TerminalExplorer(domain, clean);
+	/**
+	 * Sets the maximum velocity of the agent (the agent cannot move faster than
+	 * this value).
+	 * 
+	 * @param vmax
+	 *            the maximum velocity of the agent (the agent cannot move
+	 *            faster than this value).
+	 */
+	public void setVmax(double vmax) {
+		this.physParams.vmax = vmax;
+	}
 
-			te.addActionShortHand("a", ACTIONTURNL);
-			te.addActionShortHand("d", ACTIONTURNR);
-			te.addActionShortHand("w", ACTIONTHRUST + 0);
-			te.addActionShortHand("s", ACTIONTHRUST + 1);
-			te.addActionShortHand("x", ACTIONIDLE);
+	/**
+	 * Sets the maximum x position of the lander (the agent cannot cross this
+	 * boundary)
+	 * 
+	 * @param xmax
+	 *            the maximum x position of the lander (the agent cannot cross
+	 *            this boundary)
+	 */
+	public void setXmax(double xmax) {
+		this.physParams.xmax = xmax;
+	}
 
-			te.explore();
+	/**
+	 * Sets the minimum x position of the lander (the agent cannot cross this
+	 * boundary)
+	 * 
+	 * @param xmin
+	 *            the minimum x position of the lander (the agent cannot cross
+	 *            this boundary)
+	 */
+	public void setXmin(double xmin) {
+		this.physParams.xmin = xmin;
+	}
 
-		} else if (expMode == 1) {
+	/**
+	 * Sets the maximum y position of the lander (the agent cannot cross this
+	 * boundary)
+	 * 
+	 * @param ymax
+	 *            the maximum y position of the lander (the agent cannot cross
+	 *            this boundary)
+	 */
+	public void setYmax(double ymax) {
+		this.physParams.ymax = ymax;
+	}
 
-			Visualizer vis = LLVisualizer.getVisualizer(lld);
-			VisualExplorer exp = new VisualExplorer(domain, vis, clean);
-
-			exp.addKeyAction("w", ACTIONTHRUST + 0);
-			exp.addKeyAction("s", ACTIONTHRUST + 1);
-			exp.addKeyAction("a", ACTIONTURNL);
-			exp.addKeyAction("d", ACTIONTURNR);
-			exp.addKeyAction("x", ACTIONIDLE);
-
-			exp.initGUI();
-
-		}
-
+	/**
+	 * Sets the minimum y position of the lander (the agent cannot cross this
+	 * boundary)
+	 * 
+	 * @param ymin
+	 *            the minimum y position of the lander (the agent cannot cross
+	 *            this boundary)
+	 */
+	public void setYmin(double ymin) {
+		this.physParams.ymin = ymin;
 	}
 
 }

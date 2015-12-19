@@ -1,22 +1,22 @@
 package burlap.oomdp.singleagent.explorer;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import burlap.oomdp.auxiliary.common.NullTermination;
 import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.objects.MutableObjectInstance;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.core.objects.MutableObjectInstance;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.common.NullRewardFunction;
 import burlap.oomdp.singleagent.environment.Environment;
 import burlap.oomdp.singleagent.environment.SimulatedEnvironment;
 import burlap.oomdp.singleagent.environment.StateSettableEnvironment;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * This class allows you act as the agent by choosing actions in an
@@ -41,49 +41,6 @@ public class TerminalExplorer {
 	protected Map<String, String> actionShortHand;
 
 	protected GroundedAction lastAction;
-
-	/**
-	 * Initializes the explorer with the specified domain using a
-	 * {@link burlap.oomdp.singleagent.environment.SimulatedEnvironment} with a
-	 * {@link burlap.oomdp.singleagent.common.NullRewardFunction} and
-	 * {@link burlap.oomdp.auxiliary.common.NullTermination}
-	 * 
-	 * @param domain
-	 *            the domain to explore
-	 * @param baseState
-	 *            the initial {@link burlap.oomdp.core.states.State} of the
-	 *            {@link burlap.oomdp.singleagent.environment.SimulatedEnvironment}
-	 */
-	public TerminalExplorer(Domain domain, State baseState) {
-		this.env = new SimulatedEnvironment(domain, new NullRewardFunction(),
-				new NullTermination(), baseState);
-		this.domain = domain;
-		this.setActionShortHand(new HashMap<String, String>());
-	}
-
-	/**
-	 * Initializes the explorer with the specified domain using a
-	 * {@link burlap.oomdp.singleagent.environment.SimulatedEnvironment} with a
-	 * {@link burlap.oomdp.singleagent.common.NullRewardFunction} and
-	 * {@link burlap.oomdp.auxiliary.common.NullTermination} and short hand
-	 * names for actions
-	 * 
-	 * @param domain
-	 *            the domain to explore
-	 * @param ash
-	 *            a map from short hand names to full action names. For
-	 *            instance, "s->stack"
-	 * @param baseState
-	 *            the initial {@link burlap.oomdp.core.states.State} of the
-	 *            {@link burlap.oomdp.singleagent.environment.SimulatedEnvironment}
-	 */
-	public TerminalExplorer(Domain domain, Map<String, String> ash,
-			State baseState) {
-		this.env = new SimulatedEnvironment(domain, new NullRewardFunction(),
-				new NullTermination(), baseState);
-		this.domain = domain;
-		this.setActionShortHand(ash);
-	}
 
 	/**
 	 * Initializes.
@@ -124,18 +81,46 @@ public class TerminalExplorer {
 	}
 
 	/**
-	 * Sets the short hand names to use for actions.
+	 * Initializes the explorer with the specified domain using a
+	 * {@link burlap.oomdp.singleagent.environment.SimulatedEnvironment} with a
+	 * {@link burlap.oomdp.singleagent.common.NullRewardFunction} and
+	 * {@link burlap.oomdp.auxiliary.common.NullTermination} and short hand
+	 * names for actions
 	 * 
+	 * @param domain
+	 *            the domain to explore
 	 * @param ash
 	 *            a map from short hand names to full action names. For
 	 *            instance, "s->stack"
+	 * @param baseState
+	 *            the initial {@link burlap.oomdp.core.states.State} of the
+	 *            {@link burlap.oomdp.singleagent.environment.SimulatedEnvironment}
 	 */
-	public void setActionShortHand(Map<String, String> ash) {
-		this.actionShortHand = ash;
-		List<Action> actionList = domain.getActions();
-		for (Action a : actionList) {
-			this.addActionShortHand(a.getName(), a.getName());
-		}
+	public TerminalExplorer(Domain domain, Map<String, String> ash,
+			State baseState) {
+		this.env = new SimulatedEnvironment(domain, new NullRewardFunction(),
+				new NullTermination(), baseState);
+		this.domain = domain;
+		this.setActionShortHand(ash);
+	}
+
+	/**
+	 * Initializes the explorer with the specified domain using a
+	 * {@link burlap.oomdp.singleagent.environment.SimulatedEnvironment} with a
+	 * {@link burlap.oomdp.singleagent.common.NullRewardFunction} and
+	 * {@link burlap.oomdp.auxiliary.common.NullTermination}
+	 * 
+	 * @param domain
+	 *            the domain to explore
+	 * @param baseState
+	 *            the initial {@link burlap.oomdp.core.states.State} of the
+	 *            {@link burlap.oomdp.singleagent.environment.SimulatedEnvironment}
+	 */
+	public TerminalExplorer(Domain domain, State baseState) {
+		this.env = new SimulatedEnvironment(domain, new NullRewardFunction(),
+				new NullTermination(), baseState);
+		this.domain = domain;
+		this.setActionShortHand(new HashMap<String, String>());
 	}
 
 	/**
@@ -347,6 +332,21 @@ public class TerminalExplorer {
 		System.out.println(s
 				.getCompleteStateDescriptionWithUnsetAttributesAsNull());
 
+	}
+
+	/**
+	 * Sets the short hand names to use for actions.
+	 * 
+	 * @param ash
+	 *            a map from short hand names to full action names. For
+	 *            instance, "s->stack"
+	 */
+	public void setActionShortHand(Map<String, String> ash) {
+		this.actionShortHand = ash;
+		List<Action> actionList = domain.getActions();
+		for (Action a : actionList) {
+			this.addActionShortHand(a.getName(), a.getName());
+		}
 	}
 
 }

@@ -13,8 +13,8 @@ import burlap.behavior.stochasticgames.solvers.GeneralBimatrixSolverTools;
 import burlap.behavior.stochasticgames.solvers.MinMaxSolver;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 import burlap.oomdp.stochasticgames.JointAction;
+import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
 
 /**
@@ -71,11 +71,6 @@ public class EMinMaxPolicy extends MAQSourcePolicy {
 		this.qSourceProvider = actingAgent;
 		this.epsilon = epsilon;
 		this.targetAgentQName = actingAgent.getAgentName();
-	}
-
-	@Override
-	public void setTargetAgent(String agentName) {
-		this.targetAgentQName = agentName;
 	}
 
 	@Override
@@ -163,18 +158,23 @@ public class EMinMaxPolicy extends MAQSourcePolicy {
 	}
 
 	@Override
-	public boolean isStochastic() {
+	public boolean isDefinedFor(State s) {
 		return true;
 	}
 
 	@Override
-	public boolean isDefinedFor(State s) {
+	public boolean isStochastic() {
 		return true;
 	}
 
 	@Override
 	public void setQSourceProvider(MultiAgentQSourceProvider provider) {
 		this.qSourceProvider = provider;
+	}
+
+	@Override
+	public void setTargetAgent(String agentName) {
+		this.targetAgentQName = agentName;
 	}
 
 }

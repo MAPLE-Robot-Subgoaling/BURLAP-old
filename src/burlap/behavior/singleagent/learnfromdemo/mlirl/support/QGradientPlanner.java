@@ -1,10 +1,10 @@
 package burlap.behavior.singleagent.learnfromdemo.mlirl.support;
 
+import java.util.List;
+
 import burlap.behavior.valuefunction.QFunction;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
-
-import java.util.List;
 
 /**
  * An interface for a valueFunction that can produce Q-value gradients.

@@ -1,15 +1,15 @@
 package burlap.oomdp.singleagent.common;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.TransitionProbability;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.FullActionModel;
 import burlap.oomdp.singleagent.GroundedAction;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * An abstract subclass of {@link burlap.oomdp.singleagent.Action} for actions
@@ -31,40 +31,6 @@ import java.util.List;
  * @author James MacGlashan.
  */
 public abstract class SimpleAction extends Action {
-
-	public SimpleAction() {
-	}
-
-	public SimpleAction(String name, Domain domain) {
-		super(name, domain);
-	}
-
-	@Override
-	public boolean applicableInState(State s, GroundedAction groundedAction) {
-		return true;
-	}
-
-	@Override
-	public boolean isPrimitive() {
-		return true;
-	}
-
-	@Override
-	public boolean isParameterized() {
-		return false;
-	}
-
-	@Override
-	public GroundedAction getAssociatedGroundedAction() {
-		return new SimpleGroundedAction(this);
-	}
-
-	@Override
-	public List<GroundedAction> getAllApplicableGroundedActions(State s) {
-		GroundedAction ga = new SimpleGroundedAction(this);
-		return this.applicableInState(s, ga) ? Arrays.asList(ga)
-				: new ArrayList<GroundedAction>(0);
-	}
 
 	/**
 	 * A abstract class for deterministic actions that are not parameterized,
@@ -93,6 +59,40 @@ public abstract class SimpleAction extends Action {
 				GroundedAction groundedAction) {
 			return this.deterministicTransition(s, groundedAction);
 		}
+	}
+
+	public SimpleAction() {
+	}
+
+	public SimpleAction(String name, Domain domain) {
+		super(name, domain);
+	}
+
+	@Override
+	public boolean applicableInState(State s, GroundedAction groundedAction) {
+		return true;
+	}
+
+	@Override
+	public List<GroundedAction> getAllApplicableGroundedActions(State s) {
+		GroundedAction ga = new SimpleGroundedAction(this);
+		return this.applicableInState(s, ga) ? Arrays.asList(ga)
+				: new ArrayList<GroundedAction>(0);
+	}
+
+	@Override
+	public GroundedAction getAssociatedGroundedAction() {
+		return new SimpleGroundedAction(this);
+	}
+
+	@Override
+	public boolean isParameterized() {
+		return false;
+	}
+
+	@Override
+	public boolean isPrimitive() {
+		return true;
 	}
 
 }

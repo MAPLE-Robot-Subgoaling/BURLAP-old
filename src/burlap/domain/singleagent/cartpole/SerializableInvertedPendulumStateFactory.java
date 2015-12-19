@@ -17,40 +17,6 @@ import burlap.oomdp.stateserialization.SerializableStateFactory;
 public class SerializableInvertedPendulumStateFactory implements
 		SerializableStateFactory {
 
-	@Override
-	public SerializableState serialize(State s) {
-		return new SerializableInvertedPendulumState(s);
-	}
-
-	@Override
-	public Class<?> getGeneratedClass() {
-		return SerializableInvertedPendulumState.class;
-	}
-
-	public static class SerializableInvertedPendulumState extends
-			SerializableState {
-
-		public String stringRep;
-
-		public SerializableInvertedPendulumState() {
-		}
-
-		public SerializableInvertedPendulumState(State s) {
-			super(s);
-		}
-
-		@Override
-		public void serialize(State s) {
-			this.stringRep = stateToString(s);
-		}
-
-		@Override
-		public State deserialize(Domain domain) {
-			return stringToState(domain, this.stringRep);
-		}
-
-	}
-
 	public static class InvertedPendulumStateParser implements StateParser {
 
 		Domain domain;
@@ -71,6 +37,30 @@ public class SerializableInvertedPendulumStateFactory implements
 		}
 	}
 
+	public static class SerializableInvertedPendulumState extends
+			SerializableState {
+
+		public String stringRep;
+
+		public SerializableInvertedPendulumState() {
+		}
+
+		public SerializableInvertedPendulumState(State s) {
+			super(s);
+		}
+
+		@Override
+		public State deserialize(Domain domain) {
+			return stringToState(domain, this.stringRep);
+		}
+
+		@Override
+		public void serialize(State s) {
+			this.stringRep = stateToString(s);
+		}
+
+	}
+
 	public static String stateToString(State s) {
 		ObjectInstance o = s
 				.getFirstObjectOfClass(InvertedPendulum.CLASSPENDULUM);
@@ -88,6 +78,16 @@ public class SerializableInvertedPendulumStateFactory implements
 		double av = Double.parseDouble(comps[1]);
 		State s = InvertedPendulum.getInitialState(domain, a, av);
 		return s;
+	}
+
+	@Override
+	public Class<?> getGeneratedClass() {
+		return SerializableInvertedPendulumState.class;
+	}
+
+	@Override
+	public SerializableState serialize(State s) {
+		return new SerializableInvertedPendulumState(s);
 	}
 
 }

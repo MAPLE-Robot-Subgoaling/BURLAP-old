@@ -4,11 +4,6 @@ import burlap.oomdp.core.objects.ObjectInstance;
 
 public abstract class OOMDPState implements State {
 
-	@Override
-	public String toString() {
-		return this.getCompleteStateDescription();
-	}
-
 	/**
 	 * Renames the identifier for the object instance currently named
 	 * originalName with the name newName.
@@ -19,6 +14,7 @@ public abstract class OOMDPState implements State {
 	 * @param newName
 	 *            the new name of the object instance
 	 */
+	@Override
 	public State renameObject(String originalName, String newName) {
 		ObjectInstance o = this.getObject(originalName);
 		return this.renameObject(o, newName);
@@ -31,6 +27,7 @@ public abstract class OOMDPState implements State {
 	 *             if the object doesn't exist, or the attribute name doesn't
 	 *             exist for the object.
 	 */
+	@Override
 	public <T> State setObjectsValue(String objectName, String attName, T value) {
 		ObjectInstance obj = this.getObject(objectName);
 		if (obj == null) {
@@ -39,5 +36,10 @@ public abstract class OOMDPState implements State {
 		}
 		obj.setValue(attName, value);
 		return this;
+	}
+
+	@Override
+	public String toString() {
+		return this.getCompleteStateDescription();
 	}
 }

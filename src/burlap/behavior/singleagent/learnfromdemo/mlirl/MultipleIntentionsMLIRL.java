@@ -1,15 +1,15 @@
 package burlap.behavior.singleagent.learnfromdemo.mlirl;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlannerFactory;
 import burlap.behavior.singleagent.planning.Planner;
 import burlap.debugtools.DPrint;
 import burlap.debugtools.RandomFactory;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 /**
  * An implementation of Multiple Intentions Maximum-likelihood Inverse
@@ -118,141 +118,44 @@ public class MultipleIntentionsMLIRL {
 	}
 
 	/**
-	 * Performs multiple intention inverse reinforcement learning.
-	 */
-	public void performIRL() {
-
-		int k = this.clusterPriors.length;
-
-		for (int i = 0; i < this.numEMIterations; i++) {
-
-			DPrint.cl(this.debugCode, "Starting EM iteration " + (i + 1) + "/"
-					+ this.numEMIterations);
-
-			double[][] trajectoryPerClusterWeights = this
-					.computePerClusterMLIRLWeights();
-			for (int j = 0; j < k; j++) {
-				MLIRLRequest clusterRequest = this.clusterRequests.get(j);
-				clusterRequest.setEpisodeWeights(trajectoryPerClusterWeights[j]
-						.clone());
-				this.mlirlInstance.setRequest(clusterRequest);
-				this.mlirlInstance.performIRL();
-			}
-
-		}
-
-		DPrint.cl(this.debugCode, "Finished EM");
-
-	}
-
-	/**
-	 * Returns the probability of each behavior cluster given the trajectory.
+	 * Given a matrix holding the log[Pr(c)] + log(Pr(t | c)] values in its
+	 * entries, where Pr(c) is the probability of the cluster and Pr(t | c)] is
+	 * the probability of the trajectory given the cluster, this method returns
+	 * the log probability of the standard probability normalization factor for
+	 * trajectory t in the matrix. That is, it returns log [ \sum_i Pr(c_i) *
+	 * Pr(t | c_i) ]. The matrix is ordered such that the rows are cluster
+	 * indices and columns are trajectories.
 	 * 
 	 * @param t
-	 *            the trajectory (stored as an
-	 *            {@link burlap.behavior.singleagent.EpisodeAnalysis} object) to
-	 *            evaluate.
-	 * @return the probability of each behavior cluster given the trajectory.
+	 *            the trajectory in question.
+	 * @param logWeightedLikelihoods
+	 *            the matrix of log[Pr(c)] + log(Pr(t | c)] values.
+	 * @return log [ \sum_i Pr(c_i) * Pr(t | c_i) ]
 	 */
-	public double[] computeProbabilityOfClustersGivenTrajectory(
-			EpisodeAnalysis t) {
+	protected double computeClusterTrajectoryLoggedNormalization(int t,
+			double[][] logWeightedLikelihoods) {
 
-		int k = this.clusterPriors.length;
-		double[] probs = new double[k];
-
-		// compute the log prior weighted likelihood terms and find max
 		double mx = Double.NEGATIVE_INFINITY;
-		for (int i = 0; i < k; i++) {
-			double logPrior = Math.log(this.clusterPriors[i]);
+		int k = logWeightedLikelihoods.length;
 
-			// set the IRL request for the current cluster
-			this.mlirlInstance.setRequest(this.clusterRequests.get(i));
-			double logTrajectory = this.mlirlInstance
-					.logLikelihoodOfTrajectory(t, 1.);
-			double v = logTrajectory + logPrior;
-			probs[i] = v;
-			mx = Math.max(mx, v);
+		// first find max term
+		for (int i = 0; i < k; i++) {
+			mx = Math.max(mx, logWeightedLikelihoods[i][t]);
 		}
 
-		// compute logged denominator value
-		double exponetiatedSum = 0.;
+		// now get sum of exponentials shifted by max
+		double sum = 0.;
 		for (int i = 0; i < k; i++) {
-			double v = probs[i] - mx;
-			double expVal = Math.exp(v);
-			exponetiatedSum += expVal;
+			double v = logWeightedLikelihoods[i][t];
+			double shifted = v - mx;
+			double exponentiated = Math.exp(shifted);
+			sum += exponentiated;
 		}
-		double logSum = Math.log(exponetiatedSum);
+
+		double logSum = Math.log(sum);
 		double finalSum = mx + logSum;
 
-		// now store as final probabilities
-		for (int i = 0; i < k; i++) {
-			double v = probs[i];
-			double logProb = v - finalSum;
-			double prob = Math.exp(logProb);
-			probs[i] = prob;
-		}
-
-		return probs;
-	}
-
-	/**
-	 * Returns the
-	 * {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF}
-	 * obejcts defining each behavior cluster.
-	 * 
-	 * @return the
-	 *         {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF}
-	 *         obejcts defining each behavior cluster.
-	 */
-	public List<DifferentiableRF> getClusterRFs() {
-		List<DifferentiableRF> rfs = new ArrayList<DifferentiableRF>(
-				this.clusterPriors.length);
-		for (MLIRLRequest request : this.clusterRequests) {
-			rfs.add(request.getRf());
-		}
-		return rfs;
-	}
-
-	/**
-	 * Returns the behavior cluster prior probabilities.
-	 * 
-	 * @return the behavior cluster prior probabilities.
-	 */
-	public double[] getClusterPriors() {
-		return this.clusterPriors;
-	}
-
-	/**
-	 * Sets whether information during learning is printed to the terminal. Will
-	 * automatically toggle the debug printing for the underlying MLIRL that
-	 * runs.
-	 * 
-	 * @param printDebug
-	 *            if true, information is printed to the terminal; if false then
-	 *            it is silent.
-	 */
-	public void toggleDebugPrinting(boolean printDebug) {
-		DPrint.toggleCode(this.debugCode, printDebug);
-		this.mlirlInstance.toggleDebugPrinting(printDebug);
-	}
-
-	/**
-	 * Returns the debug code used for printing to the terminal
-	 * 
-	 * @return the debug code used for printing to the terminal.
-	 */
-	public int getDebugCode() {
-		return this.debugCode;
-	}
-
-	/**
-	 * Sets the debug code used for printing to the terminal
-	 * 
-	 * @param debugCode
-	 *            the debug code used for printing to the terminal
-	 */
-	public void setDebugCode(int debugCode) {
-		this.debugCode = debugCode;
+		return finalSum;
 	}
 
 	/**
@@ -322,44 +225,107 @@ public class MultipleIntentionsMLIRL {
 	}
 
 	/**
-	 * Given a matrix holding the log[Pr(c)] + log(Pr(t | c)] values in its
-	 * entries, where Pr(c) is the probability of the cluster and Pr(t | c)] is
-	 * the probability of the trajectory given the cluster, this method returns
-	 * the log probability of the standard probability normalization factor for
-	 * trajectory t in the matrix. That is, it returns log [ \sum_i Pr(c_i) *
-	 * Pr(t | c_i) ]. The matrix is ordered such that the rows are cluster
-	 * indices and columns are trajectories.
+	 * Returns the probability of each behavior cluster given the trajectory.
 	 * 
 	 * @param t
-	 *            the trajectory in question.
-	 * @param logWeightedLikelihoods
-	 *            the matrix of log[Pr(c)] + log(Pr(t | c)] values.
-	 * @return log [ \sum_i Pr(c_i) * Pr(t | c_i) ]
+	 *            the trajectory (stored as an
+	 *            {@link burlap.behavior.singleagent.EpisodeAnalysis} object) to
+	 *            evaluate.
+	 * @return the probability of each behavior cluster given the trajectory.
 	 */
-	protected double computeClusterTrajectoryLoggedNormalization(int t,
-			double[][] logWeightedLikelihoods) {
+	public double[] computeProbabilityOfClustersGivenTrajectory(
+			EpisodeAnalysis t) {
 
+		int k = this.clusterPriors.length;
+		double[] probs = new double[k];
+
+		// compute the log prior weighted likelihood terms and find max
 		double mx = Double.NEGATIVE_INFINITY;
-		int k = logWeightedLikelihoods.length;
-
-		// first find max term
 		for (int i = 0; i < k; i++) {
-			mx = Math.max(mx, logWeightedLikelihoods[i][t]);
+			double logPrior = Math.log(this.clusterPriors[i]);
+
+			// set the IRL request for the current cluster
+			this.mlirlInstance.setRequest(this.clusterRequests.get(i));
+			double logTrajectory = this.mlirlInstance
+					.logLikelihoodOfTrajectory(t, 1.);
+			double v = logTrajectory + logPrior;
+			probs[i] = v;
+			mx = Math.max(mx, v);
 		}
 
-		// now get sum of exponentials shifted by max
-		double sum = 0.;
+		// compute logged denominator value
+		double exponetiatedSum = 0.;
 		for (int i = 0; i < k; i++) {
-			double v = logWeightedLikelihoods[i][t];
-			double shifted = v - mx;
-			double exponentiated = Math.exp(shifted);
-			sum += exponentiated;
+			double v = probs[i] - mx;
+			double expVal = Math.exp(v);
+			exponetiatedSum += expVal;
 		}
-
-		double logSum = Math.log(sum);
+		double logSum = Math.log(exponetiatedSum);
 		double finalSum = mx + logSum;
 
-		return finalSum;
+		// now store as final probabilities
+		for (int i = 0; i < k; i++) {
+			double v = probs[i];
+			double logProb = v - finalSum;
+			double prob = Math.exp(logProb);
+			probs[i] = prob;
+		}
+
+		return probs;
+	}
+
+	/**
+	 * Returns the behavior cluster prior probabilities.
+	 * 
+	 * @return the behavior cluster prior probabilities.
+	 */
+	public double[] getClusterPriors() {
+		return this.clusterPriors;
+	}
+
+	/**
+	 * Returns the
+	 * {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF}
+	 * obejcts defining each behavior cluster.
+	 * 
+	 * @return the
+	 *         {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF}
+	 *         obejcts defining each behavior cluster.
+	 */
+	public List<DifferentiableRF> getClusterRFs() {
+		List<DifferentiableRF> rfs = new ArrayList<DifferentiableRF>(
+				this.clusterPriors.length);
+		for (MLIRLRequest request : this.clusterRequests) {
+			rfs.add(request.getRf());
+		}
+		return rfs;
+	}
+
+	/**
+	 * Returns the debug code used for printing to the terminal
+	 * 
+	 * @return the debug code used for printing to the terminal.
+	 */
+	public int getDebugCode() {
+		return this.debugCode;
+	}
+
+	/**
+	 * Initializes the
+	 * {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF}
+	 * parameters for each cluster. Will set the parameters randomly between -1
+	 * and 1.
+	 * 
+	 * @param rfs
+	 *            the
+	 *            {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF}
+	 *            whose parameters are to be initialized.
+	 */
+	protected void initializeClusterRFParameters(List<DifferentiableRF> rfs) {
+		for (DifferentiableRF rf : rfs) {
+			double[] params = rf.getParameters();
+			this.randomizeParameters(params);
+		}
 	}
 
 	/**
@@ -387,7 +353,7 @@ public class MultipleIntentionsMLIRL {
 
 		this.clusterRequests = new ArrayList<MLIRLRequest>(k);
 		this.clusterPriors = new double[k];
-		double uni = 1. / (double) k;
+		double uni = 1. / k;
 		for (int i = 0; i < k; i++) {
 			this.clusterPriors[i] = uni;
 			MLIRLRequest nRequest = new MLIRLRequest(this.request.getDomain(),
@@ -405,21 +371,31 @@ public class MultipleIntentionsMLIRL {
 	}
 
 	/**
-	 * Initializes the
-	 * {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF}
-	 * parameters for each cluster. Will set the parameters randomly between -1
-	 * and 1.
-	 * 
-	 * @param rfs
-	 *            the
-	 *            {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.DifferentiableRF}
-	 *            whose parameters are to be initialized.
+	 * Performs multiple intention inverse reinforcement learning.
 	 */
-	protected void initializeClusterRFParameters(List<DifferentiableRF> rfs) {
-		for (DifferentiableRF rf : rfs) {
-			double[] params = rf.getParameters();
-			this.randomizeParameters(params);
+	public void performIRL() {
+
+		int k = this.clusterPriors.length;
+
+		for (int i = 0; i < this.numEMIterations; i++) {
+
+			DPrint.cl(this.debugCode, "Starting EM iteration " + (i + 1) + "/"
+					+ this.numEMIterations);
+
+			double[][] trajectoryPerClusterWeights = this
+					.computePerClusterMLIRLWeights();
+			for (int j = 0; j < k; j++) {
+				MLIRLRequest clusterRequest = this.clusterRequests.get(j);
+				clusterRequest.setEpisodeWeights(trajectoryPerClusterWeights[j]
+						.clone());
+				this.mlirlInstance.setRequest(clusterRequest);
+				this.mlirlInstance.performIRL();
+			}
+
 		}
+
+		DPrint.cl(this.debugCode, "Finished EM");
+
 	}
 
 	/**
@@ -433,6 +409,30 @@ public class MultipleIntentionsMLIRL {
 			double r = this.rand.nextDouble() * 2 - 1.;
 			paramVec[i] = r;
 		}
+	}
+
+	/**
+	 * Sets the debug code used for printing to the terminal
+	 * 
+	 * @param debugCode
+	 *            the debug code used for printing to the terminal
+	 */
+	public void setDebugCode(int debugCode) {
+		this.debugCode = debugCode;
+	}
+
+	/**
+	 * Sets whether information during learning is printed to the terminal. Will
+	 * automatically toggle the debug printing for the underlying MLIRL that
+	 * runs.
+	 * 
+	 * @param printDebug
+	 *            if true, information is printed to the terminal; if false then
+	 *            it is silent.
+	 */
+	public void toggleDebugPrinting(boolean printDebug) {
+		DPrint.toggleCode(this.debugCode, printDebug);
+		this.mlirlInstance.toggleDebugPrinting(printDebug);
 	}
 
 }

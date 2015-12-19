@@ -13,6 +13,14 @@ import burlap.oomdp.core.states.State;
 public interface WorldObserver {
 
 	/**
+	 * This method is called whenever a game in a world ends.
+	 * 
+	 * @param s
+	 *            the final state of the world when it ends.
+	 */
+	public void gameEnding(State s);
+
+	/**
 	 * This method is called whenever a new game in a world is starting.
 	 * 
 	 * @param s
@@ -34,12 +42,4 @@ public interface WorldObserver {
 	 */
 	public void observe(State s, JointAction ja, Map<String, Double> reward,
 			State sp);
-
-	/**
-	 * This method is called whenever a game in a world ends.
-	 * 
-	 * @param s
-	 *            the final state of the world when it ends.
-	 */
-	public void gameEnding(State s);
 }

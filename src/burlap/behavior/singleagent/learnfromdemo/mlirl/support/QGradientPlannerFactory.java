@@ -2,9 +2,9 @@ package burlap.behavior.singleagent.learnfromdemo.mlirl.support;
 
 import burlap.behavior.singleagent.learnfromdemo.mlirl.MLIRLRequest;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.differentiableplanners.DifferentiableVI;
-import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.auxiliary.common.NullTermination;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * A factory for generating
@@ -20,24 +20,6 @@ import burlap.oomdp.core.TerminalFunction;
  * @author James MacGlashan.
  */
 public interface QGradientPlannerFactory {
-
-	/**
-	 * Returns a
-	 * {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlanner}
-	 * for an
-	 * {@link burlap.behavior.singleagent.learnfromdemo.mlirl.MLIRLRequest}
-	 * object's domain, reward function, discount factor, and Boltzmann beta
-	 * parameter.
-	 * 
-	 * @param request
-	 *            the request defining the problem the valueFunction should
-	 *            solve.
-	 * @return a
-	 *         {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlanner}
-	 *         instance.
-	 */
-	public QGradientPlanner generateDifferentiablePlannerForRequest(
-			MLIRLRequest request);
 
 	/**
 	 * A
@@ -113,5 +95,23 @@ public interface QGradientPlannerFactory {
 					this.hashingFactory, this.maxDelta, this.maxIterations);
 		}
 	}
+
+	/**
+	 * Returns a
+	 * {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlanner}
+	 * for an
+	 * {@link burlap.behavior.singleagent.learnfromdemo.mlirl.MLIRLRequest}
+	 * object's domain, reward function, discount factor, and Boltzmann beta
+	 * parameter.
+	 * 
+	 * @param request
+	 *            the request defining the problem the valueFunction should
+	 *            solve.
+	 * @return a
+	 *         {@link burlap.behavior.singleagent.learnfromdemo.mlirl.support.QGradientPlanner}
+	 *         instance.
+	 */
+	public QGradientPlanner generateDifferentiablePlannerForRequest(
+			MLIRLRequest request);
 
 }

@@ -2,16 +2,16 @@ package burlap.behavior.stochasticgames.agents.maql;
 
 import burlap.behavior.learningrate.ConstantLR;
 import burlap.behavior.learningrate.LearningRate;
-import burlap.behavior.valuefunction.ValueFunctionInitialization;
-import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.behavior.stochasticgames.PolicyFromJointPolicy;
 import burlap.behavior.stochasticgames.madynamicprogramming.SGBackupOperator;
 import burlap.behavior.stochasticgames.madynamicprogramming.backupOperators.CoCoQ;
 import burlap.behavior.stochasticgames.madynamicprogramming.backupOperators.MaxQ;
 import burlap.behavior.stochasticgames.madynamicprogramming.policies.EGreedyJointPolicy;
 import burlap.behavior.stochasticgames.madynamicprogramming.policies.EGreedyMaxWellfare;
-import burlap.oomdp.stochasticgames.SGAgent;
+import burlap.behavior.valuefunction.ValueFunctionInitialization;
+import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.stochasticgames.AgentFactory;
+import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.SGDomain;
 
 /**
@@ -26,13 +26,54 @@ import burlap.oomdp.stochasticgames.SGDomain;
  */
 public class MAQLFactory implements AgentFactory {
 
+	/**
+	 * Factory for generating CoCo-Q agents. Fixes the backup operator to CoCo-Q
+	 * and the policy to an epsilon-greedy max wellfare policy.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class CoCoQLearningFactory extends MAQLFactory {
+
+		public CoCoQLearningFactory(SGDomain d, double discount,
+				LearningRate learningRate, HashableStateFactory hashFactory,
+				ValueFunctionInitialization qInit,
+				boolean queryOtherAgentsForTheirQValues, double epsilon) {
+			this.init(d, discount, learningRate, hashFactory, qInit,
+					new CoCoQ(), queryOtherAgentsForTheirQValues,
+					new PolicyFromJointPolicy(new EGreedyMaxWellfare(epsilon)));
+		}
+
+	}
+	/**
+	 * Factory for generating Max multiagent Q-learning agents. This is also
+	 * known as "maxmax-Q" or "friend-Q." Fixes the backup operator to the max
+	 * operator and the policy to an epsilon-greedy policy.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class MAMaxQLearningFactory extends MAQLFactory {
+
+		public MAMaxQLearningFactory(SGDomain d, double discount,
+				LearningRate learningRate, HashableStateFactory hashFactory,
+				ValueFunctionInitialization qInit,
+				boolean queryOtherAgentsForTheirQValues, double epsilon) {
+			this.init(d, discount, learningRate, hashFactory, qInit,
+					new MaxQ(), queryOtherAgentsForTheirQValues,
+					new PolicyFromJointPolicy(new EGreedyJointPolicy(epsilon)));
+		}
+
+	}
 	protected SGDomain domain;
 	protected double discount;
 	protected LearningRate learningRate;
 	protected ValueFunctionInitialization qInit;
 	protected HashableStateFactory hashingFactory;
 	protected SGBackupOperator backupOperator;
+
 	protected PolicyFromJointPolicy learningPolicy;
+
 	protected boolean queryOtherAgentsQSource;
 
 	/**
@@ -122,6 +163,15 @@ public class MAQLFactory implements AgentFactory {
 		this.learningPolicy = learningPolicy;
 	}
 
+	@Override
+	public SGAgent generateAgent() {
+		MultiAgentQLearning agent = new MultiAgentQLearning(domain, discount,
+				learningRate, hashingFactory, qInit, backupOperator,
+				queryOtherAgentsQSource);
+		agent.setLearningPolicy(this.learningPolicy.copy());
+		return agent;
+	}
+
 	/**
 	 * Initializes. The policy will be defaulted to a epsilon-greey max wellfare
 	 * policy.
@@ -159,56 +209,6 @@ public class MAQLFactory implements AgentFactory {
 		this.backupOperator = backupOperator;
 		this.queryOtherAgentsQSource = queryOtherAgentsForTheirQValues;
 		this.learningPolicy = learningPolicy;
-
-	}
-
-	@Override
-	public SGAgent generateAgent() {
-		MultiAgentQLearning agent = new MultiAgentQLearning(domain, discount,
-				learningRate, hashingFactory, qInit, backupOperator,
-				queryOtherAgentsQSource);
-		agent.setLearningPolicy(this.learningPolicy.copy());
-		return agent;
-	}
-
-	/**
-	 * Factory for generating CoCo-Q agents. Fixes the backup operator to CoCo-Q
-	 * and the policy to an epsilon-greedy max wellfare policy.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class CoCoQLearningFactory extends MAQLFactory {
-
-		public CoCoQLearningFactory(SGDomain d, double discount,
-				LearningRate learningRate, HashableStateFactory hashFactory,
-				ValueFunctionInitialization qInit,
-				boolean queryOtherAgentsForTheirQValues, double epsilon) {
-			this.init(d, discount, learningRate, hashFactory, qInit,
-					new CoCoQ(), queryOtherAgentsForTheirQValues,
-					new PolicyFromJointPolicy(new EGreedyMaxWellfare(epsilon)));
-		}
-
-	}
-
-	/**
-	 * Factory for generating Max multiagent Q-learning agents. This is also
-	 * known as "maxmax-Q" or "friend-Q." Fixes the backup operator to the max
-	 * operator and the policy to an epsilon-greedy policy.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class MAMaxQLearningFactory extends MAQLFactory {
-
-		public MAMaxQLearningFactory(SGDomain d, double discount,
-				LearningRate learningRate, HashableStateFactory hashFactory,
-				ValueFunctionInitialization qInit,
-				boolean queryOtherAgentsForTheirQValues, double epsilon) {
-			this.init(d, discount, learningRate, hashFactory, qInit,
-					new MaxQ(), queryOtherAgentsForTheirQValues,
-					new PolicyFromJointPolicy(new EGreedyJointPolicy(epsilon)));
-		}
 
 	}
 

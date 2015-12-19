@@ -7,27 +7,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import burlap.behavior.singleagent.EpisodeAnalysis;
-import burlap.behavior.policy.Policy;
-import burlap.behavior.singleagent.planning.Planner;
-import burlap.behavior.valuefunction.QFunction;
 import burlap.behavior.policy.GreedyQPolicy;
+import burlap.behavior.policy.Policy;
+import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.planning.Planner;
 import burlap.behavior.singleagent.planning.deterministic.DDPlannerPolicy;
 import burlap.behavior.singleagent.planning.deterministic.DeterministicPlanner;
 import burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
+import burlap.behavior.valuefunction.QFunction;
 import burlap.debugtools.DPrint;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.common.UniformCostRF;
-
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.statehashing.SimpleHashableStateFactory;
+
 import com.joptimizer.functions.ConvexMultivariateRealFunction;
 import com.joptimizer.functions.LinearMultivariateRealFunction;
 import com.joptimizer.functions.PSDQuadraticMultivariateRealFunction;
@@ -51,9 +51,163 @@ import com.joptimizer.util.Utils;
  */
 public class ApprenticeshipLearning {
 
+	/**
+	 * Class of feature weights which contain the weight values and the
+	 * associated score given to them
+	 * 
+	 * @author Stephen Brawner
+	 * 
+	 */
+	private static class FeatureWeights {
+		private double[] weights;
+		private double score;
+
+		private FeatureWeights(double[] weights, double score) {
+			this.weights = weights.clone();
+			this.score = score;
+		}
+
+		public FeatureWeights(FeatureWeights featureWeights) {
+			this.weights = featureWeights.getWeights();
+			this.score = featureWeights.getScore();
+		}
+
+		public Double getScore() {
+			return this.score;
+		}
+
+		public double[] getWeights() {
+			return this.weights.clone();
+		}
+	}
+
+	/**
+	 * This class extends Policy, and all it does is create a randomly generated
+	 * distribution of actions over all possible states. It lazily initializes
+	 * because I have no idea what sorts of states you are passing it.
+	 * 
+	 * @author Stephen Brawner
+	 * 
+	 */
+	public static class RandomPolicy extends Policy {
+		public static Policy generateRandomPolicy(Domain domain) {
+			return new burlap.behavior.policy.RandomPolicy(domain);
+		}
+		Map<HashableState, GroundedAction> stateActionMapping;
+		List<Action> actions;
+		Map<HashableState, List<ActionProb>> stateActionDistributionMapping;
+		HashableStateFactory hashFactory;
+
+		Random rando;
+
+		/**
+		 * Constructor initializes the policy, doesn't compute anything here.
+		 * 
+		 * @param domain
+		 *            Domain object for which we need to plan
+		 */
+		private RandomPolicy(Domain domain) {
+			this.stateActionMapping = new HashMap<HashableState, GroundedAction>();
+			this.stateActionDistributionMapping = new HashMap<HashableState, List<ActionProb>>();
+			this.actions = domain.getActions();
+			this.rando = new Random();
+			this.hashFactory = new SimpleHashableStateFactory(true);
+		}
+
+		/**
+		 * For states which we have not yet visited, this policy needs a
+		 * randomly generated distribution of actions. It queries all the
+		 * grounded actions possible from this state and assigns a random
+		 * probability to it. The probabilities are all normalized for
+		 * happiness.
+		 * 
+		 * @param state
+		 *            State for which to generate actions.
+		 */
+		private void addNewDistributionForState(State state) {
+			HashableState hashableState = this.hashFactory.hashState(state);
+
+			// Get all possible actions from this state
+			// List<GroundedAction> groundedActions =
+			// state.getAllGroundedActionsFor(this.actions);
+			List<GroundedAction> groundedActions = Action
+					.getAllApplicableGroundedActionsFromActionList(
+							this.actions, state);
+			Double[] probabilities = new Double[groundedActions.size()];
+			Double sum = 0.0;
+
+			// Create a random distribution of doubles
+			for (int i = 0; i < probabilities.length; ++i) {
+				probabilities[i] = this.rando.nextDouble();
+				sum += probabilities[i];
+			}
+
+			List<ActionProb> newActionDistribution = new ArrayList<ActionProb>(
+					groundedActions.size());
+			// Normalize distribution and add a new ActionProb to our list.
+			for (int i = 0; i < probabilities.length; ++i) {
+				ActionProb actionProb = new ActionProb(groundedActions.get(i),
+						probabilities[i] / sum);
+				newActionDistribution.add(actionProb);
+			}
+
+			this.stateActionDistributionMapping.put(hashableState,
+					newActionDistribution);
+		}
+
+		@Override
+		public AbstractGroundedAction getAction(State s) {
+			HashableState hashableState = this.hashFactory.hashState(s);
+
+			// If this state has not yet been visited, we need to compute a new
+			// distribution of actions
+			if (!this.stateActionDistributionMapping.containsKey(hashableState)) {
+				this.addNewDistributionForState(s);
+			}
+
+			// Get the action probability distribution for this state
+			List<ActionProb> actionDistribution = this.stateActionDistributionMapping
+					.get(hashableState);
+			Double roll = this.rando.nextDouble();
+			Double probabilitySum = 0.0;
+
+			// Choose an action randomly from this distribution
+			for (ActionProb actionProb : actionDistribution) {
+				probabilitySum += actionProb.pSelection;
+				if (probabilitySum >= roll) {
+					return actionProb.ga;
+				}
+			}
+			return null;
+		}
+
+		@Override
+		public List<ActionProb> getActionDistributionForState(State s) {
+			HashableState hashableState = this.hashFactory.hashState(s);
+
+			// If this state has not yet been visited, we need to compute a new
+			// distribution of actions
+			if (!this.stateActionDistributionMapping.containsKey(hashableState)) {
+				this.addNewDistributionForState(s);
+			}
+			return new ArrayList<ActionProb>(
+					this.stateActionDistributionMapping.get(hashableState));
+		}
+
+		@Override
+		public boolean isDefinedFor(State s) {
+			return true;
+		}
+
+		@Override
+		public boolean isStochastic() {
+			return true;
+		}
+	}
 	public static final int FEATURE_EXPECTATION_SAMPLES = 10;
 
 	public static final int debugCodeScore = 746329;
+
 	public static final int debugCodeRFWeights = 636392;
 
 	/**
@@ -182,6 +336,42 @@ public class ApprenticeshipLearning {
 		return ApprenticeshipLearning.projectionMethod(request);
 	}
 
+	/*
+	 * Static methods for estimating weights and tolerance in feature
+	 * expectation space
+	 */
+
+	/**
+	 * This takes the Expert's feature expectation and a projection, and
+	 * calculates the weight and score. This is step 2b of the projection
+	 * method.
+	 * 
+	 * @param expertFE
+	 *            expert feature expectation
+	 * @param newProjFE
+	 *            a projection
+	 * @return the feature weights
+	 */
+	private static FeatureWeights getWeightsProjectionMethod(double[] expertFE,
+			double[] newProjFE) {
+
+		// set the weight as the expert's feature expectation minus the new
+		// projection
+		double[] weights = new double[newProjFE.length];
+		for (int i = 0; i < weights.length; i++) {
+			weights[i] = expertFE[i] - newProjFE[i];
+		}
+
+		// set the score (t) as the L2 norm of the weight
+		double score = 0;
+		for (double w : weights) {
+			score += w * w;
+		}
+
+		score = Math.sqrt(score);
+		return new FeatureWeights(weights, score);
+	}
+
 	/**
 	 * Method which implements high level algorithm provided section 3 of
 	 * Abbeel, Peter and Ng, Andrew.
@@ -288,6 +478,49 @@ public class ApprenticeshipLearning {
 		request.setTHistory(tHistory);
 
 		return policy;
+	}
+
+	/**
+	 * 
+	 * This projects the expert's feature expectation onto a line connecting the
+	 * previous estimate of the optimal feature expectation to the previous
+	 * projection. It is step 2a of the projection method.
+	 * 
+	 * @param expertFE
+	 *            - The Expert's Feature Expectations (or estimate of)
+	 * @param lastFE
+	 *            - The last (i-1)th estimate of the optimal feature
+	 *            expectations
+	 * @param lastProjFE
+	 *            - The last (i-2)th projection of the expert's Feature
+	 *            Expectations
+	 * @return A new projection of the Expert's feature Expectation
+	 */
+	private static double[] projectExpertFE(double[] expertFE, double[] lastFE,
+			double[] lastProjFE) {
+
+		double[] newProjExp = new double[lastProjFE.length];
+
+		double newProjExpCoefficient_num = 0.0;
+		double newProjExpCoefficient_den = 0.0;
+		// mu_bar^(i-2) + (mu^(i-1)-mu_bar^(i-2))*
+		// ((mu^(i-1)-mu_bar^(i-2))*(mu_E-mu_bar^(i-2)))/
+		// ((mu^(i-1)-mu_bar^(i-2))*(mu(i-1)-mu_bar^(i-2)))
+
+		for (int i = 0; i < newProjExp.length; i++) {
+			newProjExpCoefficient_num += ((lastFE[i] - lastProjFE[i]) * (expertFE[i] - lastProjFE[i]));
+			newProjExpCoefficient_den += ((lastFE[i] - lastProjFE[i]) * (lastFE[i] - lastProjFE[i]));
+		}
+
+		double newProjExpCoefficient = newProjExpCoefficient_num
+				/ newProjExpCoefficient_den;
+
+		for (int i = 0; i < newProjExp.length; i++) {
+			newProjExp[i] = lastProjFE[i] + (lastFE[i] - lastProjFE[i])
+					* newProjExpCoefficient;
+		}
+
+		return newProjExp;
 	}
 
 	/**
@@ -416,11 +649,6 @@ public class ApprenticeshipLearning {
 		return policy;
 	}
 
-	/*
-	 * Static methods for estimating weights and tolerance in feature
-	 * expectation space
-	 */
-
 	/**
 	 * FeatureWeight factory which solves the best weights given Feature
 	 * Expectations calculated from the expert demonstrations and a history of
@@ -498,234 +726,6 @@ public class ApprenticeshipLearning {
 		double[] weights = Arrays.copyOfRange(solution, 0, weightsSize);
 		double score = solution[weightsSize];
 		return new FeatureWeights(weights, score);
-	}
-
-	/**
-	 * 
-	 * This projects the expert's feature expectation onto a line connecting the
-	 * previous estimate of the optimal feature expectation to the previous
-	 * projection. It is step 2a of the projection method.
-	 * 
-	 * @param expertFE
-	 *            - The Expert's Feature Expectations (or estimate of)
-	 * @param lastFE
-	 *            - The last (i-1)th estimate of the optimal feature
-	 *            expectations
-	 * @param lastProjFE
-	 *            - The last (i-2)th projection of the expert's Feature
-	 *            Expectations
-	 * @return A new projection of the Expert's feature Expectation
-	 */
-	private static double[] projectExpertFE(double[] expertFE, double[] lastFE,
-			double[] lastProjFE) {
-
-		double[] newProjExp = new double[lastProjFE.length];
-
-		double newProjExpCoefficient_num = 0.0;
-		double newProjExpCoefficient_den = 0.0;
-		// mu_bar^(i-2) + (mu^(i-1)-mu_bar^(i-2))*
-		// ((mu^(i-1)-mu_bar^(i-2))*(mu_E-mu_bar^(i-2)))/
-		// ((mu^(i-1)-mu_bar^(i-2))*(mu(i-1)-mu_bar^(i-2)))
-
-		for (int i = 0; i < newProjExp.length; i++) {
-			newProjExpCoefficient_num += ((lastFE[i] - lastProjFE[i]) * (expertFE[i] - lastProjFE[i]));
-			newProjExpCoefficient_den += ((lastFE[i] - lastProjFE[i]) * (lastFE[i] - lastProjFE[i]));
-		}
-
-		double newProjExpCoefficient = newProjExpCoefficient_num
-				/ newProjExpCoefficient_den;
-
-		for (int i = 0; i < newProjExp.length; i++) {
-			newProjExp[i] = lastProjFE[i] + (lastFE[i] - lastProjFE[i])
-					* newProjExpCoefficient;
-		}
-
-		return newProjExp;
-	}
-
-	/**
-	 * This takes the Expert's feature expectation and a projection, and
-	 * calculates the weight and score. This is step 2b of the projection
-	 * method.
-	 * 
-	 * @param expertFE
-	 *            expert feature expectation
-	 * @param newProjFE
-	 *            a projection
-	 * @return the feature weights
-	 */
-	private static FeatureWeights getWeightsProjectionMethod(double[] expertFE,
-			double[] newProjFE) {
-
-		// set the weight as the expert's feature expectation minus the new
-		// projection
-		double[] weights = new double[newProjFE.length];
-		for (int i = 0; i < weights.length; i++) {
-			weights[i] = expertFE[i] - newProjFE[i];
-		}
-
-		// set the score (t) as the L2 norm of the weight
-		double score = 0;
-		for (double w : weights) {
-			score += w * w;
-		}
-
-		score = Math.sqrt(score);
-		return new FeatureWeights(weights, score);
-	}
-
-	/**
-	 * Class of feature weights which contain the weight values and the
-	 * associated score given to them
-	 * 
-	 * @author Stephen Brawner
-	 * 
-	 */
-	private static class FeatureWeights {
-		private double[] weights;
-		private double score;
-
-		private FeatureWeights(double[] weights, double score) {
-			this.weights = weights.clone();
-			this.score = score;
-		}
-
-		public FeatureWeights(FeatureWeights featureWeights) {
-			this.weights = featureWeights.getWeights();
-			this.score = featureWeights.getScore();
-		}
-
-		public double[] getWeights() {
-			return this.weights.clone();
-		}
-
-		public Double getScore() {
-			return this.score;
-		}
-	}
-
-	/**
-	 * This class extends Policy, and all it does is create a randomly generated
-	 * distribution of actions over all possible states. It lazily initializes
-	 * because I have no idea what sorts of states you are passing it.
-	 * 
-	 * @author Stephen Brawner
-	 * 
-	 */
-	public static class RandomPolicy extends Policy {
-		Map<HashableState, GroundedAction> stateActionMapping;
-		List<Action> actions;
-		Map<HashableState, List<ActionProb>> stateActionDistributionMapping;
-		HashableStateFactory hashFactory;
-		Random rando;
-
-		/**
-		 * Constructor initializes the policy, doesn't compute anything here.
-		 * 
-		 * @param domain
-		 *            Domain object for which we need to plan
-		 */
-		private RandomPolicy(Domain domain) {
-			this.stateActionMapping = new HashMap<HashableState, GroundedAction>();
-			this.stateActionDistributionMapping = new HashMap<HashableState, List<ActionProb>>();
-			this.actions = domain.getActions();
-			this.rando = new Random();
-			this.hashFactory = new SimpleHashableStateFactory(true);
-		}
-
-		public static Policy generateRandomPolicy(Domain domain) {
-			return new burlap.behavior.policy.RandomPolicy(domain);
-		}
-
-		/**
-		 * For states which we have not yet visited, this policy needs a
-		 * randomly generated distribution of actions. It queries all the
-		 * grounded actions possible from this state and assigns a random
-		 * probability to it. The probabilities are all normalized for
-		 * happiness.
-		 * 
-		 * @param state
-		 *            State for which to generate actions.
-		 */
-		private void addNewDistributionForState(State state) {
-			HashableState hashableState = this.hashFactory.hashState(state);
-
-			// Get all possible actions from this state
-			// List<GroundedAction> groundedActions =
-			// state.getAllGroundedActionsFor(this.actions);
-			List<GroundedAction> groundedActions = Action
-					.getAllApplicableGroundedActionsFromActionList(
-							this.actions, state);
-			Double[] probabilities = new Double[groundedActions.size()];
-			Double sum = 0.0;
-
-			// Create a random distribution of doubles
-			for (int i = 0; i < probabilities.length; ++i) {
-				probabilities[i] = this.rando.nextDouble();
-				sum += probabilities[i];
-			}
-
-			List<ActionProb> newActionDistribution = new ArrayList<ActionProb>(
-					groundedActions.size());
-			// Normalize distribution and add a new ActionProb to our list.
-			for (int i = 0; i < probabilities.length; ++i) {
-				ActionProb actionProb = new ActionProb(groundedActions.get(i),
-						probabilities[i] / sum);
-				newActionDistribution.add(actionProb);
-			}
-
-			this.stateActionDistributionMapping.put(hashableState,
-					newActionDistribution);
-		}
-
-		@Override
-		public AbstractGroundedAction getAction(State s) {
-			HashableState hashableState = this.hashFactory.hashState(s);
-
-			// If this state has not yet been visited, we need to compute a new
-			// distribution of actions
-			if (!this.stateActionDistributionMapping.containsKey(hashableState)) {
-				this.addNewDistributionForState(s);
-			}
-
-			// Get the action probability distribution for this state
-			List<ActionProb> actionDistribution = this.stateActionDistributionMapping
-					.get(hashableState);
-			Double roll = this.rando.nextDouble();
-			Double probabilitySum = 0.0;
-
-			// Choose an action randomly from this distribution
-			for (ActionProb actionProb : actionDistribution) {
-				probabilitySum += actionProb.pSelection;
-				if (probabilitySum >= roll) {
-					return actionProb.ga;
-				}
-			}
-			return null;
-		}
-
-		@Override
-		public List<ActionProb> getActionDistributionForState(State s) {
-			HashableState hashableState = this.hashFactory.hashState(s);
-
-			// If this state has not yet been visited, we need to compute a new
-			// distribution of actions
-			if (!this.stateActionDistributionMapping.containsKey(hashableState)) {
-				this.addNewDistributionForState(s);
-			}
-			return new ArrayList<ActionProb>(
-					this.stateActionDistributionMapping.get(hashableState));
-		}
-
-		@Override
-		public boolean isStochastic() {
-			return true;
-		}
-
-		@Override
-		public boolean isDefinedFor(State s) {
-			return true;
-		}
 	}
 
 }

@@ -1,5 +1,10 @@
 package burlap.behavior.singleagent.planning.stochastic.policyiteration;
 
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import burlap.behavior.policy.Policy;
 import burlap.behavior.singleagent.planning.stochastic.ActionTransitions;
 import burlap.behavior.singleagent.planning.stochastic.DynamicProgramming;
@@ -11,11 +16,6 @@ import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.statehashing.HashableStateFactory;
-
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * This class is used to compute the value function under some specified policy.
@@ -83,21 +83,6 @@ public class PolicyEvaluation extends DynamicProgramming {
 	}
 
 	/**
-	 * Computes the value function for the given policy after finding all
-	 * reachable states from seed state s
-	 * 
-	 * @param policy
-	 *            The {@link burlap.behavior.policy.Policy} to evaluate
-	 * @param s
-	 *            the seed initiate state from which to find all reachable
-	 *            states
-	 */
-	public void evaluatePolicy(Policy policy, State s) {
-		this.performReachabilityFrom(s);
-		this.evaluatePolicy(policy);
-	}
-
-	/**
 	 * Computes the value function for the given policy over the states that
 	 * have been discovered
 	 * 
@@ -140,6 +125,21 @@ public class PolicyEvaluation extends DynamicProgramming {
 
 		}
 
+	}
+
+	/**
+	 * Computes the value function for the given policy after finding all
+	 * reachable states from seed state s
+	 * 
+	 * @param policy
+	 *            The {@link burlap.behavior.policy.Policy} to evaluate
+	 * @param s
+	 *            the seed initiate state from which to find all reachable
+	 *            states
+	 */
+	public void evaluatePolicy(Policy policy, State s) {
+		this.performReachabilityFrom(s);
+		this.evaluatePolicy(policy);
 	}
 
 	/**

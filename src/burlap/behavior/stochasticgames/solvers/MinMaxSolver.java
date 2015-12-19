@@ -8,20 +8,6 @@ import scpsolver.problems.LinearProgram;
 public class MinMaxSolver {
 
 	/**
-	 * Computes the minmax strategy for the row player of the given payoff
-	 * matrix. The entries of the payoff matrix are assumed to be the payouts
-	 * for the *row* player.
-	 * 
-	 * @param payoffMatrix
-	 *            payoffs for the row player.
-	 * @return the strategy of the row player.
-	 */
-	public static double[] getRowPlayersStrategy(double[][] payoffMatrix) {
-		double[][] t = GeneralBimatrixSolverTools.transposeMatrix(payoffMatrix);
-		return getColPlayersStrategy(t);
-	}
-
-	/**
 	 * Computes the minmax strategy for the column player of the given payoff
 	 * matrix. The entries of the payoff matrix are assumed to be the payouts
 	 * for the *column* player.
@@ -75,6 +61,20 @@ public class MinMaxSolver {
 		}
 
 		return sol;
+	}
+
+	/**
+	 * Computes the minmax strategy for the row player of the given payoff
+	 * matrix. The entries of the payoff matrix are assumed to be the payouts
+	 * for the *row* player.
+	 * 
+	 * @param payoffMatrix
+	 *            payoffs for the row player.
+	 * @return the strategy of the row player.
+	 */
+	public static double[] getRowPlayersStrategy(double[][] payoffMatrix) {
+		double[][] t = GeneralBimatrixSolverTools.transposeMatrix(payoffMatrix);
+		return getColPlayersStrategy(t);
 	}
 
 }

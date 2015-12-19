@@ -1,12 +1,12 @@
 package burlap.oomdp.singleagent;
 
-import burlap.oomdp.core.Domain;
-import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import burlap.oomdp.core.Domain;
+import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
 
 /**
  * A domain subclass for single agent domains. This class adds data structures
@@ -26,17 +26,11 @@ public class SADomain extends Domain {
 		actionMap = new HashMap<String, Action>();
 	}
 
-	/**
-	 * Clears all action observers for all actions in this domain and then sets
-	 * them to have the single action observer provided
-	 * 
-	 * @param observer
-	 *            the single action observer to set all actions to use.
-	 */
-	public void setActionObserverForAllAction(ActionObserver observer) {
-		for (Action a : this.actions) {
-			a.clearAllActionsObservers();
-			a.addActionObserver(observer);
+	@Override
+	public void addAction(Action act) {
+		if (!actionMap.containsKey(act.getName())) {
+			actions.add(act);
+			actionMap.put(act.getName(), act);
 		}
 	}
 
@@ -55,6 +49,12 @@ public class SADomain extends Domain {
 		}
 	}
 
+	@Override
+	public void addSGAgentAction(SGAgentAction sa) {
+		throw new UnsupportedOperationException(
+				"Single Agent domain cannot add actions designed for stochastic game formalisms");
+	}
+
 	/**
 	 * Clears all action observers for all action in this domain.
 	 */
@@ -65,11 +65,8 @@ public class SADomain extends Domain {
 	}
 
 	@Override
-	public void addAction(Action act) {
-		if (!actionMap.containsKey(act.getName())) {
-			actions.add(act);
-			actionMap.put(act.getName(), act);
-		}
+	public Action getAction(String name) {
+		return actionMap.get(name);
 	}
 
 	@Override
@@ -78,24 +75,7 @@ public class SADomain extends Domain {
 	}
 
 	@Override
-	public Action getAction(String name) {
-		return actionMap.get(name);
-	}
-
-	@Override
-	public void addSGAgentAction(SGAgentAction sa) {
-		throw new UnsupportedOperationException(
-				"Single Agent domain cannot add actions designed for stochastic game formalisms");
-	}
-
-	@Override
 	public List<SGAgentAction> getAgentActions() {
-		throw new UnsupportedOperationException(
-				"Single Agent domain does not contain any action for stochastic game formalisms");
-	}
-
-	@Override
-	public SGAgentAction getSingleAction(String name) {
 		throw new UnsupportedOperationException(
 				"Single Agent domain does not contain any action for stochastic game formalisms");
 	}
@@ -107,8 +87,28 @@ public class SADomain extends Domain {
 	}
 
 	@Override
+	public SGAgentAction getSingleAction(String name) {
+		throw new UnsupportedOperationException(
+				"Single Agent domain does not contain any action for stochastic game formalisms");
+	}
+
+	@Override
 	protected Domain newInstance() {
 		return new SADomain();
+	}
+
+	/**
+	 * Clears all action observers for all actions in this domain and then sets
+	 * them to have the single action observer provided
+	 * 
+	 * @param observer
+	 *            the single action observer to set all actions to use.
+	 */
+	public void setActionObserverForAllAction(ActionObserver observer) {
+		for (Action a : this.actions) {
+			a.clearAllActionsObservers();
+			a.addActionObserver(observer);
+		}
 	}
 
 }

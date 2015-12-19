@@ -1,8 +1,5 @@
 package burlap.oomdp.core.values;
 
-import java.util.Collection;
-import java.util.Set;
-
 import burlap.oomdp.core.Attribute;
 
 /**
@@ -32,6 +29,11 @@ public class IntValue extends OOMDPValue implements Value {
 		this.intVal = 0;
 	}
 
+	public IntValue(Attribute attribute, int intVal) {
+		super(attribute);
+		this.intVal = intVal;
+	}
+
 	/**
 	 * Initializes from an existing IntUnBound value.
 	 * 
@@ -40,47 +42,7 @@ public class IntValue extends OOMDPValue implements Value {
 	 */
 	public IntValue(IntValue v) {
 		super(v);
-		this.intVal = ((IntValue) v).intVal;
-	}
-
-	public IntValue(Attribute attribute, int intVal) {
-		super(attribute);
-		this.intVal = intVal;
-	}
-
-	@Override
-	public boolean valueHasBeenSet() {
-		return true;
-	}
-
-	@Override
-	public Value copy() {
-		return new IntValue(this);
-	}
-
-	@Override
-	public Value setValue(int v) {
-		return new IntValue(this.attribute, v);
-	}
-
-	@Override
-	public Value setValue(double v) {
-		return new IntValue(this.attribute, (int) v);
-	}
-
-	@Override
-	public Value setValue(String v) {
-		return new IntValue(this.attribute, Integer.parseInt(v));
-	}
-
-	@Override
-	public Value setValue(boolean v) {
-		return new IntValue(this.attribute, (v) ? 1 : 0);
-	}
-
-	@Override
-	public int getDiscVal() {
-		return this.intVal;
+		this.intVal = v.intVal;
 	}
 
 	@Override
@@ -89,8 +51,8 @@ public class IntValue extends OOMDPValue implements Value {
 	}
 
 	@Override
-	public double getNumericRepresentation() {
-		return (double) this.intVal;
+	public Value copy() {
+		return new IntValue(this);
 	}
 
 	@Override
@@ -116,5 +78,40 @@ public class IntValue extends OOMDPValue implements Value {
 	@Override
 	public boolean getBooleanValue() {
 		return this.intVal != 0;
+	}
+
+	@Override
+	public int getDiscVal() {
+		return this.intVal;
+	}
+
+	@Override
+	public double getNumericRepresentation() {
+		return this.intVal;
+	}
+
+	@Override
+	public Value setValue(boolean v) {
+		return new IntValue(this.attribute, (v) ? 1 : 0);
+	}
+
+	@Override
+	public Value setValue(double v) {
+		return new IntValue(this.attribute, (int) v);
+	}
+
+	@Override
+	public Value setValue(int v) {
+		return new IntValue(this.attribute, v);
+	}
+
+	@Override
+	public Value setValue(String v) {
+		return new IntValue(this.attribute, Integer.parseInt(v));
+	}
+
+	@Override
+	public boolean valueHasBeenSet() {
+		return true;
 	}
 }

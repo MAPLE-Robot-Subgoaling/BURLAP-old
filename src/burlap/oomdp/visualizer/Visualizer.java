@@ -1,9 +1,9 @@
 package burlap.oomdp.visualizer;
 
+import java.awt.Color;
+
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.states.State;
-
-import java.awt.*;
 
 /**
  * This class extends the {@link MultiLayerRenderer} class to provide a base
@@ -49,6 +49,62 @@ public class Visualizer extends MultiLayerRenderer {
 		this.renderLayers.add(this.srender);
 	}
 
+	/**
+	 * Adds a class that will paint objects that belong to a given OO-MDPclass.
+	 * 
+	 * @param className
+	 *            the name of the class that the provided painter can paint
+	 * @param op
+	 *            the painter
+	 */
+	public void addObjectClassPainter(String className, ObjectPainter op) {
+		this.srender.addObjectClassPainter(className, op);
+	}
+
+	/**
+	 * Adds a painter that will be used to paint a specific object in states
+	 * 
+	 * @param objectName
+	 *            the name of the object this painter is used to paint
+	 * @param op
+	 *            the painter
+	 */
+	public void addSpecificObjectPainter(String objectName, ObjectPainter op) {
+		this.srender.addSpecificObjectPainter(objectName, op);
+	}
+
+	/**
+	 * Adds a static painter for the domain.
+	 * 
+	 * @param sp
+	 *            the static painter to add.
+	 */
+	public void addStaticPainter(StaticPainter sp) {
+		this.srender.addStaticPainter(sp);
+	}
+
+	/**
+	 * Returns the {@link StateRenderLayer} instance for visualizing OO-MDP
+	 * states.
+	 * 
+	 * @return the {@link StateRenderLayer} instance for visualizing OO-MDP
+	 *         states.
+	 */
+	public StateRenderLayer getStateRenderLayer() {
+		return this.srender;
+	}
+
+	/**
+	 * Sets the background color of the canvas
+	 * 
+	 * @param c
+	 *            the background color of the canvas
+	 */
+	@Override
+	public void setBGColor(Color c) {
+		this.bgColor = c;
+	}
+
 	public void setSetRenderLayer(StateRenderLayer srender) {
 		this.renderLayers.remove(this.srender);
 		this.renderLayers.add(srender);
@@ -88,61 +144,6 @@ public class Visualizer extends MultiLayerRenderer {
 		} else {
 			this.renderLayers.add(srenderPos, sarender);
 		}
-	}
-
-	/**
-	 * Sets the background color of the canvas
-	 * 
-	 * @param c
-	 *            the background color of the canvas
-	 */
-	public void setBGColor(Color c) {
-		this.bgColor = c;
-	}
-
-	/**
-	 * Adds a static painter for the domain.
-	 * 
-	 * @param sp
-	 *            the static painter to add.
-	 */
-	public void addStaticPainter(StaticPainter sp) {
-		this.srender.addStaticPainter(sp);
-	}
-
-	/**
-	 * Adds a class that will paint objects that belong to a given OO-MDPclass.
-	 * 
-	 * @param className
-	 *            the name of the class that the provided painter can paint
-	 * @param op
-	 *            the painter
-	 */
-	public void addObjectClassPainter(String className, ObjectPainter op) {
-		this.srender.addObjectClassPainter(className, op);
-	}
-
-	/**
-	 * Adds a painter that will be used to paint a specific object in states
-	 * 
-	 * @param objectName
-	 *            the name of the object this painter is used to paint
-	 * @param op
-	 *            the painter
-	 */
-	public void addSpecificObjectPainter(String objectName, ObjectPainter op) {
-		this.srender.addSpecificObjectPainter(objectName, op);
-	}
-
-	/**
-	 * Returns the {@link StateRenderLayer} instance for visualizing OO-MDP
-	 * states.
-	 * 
-	 * @return the {@link StateRenderLayer} instance for visualizing OO-MDP
-	 *         states.
-	 */
-	public StateRenderLayer getStateRenderLayer() {
-		return this.srender;
 	}
 
 	/**

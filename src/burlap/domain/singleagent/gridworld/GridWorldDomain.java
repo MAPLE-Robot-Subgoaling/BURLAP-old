@@ -15,10 +15,8 @@ import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.TransitionProbability;
 import burlap.oomdp.core.objects.MutableObjectInstance;
-import burlap.oomdp.core.objects.OOMDPObjectInstance;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.MutableState;
-import burlap.oomdp.core.states.OOMDPState;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.FullActionModel;
 import burlap.oomdp.singleagent.GroundedAction;
@@ -63,6 +61,221 @@ import burlap.oomdp.visualizer.Visualizer;
  * 
  */
 public class GridWorldDomain implements DomainGenerator {
+
+	/**
+	 * Propositional function for determining if the agent is at the same
+	 * position as a given location object
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class AtLocationPF extends PropositionalFunction {
+
+		/**
+		 * Initializes with given name domain and parameter object class types
+		 * 
+		 * @param name
+		 *            name of function
+		 * @param domain
+		 *            the domain of the function
+		 * @param parameterClasses
+		 *            the object class types for the parameters
+		 */
+		public AtLocationPF(String name, Domain domain,
+				String[] parameterClasses) {
+			super(name, domain, parameterClasses);
+		}
+
+		@Override
+		public boolean isTrue(State st, String... params) {
+
+			ObjectInstance agent = st.getObject(params[0]);
+			ObjectInstance location = st.getObject(params[1]);
+
+			int ax = agent.getIntValForAttribute(ATTX);
+			int ay = agent.getIntValForAttribute(ATTY);
+
+			int lx = location.getIntValForAttribute(ATTX);
+			int ly = location.getIntValForAttribute(ATTY);
+
+			if (ax == lx && ay == ly) {
+				return true;
+			}
+
+			return false;
+		}
+
+	}
+
+	/**
+	 * Action class for movement actions in grid world.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class MovementAction extends SimpleAction implements FullActionModel {
+
+		/**
+		 * Probabilities of the actual direction the agent will go
+		 */
+		protected double[] directionProbs;
+
+		/**
+		 * Random object for sampling distribution
+		 */
+		protected Random rand;
+
+		/**
+		 * The map of the world
+		 */
+		protected int[][] map;
+
+		/**
+		 * Initializes for the given name, domain and actually direction
+		 * probabilities the agent will go
+		 * 
+		 * @param name
+		 *            name of the action
+		 * @param domain
+		 *            the domain of the action
+		 * @param directions
+		 *            the probability for each direction (index 0,1,2,3
+		 *            corresponds to north,south,east,west, respectively).
+		 * @param map
+		 *            the map of the world
+		 */
+		public MovementAction(String name, Domain domain, double[] directions,
+				int[][] map) {
+			super(name, domain);
+			this.directionProbs = directions.clone();
+			this.rand = RandomFactory.getMapped(0);
+			this.map = map;
+		}
+
+		@Override
+		public List<TransitionProbability> getTransitions(State s,
+				GroundedAction groundedAction) {
+			List<TransitionProbability> transitions = new ArrayList<TransitionProbability>();
+			for (int i = 0; i < directionProbs.length; i++) {
+				double p = directionProbs[i];
+				if (p == 0.) {
+					continue; // cannot transition in this direction
+				}
+				State ns = s.copy();
+				int[] dcomps = GridWorldDomain.this
+						.movementDirectionFromIndex(i);
+				ns = GridWorldDomain.this.move(ns, dcomps[0], dcomps[1],
+						this.map);
+
+				// make sure this direction doesn't actually stay in the same
+				// place and replicate another no-op
+				boolean isNew = true;
+				for (TransitionProbability tp : transitions) {
+					if (tp.s.equals(ns)) {
+						isNew = false;
+						tp.p += p;
+						break;
+					}
+				}
+
+				if (isNew) {
+					TransitionProbability tp = new TransitionProbability(ns, p);
+					transitions.add(tp);
+				}
+
+			}
+
+			return transitions;
+		}
+
+		@Override
+		protected State performActionHelper(State s,
+				GroundedAction groundedAction) {
+			double roll = rand.nextDouble();
+			double curSum = 0.;
+			int dir = 0;
+			for (int i = 0; i < directionProbs.length; i++) {
+				curSum += directionProbs[i];
+				if (roll < curSum) {
+					dir = i;
+					break;
+				}
+			}
+
+			int[] dcomps = GridWorldDomain.this.movementDirectionFromIndex(dir);
+			return GridWorldDomain.this.move(s, dcomps[0], dcomps[1], this.map);
+		}
+
+	}
+
+	/**
+	 * Propositional function for indicating if a wall is in a given position
+	 * relative to the agent position
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class WallToPF extends PropositionalFunction {
+
+		/**
+		 * The relative x distance from the agent of the cell to check
+		 */
+		protected int xdelta;
+
+		/**
+		 * The relative y distance from the agent of the cell to check
+		 */
+		protected int ydelta;
+
+		/**
+		 * Initializes the function.
+		 * 
+		 * @param name
+		 *            the name of the function
+		 * @param domain
+		 *            the domain of the function
+		 * @param parameterClasses
+		 *            the object class parameter types
+		 * @param direction
+		 *            the unit distance direction from the agent to check for a
+		 *            wall (0,1,2,3 corresponds to north,south,east,west).
+		 */
+		public WallToPF(String name, Domain domain, String[] parameterClasses,
+				int direction) {
+			super(name, domain, parameterClasses);
+			int[] dcomps = GridWorldDomain.this
+					.movementDirectionFromIndex(direction);
+			xdelta = dcomps[0];
+			ydelta = dcomps[1];
+		}
+
+		@Override
+		public boolean isTrue(State st, String... params) {
+
+			ObjectInstance agent = st.getObject(params[0]);
+
+			int ax = agent.getIntValForAttribute(ATTX);
+			int ay = agent.getIntValForAttribute(ATTY);
+
+			int cx = ax + xdelta;
+			int cy = ay + ydelta;
+
+			if (cx < 0
+					|| cx >= GridWorldDomain.this.width
+					|| cy < 0
+					|| cy >= GridWorldDomain.this.height
+					|| GridWorldDomain.this.map[cx][cy] == 1
+					|| (xdelta > 0 && (GridWorldDomain.this.map[ax][ay] == 3 || GridWorldDomain.this.map[ax][ay] == 4))
+					|| (xdelta < 0 && (GridWorldDomain.this.map[cx][cy] == 3 || GridWorldDomain.this.map[cx][cy] == 4))
+					|| (ydelta > 0 && (GridWorldDomain.this.map[ax][ay] == 2 || GridWorldDomain.this.map[ax][ay] == 4))
+					|| (ydelta < 0 && (GridWorldDomain.this.map[cx][cy] == 2 || GridWorldDomain.this.map[cx][cy] == 4))) {
+				return true;
+			}
+
+			return false;
+		}
+
+	}
 
 	/**
 	 * Constant for the name of the x attribute
@@ -135,421 +348,58 @@ public class GridWorldDomain implements DomainGenerator {
 	public static final String PFWALLWEST = "wallToWest";
 
 	/**
-	 * The width of the grid world
-	 */
-	protected int width;
-
-	/**
-	 * The height of grid world
-	 */
-	protected int height;
-
-	/**
-	 * The number of possible location types
-	 */
-	protected int numLocationTypes = 1;
-
-	/**
-	 * The wall map where the first index is the x position and the second index
-	 * is the y position. Values of 1 indicate a wall is there, values of 0
-	 * indicate an empty cell
-	 */
-	protected int[][] map;
-
-	/**
-	 * Matrix specifying the transition dynamics in terms of movement
-	 * directions. The first index indicates the action direction attempted
-	 * (ordered north, south, east, west) the second index indicates the actual
-	 * resulting direction the agent will go (assuming there is no wall in the
-	 * way). The value is the probability of that outcome. The existence of
-	 * walls does not affect the probability of the direction the agent will
-	 * actually go, but if a wall is in the way, it will affect the outcome. For
-	 * instance, if the agent selects north, but there is a 0.2 probability of
-	 * actually going east and there is a wall to the east, then with 0.2
-	 * probability, the agent will stay in place.
-	 */
-	protected double[][] transitionDynamics;
-
-	/**
-	 * Constructs an empty map with deterministic transitions
+	 * Creates and returns a
+	 * {@link burlap.behavior.singleagent.auxiliary.valuefunctionvis.ValueFunctionVisualizerGUI}
+	 * object for a grid world. The value of states will be represented by
+	 * colored cells from red (lowest value) to blue (highest value).
+	 * North-south-east-west actions will be rendered with arrows using
+	 * {@link burlap.behavior.singleagent.auxiliary.valuefunctionvis.common.ArrowActionGlyph}
+	 * objects. The GUI will not be launched by default; call the
+	 * {@link burlap.behavior.singleagent.auxiliary.valuefunctionvis.ValueFunctionVisualizerGUI#initGUI()}
+	 * on the returned object to start it.
 	 * 
-	 * @param width
-	 *            width of the map
-	 * @param height
-	 *            height of the map
+	 * @param states
+	 *            the states whose value should be rendered.
+	 * @param valueFunction
+	 *            the value Function that can return the state values.
+	 * @param p
+	 *            the policy to render
+	 * @return a gridworld-based
+	 *         {@link burlap.behavior.singleagent.auxiliary.valuefunctionvis.ValueFunctionVisualizerGUI}
+	 *         object.
 	 */
-	public GridWorldDomain(int width, int height) {
-		this.width = width;
-		this.height = height;
-		this.setDeterministicTransitionDynamics();
-		this.makeEmptyMap();
+	public static ValueFunctionVisualizerGUI getGridWorldValueFunctionVisualization(
+			List<State> states, ValueFunction valueFunction, Policy p) {
+		return ValueFunctionVisualizerGUI
+				.createGridWorldBasedValueFunctionVisualizerGUI(states,
+						valueFunction, p, CLASSAGENT, ATTX, ATTY, ACTIONNORTH,
+						ACTIONSOUTH, ACTIONEAST, ACTIONWEST);
 	}
 
 	/**
-	 * Constructs a deterministic world based on the provided map.
+	 * Will return a state object with a single agent object and n location
+	 * objects
 	 * 
-	 * @param map
-	 *            the first index is the x index, the second the y; 1 entries
-	 *            indicate a wall
+	 * @param d
+	 *            the domain object that is used to specify the min/max
+	 *            dimensions
+	 * @param n
+	 *            the number of location objects
+	 * @return a state object with a single agent object and n location objects
 	 */
-	public GridWorldDomain(int[][] map) {
-		this.setMap(map);
-		this.setDeterministicTransitionDynamics();
-	}
+	public static State getOneAgentNLocationState(Domain d, int n) {
 
-	/**
-	 * Sets the number of possible location types to which a location object can
-	 * belong. The default is 1.
-	 * 
-	 * @param numLocationTypes
-	 *            the number of possible location types to which a location
-	 *            object can belong.
-	 */
-	public void setNumberOfLocationTypes(int numLocationTypes) {
-		this.numLocationTypes = numLocationTypes;
-	}
+		State s = new MutableState();
 
-	/**
-	 * Will set the domain to use deterministic action transitions.
-	 */
-	public void setDeterministicTransitionDynamics() {
-		int na = 4;
-		transitionDynamics = new double[na][na];
-		for (int i = 0; i < na; i++) {
-			for (int j = 0; j < na; j++) {
-				if (i != j) {
-					transitionDynamics[i][j] = 0.;
-				} else {
-					transitionDynamics[i][j] = 1.;
-				}
-			}
+		s.addObject(new MutableObjectInstance(d.getObjectClass(CLASSAGENT),
+				CLASSAGENT + 0));
+
+		for (int i = 0; i < n; i++) {
+			s.addObject(new MutableObjectInstance(d
+					.getObjectClass(CLASSLOCATION), CLASSLOCATION + i));
 		}
-	}
 
-	/**
-	 * Sets the domain to use probabilistic transitions. Agent will move in the
-	 * intended direction with probability probSucceed. Agent will move in a
-	 * random direction with probability 1 - probSucceed
-	 * 
-	 * @param probSucceed
-	 *            probability to move the in intended direction
-	 */
-	public void setProbSucceedTransitionDynamics(double probSucceed) {
-		int na = 4;
-		double pAlt = (1. - probSucceed) / 3.;
-		transitionDynamics = new double[na][na];
-		for (int i = 0; i < na; i++) {
-			for (int j = 0; j < na; j++) {
-				if (i != j) {
-					transitionDynamics[i][j] = pAlt;
-				} else {
-					transitionDynamics[i][j] = probSucceed;
-				}
-			}
-		}
-	}
-
-	/**
-	 * Will set the movement direction probabilities based on the action chosen.
-	 * The index (0,1,2,3) indicates the direction north,south,east,west,
-	 * respectively and the matrix is organized by
-	 * transitionDynamics[selectedDirection][actualDirection]. For instance, the
-	 * probability of the agent moving east when selecting north would be
-	 * specified in the entry transitionDynamics[0][2]
-	 * 
-	 * @param transitionDynamics
-	 *            entries indicate the probability of movement in the given
-	 *            direction (second index) for the given action selected (first
-	 *            index).
-	 */
-	public void setTransitionDynamics(double[][] transitionDynamics) {
-		this.transitionDynamics = transitionDynamics.clone();
-	}
-
-	/**
-	 * Makes the map empty
-	 */
-	public void makeEmptyMap() {
-		this.map = new int[this.width][this.height];
-		for (int i = 0; i < this.width; i++) {
-			for (int j = 0; j < this.height; j++) {
-				this.map[i][j] = 0;
-			}
-		}
-	}
-
-	/**
-	 * Set the map of the world.
-	 * 
-	 * @param map
-	 *            the first index is the x index, the second the y; 1 entries
-	 *            indicate a wall
-	 */
-	public void setMap(int[][] map) {
-		this.width = map.length;
-		this.height = map[0].length;
-		this.map = map.clone();
-	}
-
-	/**
-	 * Will set the map of the world to the classic Four Rooms map used the
-	 * original options work (Sutton, R.S. and Precup, D. and Singh, S., 1999).
-	 */
-	public void setMapToFourRooms() {
-		this.width = 11;
-		this.height = 11;
-		this.makeEmptyMap();
-
-		horizontalWall(0, 0, 5);
-		horizontalWall(2, 4, 5);
-		horizontalWall(6, 7, 4);
-		horizontalWall(9, 10, 4);
-
-		verticalWall(0, 0, 5);
-		verticalWall(2, 7, 5);
-		verticalWall(9, 10, 5);
-
-	}
-
-	/**
-	 * Creates a sequence of complete cell walls spanning the specified start
-	 * and end x coordinates.
-	 * 
-	 * @param xi
-	 *            The starting x coordinate of the wall
-	 * @param xf
-	 *            The ending x coordinate of the wall
-	 * @param y
-	 *            The y coordinate of the wall
-	 */
-	public void horizontalWall(int xi, int xf, int y) {
-		for (int x = xi; x <= xf; x++) {
-			this.map[x][y] = 1;
-		}
-	}
-
-	/**
-	 * Creates a sequence of complete cell walls spanning the specified start
-	 * and end y coordinates
-	 * 
-	 * @param yi
-	 *            The stating y coordinate of the wall
-	 * @param yf
-	 *            The ending y coordinate of the wall
-	 * @param x
-	 *            The x coordinate of the wall
-	 */
-	public void verticalWall(int yi, int yf, int x) {
-		for (int y = yi; y <= yf; y++) {
-			this.map[x][y] = 1;
-		}
-	}
-
-	/**
-	 * Creates a sequence of 1D north walls spanning the specified start and end
-	 * x coordinates. If any of the cells spanned already have a east wall set
-	 * in that location, then the cell is set to have both an east wall and a
-	 * north wall.
-	 * 
-	 * @param xi
-	 *            The starting x coordinate of the wall
-	 * @param xf
-	 *            The ending x coordinate of the wall
-	 * @param y
-	 *            The y coordinate of the wall
-	 */
-	public void horizontal1DNorthWall(int xi, int xf, int y) {
-		for (int x = xi; x <= xf; x++) {
-			int cur = this.map[x][y];
-			if (cur != 3 && cur != 4) {
-				this.map[x][y] = 2;
-			} else {
-				this.map[x][y] = 4;
-			}
-		}
-	}
-
-	/**
-	 * Creates a sequence of 1D east walls spanning the specified start and end
-	 * y coordinates. If any of the cells spanned already have a 1D north wall
-	 * set in that location, then the cell is set to have both a north wall and
-	 * an east wall.
-	 * 
-	 * @param yi
-	 *            The stating y coordinate of the wall
-	 * @param yf
-	 *            The ending y coordinate of the wall
-	 * @param x
-	 *            The x coordinate of the wall
-	 */
-	public void vertical1DEastWall(int yi, int yf, int x) {
-		for (int y = yi; y <= yf; y++) {
-			int cur = this.map[x][y];
-			if (cur != 2 && cur != 4) {
-				this.map[x][y] = 3;
-			} else {
-				this.map[x][y] = 4;
-			}
-		}
-	}
-
-	/**
-	 * Sets a complete cell obstacle in the designated location.
-	 * 
-	 * @param x
-	 *            the x coordinate of the obstacle
-	 * @param y
-	 *            the y coordinate of the obstacle
-	 */
-	public void setObstacleInCell(int x, int y) {
-		this.map[x][y] = 1;
-	}
-
-	/**
-	 * Sets a specified location to have a 1D north wall. If the specified cell
-	 * already has a 1D east wall set in that location, then the cell is set to
-	 * have both an east wall and a north wall.
-	 * 
-	 * @param x
-	 *            the x coordinate of the location to have the north wall
-	 * @param y
-	 *            the y coordinate of the location to have the north wall
-	 */
-	public void set1DNorthWall(int x, int y) {
-		int cur = this.map[x][y];
-		if (cur != 3 && cur != 4) {
-			this.map[x][y] = 2;
-		} else {
-			this.map[x][y] = 4;
-		}
-	}
-
-	/**
-	 * Sets a specified location to have a 1D east wall. If the specified cell
-	 * already has a 1D north wall set in that location, then the cell is set to
-	 * have both a north wall and an east wall.
-	 * 
-	 * @param x
-	 *            the x coordinate of the location to have the east wall
-	 * @param y
-	 *            the y coordinate of the location to have the east wall
-	 */
-	public void set1DEastWall(int x, int y) {
-		int cur = this.map[x][y];
-		if (cur != 2 && cur != 4) {
-			this.map[x][y] = 3;
-		} else {
-			this.map[x][y] = 4;
-		}
-	}
-
-	/**
-	 * Removes any obstacles or walls at the specified location.
-	 * 
-	 * @param x
-	 *            the x coordinate of the location
-	 * @param y
-	 *            the y coordinate of the location
-	 */
-	public void clearLocationOfWalls(int x, int y) {
-		this.map[x][y] = 0;
-	}
-
-	/**
-	 * Sets the map at the specified location to have the specified wall
-	 * configuration.
-	 * 
-	 * @param x
-	 *            the x coordinate of the location
-	 * @param y
-	 *            the y coordinate of the location
-	 * @param wallType
-	 *            the wall configuration for this location. 0 = no walls; 1 =
-	 *            complete cell wall/obstacle; 2 = 1D north wall; 3 = 1D east
-	 *            wall; 4 = 1D north *and* east wall
-	 */
-	public void setCellWallState(int x, int y, int wallType) {
-		this.map[x][y] = wallType;
-	}
-
-	/**
-	 * Returns a deep copy of the map being used for the domain
-	 * 
-	 * @return a deep copy of the map being used in the domain
-	 */
-	public int[][] getMap() {
-		int[][] cmap = new int[this.map.length][this.map[0].length];
-		for (int i = 0; i < this.map.length; i++) {
-			for (int j = 0; j < this.map[0].length; j++) {
-				cmap[i][j] = this.map[i][j];
-			}
-		}
-		return cmap;
-	}
-
-	/**
-	 * Returns this grid world's width
-	 * 
-	 * @return this grid world's width
-	 */
-	public int getWidth() {
-		return this.width;
-	}
-
-	/**
-	 * Returns this grid world's height
-	 * 
-	 * @return this grid world's height
-	 */
-	public int getHeight() {
-		return this.height;
-	}
-
-	@Override
-	public Domain generateDomain() {
-
-		Domain domain = new SADomain();
-
-		// Creates a new Attribute object
-		Attribute xatt = new Attribute(domain, ATTX,
-				Attribute.AttributeType.INT);
-		xatt.setLims(0, this.width - 1);
-
-		Attribute yatt = new Attribute(domain, ATTY,
-				Attribute.AttributeType.INT);
-		yatt.setLims(0., this.height - 1);
-
-		Attribute ltatt = new Attribute(domain, ATTLOCTYPE,
-				Attribute.AttributeType.DISC);
-		ltatt.setDiscValuesForRange(0, numLocationTypes - 1, 1);
-
-		ObjectClass agentClass = new ObjectClass(domain, CLASSAGENT);
-		agentClass.addAttribute(xatt);
-		agentClass.addAttribute(yatt);
-
-		ObjectClass locationClass = new ObjectClass(domain, CLASSLOCATION);
-		locationClass.addAttribute(xatt);
-		locationClass.addAttribute(yatt);
-		locationClass.addAttribute(ltatt);
-
-		int[][] cmap = this.getMap();
-
-		new MovementAction(ACTIONNORTH, domain, this.transitionDynamics[0],
-				cmap);
-		new MovementAction(ACTIONSOUTH, domain, this.transitionDynamics[1],
-				cmap);
-		new MovementAction(ACTIONEAST, domain, this.transitionDynamics[2], cmap);
-		new MovementAction(ACTIONWEST, domain, this.transitionDynamics[3], cmap);
-
-		new AtLocationPF(PFATLOCATION, domain, new String[] { CLASSAGENT,
-				CLASSLOCATION });
-
-		new WallToPF(PFWALLNORTH, domain, new String[] { CLASSAGENT }, 0);
-		new WallToPF(PFWALLSOUTH, domain, new String[] { CLASSAGENT }, 1);
-		new WallToPF(PFWALLEAST, domain, new String[] { CLASSAGENT }, 2);
-		new WallToPF(PFWALLWEST, domain, new String[] { CLASSAGENT }, 3);
-
-		return domain;
+		return s;
 	}
 
 	/**
@@ -621,29 +471,58 @@ public class GridWorldDomain implements DomainGenerator {
 	}
 
 	/**
-	 * Will return a state object with a single agent object and n location
-	 * objects
+	 * Creates a visual explorer or terminal explorer. By default a visual
+	 * explorer is presented; use the "t" argument to create terminal explorer.
+	 * Will create a 4 rooms grid world with the agent in lower left corner and
+	 * a location in the upper right. Use w-a-s-d to move.
 	 * 
-	 * @param d
-	 *            the domain object that is used to specify the min/max
-	 *            dimensions
-	 * @param n
-	 *            the number of location objects
-	 * @return a state object with a single agent object and n location objects
+	 * @param args
 	 */
-	public static State getOneAgentNLocationState(Domain d, int n) {
+	public static void main(String[] args) {
 
-		State s = new MutableState();
+		GridWorldDomain gwdg = new GridWorldDomain(11, 11);
+		gwdg.setMapToFourRooms();
+		// gwdg.setProbSucceedTransitionDynamics(0.75);
 
-		s.addObject(new MutableObjectInstance(d.getObjectClass(CLASSAGENT),
-				CLASSAGENT + 0));
+		Domain d = gwdg.generateDomain();
 
-		for (int i = 0; i < n; i++) {
-			s.addObject(new MutableObjectInstance(d
-					.getObjectClass(CLASSLOCATION), CLASSLOCATION + i));
+		State s = getOneAgentOneLocationState(d);
+		setAgent(s, 0, 0);
+		setLocation(s, 0, 10, 10, 0);
+
+		int expMode = 1;
+		if (args.length > 0) {
+			if (args[0].equals("v")) {
+				expMode = 1;
+			} else if (args[0].equals("t")) {
+				expMode = 0;
+			}
 		}
 
-		return s;
+		if (expMode == 0) {
+
+			TerminalExplorer exp = new TerminalExplorer(d, s);
+			exp.addActionShortHand("n", ACTIONNORTH);
+			exp.addActionShortHand("e", ACTIONEAST);
+			exp.addActionShortHand("w", ACTIONWEST);
+			exp.addActionShortHand("s", ACTIONSOUTH);
+
+			exp.explore();
+
+		} else if (expMode == 1) {
+
+			Visualizer v = GridWorldVisualizer.getVisualizer(gwdg.getMap());
+			VisualExplorer exp = new VisualExplorer(d, v, s);
+
+			// use w-s-a-d-x
+			exp.addKeyAction("w", ACTIONNORTH);
+			exp.addKeyAction("s", ACTIONSOUTH);
+			exp.addKeyAction("a", ACTIONWEST);
+			exp.addKeyAction("d", ACTIONEAST);
+
+			exp.initGUI();
+		}
+
 	}
 
 	/**
@@ -708,32 +587,211 @@ public class GridWorldDomain implements DomainGenerator {
 	}
 
 	/**
-	 * Creates and returns a
-	 * {@link burlap.behavior.singleagent.auxiliary.valuefunctionvis.ValueFunctionVisualizerGUI}
-	 * object for a grid world. The value of states will be represented by
-	 * colored cells from red (lowest value) to blue (highest value).
-	 * North-south-east-west actions will be rendered with arrows using
-	 * {@link burlap.behavior.singleagent.auxiliary.valuefunctionvis.common.ArrowActionGlyph}
-	 * objects. The GUI will not be launched by default; call the
-	 * {@link burlap.behavior.singleagent.auxiliary.valuefunctionvis.ValueFunctionVisualizerGUI#initGUI()}
-	 * on the returned object to start it.
-	 * 
-	 * @param states
-	 *            the states whose value should be rendered.
-	 * @param valueFunction
-	 *            the value Function that can return the state values.
-	 * @param p
-	 *            the policy to render
-	 * @return a gridworld-based
-	 *         {@link burlap.behavior.singleagent.auxiliary.valuefunctionvis.ValueFunctionVisualizerGUI}
-	 *         object.
+	 * The width of the grid world
 	 */
-	public static ValueFunctionVisualizerGUI getGridWorldValueFunctionVisualization(
-			List<State> states, ValueFunction valueFunction, Policy p) {
-		return ValueFunctionVisualizerGUI
-				.createGridWorldBasedValueFunctionVisualizerGUI(states,
-						valueFunction, p, CLASSAGENT, ATTX, ATTY, ACTIONNORTH,
-						ACTIONSOUTH, ACTIONEAST, ACTIONWEST);
+	protected int width;
+
+	/**
+	 * The height of grid world
+	 */
+	protected int height;
+
+	/**
+	 * The number of possible location types
+	 */
+	protected int numLocationTypes = 1;
+
+	/**
+	 * The wall map where the first index is the x position and the second index
+	 * is the y position. Values of 1 indicate a wall is there, values of 0
+	 * indicate an empty cell
+	 */
+	protected int[][] map;
+
+	/**
+	 * Matrix specifying the transition dynamics in terms of movement
+	 * directions. The first index indicates the action direction attempted
+	 * (ordered north, south, east, west) the second index indicates the actual
+	 * resulting direction the agent will go (assuming there is no wall in the
+	 * way). The value is the probability of that outcome. The existence of
+	 * walls does not affect the probability of the direction the agent will
+	 * actually go, but if a wall is in the way, it will affect the outcome. For
+	 * instance, if the agent selects north, but there is a 0.2 probability of
+	 * actually going east and there is a wall to the east, then with 0.2
+	 * probability, the agent will stay in place.
+	 */
+	protected double[][] transitionDynamics;
+
+	/**
+	 * Constructs an empty map with deterministic transitions
+	 * 
+	 * @param width
+	 *            width of the map
+	 * @param height
+	 *            height of the map
+	 */
+	public GridWorldDomain(int width, int height) {
+		this.width = width;
+		this.height = height;
+		this.setDeterministicTransitionDynamics();
+		this.makeEmptyMap();
+	}
+
+	/**
+	 * Constructs a deterministic world based on the provided map.
+	 * 
+	 * @param map
+	 *            the first index is the x index, the second the y; 1 entries
+	 *            indicate a wall
+	 */
+	public GridWorldDomain(int[][] map) {
+		this.setMap(map);
+		this.setDeterministicTransitionDynamics();
+	}
+
+	/**
+	 * Removes any obstacles or walls at the specified location.
+	 * 
+	 * @param x
+	 *            the x coordinate of the location
+	 * @param y
+	 *            the y coordinate of the location
+	 */
+	public void clearLocationOfWalls(int x, int y) {
+		this.map[x][y] = 0;
+	}
+
+	@Override
+	public Domain generateDomain() {
+
+		Domain domain = new SADomain();
+
+		// Creates a new Attribute object
+		Attribute xatt = new Attribute(domain, ATTX,
+				Attribute.AttributeType.INT);
+		xatt.setLims(0, this.width - 1);
+
+		Attribute yatt = new Attribute(domain, ATTY,
+				Attribute.AttributeType.INT);
+		yatt.setLims(0., this.height - 1);
+
+		Attribute ltatt = new Attribute(domain, ATTLOCTYPE,
+				Attribute.AttributeType.DISC);
+		ltatt.setDiscValuesForRange(0, numLocationTypes - 1, 1);
+
+		ObjectClass agentClass = new ObjectClass(domain, CLASSAGENT);
+		agentClass.addAttribute(xatt);
+		agentClass.addAttribute(yatt);
+
+		ObjectClass locationClass = new ObjectClass(domain, CLASSLOCATION);
+		locationClass.addAttribute(xatt);
+		locationClass.addAttribute(yatt);
+		locationClass.addAttribute(ltatt);
+
+		int[][] cmap = this.getMap();
+
+		new MovementAction(ACTIONNORTH, domain, this.transitionDynamics[0],
+				cmap);
+		new MovementAction(ACTIONSOUTH, domain, this.transitionDynamics[1],
+				cmap);
+		new MovementAction(ACTIONEAST, domain, this.transitionDynamics[2], cmap);
+		new MovementAction(ACTIONWEST, domain, this.transitionDynamics[3], cmap);
+
+		new AtLocationPF(PFATLOCATION, domain, new String[] { CLASSAGENT,
+				CLASSLOCATION });
+
+		new WallToPF(PFWALLNORTH, domain, new String[] { CLASSAGENT }, 0);
+		new WallToPF(PFWALLSOUTH, domain, new String[] { CLASSAGENT }, 1);
+		new WallToPF(PFWALLEAST, domain, new String[] { CLASSAGENT }, 2);
+		new WallToPF(PFWALLWEST, domain, new String[] { CLASSAGENT }, 3);
+
+		return domain;
+	}
+
+	/**
+	 * Returns this grid world's height
+	 * 
+	 * @return this grid world's height
+	 */
+	public int getHeight() {
+		return this.height;
+	}
+
+	/**
+	 * Returns a deep copy of the map being used for the domain
+	 * 
+	 * @return a deep copy of the map being used in the domain
+	 */
+	public int[][] getMap() {
+		int[][] cmap = new int[this.map.length][this.map[0].length];
+		for (int i = 0; i < this.map.length; i++) {
+			for (int j = 0; j < this.map[0].length; j++) {
+				cmap[i][j] = this.map[i][j];
+			}
+		}
+		return cmap;
+	}
+
+	/**
+	 * Returns this grid world's width
+	 * 
+	 * @return this grid world's width
+	 */
+	public int getWidth() {
+		return this.width;
+	}
+
+	/**
+	 * Creates a sequence of 1D north walls spanning the specified start and end
+	 * x coordinates. If any of the cells spanned already have a east wall set
+	 * in that location, then the cell is set to have both an east wall and a
+	 * north wall.
+	 * 
+	 * @param xi
+	 *            The starting x coordinate of the wall
+	 * @param xf
+	 *            The ending x coordinate of the wall
+	 * @param y
+	 *            The y coordinate of the wall
+	 */
+	public void horizontal1DNorthWall(int xi, int xf, int y) {
+		for (int x = xi; x <= xf; x++) {
+			int cur = this.map[x][y];
+			if (cur != 3 && cur != 4) {
+				this.map[x][y] = 2;
+			} else {
+				this.map[x][y] = 4;
+			}
+		}
+	}
+
+	/**
+	 * Creates a sequence of complete cell walls spanning the specified start
+	 * and end x coordinates.
+	 * 
+	 * @param xi
+	 *            The starting x coordinate of the wall
+	 * @param xf
+	 *            The ending x coordinate of the wall
+	 * @param y
+	 *            The y coordinate of the wall
+	 */
+	public void horizontalWall(int xi, int xf, int y) {
+		for (int x = xi; x <= xf; x++) {
+			this.map[x][y] = 1;
+		}
+	}
+
+	/**
+	 * Makes the map empty
+	 */
+	public void makeEmptyMap() {
+		this.map = new int[this.width][this.height];
+		for (int i = 0; i < this.width; i++) {
+			for (int j = 0; j < this.height; j++) {
+				this.map[i][j] = 0;
+			}
+		}
 	}
 
 	/**
@@ -810,273 +868,213 @@ public class GridWorldDomain implements DomainGenerator {
 	}
 
 	/**
-	 * Action class for movement actions in grid world.
+	 * Sets a specified location to have a 1D east wall. If the specified cell
+	 * already has a 1D north wall set in that location, then the cell is set to
+	 * have both a north wall and an east wall.
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @param x
+	 *            the x coordinate of the location to have the east wall
+	 * @param y
+	 *            the y coordinate of the location to have the east wall
 	 */
-	public class MovementAction extends SimpleAction implements FullActionModel {
-
-		/**
-		 * Probabilities of the actual direction the agent will go
-		 */
-		protected double[] directionProbs;
-
-		/**
-		 * Random object for sampling distribution
-		 */
-		protected Random rand;
-
-		/**
-		 * The map of the world
-		 */
-		protected int[][] map;
-
-		/**
-		 * Initializes for the given name, domain and actually direction
-		 * probabilities the agent will go
-		 * 
-		 * @param name
-		 *            name of the action
-		 * @param domain
-		 *            the domain of the action
-		 * @param directions
-		 *            the probability for each direction (index 0,1,2,3
-		 *            corresponds to north,south,east,west, respectively).
-		 * @param map
-		 *            the map of the world
-		 */
-		public MovementAction(String name, Domain domain, double[] directions,
-				int[][] map) {
-			super(name, domain);
-			this.directionProbs = directions.clone();
-			this.rand = RandomFactory.getMapped(0);
-			this.map = map;
+	public void set1DEastWall(int x, int y) {
+		int cur = this.map[x][y];
+		if (cur != 2 && cur != 4) {
+			this.map[x][y] = 3;
+		} else {
+			this.map[x][y] = 4;
 		}
+	}
 
-		@Override
-		protected State performActionHelper(State s,
-				GroundedAction groundedAction) {
-			double roll = rand.nextDouble();
-			double curSum = 0.;
-			int dir = 0;
-			for (int i = 0; i < directionProbs.length; i++) {
-				curSum += directionProbs[i];
-				if (roll < curSum) {
-					dir = i;
-					break;
+	/**
+	 * Sets a specified location to have a 1D north wall. If the specified cell
+	 * already has a 1D east wall set in that location, then the cell is set to
+	 * have both an east wall and a north wall.
+	 * 
+	 * @param x
+	 *            the x coordinate of the location to have the north wall
+	 * @param y
+	 *            the y coordinate of the location to have the north wall
+	 */
+	public void set1DNorthWall(int x, int y) {
+		int cur = this.map[x][y];
+		if (cur != 3 && cur != 4) {
+			this.map[x][y] = 2;
+		} else {
+			this.map[x][y] = 4;
+		}
+	}
+
+	/**
+	 * Sets the map at the specified location to have the specified wall
+	 * configuration.
+	 * 
+	 * @param x
+	 *            the x coordinate of the location
+	 * @param y
+	 *            the y coordinate of the location
+	 * @param wallType
+	 *            the wall configuration for this location. 0 = no walls; 1 =
+	 *            complete cell wall/obstacle; 2 = 1D north wall; 3 = 1D east
+	 *            wall; 4 = 1D north *and* east wall
+	 */
+	public void setCellWallState(int x, int y, int wallType) {
+		this.map[x][y] = wallType;
+	}
+
+	/**
+	 * Will set the domain to use deterministic action transitions.
+	 */
+	public void setDeterministicTransitionDynamics() {
+		int na = 4;
+		transitionDynamics = new double[na][na];
+		for (int i = 0; i < na; i++) {
+			for (int j = 0; j < na; j++) {
+				if (i != j) {
+					transitionDynamics[i][j] = 0.;
+				} else {
+					transitionDynamics[i][j] = 1.;
 				}
 			}
-
-			int[] dcomps = GridWorldDomain.this.movementDirectionFromIndex(dir);
-			return GridWorldDomain.this.move(s, dcomps[0], dcomps[1], this.map);
 		}
+	}
 
-		@Override
-		public List<TransitionProbability> getTransitions(State s,
-				GroundedAction groundedAction) {
-			List<TransitionProbability> transitions = new ArrayList<TransitionProbability>();
-			for (int i = 0; i < directionProbs.length; i++) {
-				double p = directionProbs[i];
-				if (p == 0.) {
-					continue; // cannot transition in this direction
-				}
-				State ns = s.copy();
-				int[] dcomps = GridWorldDomain.this
-						.movementDirectionFromIndex(i);
-				ns = GridWorldDomain.this.move(ns, dcomps[0], dcomps[1],
-						this.map);
+	/**
+	 * Set the map of the world.
+	 * 
+	 * @param map
+	 *            the first index is the x index, the second the y; 1 entries
+	 *            indicate a wall
+	 */
+	public void setMap(int[][] map) {
+		this.width = map.length;
+		this.height = map[0].length;
+		this.map = map.clone();
+	}
 
-				// make sure this direction doesn't actually stay in the same
-				// place and replicate another no-op
-				boolean isNew = true;
-				for (TransitionProbability tp : transitions) {
-					if (tp.s.equals(ns)) {
-						isNew = false;
-						tp.p += p;
-						break;
-					}
-				}
+	/**
+	 * Will set the map of the world to the classic Four Rooms map used the
+	 * original options work (Sutton, R.S. and Precup, D. and Singh, S., 1999).
+	 */
+	public void setMapToFourRooms() {
+		this.width = 11;
+		this.height = 11;
+		this.makeEmptyMap();
 
-				if (isNew) {
-					TransitionProbability tp = new TransitionProbability(ns, p);
-					transitions.add(tp);
-				}
+		horizontalWall(0, 0, 5);
+		horizontalWall(2, 4, 5);
+		horizontalWall(6, 7, 4);
+		horizontalWall(9, 10, 4);
 
-			}
-
-			return transitions;
-		}
+		verticalWall(0, 0, 5);
+		verticalWall(2, 7, 5);
+		verticalWall(9, 10, 5);
 
 	}
 
 	/**
-	 * Propositional function for determining if the agent is at the same
-	 * position as a given location object
+	 * Sets the number of possible location types to which a location object can
+	 * belong. The default is 1.
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @param numLocationTypes
+	 *            the number of possible location types to which a location
+	 *            object can belong.
 	 */
-	public class AtLocationPF extends PropositionalFunction {
-
-		/**
-		 * Initializes with given name domain and parameter object class types
-		 * 
-		 * @param name
-		 *            name of function
-		 * @param domain
-		 *            the domain of the function
-		 * @param parameterClasses
-		 *            the object class types for the parameters
-		 */
-		public AtLocationPF(String name, Domain domain,
-				String[] parameterClasses) {
-			super(name, domain, parameterClasses);
-		}
-
-		@Override
-		public boolean isTrue(State st, String... params) {
-
-			ObjectInstance agent = st.getObject(params[0]);
-			ObjectInstance location = st.getObject(params[1]);
-
-			int ax = agent.getIntValForAttribute(ATTX);
-			int ay = agent.getIntValForAttribute(ATTY);
-
-			int lx = location.getIntValForAttribute(ATTX);
-			int ly = location.getIntValForAttribute(ATTY);
-
-			if (ax == lx && ay == ly) {
-				return true;
-			}
-
-			return false;
-		}
-
+	public void setNumberOfLocationTypes(int numLocationTypes) {
+		this.numLocationTypes = numLocationTypes;
 	}
 
 	/**
-	 * Propositional function for indicating if a wall is in a given position
-	 * relative to the agent position
+	 * Sets a complete cell obstacle in the designated location.
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @param x
+	 *            the x coordinate of the obstacle
+	 * @param y
+	 *            the y coordinate of the obstacle
 	 */
-	public class WallToPF extends PropositionalFunction {
-
-		/**
-		 * The relative x distance from the agent of the cell to check
-		 */
-		protected int xdelta;
-
-		/**
-		 * The relative y distance from the agent of the cell to check
-		 */
-		protected int ydelta;
-
-		/**
-		 * Initializes the function.
-		 * 
-		 * @param name
-		 *            the name of the function
-		 * @param domain
-		 *            the domain of the function
-		 * @param parameterClasses
-		 *            the object class parameter types
-		 * @param direction
-		 *            the unit distance direction from the agent to check for a
-		 *            wall (0,1,2,3 corresponds to north,south,east,west).
-		 */
-		public WallToPF(String name, Domain domain, String[] parameterClasses,
-				int direction) {
-			super(name, domain, parameterClasses);
-			int[] dcomps = GridWorldDomain.this
-					.movementDirectionFromIndex(direction);
-			xdelta = dcomps[0];
-			ydelta = dcomps[1];
-		}
-
-		@Override
-		public boolean isTrue(State st, String... params) {
-
-			ObjectInstance agent = st.getObject(params[0]);
-
-			int ax = agent.getIntValForAttribute(ATTX);
-			int ay = agent.getIntValForAttribute(ATTY);
-
-			int cx = ax + xdelta;
-			int cy = ay + ydelta;
-
-			if (cx < 0
-					|| cx >= GridWorldDomain.this.width
-					|| cy < 0
-					|| cy >= GridWorldDomain.this.height
-					|| GridWorldDomain.this.map[cx][cy] == 1
-					|| (xdelta > 0 && (GridWorldDomain.this.map[ax][ay] == 3 || GridWorldDomain.this.map[ax][ay] == 4))
-					|| (xdelta < 0 && (GridWorldDomain.this.map[cx][cy] == 3 || GridWorldDomain.this.map[cx][cy] == 4))
-					|| (ydelta > 0 && (GridWorldDomain.this.map[ax][ay] == 2 || GridWorldDomain.this.map[ax][ay] == 4))
-					|| (ydelta < 0 && (GridWorldDomain.this.map[cx][cy] == 2 || GridWorldDomain.this.map[cx][cy] == 4))) {
-				return true;
-			}
-
-			return false;
-		}
-
+	public void setObstacleInCell(int x, int y) {
+		this.map[x][y] = 1;
 	}
 
 	/**
-	 * Creates a visual explorer or terminal explorer. By default a visual
-	 * explorer is presented; use the "t" argument to create terminal explorer.
-	 * Will create a 4 rooms grid world with the agent in lower left corner and
-	 * a location in the upper right. Use w-a-s-d to move.
+	 * Sets the domain to use probabilistic transitions. Agent will move in the
+	 * intended direction with probability probSucceed. Agent will move in a
+	 * random direction with probability 1 - probSucceed
 	 * 
-	 * @param args
+	 * @param probSucceed
+	 *            probability to move the in intended direction
 	 */
-	public static void main(String[] args) {
-
-		GridWorldDomain gwdg = new GridWorldDomain(11, 11);
-		gwdg.setMapToFourRooms();
-		// gwdg.setProbSucceedTransitionDynamics(0.75);
-
-		Domain d = gwdg.generateDomain();
-
-		State s = getOneAgentOneLocationState(d);
-		setAgent(s, 0, 0);
-		setLocation(s, 0, 10, 10, 0);
-
-		int expMode = 1;
-		if (args.length > 0) {
-			if (args[0].equals("v")) {
-				expMode = 1;
-			} else if (args[0].equals("t")) {
-				expMode = 0;
+	public void setProbSucceedTransitionDynamics(double probSucceed) {
+		int na = 4;
+		double pAlt = (1. - probSucceed) / 3.;
+		transitionDynamics = new double[na][na];
+		for (int i = 0; i < na; i++) {
+			for (int j = 0; j < na; j++) {
+				if (i != j) {
+					transitionDynamics[i][j] = pAlt;
+				} else {
+					transitionDynamics[i][j] = probSucceed;
+				}
 			}
 		}
+	}
 
-		if (expMode == 0) {
+	/**
+	 * Will set the movement direction probabilities based on the action chosen.
+	 * The index (0,1,2,3) indicates the direction north,south,east,west,
+	 * respectively and the matrix is organized by
+	 * transitionDynamics[selectedDirection][actualDirection]. For instance, the
+	 * probability of the agent moving east when selecting north would be
+	 * specified in the entry transitionDynamics[0][2]
+	 * 
+	 * @param transitionDynamics
+	 *            entries indicate the probability of movement in the given
+	 *            direction (second index) for the given action selected (first
+	 *            index).
+	 */
+	public void setTransitionDynamics(double[][] transitionDynamics) {
+		this.transitionDynamics = transitionDynamics.clone();
+	}
 
-			TerminalExplorer exp = new TerminalExplorer(d, s);
-			exp.addActionShortHand("n", ACTIONNORTH);
-			exp.addActionShortHand("e", ACTIONEAST);
-			exp.addActionShortHand("w", ACTIONWEST);
-			exp.addActionShortHand("s", ACTIONSOUTH);
-
-			exp.explore();
-
-		} else if (expMode == 1) {
-
-			Visualizer v = GridWorldVisualizer.getVisualizer(gwdg.getMap());
-			VisualExplorer exp = new VisualExplorer(d, v, s);
-
-			// use w-s-a-d-x
-			exp.addKeyAction("w", ACTIONNORTH);
-			exp.addKeyAction("s", ACTIONSOUTH);
-			exp.addKeyAction("a", ACTIONWEST);
-			exp.addKeyAction("d", ACTIONEAST);
-
-			exp.initGUI();
+	/**
+	 * Creates a sequence of 1D east walls spanning the specified start and end
+	 * y coordinates. If any of the cells spanned already have a 1D north wall
+	 * set in that location, then the cell is set to have both a north wall and
+	 * an east wall.
+	 * 
+	 * @param yi
+	 *            The stating y coordinate of the wall
+	 * @param yf
+	 *            The ending y coordinate of the wall
+	 * @param x
+	 *            The x coordinate of the wall
+	 */
+	public void vertical1DEastWall(int yi, int yf, int x) {
+		for (int y = yi; y <= yf; y++) {
+			int cur = this.map[x][y];
+			if (cur != 2 && cur != 4) {
+				this.map[x][y] = 3;
+			} else {
+				this.map[x][y] = 4;
+			}
 		}
+	}
 
+	/**
+	 * Creates a sequence of complete cell walls spanning the specified start
+	 * and end y coordinates
+	 * 
+	 * @param yi
+	 *            The stating y coordinate of the wall
+	 * @param yf
+	 *            The ending y coordinate of the wall
+	 * @param x
+	 *            The x coordinate of the wall
+	 */
+	public void verticalWall(int yi, int yf, int x) {
+		for (int y = yi; y <= yf; y++) {
+			this.map[x][y] = 1;
+		}
 	}
 
 }

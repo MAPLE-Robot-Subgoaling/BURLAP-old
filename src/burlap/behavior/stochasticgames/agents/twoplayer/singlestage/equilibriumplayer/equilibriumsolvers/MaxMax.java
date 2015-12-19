@@ -23,6 +23,38 @@ import burlap.behavior.stochasticgames.agents.twoplayer.singlestage.equilibriump
 public class MaxMax extends BimatrixEquilibriumSolver {
 
 	@Override
+	public double[] computeColStrategy(double[][] rowPayoff,
+			double[][] colPayoff) {
+		double max = Double.NEGATIVE_INFINITY;
+		Set<Integer> candidates = new HashSet<Integer>(rowPayoff.length);
+		for (int j = 0; j < colPayoff[0].length; j++) {
+			for (int i = 0; i < colPayoff.length; i++) {
+				if (BimatrixEquilibriumSolver.doubleEquality(max,
+						colPayoff[i][j])) {
+					candidates.add(j);
+				} else if (colPayoff[i][j] > max) {
+					max = colPayoff[i][j];
+					candidates.clear();
+					candidates.add(i);
+				}
+			}
+		}
+
+		double p = 1. / candidates.size();
+
+		double[] strat = new double[colPayoff[0].length];
+		for (int i = 0; i < strat.length; i++) {
+			if (candidates.contains(i)) {
+				strat[i] = p;
+			} else {
+				strat[i] = 0.;
+			}
+		}
+
+		return strat;
+	}
+
+	@Override
 	public double[] computeRowStrategy(double[][] rowPayoff,
 			double[][] colPayoff) {
 
@@ -41,41 +73,9 @@ public class MaxMax extends BimatrixEquilibriumSolver {
 			}
 		}
 
-		double p = 1. / (double) candidates.size();
+		double p = 1. / candidates.size();
 
 		double[] strat = new double[rowPayoff.length];
-		for (int i = 0; i < strat.length; i++) {
-			if (candidates.contains(i)) {
-				strat[i] = p;
-			} else {
-				strat[i] = 0.;
-			}
-		}
-
-		return strat;
-	}
-
-	@Override
-	public double[] computeColStrategy(double[][] rowPayoff,
-			double[][] colPayoff) {
-		double max = Double.NEGATIVE_INFINITY;
-		Set<Integer> candidates = new HashSet<Integer>(rowPayoff.length);
-		for (int j = 0; j < colPayoff[0].length; j++) {
-			for (int i = 0; i < colPayoff.length; i++) {
-				if (BimatrixEquilibriumSolver.doubleEquality(max,
-						colPayoff[i][j])) {
-					candidates.add(j);
-				} else if (colPayoff[i][j] > max) {
-					max = colPayoff[i][j];
-					candidates.clear();
-					candidates.add(i);
-				}
-			}
-		}
-
-		double p = 1. / (double) candidates.size();
-
-		double[] strat = new double[colPayoff[0].length];
 		for (int i = 0; i < strat.length; i++) {
 			if (candidates.contains(i)) {
 				strat[i] = p;

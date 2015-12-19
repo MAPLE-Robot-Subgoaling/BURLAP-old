@@ -5,9 +5,9 @@ import java.util.Map;
 
 import burlap.debugtools.RandomFactory;
 import burlap.oomdp.core.states.State;
+import burlap.oomdp.stochasticgames.JointAction;
 import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
-import burlap.oomdp.stochasticgames.JointAction;
 import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
 
 /**
@@ -22,6 +22,11 @@ public class RandomSGAgent extends SGAgent {
 	public void gameStarting() {
 		// do nothing
 
+	}
+
+	@Override
+	public void gameTerminated() {
+		// do nothing
 	}
 
 	@Override
@@ -42,11 +47,6 @@ public class RandomSGAgent extends SGAgent {
 			Map<String, Double> jointReward, State sprime, boolean isTerminal) {
 		// do nothing
 
-	}
-
-	@Override
-	public void gameTerminated() {
-		// do nothing
 	}
 
 }

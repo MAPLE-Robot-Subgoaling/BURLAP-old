@@ -1,11 +1,11 @@
 package burlap.behavior.singleagent.learnfromdemo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.planning.Planner;
 import burlap.oomdp.core.Domain;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A data structure for setting the common parameters necessary for an IRL
@@ -62,6 +62,22 @@ public class IRLRequest {
 		this.setExpertEpisodes(expertEpisodes);
 	}
 
+	public Domain getDomain() {
+		return this.domain;
+	}
+
+	public List<EpisodeAnalysis> getExpertEpisodes() {
+		return expertEpisodes;
+	}
+
+	public double getGamma() {
+		return gamma;
+	}
+
+	public Planner getPlanner() {
+		return this.planner;
+	}
+
 	/**
 	 * Returns true if this request object has valid data members set; false
 	 * otherwise.
@@ -94,10 +110,6 @@ public class IRLRequest {
 		this.domain = d;
 	}
 
-	public void setPlanner(Planner p) {
-		this.planner = p;
-	}
-
 	public void setExpertEpisodes(List<EpisodeAnalysis> episodeList) {
 		this.expertEpisodes = new ArrayList<EpisodeAnalysis>(episodeList);
 	}
@@ -106,19 +118,7 @@ public class IRLRequest {
 		this.gamma = gamma;
 	}
 
-	public Domain getDomain() {
-		return this.domain;
-	}
-
-	public Planner getPlanner() {
-		return this.planner;
-	}
-
-	public double getGamma() {
-		return gamma;
-	}
-
-	public List<EpisodeAnalysis> getExpertEpisodes() {
-		return expertEpisodes;
+	public void setPlanner(Planner p) {
+		this.planner = p;
 	}
 }

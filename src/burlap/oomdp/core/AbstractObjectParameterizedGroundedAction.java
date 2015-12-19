@@ -1,11 +1,11 @@
 package burlap.oomdp.core;
 
-import burlap.oomdp.core.objects.ObjectInstance;
-import burlap.oomdp.core.states.State;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import burlap.oomdp.core.objects.ObjectInstance;
+import burlap.oomdp.core.states.State;
 
 /**
  * An interface extension to the
@@ -32,37 +32,6 @@ import java.util.Set;
  */
 public interface AbstractObjectParameterizedGroundedAction extends
 		AbstractGroundedAction {
-
-	/**
-	 * Returns the parameters of this
-	 * {@link burlap.oomdp.core.AbstractGroundedAction} that correspond to
-	 * OO-MDP objects.
-	 * 
-	 * @return the parameters of this
-	 *         {@link burlap.oomdp.core.AbstractGroundedAction} that correspond
-	 *         to OO-MDP objects.
-	 */
-	String[] getObjectParameters();
-
-	/**
-	 * Sets the object parameters for this
-	 * {@link burlap.oomdp.core.AbstractGroundedAction}.
-	 * 
-	 * @param params
-	 *            the object parameters to use.
-	 */
-	void setObjectParameters(String[] params);
-
-	/**
-	 * Returns true if this {@link burlap.oomdp.core.AbstractGroundedAction} is
-	 * for a domain in which states are identifier independent; false if
-	 * dependent
-	 * 
-	 * @return true if this {@link burlap.oomdp.core.AbstractGroundedAction} is
-	 *         for a domain in which states are identifier independent; false if
-	 *         dependent
-	 */
-	boolean actionDomainIsObjectIdentifierIndependent();
 
 	public static class Helper {
 
@@ -135,5 +104,36 @@ public interface AbstractObjectParameterizedGroundedAction extends
 		}
 
 	}
+
+	/**
+	 * Returns true if this {@link burlap.oomdp.core.AbstractGroundedAction} is
+	 * for a domain in which states are identifier independent; false if
+	 * dependent
+	 * 
+	 * @return true if this {@link burlap.oomdp.core.AbstractGroundedAction} is
+	 *         for a domain in which states are identifier independent; false if
+	 *         dependent
+	 */
+	boolean actionDomainIsObjectIdentifierIndependent();
+
+	/**
+	 * Returns the parameters of this
+	 * {@link burlap.oomdp.core.AbstractGroundedAction} that correspond to
+	 * OO-MDP objects.
+	 * 
+	 * @return the parameters of this
+	 *         {@link burlap.oomdp.core.AbstractGroundedAction} that correspond
+	 *         to OO-MDP objects.
+	 */
+	String[] getObjectParameters();
+
+	/**
+	 * Sets the object parameters for this
+	 * {@link burlap.oomdp.core.AbstractGroundedAction}.
+	 * 
+	 * @param params
+	 *            the object parameters to use.
+	 */
+	void setObjectParameters(String[] params);
 
 }

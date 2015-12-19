@@ -1,7 +1,6 @@
 package burlap.oomdp.statehashing;
 
 import java.util.Iterator;
-import java.util.List;
 
 import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.objects.ImmutableObjectInstance;
@@ -17,7 +16,24 @@ import burlap.oomdp.core.values.Value;
  * 
  */
 public class ImmutableHashableObjectFactory implements HashableObjectFactory {
+	public class ImmutableHashableObject extends HashableObject {
+
+		public ImmutableHashableObject(ImmutableObjectInstance source) {
+			super(source);
+		}
+
+		public ImmutableObjectInstance getObjectInstance() {
+			return (ImmutableObjectInstance) this.source;
+		}
+
+		@Override
+		public int hashCode() {
+			return this.source.hashCode();
+		}
+
+	}
 	private final SimpleHashableStateFactory stateFactory;
+
 	private final boolean identifierIndependent;
 
 	public ImmutableHashableObjectFactory(
@@ -25,6 +41,25 @@ public class ImmutableHashableObjectFactory implements HashableObjectFactory {
 			boolean identifierIndependent) {
 		this.stateFactory = stateFactory;
 		this.identifierIndependent = identifierIndependent;
+	}
+
+	protected int computeHashCode(ObjectInstance object) {
+		return this.stateFactory.computeHashCode(object);
+	}
+
+	@Override
+	public HashableValueFactory getValueHashFactory() {
+		return null;
+	}
+
+	public ImmutableHashableObject hashObject(ImmutableObjectInstance immObj) {
+		if (!immObj.isHashed()) {
+			int code = ImmutableHashableObjectFactory.this
+					.computeHashCode(immObj);
+			return new ImmutableHashableObject(immObj.setHashCode(code,
+					identifierIndependent));
+		}
+		return new ImmutableHashableObject(immObj);
 	}
 
 	@Override
@@ -39,16 +74,6 @@ public class ImmutableHashableObjectFactory implements HashableObjectFactory {
 		if (!immObj.isHashed()) {
 			int code = ImmutableHashableObjectFactory.this
 					.computeHashCode(object);
-			return new ImmutableHashableObject(immObj.setHashCode(code,
-					identifierIndependent));
-		}
-		return new ImmutableHashableObject(immObj);
-	}
-
-	public ImmutableHashableObject hashObject(ImmutableObjectInstance immObj) {
-		if (!immObj.isHashed()) {
-			int code = ImmutableHashableObjectFactory.this
-					.computeHashCode(immObj);
 			return new ImmutableHashableObject(immObj.setHashCode(code,
 					identifierIndependent));
 		}
@@ -73,32 +98,6 @@ public class ImmutableHashableObjectFactory implements HashableObjectFactory {
 		}
 
 		return true;
-	}
-
-	protected int computeHashCode(ObjectInstance object) {
-		return this.stateFactory.computeHashCode(object);
-	}
-
-	@Override
-	public HashableValueFactory getValueHashFactory() {
-		return null;
-	}
-
-	public class ImmutableHashableObject extends HashableObject {
-
-		public ImmutableHashableObject(ImmutableObjectInstance source) {
-			super(source);
-		}
-
-		@Override
-		public int hashCode() {
-			return this.source.hashCode();
-		}
-
-		public ImmutableObjectInstance getObjectInstance() {
-			return (ImmutableObjectInstance) this.source;
-		}
-
 	}
 
 }

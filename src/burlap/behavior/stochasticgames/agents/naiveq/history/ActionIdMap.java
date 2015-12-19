@@ -11,6 +11,15 @@ import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
 public interface ActionIdMap {
 
 	/**
+	 * Returns a corresponding GroundedSingleAction for a given int value
+	 * 
+	 * @param id
+	 *            the int value indicating which GroundedSingleAction to return.
+	 * @return a corresponding GroundedSingleAction for a given int value
+	 */
+	public GroundedSGAgentAction getActionForId(int id);
+
+	/**
 	 * Returns an int value corresponding to the input action
 	 * 
 	 * @param gsa
@@ -38,13 +47,4 @@ public interface ActionIdMap {
 	 * @return maximum number of int values for actions
 	 */
 	public int maxValue();
-
-	/**
-	 * Returns a corresponding GroundedSingleAction for a given int value
-	 * 
-	 * @param id
-	 *            the int value indicating which GroundedSingleAction to return.
-	 * @return a corresponding GroundedSingleAction for a given int value
-	 */
-	public GroundedSGAgentAction getActionForId(int id);
 }

@@ -1,9 +1,9 @@
 package burlap.oomdp.visualizer;
 
+import java.awt.Graphics2D;
+
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.states.State;
-
-import java.awt.*;
 
 /**
  * A class for rendering state-action events. This class will maintain the
@@ -28,13 +28,15 @@ public abstract class StateActionRenderLayer implements RenderLayer {
 	protected AbstractGroundedAction renderAction = null;
 
 	/**
-	 * Returns the {@link burlap.oomdp.core.states.State} that is/will be
-	 * rendered
-	 * 
-	 * @return a {@link burlap.oomdp.core.states.State}
+	 * Sets the {@link burlap.oomdp.core.states.State} and
+	 * {@link burlap.oomdp.core.AbstractGroundedAction} to render to null, which
+	 * will prevent calls to the method
+	 * {@link #renderStateAction(java.awt.Graphics2D, burlap.oomdp.core.states.State, burlap.oomdp.core.AbstractGroundedAction, float, float)}
+	 * to be made.
 	 */
-	public State getRenderState() {
-		return renderState;
+	public void clearRenderedStateAction() {
+		this.renderState = null;
+		this.renderAction = null;
 	}
 
 	/**
@@ -48,30 +50,13 @@ public abstract class StateActionRenderLayer implements RenderLayer {
 	}
 
 	/**
-	 * Updates the {@link burlap.oomdp.core.states.State} and
-	 * {@link burlap.oomdp.core.AbstractGroundedAction} that will be rendered
-	 * the next time this class draws
+	 * Returns the {@link burlap.oomdp.core.states.State} that is/will be
+	 * rendered
 	 * 
-	 * @param s
-	 *            a {@link burlap.oomdp.core.states.State} to render
-	 * @param a
-	 *            a {@link burlap.oomdp.core.AbstractGroundedAction} to render
+	 * @return a {@link burlap.oomdp.core.states.State}
 	 */
-	public void updateRenderedStateAction(State s, AbstractGroundedAction a) {
-		this.renderState = s;
-		this.renderAction = a;
-	}
-
-	/**
-	 * Sets the {@link burlap.oomdp.core.states.State} and
-	 * {@link burlap.oomdp.core.AbstractGroundedAction} to render to null, which
-	 * will prevent calls to the method
-	 * {@link #renderStateAction(java.awt.Graphics2D, burlap.oomdp.core.states.State, burlap.oomdp.core.AbstractGroundedAction, float, float)}
-	 * to be made.
-	 */
-	public void clearRenderedStateAction() {
-		this.renderState = null;
-		this.renderAction = null;
+	public State getRenderState() {
+		return renderState;
 	}
 
 	@Override
@@ -99,5 +84,20 @@ public abstract class StateActionRenderLayer implements RenderLayer {
 	 */
 	public abstract void renderStateAction(Graphics2D g2, State s,
 			AbstractGroundedAction a, float width, float height);
+
+	/**
+	 * Updates the {@link burlap.oomdp.core.states.State} and
+	 * {@link burlap.oomdp.core.AbstractGroundedAction} that will be rendered
+	 * the next time this class draws
+	 * 
+	 * @param s
+	 *            a {@link burlap.oomdp.core.states.State} to render
+	 * @param a
+	 *            a {@link burlap.oomdp.core.AbstractGroundedAction} to render
+	 */
+	public void updateRenderedStateAction(State s, AbstractGroundedAction a) {
+		this.renderState = s;
+		this.renderAction = a;
+	}
 
 }

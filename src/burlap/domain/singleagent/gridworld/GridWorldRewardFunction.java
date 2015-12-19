@@ -32,37 +32,17 @@ public class GridWorldRewardFunction implements RewardFunction {
 	protected int height;
 
 	/**
-	 * Initializes the reward function for a grid world of size width and height
-	 * and initializes the reward values everywhere to initializingReward. The
-	 * reward returned from specific agent positions may be changed with the
+	 * Initializes the reward function for a grid world with a size defined by
+	 * the attributes of the domain object to 0. The reward returned from
+	 * specific agent positions may be changed with the
 	 * {@link #setReward(int, int, double)} method.
 	 * 
-	 * @param width
-	 *            the width of the grid world
-	 * @param height
-	 *            the height of the grid world
-	 * @param initializingReward
-	 *            the reward to which all agent position transitions are
-	 *            initialized to return.
+	 * @param domain
+	 *            the domain whose x and y attributes will be used to determine
+	 *            the size of the grid world.
 	 */
-	public GridWorldRewardFunction(int width, int height,
-			double initializingReward) {
-		this.initialize(width, height, initializingReward);
-	}
-
-	/**
-	 * Initializes the reward function for a grid world of size width and height
-	 * and initializes the reward values everywhere to 0. The reward returned
-	 * from specific agent positions may be changed with the
-	 * {@link #setReward(int, int, double)} method.
-	 * 
-	 * @param width
-	 *            the width of the grid world
-	 * @param height
-	 *            the height of the grid world
-	 */
-	public GridWorldRewardFunction(int width, int height) {
-		this(width, height, 0.);
+	public GridWorldRewardFunction(Domain domain) {
+		this(domain, 0.);
 	}
 
 	/**
@@ -87,17 +67,64 @@ public class GridWorldRewardFunction implements RewardFunction {
 	}
 
 	/**
-	 * Initializes the reward function for a grid world with a size defined by
-	 * the attributes of the domain object to 0. The reward returned from
-	 * specific agent positions may be changed with the
+	 * Initializes the reward function for a grid world of size width and height
+	 * and initializes the reward values everywhere to 0. The reward returned
+	 * from specific agent positions may be changed with the
 	 * {@link #setReward(int, int, double)} method.
 	 * 
-	 * @param domain
-	 *            the domain whose x and y attributes will be used to determine
-	 *            the size of the grid world.
+	 * @param width
+	 *            the width of the grid world
+	 * @param height
+	 *            the height of the grid world
 	 */
-	public GridWorldRewardFunction(Domain domain) {
-		this(domain, 0.);
+	public GridWorldRewardFunction(int width, int height) {
+		this(width, height, 0.);
+	}
+
+	/**
+	 * Initializes the reward function for a grid world of size width and height
+	 * and initializes the reward values everywhere to initializingReward. The
+	 * reward returned from specific agent positions may be changed with the
+	 * {@link #setReward(int, int, double)} method.
+	 * 
+	 * @param width
+	 *            the width of the grid world
+	 * @param height
+	 *            the height of the grid world
+	 * @param initializingReward
+	 *            the reward to which all agent position transitions are
+	 *            initialized to return.
+	 */
+	public GridWorldRewardFunction(int width, int height,
+			double initializingReward) {
+		this.initialize(width, height, initializingReward);
+	}
+
+	/**
+	 * Returns the reward this reward function will return when the agent
+	 * transitions to position x, y.
+	 * 
+	 * @param x
+	 *            the x position
+	 * @param y
+	 *            the y position
+	 * @return the reward this reward function will return when the agent
+	 *         transitions to position x, y.
+	 */
+	public double getRewardForTransitionsTo(int x, int y) {
+		return this.rewardMatrix[x][y];
+	}
+
+	/**
+	 * Returns the reward matrix this reward function uses. Changes to the
+	 * returned matrix *will* change this reward function. rewardMatrix[x][y]
+	 * specifies the reward the agent will receive for transitioning to position
+	 * x,y.
+	 * 
+	 * @return the reward matrix this reward function uses
+	 */
+	public double[][] getRewardMatrix() {
+		return this.rewardMatrix;
 	}
 
 	/**
@@ -122,48 +149,6 @@ public class GridWorldRewardFunction implements RewardFunction {
 		}
 	}
 
-	/**
-	 * Returns the reward matrix this reward function uses. Changes to the
-	 * returned matrix *will* change this reward function. rewardMatrix[x][y]
-	 * specifies the reward the agent will receive for transitioning to position
-	 * x,y.
-	 * 
-	 * @return the reward matrix this reward function uses
-	 */
-	public double[][] getRewardMatrix() {
-		return this.rewardMatrix;
-	}
-
-	/**
-	 * Sets the reward the agent will receive to transitioning to position x, y
-	 * 
-	 * @param x
-	 *            the x position
-	 * @param y
-	 *            the y position
-	 * @param r
-	 *            the reward the agent will receive to transitioning to position
-	 *            x, y
-	 */
-	public void setReward(int x, int y, double r) {
-		this.rewardMatrix[x][y] = r;
-	}
-
-	/**
-	 * Returns the reward this reward function will return when the agent
-	 * transitions to position x, y.
-	 * 
-	 * @param x
-	 *            the x position
-	 * @param y
-	 *            the y position
-	 * @return the reward this reward function will return when the agent
-	 *         transitions to position x, y.
-	 */
-	public double getRewardForTransitionsTo(int x, int y) {
-		return this.rewardMatrix[x][y];
-	}
-
 	@Override
 	public double reward(State s, GroundedAction a, State sprime) {
 		ObjectInstance agent = sprime
@@ -183,6 +168,21 @@ public class GridWorldRewardFunction implements RewardFunction {
 
 		double r = this.rewardMatrix[x][y];
 		return r;
+	}
+
+	/**
+	 * Sets the reward the agent will receive to transitioning to position x, y
+	 * 
+	 * @param x
+	 *            the x position
+	 * @param y
+	 *            the y position
+	 * @param r
+	 *            the reward the agent will receive to transitioning to position
+	 *            x, y
+	 */
+	public void setReward(int x, int y, double r) {
+		this.rewardMatrix[x][y] = r;
 	}
 
 }

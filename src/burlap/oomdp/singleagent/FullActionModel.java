@@ -1,11 +1,11 @@
 package burlap.oomdp.singleagent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import burlap.debugtools.RandomFactory;
 import burlap.oomdp.core.TransitionProbability;
 import burlap.oomdp.core.states.State;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * An interface to be used with {@link burlap.oomdp.singleagent.Action} objects
@@ -40,29 +40,37 @@ import java.util.List;
 public interface FullActionModel {
 
 	/**
-	 * Returns the transition probabilities for applying this action in the
-	 * given state with the given set of parameters. Transition probabilities
-	 * are specified as list of {@link burlap.oomdp.core.TransitionProbability}
-	 * objects. The list is only required to contain transitions with non-zero
-	 * probability.
-	 * 
-	 * @param s
-	 *            the state from which the transition probabilities when
-	 *            applying this action will be returned.
-	 * @param groundedAction
-	 *            the {@link burlap.oomdp.singleagent.GroundedAction} specifying
-	 *            the parameters to use
-	 * @return a List of transition probabilities for applying this action in
-	 *         the given state with the given set of parameters
-	 */
-	List<TransitionProbability> getTransitions(State s,
-			GroundedAction groundedAction);
-
-	/**
 	 * A class with helper methods for working with actions that implement
 	 * {@link burlap.oomdp.singleagent.FullActionModel}.
 	 */
 	public static class FullActionModelHelper {
+
+		/**
+		 * Takes a list of fully enumerated
+		 * {@link burlap.oomdp.core.states.State} transitions specified with
+		 * {@link burlap.oomdp.core.TransitionProbability} objects, and returns
+		 * a new list of {@link burlap.oomdp.core.TransitionProbability} objects
+		 * that excludes any objects assigned probability 0.
+		 * 
+		 * @param sourceTransitions
+		 *            the original list of state transitions
+		 * @return a new list of {@link burlap.oomdp.core.TransitionProbability}
+		 *         objects without any with probability 0.
+		 */
+		public static List<TransitionProbability> removeZeroProbTransitions(
+				List<TransitionProbability> sourceTransitions) {
+
+			List<TransitionProbability> nonZeroes = new ArrayList<TransitionProbability>(
+					sourceTransitions.size());
+			for (TransitionProbability tp : sourceTransitions) {
+				if (tp.p > 0) {
+					nonZeroes.add(tp);
+				}
+			}
+
+			return nonZeroes;
+
+		}
 
 		/**
 		 * Samples a state from fully enumerated transition dynamics that are
@@ -106,33 +114,25 @@ public interface FullActionModel {
 
 		}
 
-		/**
-		 * Takes a list of fully enumerated
-		 * {@link burlap.oomdp.core.states.State} transitions specified with
-		 * {@link burlap.oomdp.core.TransitionProbability} objects, and returns
-		 * a new list of {@link burlap.oomdp.core.TransitionProbability} objects
-		 * that excludes any objects assigned probability 0.
-		 * 
-		 * @param sourceTransitions
-		 *            the original list of state transitions
-		 * @return a new list of {@link burlap.oomdp.core.TransitionProbability}
-		 *         objects without any with probability 0.
-		 */
-		public static List<TransitionProbability> removeZeroProbTransitions(
-				List<TransitionProbability> sourceTransitions) {
-
-			List<TransitionProbability> nonZeroes = new ArrayList<TransitionProbability>(
-					sourceTransitions.size());
-			for (TransitionProbability tp : sourceTransitions) {
-				if (tp.p > 0) {
-					nonZeroes.add(tp);
-				}
-			}
-
-			return nonZeroes;
-
-		}
-
 	}
+
+	/**
+	 * Returns the transition probabilities for applying this action in the
+	 * given state with the given set of parameters. Transition probabilities
+	 * are specified as list of {@link burlap.oomdp.core.TransitionProbability}
+	 * objects. The list is only required to contain transitions with non-zero
+	 * probability.
+	 * 
+	 * @param s
+	 *            the state from which the transition probabilities when
+	 *            applying this action will be returned.
+	 * @param groundedAction
+	 *            the {@link burlap.oomdp.singleagent.GroundedAction} specifying
+	 *            the parameters to use
+	 * @return a List of transition probabilities for applying this action in
+	 *         the given state with the given set of parameters
+	 */
+	List<TransitionProbability> getTransitions(State s,
+			GroundedAction groundedAction);
 
 }

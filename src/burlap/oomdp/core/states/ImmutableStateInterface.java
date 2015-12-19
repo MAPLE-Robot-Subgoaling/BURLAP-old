@@ -19,17 +19,17 @@ import com.google.common.collect.ImmutableList;
  */
 public interface ImmutableStateInterface extends State,
 		Iterable<ImmutableObjectInstance> {
-	ImmutableStateInterface replaceAndHash(
-			ImmutableList<ImmutableObjectInstance> objects, int code);
+	ImmutableList<ImmutableObjectInstance> getImmutableObjects();
 
-	ImmutableStateInterface replaceObject(ObjectInstance objectToReplace,
-			ObjectInstance newObject);
+	boolean isHashed();
 
 	ImmutableStateInterface replaceAllObjects(
 			List<ImmutableObjectInstance> objectsToRemove,
 			List<ImmutableObjectInstance> objectsToAdd);
 
-	ImmutableList<ImmutableObjectInstance> getImmutableObjects();
+	ImmutableStateInterface replaceAndHash(
+			ImmutableList<ImmutableObjectInstance> objects, int code);
 
-	boolean isHashed();
+	ImmutableStateInterface replaceObject(ObjectInstance objectToReplace,
+			ObjectInstance newObject);
 }

@@ -15,16 +15,6 @@ public enum TrialMode {
 	MOSTRECENTTTRIALONLY, TRIALAVERAGESONLY, MOSTRECENTANDAVERAGE;
 
 	/**
-	 * Returns true if the most recent trial plots will be plotted by this mode.
-	 * 
-	 * @return true if the most recent trial plots will be plotted by this mode;
-	 *         false otherwise.
-	 */
-	public boolean mostRecentTrialEnabled() {
-		return this == MOSTRECENTTTRIALONLY || this == MOSTRECENTANDAVERAGE;
-	}
-
-	/**
 	 * Returns true if the trial average plots will be plotted by this mode.
 	 * 
 	 * @return true if the trial average plots will be plotted by this mode;
@@ -32,5 +22,15 @@ public enum TrialMode {
 	 */
 	public boolean averagesEnabled() {
 		return this == TRIALAVERAGESONLY || this == MOSTRECENTANDAVERAGE;
+	}
+
+	/**
+	 * Returns true if the most recent trial plots will be plotted by this mode.
+	 * 
+	 * @return true if the most recent trial plots will be plotted by this mode;
+	 *         false otherwise.
+	 */
+	public boolean mostRecentTrialEnabled() {
+		return this == MOSTRECENTTTRIALONLY || this == MOSTRECENTANDAVERAGE;
 	}
 }

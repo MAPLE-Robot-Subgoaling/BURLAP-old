@@ -1,19 +1,21 @@
 package burlap.behavior.singleagent.interfaces.rlglue;
 
-import burlap.oomdp.auxiliary.DomainGenerator;
-import burlap.oomdp.core.*;
-import burlap.oomdp.core.objects.MutableObjectInstance;
-import burlap.oomdp.core.objects.ObjectInstance;
-import burlap.oomdp.core.states.MutableState;
-import burlap.oomdp.core.states.State;
-import burlap.oomdp.singleagent.Action;
-import burlap.oomdp.singleagent.GroundedAction;
-import burlap.oomdp.singleagent.SADomain;
-import burlap.oomdp.singleagent.common.SimpleAction;
 import org.rlcommunity.rlglue.codec.taskspec.TaskSpec;
 import org.rlcommunity.rlglue.codec.taskspec.ranges.DoubleRange;
 import org.rlcommunity.rlglue.codec.taskspec.ranges.IntRange;
 import org.rlcommunity.rlglue.codec.types.Observation;
+
+import burlap.oomdp.auxiliary.DomainGenerator;
+import burlap.oomdp.core.Attribute;
+import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.ObjectClass;
+import burlap.oomdp.core.objects.MutableObjectInstance;
+import burlap.oomdp.core.objects.ObjectInstance;
+import burlap.oomdp.core.states.MutableState;
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.singleagent.SADomain;
+import burlap.oomdp.singleagent.common.SimpleAction;
 
 /**
  * A class for generating a BURLAP {@link burlap.oomdp.core.Domain} for an
@@ -33,6 +35,46 @@ import org.rlcommunity.rlglue.codec.types.Observation;
  * @author James MacGlashan.
  */
 public class RLGlueDomain implements DomainGenerator {
+
+	/**
+	 * A BURLAP {@link burlap.oomdp.singleagent.Action} that corresponds to an
+	 * RLGlue action that is defined by a single int value.
+	 */
+	public static class RLGlueActionSpecification extends SimpleAction {
+
+		/**
+		 * The RLGlue action index
+		 */
+		protected int ind;
+
+		/**
+		 * Initiaizes.
+		 * 
+		 * @param domain
+		 *            the BURLAP domain to which the action will belong.
+		 * @param ind
+		 *            the RLGlue int identifier of the action
+		 */
+		public RLGlueActionSpecification(Domain domain, int ind) {
+			super("" + ind, domain);
+			this.ind = ind;
+		}
+
+		/**
+		 * Returns the RLGlue int identifier of this action
+		 * 
+		 * @return the RLGlue int identifier of this action
+		 */
+		public int getInd() {
+			return ind;
+		}
+
+		@Override
+		protected State performActionHelper(State s, GroundedAction ga) {
+			throw new RuntimeException(
+					"RLGlue Actions cannot be applied to arbitrary states; they can only be performed in an Environment.");
+		}
+	}
 
 	/**
 	 * The object class name for the object that holds the RLGlue discrete
@@ -59,20 +101,49 @@ public class RLGlueDomain implements DomainGenerator {
 	public static final String REALATT = "real";
 
 	/**
+	 * Creates a BURLAP {@link burlap.oomdp.core.states.State} from a RLGlue
+	 * {@link org.rlcommunity.rlglue.codec.types.Observation}.
+	 * 
+	 * @param domain
+	 *            the domain to which the state
+	 *            {@link burlap.oomdp.core.ObjectClass} instances belong.
+	 * @param obsv
+	 *            the RLGlue
+	 *            {@link org.rlcommunity.rlglue.codec.types.Observation}
+	 * @return the corresponding BURLAP {@link burlap.oomdp.core.states.State}.
+	 */
+	public static State stateFromObservation(Domain domain, Observation obsv) {
+
+		State s = new MutableState();
+
+		if (obsv.intArray != null && obsv.intArray.length > 0) {
+			ObjectInstance o = new MutableObjectInstance(
+					domain.getObjectClass(DISCRETECLASS), "discreteVals");
+			s.addObject(o);
+			for (int i = 0; i < obsv.intArray.length; i++) {
+				o.setValue(DISCATT + i, obsv.intArray[i]);
+			}
+		}
+
+		if (obsv.doubleArray != null && obsv.doubleArray.length > 0) {
+			ObjectInstance o = new MutableObjectInstance(
+					domain.getObjectClass(REALCLASS), "realVals");
+			s.addObject(o);
+			for (int i = 0; i < obsv.doubleArray.length; i++) {
+				o.setValue(REALATT + i, obsv.doubleArray[i]);
+			}
+		}
+
+		return s;
+	}
+
+	/**
 	 * The {@link org.rlcommunity.rlglue.codec.taskspec.TaskSpec} used to
 	 * generate the BURLAP {@link burlap.oomdp.core.Domain}
 	 */
 	protected TaskSpec theTaskSpec;
 
 	public RLGlueDomain(TaskSpec theTaskSpec) {
-		this.theTaskSpec = theTaskSpec;
-	}
-
-	public TaskSpec getTheTaskSpec() {
-		return theTaskSpec;
-	}
-
-	public void setTheTaskSpec(TaskSpec theTaskSpec) {
 		this.theTaskSpec = theTaskSpec;
 	}
 
@@ -113,80 +184,11 @@ public class RLGlueDomain implements DomainGenerator {
 		return domain;
 	}
 
-	/**
-	 * Creates a BURLAP {@link burlap.oomdp.core.states.State} from a RLGlue
-	 * {@link org.rlcommunity.rlglue.codec.types.Observation}.
-	 * 
-	 * @param domain
-	 *            the domain to which the state
-	 *            {@link burlap.oomdp.core.ObjectClass} instances belong.
-	 * @param obsv
-	 *            the RLGlue
-	 *            {@link org.rlcommunity.rlglue.codec.types.Observation}
-	 * @return the corresponding BURLAP {@link burlap.oomdp.core.states.State}.
-	 */
-	public static State stateFromObservation(Domain domain, Observation obsv) {
-
-		State s = new MutableState();
-
-		if (obsv.intArray != null && obsv.intArray.length > 0) {
-			ObjectInstance o = new MutableObjectInstance(
-					domain.getObjectClass(DISCRETECLASS), "discreteVals");
-			s.addObject(o);
-			for (int i = 0; i < obsv.intArray.length; i++) {
-				o.setValue(DISCATT + i, obsv.intArray[i]);
-			}
-		}
-
-		if (obsv.doubleArray != null && obsv.doubleArray.length > 0) {
-			ObjectInstance o = new MutableObjectInstance(
-					domain.getObjectClass(REALCLASS), "realVals");
-			s.addObject(o);
-			for (int i = 0; i < obsv.doubleArray.length; i++) {
-				o.setValue(REALATT + i, obsv.doubleArray[i]);
-			}
-		}
-
-		return s;
+	public TaskSpec getTheTaskSpec() {
+		return theTaskSpec;
 	}
 
-	/**
-	 * A BURLAP {@link burlap.oomdp.singleagent.Action} that corresponds to an
-	 * RLGlue action that is defined by a single int value.
-	 */
-	public static class RLGlueActionSpecification extends SimpleAction {
-
-		/**
-		 * The RLGlue action index
-		 */
-		protected int ind;
-
-		/**
-		 * Initiaizes.
-		 * 
-		 * @param domain
-		 *            the BURLAP domain to which the action will belong.
-		 * @param ind
-		 *            the RLGlue int identifier of the action
-		 */
-		public RLGlueActionSpecification(Domain domain, int ind) {
-			super("" + ind, domain);
-			this.ind = ind;
-		}
-
-		/**
-		 * Returns the RLGlue int identifier of this action
-		 * 
-		 * @return the RLGlue int identifier of this action
-		 */
-		public int getInd() {
-			return ind;
-		}
-
-		@Override
-		protected State performActionHelper(State s, GroundedAction ga) {
-			throw new RuntimeException(
-					"RLGlue Actions cannot be applied to arbitrary states; they can only be performed in an Environment.");
-		}
+	public void setTheTaskSpec(TaskSpec theTaskSpec) {
+		this.theTaskSpec = theTaskSpec;
 	}
 }

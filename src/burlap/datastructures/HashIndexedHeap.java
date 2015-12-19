@@ -89,23 +89,14 @@ public class HashIndexedHeap<T> implements Iterable<T> {
 
 	}
 
-	/**
-	 * Returns the size of the heap
-	 * 
-	 * @return the size of the heap
-	 */
-	public int size() {
-		return size;
-	}
+	private int compare(T a, T b) {
+		int signFlip = 1;
+		if (!maxHeap) {
+			signFlip = -1;
+		}
 
-	/**
-	 * Sets whether this heap is a max heap or a min heap
-	 * 
-	 * @param max
-	 *            if true, sets to be ma heap; if false sets to be min heap.
-	 */
-	public void setUseMaxHeap(boolean max) {
-		this.maxHeap = max;
+		return signFlip * priorityCompare.compare(a, b);
+
 	}
 
 	/**
@@ -124,46 +115,6 @@ public class HashIndexedHeap<T> implements Iterable<T> {
 		}
 		int i = I;
 		return nodesArray.get(i);
-	}
-
-	/**
-	 * Returns a pointer to the head of the heap without removing it
-	 * 
-	 * @return a pointer to the head of the heap
-	 */
-	public T peek() {
-		if (size == 0) {
-			return null;
-		}
-
-		return nodesArray.get(0);
-	}
-
-	/**
-	 * Returns a pointer to the head of the heap and removes it
-	 * 
-	 * @return a pointer to the head of the heap
-	 */
-	public T poll() {
-
-		if (size == 0) {
-			return null;
-		}
-
-		T top = this.peek();
-		arrayIndexMap.remove(top);
-
-		if (size != 1) {
-			T last = nodesArray.get(size - 1);
-			this.set(0, last);
-			size--;
-			this.maxHeapify(0);
-		} else {
-			size--;
-		}
-		nodesArray.remove(size);
-
-		return top;
 	}
 
 	/**
@@ -187,95 +138,13 @@ public class HashIndexedHeap<T> implements Iterable<T> {
 
 	}
 
-	/**
-	 * Calling this method indicates that the priority of the object passed to
-	 * the method has been modified and that this heap needs to reorder its
-	 * elements as a result
-	 * 
-	 * @param el
-	 *            the element whose priority was modified
-	 */
-	public void refreshPriority(T el) {
-		Integer I = arrayIndexMap.get(el);
-		if (I == null) {
-			return; // el is not in the priority queue
-		}
-
-		int i = I;
-		this.refreshPriority(i, el);
-
-	}
-
 	@Override
 	public Iterator<T> iterator() {
 		return this.nodesArray.iterator();
 	}
 
-	/**
-	 * This method returns whether the data structure stored is in fact a heap
-	 * (costs linear time). This method should only be used for debug purposes
-	 * such as when a heap's elements have their priority changed from multiple
-	 * sources and it needs to be made sure that each element is being properly
-	 * refreshed within the heap. Note that to be a heap, each node must be
-	 * greater than or equal to its children.
-	 * 
-	 * @return true if the stored data is a valid heap; false otherwise.
-	 */
-	public boolean satisifiesHeap() {
-
-		for (int i = 0; i < this.nodesArray.size(); i++) {
-			T n = this.nodesArray.get(i);
-			int l = this.left(i);
-			if (l < this.nodesArray.size()) {
-				T ln = this.nodesArray.get(l);
-				if (this.compare(n, ln) < 0) {
-					return false;
-				}
-			}
-
-			int r = this.right(i);
-			if (r < this.nodesArray.size()) {
-				T rn = this.nodesArray.get(r);
-				if (this.compare(n, rn) < 0) {
-					return false;
-				}
-			}
-		}
-
-		return true;
-
-	}
-
-	/**
-	 * Adjusts the heap position of the given element
-	 * 
-	 * @param i
-	 *            the index of the given element
-	 * @param el
-	 *            the element to re-index
-	 */
-	private void refreshPriority(int i, T el) {
-
-		boolean shiftedDown = this.maxHeapify(i);
-
-		if (!shiftedDown) {
-			// if it didn't shift down then we might need to push it up the tree
-			if (i > 0) {
-				T cur = el;
-				int p = this.parent(i);
-				T pel = nodesArray.get(p);
-				while (i > 0 && this.compare(pel, cur) < 0) {
-					this.set(p, cur);
-					this.set(i, pel);
-					i = p;
-					p = this.parent(i);
-					if (i > 0) {
-						pel = nodesArray.get(p);
-					}
-				}
-
-			}
-		}
+	private int left(int i) {
+		return (2 * (i + 1)) - 1;
 	}
 
 	/**
@@ -325,31 +194,162 @@ public class HashIndexedHeap<T> implements Iterable<T> {
 
 	}
 
+	private int parent(int i) {
+		return ((i + 1) / 2) - 1;
+	}
+
+	/**
+	 * Returns a pointer to the head of the heap without removing it
+	 * 
+	 * @return a pointer to the head of the heap
+	 */
+	public T peek() {
+		if (size == 0) {
+			return null;
+		}
+
+		return nodesArray.get(0);
+	}
+
+	/**
+	 * Returns a pointer to the head of the heap and removes it
+	 * 
+	 * @return a pointer to the head of the heap
+	 */
+	public T poll() {
+
+		if (size == 0) {
+			return null;
+		}
+
+		T top = this.peek();
+		arrayIndexMap.remove(top);
+
+		if (size != 1) {
+			T last = nodesArray.get(size - 1);
+			this.set(0, last);
+			size--;
+			this.maxHeapify(0);
+		} else {
+			size--;
+		}
+		nodesArray.remove(size);
+
+		return top;
+	}
+
+	/**
+	 * Adjusts the heap position of the given element
+	 * 
+	 * @param i
+	 *            the index of the given element
+	 * @param el
+	 *            the element to re-index
+	 */
+	private void refreshPriority(int i, T el) {
+
+		boolean shiftedDown = this.maxHeapify(i);
+
+		if (!shiftedDown) {
+			// if it didn't shift down then we might need to push it up the tree
+			if (i > 0) {
+				T cur = el;
+				int p = this.parent(i);
+				T pel = nodesArray.get(p);
+				while (i > 0 && this.compare(pel, cur) < 0) {
+					this.set(p, cur);
+					this.set(i, pel);
+					i = p;
+					p = this.parent(i);
+					if (i > 0) {
+						pel = nodesArray.get(p);
+					}
+				}
+
+			}
+		}
+	}
+
+	/**
+	 * Calling this method indicates that the priority of the object passed to
+	 * the method has been modified and that this heap needs to reorder its
+	 * elements as a result
+	 * 
+	 * @param el
+	 *            the element whose priority was modified
+	 */
+	public void refreshPriority(T el) {
+		Integer I = arrayIndexMap.get(el);
+		if (I == null) {
+			return; // el is not in the priority queue
+		}
+
+		int i = I;
+		this.refreshPriority(i, el);
+
+	}
+
+	private int right(int i) {
+		return (2 * (i + 1));
+	}
+
+	/**
+	 * This method returns whether the data structure stored is in fact a heap
+	 * (costs linear time). This method should only be used for debug purposes
+	 * such as when a heap's elements have their priority changed from multiple
+	 * sources and it needs to be made sure that each element is being properly
+	 * refreshed within the heap. Note that to be a heap, each node must be
+	 * greater than or equal to its children.
+	 * 
+	 * @return true if the stored data is a valid heap; false otherwise.
+	 */
+	public boolean satisifiesHeap() {
+
+		for (int i = 0; i < this.nodesArray.size(); i++) {
+			T n = this.nodesArray.get(i);
+			int l = this.left(i);
+			if (l < this.nodesArray.size()) {
+				T ln = this.nodesArray.get(l);
+				if (this.compare(n, ln) < 0) {
+					return false;
+				}
+			}
+
+			int r = this.right(i);
+			if (r < this.nodesArray.size()) {
+				T rn = this.nodesArray.get(r);
+				if (this.compare(n, rn) < 0) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+
+	}
+
 	private void set(int i, T e) {
 		nodesArray.set(i, e);
 		arrayIndexMap.put(e, i);
 	}
 
-	private int compare(T a, T b) {
-		int signFlip = 1;
-		if (!maxHeap) {
-			signFlip = -1;
-		}
-
-		return signFlip * priorityCompare.compare(a, b);
-
+	/**
+	 * Sets whether this heap is a max heap or a min heap
+	 * 
+	 * @param max
+	 *            if true, sets to be ma heap; if false sets to be min heap.
+	 */
+	public void setUseMaxHeap(boolean max) {
+		this.maxHeap = max;
 	}
 
-	private int parent(int i) {
-		return ((i + 1) / 2) - 1;
-	}
-
-	private int left(int i) {
-		return (2 * (i + 1)) - 1;
-	}
-
-	private int right(int i) {
-		return (2 * (i + 1));
+	/**
+	 * Returns the size of the heap
+	 * 
+	 * @return the size of the heap
+	 */
+	public int size() {
+		return size;
 	}
 
 }

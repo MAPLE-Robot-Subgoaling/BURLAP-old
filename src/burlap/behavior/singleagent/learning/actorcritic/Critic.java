@@ -28,19 +28,6 @@ public interface Critic {
 	public void addNonDomainReferencedAction(Action a);
 
 	/**
-	 * This method is called whenever a new learning episode begins
-	 * 
-	 * @param s
-	 *            the initial state of the new learning episode
-	 */
-	public void initializeEpisode(State s);
-
-	/**
-	 * This method is called whenever a learning episode terminates
-	 */
-	public void endEpisode();
-
-	/**
 	 * This method's implementation provides the critique for some specific
 	 * instance of the behavior.
 	 * 
@@ -55,6 +42,19 @@ public interface Critic {
 	 */
 	public CritiqueResult critiqueAndUpdate(State s, GroundedAction ga,
 			State sprime);
+
+	/**
+	 * This method is called whenever a learning episode terminates
+	 */
+	public void endEpisode();
+
+	/**
+	 * This method is called whenever a new learning episode begins
+	 * 
+	 * @param s
+	 *            the initial state of the new learning episode
+	 */
+	public void initializeEpisode(State s);
 
 	/**
 	 * Used to reset any data that was created/modified during learning so that

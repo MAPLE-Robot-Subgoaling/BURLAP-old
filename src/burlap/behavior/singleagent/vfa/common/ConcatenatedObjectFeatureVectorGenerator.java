@@ -39,22 +39,6 @@ public class ConcatenatedObjectFeatureVectorGenerator implements
 	 * that appear in the array. Furthermore, the order that the observable
 	 * values of the objects are concatenated will follow the order that these
 	 * object classes are specfied, and then by the order that objects appear in
-	 * the BURLAP state.
-	 * 
-	 * @param objectClassOrder
-	 *            the sequence of object classes to use when constructing a
-	 *            state feature vector.
-	 */
-	public ConcatenatedObjectFeatureVectorGenerator(String... objectClassOrder) {
-		this.objectClassOrder = objectClassOrder.clone();
-	}
-
-	/**
-	 * Initializes with an array of or object class names. The resulting state
-	 * feature vector will only be made up of objects beloning to the classes
-	 * that appear in the array. Furthermore, the order that the observable
-	 * values of the objects are concatenated will follow the order that these
-	 * object classes are specfied, and then by the order that objects appear in
 	 * the BURLAP state. If normalizeValues is set to true, then the value of
 	 * all attributes are first normalized using the attribute lowerlims and
 	 * upperlims fields.
@@ -72,15 +56,19 @@ public class ConcatenatedObjectFeatureVectorGenerator implements
 	}
 
 	/**
-	 * Sets whether the object values are normalized in the returned feature
-	 * vector
+	 * Initializes with an array of or object class names. The resulting state
+	 * feature vector will only be made up of objects beloning to the classes
+	 * that appear in the array. Furthermore, the order that the observable
+	 * values of the objects are concatenated will follow the order that these
+	 * object classes are specfied, and then by the order that objects appear in
+	 * the BURLAP state.
 	 * 
-	 * @param normalizeValues
-	 *            true if values should be normalized; false if they should be
-	 *            unnormalized.
+	 * @param objectClassOrder
+	 *            the sequence of object classes to use when constructing a
+	 *            state feature vector.
 	 */
-	public void setNormalizeValues(boolean normalizeValues) {
-		this.normalizeValues = normalizeValues;
+	public ConcatenatedObjectFeatureVectorGenerator(String... objectClassOrder) {
+		this.objectClassOrder = objectClassOrder.clone();
 	}
 
 	@Override
@@ -113,6 +101,18 @@ public class ConcatenatedObjectFeatureVectorGenerator implements
 		}
 
 		return featureVector;
+	}
+
+	/**
+	 * Sets whether the object values are normalized in the returned feature
+	 * vector
+	 * 
+	 * @param normalizeValues
+	 *            true if values should be normalized; false if they should be
+	 *            unnormalized.
+	 */
+	public void setNormalizeValues(boolean normalizeValues) {
+		this.normalizeValues = normalizeValues;
 	}
 
 }

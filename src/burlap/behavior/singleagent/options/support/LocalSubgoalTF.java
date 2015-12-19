@@ -1,8 +1,8 @@
 package burlap.behavior.singleagent.options.support;
 
 import burlap.oomdp.auxiliary.stateconditiontest.StateConditionTest;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 
 /**
  * It is typical for options to be defined for following policies to subgoals

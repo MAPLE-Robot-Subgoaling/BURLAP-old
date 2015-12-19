@@ -1,6 +1,8 @@
 package burlap.debugtools;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Random factory that allows you to logically group various random generators.
@@ -20,21 +22,77 @@ public class RandomFactory {
 	private static RandomFactory factory = new RandomFactory();
 
 	/**
-	 * A default random number generator
+	 * Returns the default random number generator.
+	 * 
+	 * @return the default random number generator.
 	 */
-	Random defaultRandom_;
+	public static Random getDefault() {
+		return factory.ingetDefault();
+	}
 
 	/**
-	 * The set of random number generators that have been constructed for
-	 * different int codes
+	 * Returns the random generator with the associated id or creates it if it
+	 * does not yet exist
+	 * 
+	 * @param id
+	 *            the id of the random generator
+	 * @return the random generator
 	 */
-	Map<Integer, Random> intMapped;
+	public static Random getMapped(int id) {
+		return factory.ingetMapped(id);
+	}
 
 	/**
-	 * The set of random number generators that have been constructed for
-	 * different String codes
+	 * Returns the random generator with the associated String id or creates it
+	 * if it does not yet exist
+	 * 
+	 * @param id
+	 *            the id of the random generator
+	 * @return the random generator
 	 */
-	Map<String, Random> stringMapped;
+	public static Random getMapped(String id) {
+		return factory.ingetMapped(id);
+	}
+
+	/**
+	 * Either return a the default random generator if it has already been
+	 * created; or created it with the given seed if it has not been created.
+	 * 
+	 * @param seed
+	 *            the seed to use
+	 * @return the default random generator
+	 */
+	public static Random getOrSeedDefault(long seed) {
+		return factory.ingetOrSeedDefault(seed);
+	}
+
+	/**
+	 * Either returns the random generator for the given id or creates if with
+	 * the given seed it does not yet exit
+	 * 
+	 * @param id
+	 *            the id of the random generator
+	 * @param seed
+	 *            the seed to use
+	 * @return the random generator
+	 */
+	public static Random getOrSeedMapped(int id, long seed) {
+		return factory.ingetOrSeedMapped(id, seed);
+	}
+
+	/**
+	 * Either returns the random generator for the given String id or creates if
+	 * with the given seed it does not yet exit
+	 * 
+	 * @param id
+	 *            the id of the random generator
+	 * @param seed
+	 *            the seed to use
+	 * @return the random generator
+	 */
+	public static Random getOrSeedMapped(String id, long seed) {
+		return factory.ingetOrSeedMapped(id, seed);
+	}
 
 	/**
 	 * Example usage.
@@ -58,15 +116,6 @@ public class RandomFactory {
 	}
 
 	/**
-	 * Returns the default random number generator.
-	 * 
-	 * @return the default random number generator.
-	 */
-	public static Random getDefault() {
-		return factory.ingetDefault();
-	}
-
-	/**
 	 * Sets the seed of the default random number generator
 	 * 
 	 * @param seed
@@ -75,30 +124,6 @@ public class RandomFactory {
 	 */
 	public static Random seedDefault(long seed) {
 		return factory.inseedDefault(seed);
-	}
-
-	/**
-	 * Either return a the default random generator if it has already been
-	 * created; or created it with the given seed if it has not been created.
-	 * 
-	 * @param seed
-	 *            the seed to use
-	 * @return the default random generator
-	 */
-	public static Random getOrSeedDefault(long seed) {
-		return factory.ingetOrSeedDefault(seed);
-	}
-
-	/**
-	 * Returns the random generator with the associated id or creates it if it
-	 * does not yet exist
-	 * 
-	 * @param id
-	 *            the id of the random generator
-	 * @return the random generator
-	 */
-	public static Random getMapped(int id) {
-		return factory.ingetMapped(id);
 	}
 
 	/**
@@ -116,32 +141,6 @@ public class RandomFactory {
 	}
 
 	/**
-	 * Either returns the random generator for the given id or creates if with
-	 * the given seed it does not yet exit
-	 * 
-	 * @param id
-	 *            the id of the random generator
-	 * @param seed
-	 *            the seed to use
-	 * @return the random generator
-	 */
-	public static Random getOrSeedMapped(int id, long seed) {
-		return factory.ingetOrSeedMapped(id, seed);
-	}
-
-	/**
-	 * Returns the random generator with the associated String id or creates it
-	 * if it does not yet exist
-	 * 
-	 * @param id
-	 *            the id of the random generator
-	 * @return the random generator
-	 */
-	public static Random getMapped(String id) {
-		return factory.ingetMapped(id);
-	}
-
-	/**
 	 * Seeds and returns the random generator with the associated String id or
 	 * creates it if it does not yet exist
 	 * 
@@ -156,18 +155,21 @@ public class RandomFactory {
 	}
 
 	/**
-	 * Either returns the random generator for the given String id or creates if
-	 * with the given seed it does not yet exit
-	 * 
-	 * @param id
-	 *            the id of the random generator
-	 * @param seed
-	 *            the seed to use
-	 * @return the random generator
+	 * A default random number generator
 	 */
-	public static Random getOrSeedMapped(String id, long seed) {
-		return factory.ingetOrSeedMapped(id, seed);
-	}
+	Random defaultRandom_;
+
+	/**
+	 * The set of random number generators that have been constructed for
+	 * different int codes
+	 */
+	Map<Integer, Random> intMapped;
+
+	/**
+	 * The set of random number generators that have been constructed for
+	 * different String codes
+	 */
+	Map<String, Random> stringMapped;
 
 	/**
 	 * Initializes the map structures
@@ -191,33 +193,6 @@ public class RandomFactory {
 	}
 
 	/**
-	 * Sets the seed of the default random number generator
-	 * 
-	 * @param seed
-	 *            the seed to use
-	 * @return the default random number generator
-	 */
-	public Random inseedDefault(long seed) {
-		defaultRandom_ = new Random(seed);
-		return defaultRandom_;
-	}
-
-	/**
-	 * Either return a the default random generator if it has already been
-	 * created; or created it with the given seed if it has not been created.
-	 * 
-	 * @param seed
-	 *            the seed to use
-	 * @return the default random generator
-	 */
-	public Random ingetOrSeedDefault(long seed) {
-		if (defaultRandom_ == null) {
-			defaultRandom_ = new Random(seed);
-		}
-		return defaultRandom_;
-	}
-
-	/**
 	 * Returns the random generator with the associated id or creates it if it
 	 * does not yet exist
 	 * 
@@ -231,43 +206,6 @@ public class RandomFactory {
 			return r;
 		} else {
 			r = new Random();
-			intMapped.put(id, r);
-		}
-		return r;
-	}
-
-	/**
-	 * Seeds and returns the random generator with the associated id or creates
-	 * it if it does not yet exist
-	 * 
-	 * @param id
-	 *            the id of the random generator
-	 * @param seed
-	 *            the seed to use
-	 * @return the random generator
-	 */
-	public Random inseedMapped(int id, long seed) {
-		Random r = new Random(seed);
-		intMapped.put(id, r);
-		return r;
-	}
-
-	/**
-	 * Either returns the random generator for the given id or creates if with
-	 * the given seed it does not yet exit
-	 * 
-	 * @param id
-	 *            the id of the random generator
-	 * @param seed
-	 *            the seed to use
-	 * @return the random generator
-	 */
-	public Random ingetOrSeedMapped(int id, long seed) {
-		Random r = intMapped.get(id);
-		if (r != null) {
-			return r;
-		} else {
-			r = new Random(seed);
 			intMapped.put(id, r);
 		}
 		return r;
@@ -293,8 +231,23 @@ public class RandomFactory {
 	}
 
 	/**
-	 * Seeds and returns the random generator with the associated String id or
-	 * creates it if it does not yet exist
+	 * Either return a the default random generator if it has already been
+	 * created; or created it with the given seed if it has not been created.
+	 * 
+	 * @param seed
+	 *            the seed to use
+	 * @return the default random generator
+	 */
+	public Random ingetOrSeedDefault(long seed) {
+		if (defaultRandom_ == null) {
+			defaultRandom_ = new Random(seed);
+		}
+		return defaultRandom_;
+	}
+
+	/**
+	 * Either returns the random generator for the given id or creates if with
+	 * the given seed it does not yet exit
 	 * 
 	 * @param id
 	 *            the id of the random generator
@@ -302,9 +255,14 @@ public class RandomFactory {
 	 *            the seed to use
 	 * @return the random generator
 	 */
-	public Random inseedMapped(String id, long seed) {
-		Random r = new Random(seed);
-		stringMapped.put(id, r);
+	public Random ingetOrSeedMapped(int id, long seed) {
+		Random r = intMapped.get(id);
+		if (r != null) {
+			return r;
+		} else {
+			r = new Random(seed);
+			intMapped.put(id, r);
+		}
 		return r;
 	}
 
@@ -326,6 +284,50 @@ public class RandomFactory {
 			r = new Random(seed);
 			stringMapped.put(id, r);
 		}
+		return r;
+	}
+
+	/**
+	 * Sets the seed of the default random number generator
+	 * 
+	 * @param seed
+	 *            the seed to use
+	 * @return the default random number generator
+	 */
+	public Random inseedDefault(long seed) {
+		defaultRandom_ = new Random(seed);
+		return defaultRandom_;
+	}
+
+	/**
+	 * Seeds and returns the random generator with the associated id or creates
+	 * it if it does not yet exist
+	 * 
+	 * @param id
+	 *            the id of the random generator
+	 * @param seed
+	 *            the seed to use
+	 * @return the random generator
+	 */
+	public Random inseedMapped(int id, long seed) {
+		Random r = new Random(seed);
+		intMapped.put(id, r);
+		return r;
+	}
+
+	/**
+	 * Seeds and returns the random generator with the associated String id or
+	 * creates it if it does not yet exist
+	 * 
+	 * @param id
+	 *            the id of the random generator
+	 * @param seed
+	 *            the seed to use
+	 * @return the random generator
+	 */
+	public Random inseedMapped(String id, long seed) {
+		Random r = new Random(seed);
+		stringMapped.put(id, r);
 		return r;
 	}
 

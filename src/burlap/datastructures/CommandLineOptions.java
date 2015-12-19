@@ -58,26 +58,6 @@ public class CommandLineOptions {
 	}
 
 	/**
-	 * Returns the value of the queried option. If the the queried option is not
-	 * set or has not associated value, then the empty string is returned. This
-	 * method will automatically ignore a prefix "--" if it is included in the
-	 * option name.
-	 * 
-	 * @param option
-	 *            the option to get the value for.
-	 * @return the empty string if the option is not set or has no associated
-	 *         value; the associated value otherwise.
-	 */
-	public String optionValue(String option) {
-		if (option.startsWith("--")) {
-			option = option.substring(2);
-		}
-		String result = this.optionValue.get(option);
-		result = result != null ? result : "";
-		return result;
-	}
-
-	/**
 	 * Returns the list of options whose name starts with the given option
 	 * prefix. This method will automatically ignore a prefix "--" if it is
 	 * included in the optionPrefix name.
@@ -99,6 +79,26 @@ public class CommandLineOptions {
 		}
 
 		return options;
+	}
+
+	/**
+	 * Returns the value of the queried option. If the the queried option is not
+	 * set or has not associated value, then the empty string is returned. This
+	 * method will automatically ignore a prefix "--" if it is included in the
+	 * option name.
+	 * 
+	 * @param option
+	 *            the option to get the value for.
+	 * @return the empty string if the option is not set or has no associated
+	 *         value; the associated value otherwise.
+	 */
+	public String optionValue(String option) {
+		if (option.startsWith("--")) {
+			option = option.substring(2);
+		}
+		String result = this.optionValue.get(option);
+		result = result != null ? result : "";
+		return result;
 	}
 
 }

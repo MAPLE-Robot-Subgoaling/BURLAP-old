@@ -1,10 +1,10 @@
 package burlap.domain.singleagent.blockdude;
 
+import java.util.List;
+
+import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.core.TerminalFunction;
-
-import java.util.List;
 
 /**
  * A {@link burlap.oomdp.core.TerminalFunction} for

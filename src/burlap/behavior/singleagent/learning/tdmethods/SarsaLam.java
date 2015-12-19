@@ -2,19 +2,19 @@ package burlap.behavior.singleagent.learning.tdmethods;
 
 import java.util.LinkedList;
 
-import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.policy.Policy;
+import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.options.Option;
+import burlap.behavior.singleagent.options.support.EnvironmentOptionOutcome;
 import burlap.behavior.valuefunction.QValue;
 import burlap.behavior.valuefunction.ValueFunctionInitialization;
-import burlap.behavior.singleagent.options.support.EnvironmentOptionOutcome;
-import burlap.behavior.singleagent.options.Option;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.environment.Environment;
 import burlap.oomdp.singleagent.environment.EnvironmentOutcome;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * Tabular SARSA(\lambda) implementation [1]. This implementation will work
@@ -50,6 +50,54 @@ import burlap.oomdp.singleagent.environment.EnvironmentOutcome;
  * 
  */
 public class SarsaLam extends QLearning {
+
+	/**
+	 * A data structure for maintaining eligibility trace values
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class EligibilityTrace {
+
+		/**
+		 * The eligibility value
+		 */
+		public double eligibility;
+
+		/**
+		 * The state for this trace
+		 */
+		public HashableState sh;
+
+		/**
+		 * The current Q-value info for this trace (contains the action
+		 * reference)
+		 */
+		public QValue q;
+
+		/**
+		 * The initial numeric Q-value for this trace when it was created.
+		 */
+		public double initialQ;
+
+		/**
+		 * Creates a new eligibility trace to track for an episode.
+		 * 
+		 * @param sh
+		 *            the state of the trace
+		 * @param q
+		 *            the q-value (containing the action reference) of the trace
+		 * @param elgigbility
+		 *            the eligibility value
+		 */
+		public EligibilityTrace(HashableState sh, QValue q, double elgigbility) {
+			this.sh = sh;
+			this.q = q;
+			this.eligibility = elgigbility;
+			this.initialQ = q.q;
+		}
+
+	}
 
 	/**
 	 * the strength of eligibility traces (0 for one step, 1 for full
@@ -208,10 +256,6 @@ public class SarsaLam extends QLearning {
 		this.sarsalamInit(lambda);
 	}
 
-	protected void sarsalamInit(double lambda) {
-		this.lambda = lambda;
-	}
-
 	@Override
 	public EpisodeAnalysis runLearningEpisode(Environment env, int maxSteps) {
 
@@ -321,52 +365,8 @@ public class SarsaLam extends QLearning {
 		return ea;
 	}
 
-	/**
-	 * A data structure for maintaining eligibility trace values
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class EligibilityTrace {
-
-		/**
-		 * The eligibility value
-		 */
-		public double eligibility;
-
-		/**
-		 * The state for this trace
-		 */
-		public HashableState sh;
-
-		/**
-		 * The current Q-value info for this trace (contains the action
-		 * reference)
-		 */
-		public QValue q;
-
-		/**
-		 * The initial numeric Q-value for this trace when it was created.
-		 */
-		public double initialQ;
-
-		/**
-		 * Creates a new eligibility trace to track for an episode.
-		 * 
-		 * @param sh
-		 *            the state of the trace
-		 * @param q
-		 *            the q-value (containing the action reference) of the trace
-		 * @param elgigbility
-		 *            the eligibility value
-		 */
-		public EligibilityTrace(HashableState sh, QValue q, double elgigbility) {
-			this.sh = sh;
-			this.q = q;
-			this.eligibility = elgigbility;
-			this.initialQ = q.q;
-		}
-
+	protected void sarsalamInit(double lambda) {
+		this.lambda = lambda;
 	}
 
 }

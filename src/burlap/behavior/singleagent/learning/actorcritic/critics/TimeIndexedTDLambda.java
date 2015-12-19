@@ -5,15 +5,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.behavior.singleagent.learning.actorcritic.CritiqueResult;
 import burlap.behavior.singleagent.options.Option;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
-import burlap.oomdp.core.states.State;
+import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * An implementation of TDLambda that can be used as a critic for
@@ -33,6 +33,41 @@ import burlap.oomdp.singleagent.RewardFunction;
  * 
  */
 public class TimeIndexedTDLambda extends TDLambda {
+
+	/**
+	 * Extends the standard {@link TDLambda.StateEligibilityTrace} to include
+	 * time/depth information.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class StateTimeElibilityTrace extends StateEligibilityTrace {
+
+		/**
+		 * The time/depth of the state this eligibility represents.
+		 */
+		public int timeIndex;
+
+		/**
+		 * Initializes with hashed state, eligibility value, time/depth of the
+		 * state, and the value function value associated with the state.
+		 * 
+		 * @param sh
+		 *            the hashed input state for this eligibility
+		 * @param time
+		 *            the time/depth of the state at which it was first visited.
+		 * @param eligibility
+		 *            the eligibility of the state
+		 * @param v
+		 *            the value function value for the state.
+		 */
+		public StateTimeElibilityTrace(HashableState sh, int time,
+				double eligibility, VValue v) {
+			super(sh, eligibility, v);
+			this.timeIndex = time;
+		}
+
+	}
 
 	/**
 	 * The time/depth indexed value function
@@ -147,36 +182,6 @@ public class TimeIndexedTDLambda extends TDLambda {
 
 	}
 
-	/**
-	 * Returns the current time/depth of the current episodes
-	 * 
-	 * @return the current time/depth of the current episodes
-	 */
-	public int getCurTime() {
-		return curTime;
-	}
-
-	/**
-	 * Sets the time/depth of the current episode.
-	 * 
-	 * @param t
-	 *            the time/depth of the current episode.
-	 */
-	public void setCurTime(int t) {
-		this.curTime = t;
-	}
-
-	@Override
-	public void initializeEpisode(State s) {
-		super.initializeEpisode(s);
-		this.curTime = 0;
-	}
-
-	@Override
-	public void endEpisode() {
-		super.endEpisode();
-	}
-
 	@Override
 	public CritiqueResult critiqueAndUpdate(State s, GroundedAction ga,
 			State sprime) {
@@ -229,6 +234,20 @@ public class TimeIndexedTDLambda extends TDLambda {
 		return critique;
 	}
 
+	@Override
+	public void endEpisode() {
+		super.endEpisode();
+	}
+
+	/**
+	 * Returns the current time/depth of the current episodes
+	 * 
+	 * @return the current time/depth of the current episodes
+	 */
+	public int getCurTime() {
+		return curTime;
+	}
+
 	/**
 	 * Returns the {@link TDLambda.VValue} object (storing the value) for a
 	 * given hashed stated at the specified time/depth.
@@ -257,44 +276,25 @@ public class TimeIndexedTDLambda extends TDLambda {
 	}
 
 	@Override
+	public void initializeEpisode(State s) {
+		super.initializeEpisode(s);
+		this.curTime = 0;
+	}
+
+	@Override
 	public void resetData() {
 		super.resetData();
 		this.vTIndex.clear();
 	}
 
 	/**
-	 * Extends the standard {@link TDLambda.StateEligibilityTrace} to include
-	 * time/depth information.
+	 * Sets the time/depth of the current episode.
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @param t
+	 *            the time/depth of the current episode.
 	 */
-	public static class StateTimeElibilityTrace extends StateEligibilityTrace {
-
-		/**
-		 * The time/depth of the state this eligibility represents.
-		 */
-		public int timeIndex;
-
-		/**
-		 * Initializes with hashed state, eligibility value, time/depth of the
-		 * state, and the value function value associated with the state.
-		 * 
-		 * @param sh
-		 *            the hashed input state for this eligibility
-		 * @param time
-		 *            the time/depth of the state at which it was first visited.
-		 * @param eligibility
-		 *            the eligibility of the state
-		 * @param v
-		 *            the value function value for the state.
-		 */
-		public StateTimeElibilityTrace(HashableState sh, int time,
-				double eligibility, VValue v) {
-			super(sh, eligibility, v);
-			this.timeIndex = time;
-		}
-
+	public void setCurTime(int t) {
+		this.curTime = t;
 	}
 
 }

@@ -9,10 +9,10 @@ import java.util.Map;
 import burlap.behavior.policy.Policy;
 import burlap.behavior.policy.SolverDerivedPolicy;
 import burlap.behavior.singleagent.MDPSolverInterface;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.statehashing.HashableState;
 
 /**
  * This policy is for use with UCT. Note that UCT can only guarantee the policy
@@ -46,15 +46,6 @@ public class UCTTreeWalkPolicy extends Policy implements SolverDerivedPolicy {
 	public UCTTreeWalkPolicy(UCT planner) {
 		this.planner = planner;
 		policy = null;
-	}
-
-	@Override
-	public void setSolver(MDPSolverInterface solver) {
-		if (!(solver instanceof UCT)) {
-			throw new RuntimeException("Planner must be an instance of UCT");
-		}
-		this.planner = (UCT) solver;
-
 	}
 
 	/**
@@ -105,35 +96,6 @@ public class UCTTreeWalkPolicy extends Policy implements SolverDerivedPolicy {
 
 	}
 
-	/**
-	 * Returns the {@link UCTActionNode} with the highest average sample return.
-	 * Note that this does not use the upper confidence since planning is
-	 * completed.
-	 * 
-	 * @param snode
-	 *            the {@link UCTStateNode} for which to get the best
-	 *            {@link UCTActionNode}.
-	 * @return the {@link UCTActionNode} with the highest average sample return.
-	 */
-	protected UCTActionNode getQGreedyNode(UCTStateNode snode) {
-
-		double maxQ = Double.NEGATIVE_INFINITY;
-		UCTActionNode choice = null;
-
-		for (UCTActionNode anode : snode.actionNodes) {
-
-			// only select nodes that have been visited
-			if (anode.n > 0 && anode.averageReturn() > maxQ) {
-				maxQ = anode.averageReturn();
-				choice = anode;
-			}
-
-		}
-
-		return choice;
-
-	}
-
 	@Override
 	public AbstractGroundedAction getAction(State s) {
 
@@ -168,10 +130,33 @@ public class UCTTreeWalkPolicy extends Policy implements SolverDerivedPolicy {
 		return res;
 	}
 
-	@Override
-	public boolean isStochastic() {
-		return false; // although UCT solves stochastic MDPs, the policy
-						// returned here is deterministic and greedy
+	/**
+	 * Returns the {@link UCTActionNode} with the highest average sample return.
+	 * Note that this does not use the upper confidence since planning is
+	 * completed.
+	 * 
+	 * @param snode
+	 *            the {@link UCTStateNode} for which to get the best
+	 *            {@link UCTActionNode}.
+	 * @return the {@link UCTActionNode} with the highest average sample return.
+	 */
+	protected UCTActionNode getQGreedyNode(UCTStateNode snode) {
+
+		double maxQ = Double.NEGATIVE_INFINITY;
+		UCTActionNode choice = null;
+
+		for (UCTActionNode anode : snode.actionNodes) {
+
+			// only select nodes that have been visited
+			if (anode.n > 0 && anode.averageReturn() > maxQ) {
+				maxQ = anode.averageReturn();
+				choice = anode;
+			}
+
+		}
+
+		return choice;
+
 	}
 
 	@Override
@@ -185,6 +170,21 @@ public class UCTTreeWalkPolicy extends Policy implements SolverDerivedPolicy {
 		}
 
 		return true;
+	}
+
+	@Override
+	public boolean isStochastic() {
+		return false; // although UCT solves stochastic MDPs, the policy
+						// returned here is deterministic and greedy
+	}
+
+	@Override
+	public void setSolver(MDPSolverInterface solver) {
+		if (!(solver instanceof UCT)) {
+			throw new RuntimeException("Planner must be an instance of UCT");
+		}
+		this.planner = (UCT) solver;
+
 	}
 
 }

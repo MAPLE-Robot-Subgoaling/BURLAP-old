@@ -33,20 +33,6 @@ public interface DirectOptionTerminateMapper {
 	public State generateOptionTerminalState(State s);
 
 	/**
-	 * Returns the number of steps that would have occurred for taking the
-	 * option associated with this object from state <code>s</code> and
-	 * terminating in state <code>sp</code>.
-	 * 
-	 * @param s
-	 *            the initiation state in which the option associated with this
-	 *            object will be applied.
-	 * @param sp
-	 *            the terminal state the option will reach
-	 * @return the number of steps that would have occurred
-	 */
-	public int getNumSteps(State s, State sp);
-
-	/**
 	 * Returns the cumulative discounted reward that would be received from
 	 * applying the option associated with this object in the given initiation
 	 * state.
@@ -64,5 +50,19 @@ public interface DirectOptionTerminateMapper {
 	 */
 	public double getCumulativeReward(State s, State sp, RewardFunction rf,
 			double discount);
+
+	/**
+	 * Returns the number of steps that would have occurred for taking the
+	 * option associated with this object from state <code>s</code> and
+	 * terminating in state <code>sp</code>.
+	 * 
+	 * @param s
+	 *            the initiation state in which the option associated with this
+	 *            object will be applied.
+	 * @param sp
+	 *            the terminal state the option will reach
+	 * @return the number of steps that would have occurred
+	 */
+	public int getNumSteps(State s, State sp);
 
 }

@@ -32,22 +32,12 @@ public class PolicyRenderLayer implements RenderLayer {
 	}
 
 	/**
-	 * Returns the states that will be visualized
+	 * Returns the policy that will be rendered.
 	 * 
-	 * @return the states that will be visualized
+	 * @return the policy to be rendered
 	 */
-	public Collection<State> getStatesToVisualize() {
-		return statesToVisualize;
-	}
-
-	/**
-	 * Sets the states to visualize
-	 * 
-	 * @param stateValuesToVisualize
-	 *            the state to visualize
-	 */
-	public void setStatesToVisualize(Collection<State> stateValuesToVisualize) {
-		this.statesToVisualize = stateValuesToVisualize;
+	public Policy getPolicy() {
+		return policy;
 	}
 
 	/**
@@ -60,32 +50,12 @@ public class PolicyRenderLayer implements RenderLayer {
 	}
 
 	/**
-	 * Sets the state-wise policy painter
+	 * Returns the states that will be visualized
 	 * 
-	 * @param spp
-	 *            the state-wise policy painter
+	 * @return the states that will be visualized
 	 */
-	public void setSpp(StatePolicyPainter spp) {
-		this.spp = spp;
-	}
-
-	/**
-	 * Returns the policy that will be rendered.
-	 * 
-	 * @return the policy to be rendered
-	 */
-	public Policy getPolicy() {
-		return policy;
-	}
-
-	/**
-	 * Sets the policy to render
-	 * 
-	 * @param policy
-	 *            the policy to render
-	 */
-	public void setPolicy(Policy policy) {
-		this.policy = policy;
+	public Collection<State> getStatesToVisualize() {
+		return statesToVisualize;
 	}
 
 	@Override
@@ -99,6 +69,36 @@ public class PolicyRenderLayer implements RenderLayer {
 			this.spp.paintStatePolicy(g2, s, policy, width, height);
 		}
 
+	}
+
+	/**
+	 * Sets the policy to render
+	 * 
+	 * @param policy
+	 *            the policy to render
+	 */
+	public void setPolicy(Policy policy) {
+		this.policy = policy;
+	}
+
+	/**
+	 * Sets the state-wise policy painter
+	 * 
+	 * @param spp
+	 *            the state-wise policy painter
+	 */
+	public void setSpp(StatePolicyPainter spp) {
+		this.spp = spp;
+	}
+
+	/**
+	 * Sets the states to visualize
+	 * 
+	 * @param stateValuesToVisualize
+	 *            the state to visualize
+	 */
+	public void setStatesToVisualize(Collection<State> stateValuesToVisualize) {
+		this.statesToVisualize = stateValuesToVisualize;
 	}
 
 }

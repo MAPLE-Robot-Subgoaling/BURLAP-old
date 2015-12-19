@@ -1,5 +1,7 @@
 package burlap.behavior.singleagent.learning.modellearning;
 
+import java.util.List;
+
 import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.PropositionalFunction;
@@ -8,8 +10,6 @@ import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.FullActionModel;
 import burlap.oomdp.singleagent.GroundedAction;
-
-import java.util.List;
 
 /**
  * Use this class when an action model is being modeled. It will create a new
@@ -23,46 +23,6 @@ import java.util.List;
  * 
  */
 public class ModeledDomainGenerator implements DomainGenerator {
-
-	/**
-	 * The domain object to be returned
-	 */
-	protected Domain modelDomain;
-
-	/**
-	 * Creates a new domain object that is a reflection of the input domain,
-	 * Actions are created using the {@link ModeledAction} class and their
-	 * execution and transition dynamics should be defined by the given model
-	 * that was learned by some {@link Model} class. To retrieve the Domain
-	 * object that was created, make a call to the {@link #generateDomain()}
-	 * method.
-	 * 
-	 * @param sourceDomain
-	 *            the source domain that the create domain will reflect.
-	 */
-	public ModeledDomainGenerator(Domain sourceDomain, Model model) {
-
-		// model domain copies object classes
-		modelDomain = sourceDomain.getNewDomainWithCopiedObjectClasses();
-
-		for (Action srcA : sourceDomain.getActions()) {
-			new ModeledAction(modelDomain, srcA, model);
-		}
-
-		// model domain take same object pointers to propositional functions in
-		// the source domain;
-		// note that the propositional functions will still belong to the
-		// original source domain
-		for (PropositionalFunction pf : sourceDomain.getPropFunctions()) {
-			modelDomain.addPropositionalFunction(pf);
-		}
-
-	}
-
-	@Override
-	public Domain generateDomain() {
-		return modelDomain;
-	}
 
 	/**
 	 * A class for creating an action model for some source action. This class
@@ -115,25 +75,13 @@ public class ModeledDomainGenerator implements DomainGenerator {
 		}
 
 		@Override
-		public boolean isPrimitive() {
-			return sourceAction.isPrimitive();
-		}
-
-		@Override
-		public boolean isParameterized() {
-			return sourceAction.isParameterized();
-		}
-
-		@Override
-		protected State performActionHelper(State s,
-				GroundedAction groundedAction) {
-			return this.model.sampleModel(s, groundedAction);
-		}
-
-		@Override
-		public List<TransitionProbability> getTransitions(State s,
-				GroundedAction groundedAction) {
-			return this.model.getTransitionProbabilities(s, groundedAction);
+		public List<GroundedAction> getAllApplicableGroundedActions(State s) {
+			List<GroundedAction> actionList = sourceAction
+					.getAllApplicableGroundedActions(s);
+			for (GroundedAction ga : actionList) {
+				ga.action = this;
+			}
+			return actionList;
 		}
 
 		@Override
@@ -145,14 +93,66 @@ public class ModeledDomainGenerator implements DomainGenerator {
 		}
 
 		@Override
-		public List<GroundedAction> getAllApplicableGroundedActions(State s) {
-			List<GroundedAction> actionList = sourceAction
-					.getAllApplicableGroundedActions(s);
-			for (GroundedAction ga : actionList) {
-				ga.action = this;
-			}
-			return actionList;
+		public List<TransitionProbability> getTransitions(State s,
+				GroundedAction groundedAction) {
+			return this.model.getTransitionProbabilities(s, groundedAction);
 		}
+
+		@Override
+		public boolean isParameterized() {
+			return sourceAction.isParameterized();
+		}
+
+		@Override
+		public boolean isPrimitive() {
+			return sourceAction.isPrimitive();
+		}
+
+		@Override
+		protected State performActionHelper(State s,
+				GroundedAction groundedAction) {
+			return this.model.sampleModel(s, groundedAction);
+		}
+	}
+
+	/**
+	 * The domain object to be returned
+	 */
+	protected Domain modelDomain;
+
+	/**
+	 * Creates a new domain object that is a reflection of the input domain,
+	 * Actions are created using the {@link ModeledAction} class and their
+	 * execution and transition dynamics should be defined by the given model
+	 * that was learned by some {@link Model} class. To retrieve the Domain
+	 * object that was created, make a call to the {@link #generateDomain()}
+	 * method.
+	 * 
+	 * @param sourceDomain
+	 *            the source domain that the create domain will reflect.
+	 */
+	public ModeledDomainGenerator(Domain sourceDomain, Model model) {
+
+		// model domain copies object classes
+		modelDomain = sourceDomain.getNewDomainWithCopiedObjectClasses();
+
+		for (Action srcA : sourceDomain.getActions()) {
+			new ModeledAction(modelDomain, srcA, model);
+		}
+
+		// model domain take same object pointers to propositional functions in
+		// the source domain;
+		// note that the propositional functions will still belong to the
+		// original source domain
+		for (PropositionalFunction pf : sourceDomain.getPropFunctions()) {
+			modelDomain.addPropositionalFunction(pf);
+		}
+
+	}
+
+	@Override
+	public Domain generateDomain() {
+		return modelDomain;
 	}
 
 }

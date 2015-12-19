@@ -24,13 +24,10 @@ public class MultiStatePrePlanner {
 	 * @param planner
 	 *            the valueFunction to be used.
 	 * @param initialStates
-	 *            a
-	 *            {@link burlap.oomdp.auxiliary.stateconditiontest.StateConditionTestIterable}
-	 *            object that will iterate over the initial states from which to
-	 *            plan.
+	 *            a collection of states from which to plan.
 	 */
 	public static void runPlannerForAllInitStates(Planner planner,
-			StateConditionTestIterable initialStates) {
+			Collection<State> initialStates) {
 		for (State s : initialStates) {
 			planner.planFromState(s);
 		}
@@ -43,10 +40,13 @@ public class MultiStatePrePlanner {
 	 * @param planner
 	 *            the valueFunction to be used.
 	 * @param initialStates
-	 *            a collection of states from which to plan.
+	 *            a
+	 *            {@link burlap.oomdp.auxiliary.stateconditiontest.StateConditionTestIterable}
+	 *            object that will iterate over the initial states from which to
+	 *            plan.
 	 */
 	public static void runPlannerForAllInitStates(Planner planner,
-			Collection<State> initialStates) {
+			StateConditionTestIterable initialStates) {
 		for (State s : initialStates) {
 			planner.planFromState(s);
 		}

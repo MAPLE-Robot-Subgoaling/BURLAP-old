@@ -10,25 +10,25 @@ import java.util.Set;
 
 import burlap.behavior.learningrate.ConstantLR;
 import burlap.behavior.learningrate.LearningRate;
-import burlap.behavior.policy.GreedyQPolicy;
-import burlap.behavior.singleagent.EpisodeAnalysis;
-import burlap.behavior.policy.Policy;
-import burlap.behavior.singleagent.planning.Planner;
-import burlap.behavior.valuefunction.QValue;
-import burlap.behavior.singleagent.learning.LearningAgent;
-import burlap.behavior.singleagent.options.support.EnvironmentOptionOutcome;
-import burlap.behavior.singleagent.options.Option;
-import burlap.behavior.singleagent.MDPSolver;
-import burlap.behavior.valuefunction.QFunction;
 import burlap.behavior.policy.EpsilonGreedy;
+import burlap.behavior.policy.GreedyQPolicy;
+import burlap.behavior.policy.Policy;
+import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.MDPSolver;
+import burlap.behavior.singleagent.learning.LearningAgent;
+import burlap.behavior.singleagent.options.Option;
+import burlap.behavior.singleagent.options.support.EnvironmentOptionOutcome;
+import burlap.behavior.singleagent.planning.Planner;
 import burlap.behavior.singleagent.vfa.ActionApproximationResult;
 import burlap.behavior.singleagent.vfa.FunctionWeight;
 import burlap.behavior.singleagent.vfa.ValueFunctionApproximation;
 import burlap.behavior.singleagent.vfa.WeightGradient;
+import burlap.behavior.valuefunction.QFunction;
+import burlap.behavior.valuefunction.QValue;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
@@ -76,6 +76,47 @@ import burlap.oomdp.singleagent.environment.SimulatedEnvironment;
  */
 public class GradientDescentSarsaLam extends MDPSolver implements QFunction,
 		LearningAgent, Planner {
+
+	/**
+	 * An object for keeping track of the eligibility traces within an episode
+	 * for each VFA weight
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class EligibilityTraceVector {
+
+		/**
+		 * The VFA weight being traced
+		 */
+		public FunctionWeight weight;
+
+		/**
+		 * The eligibility value
+		 */
+		public double eligibilityValue;
+
+		/**
+		 * The value of the weight when the trace started
+		 */
+		public double initialWeightValue;
+
+		/**
+		 * Creates a trace for the given weight with the given eligibility value
+		 * 
+		 * @param weight
+		 *            the VFA weight
+		 * @param eligibilityValue
+		 *            the eligibility to assign to it.
+		 */
+		public EligibilityTraceVector(FunctionWeight weight,
+				double eligibilityValue) {
+			this.weight = weight;
+			this.eligibilityValue = eligibilityValue;
+			this.initialWeightValue = weight.weightValue();
+		}
+
+	}
 
 	/**
 	 * The object that performs value function approximation
@@ -311,6 +352,104 @@ public class GradientDescentSarsaLam extends MDPSolver implements QFunction,
 	}
 
 	/**
+	 * Returns the VFA Q-value approximation for the given state and action.
+	 * 
+	 * @param s
+	 *            the state for which the VFA result should be returned
+	 * @param ga
+	 *            the action for which the VFA result should be returned
+	 * @return the VFA Q-value approximation for the given state and action.
+	 */
+	protected ActionApproximationResult getActionApproximation(State s,
+			GroundedAction ga) {
+		List<GroundedAction> gaList = new ArrayList<GroundedAction>(1);
+		gaList.add(ga);
+
+		List<ActionApproximationResult> results = vfa.getStateActionValues(s,
+				gaList);
+
+		return ActionApproximationResult.extractApproximationForAction(results,
+				ga);
+	}
+
+	/**
+	 * Gets all Q-value VFA results for each action for a given state
+	 * 
+	 * @param s
+	 *            the state for which the Q-Value VFA results should be
+	 *            returned.
+	 * @return all Q-value VFA results for each action for a given state
+	 */
+	protected List<ActionApproximationResult> getAllActionApproximations(State s) {
+		List<GroundedAction> gas = this.getAllGroundedActions(s);
+		return this.vfa.getStateActionValues(s, gas);
+	}
+
+	public List<EpisodeAnalysis> getAllStoredLearningEpisodes() {
+		return episodeHistory;
+	}
+
+	public EpisodeAnalysis getLastLearningEpisode() {
+		return episodeHistory.getLast();
+	}
+
+	/**
+	 * Returns the number of steps taken in the last episode;
+	 * 
+	 * @return the number of steps taken in the last episode;
+	 */
+	public int getLastNumSteps() {
+		return eStepCounter;
+	}
+
+	@Override
+	public QValue getQ(State s, AbstractGroundedAction a) {
+
+		List<GroundedAction> gaList = new ArrayList<GroundedAction>(1);
+		gaList.add((GroundedAction) a);
+
+		List<ActionApproximationResult> results = vfa.getStateActionValues(s,
+				gaList);
+
+		return this.getQFromFeaturesFor(results, s, (GroundedAction) a);
+	}
+
+	/**
+	 * Creates a Q-value object in which the Q-value is determined from VFA.
+	 * 
+	 * @param results
+	 *            the VFA prediction results for each action.
+	 * @param s
+	 *            the state of the Q-value
+	 * @param ga
+	 *            the action taken
+	 * @return a Q-value object in which the Q-value is determined from VFA.
+	 */
+	protected QValue getQFromFeaturesFor(
+			List<ActionApproximationResult> results, State s, GroundedAction ga) {
+
+		ActionApproximationResult result = ActionApproximationResult
+				.extractApproximationForAction(results, ga);
+		QValue q = new QValue(s, ga, result.approximationResult.predictedValue);
+
+		return q;
+	}
+
+	@Override
+	public List<QValue> getQs(State s) {
+		List<GroundedAction> gas = this.getAllGroundedActions(s);
+		List<QValue> qs = new ArrayList<QValue>(gas.size());
+
+		List<ActionApproximationResult> results = vfa.getStateActionValues(s,
+				gas);
+		for (GroundedAction ga : gas) {
+			qs.add(this.getQFromFeaturesFor(results, s, ga));
+		}
+
+		return qs;
+	}
+
+	/**
 	 * Sets the {@link burlap.oomdp.singleagent.RewardFunction},
 	 * {@link burlap.oomdp.core.TerminalFunction}, and the number of simulated
 	 * episodes to use for planning when the
@@ -335,132 +474,42 @@ public class GradientDescentSarsaLam extends MDPSolver implements QFunction,
 	}
 
 	/**
-	 * Sets the learning rate function to use.
+	 * Plans from the input state and then returns a
+	 * {@link burlap.behavior.policy.GreedyQPolicy} that greedily selects the
+	 * action with the highest Q-value and breaks ties uniformly randomly.
 	 * 
-	 * @param lr
-	 *            the learning rate function to use.
+	 * @param initialState
+	 *            the initial state of the planning problem
+	 * @return a {@link burlap.behavior.policy.GreedyQPolicy}.
 	 */
-	public void setLearningRate(LearningRate lr) {
-		this.learningRate = lr;
-	}
+	@Override
+	public GreedyQPolicy planFromState(State initialState) {
 
-	/**
-	 * Sets whether learning rate polls should be based on the VFA state feature
-	 * ids, or the OO-MDP state. Default is to use feature ids.
-	 * 
-	 * @param useFeatureWiseLearningRate
-	 *            if true then learning rate polls are based on VFA state
-	 *            feature ids; if false then they are based on the OO-MDP state
-	 *            object.
-	 */
-	public void setUseFeatureWiseLearningRate(boolean useFeatureWiseLearningRate) {
-		this.useFeatureWiseLearningRate = useFeatureWiseLearningRate;
-	}
-
-	/**
-	 * Sets which policy this agent should use for learning.
-	 * 
-	 * @param p
-	 *            the policy to use for learning.
-	 */
-	public void setLearningPolicy(Policy p) {
-		this.learningPolicy = p;
-	}
-
-	/**
-	 * Sets the maximum number of episodes that will be performed when the
-	 * {@link #planFromState(State)} method is called.
-	 * 
-	 * @param n
-	 *            the maximum number of episodes that will be performed when the
-	 *            {@link #planFromState(State)} method is called.
-	 */
-	public void setMaximumEpisodesForPlanning(int n) {
-		if (n > 0) {
-			this.numEpisodesForPlanning = n;
-		} else {
-			this.numEpisodesForPlanning = 1;
+		if (this.rf == null || this.tf == null) {
+			throw new RuntimeException(
+					"QLearning (and its subclasses) cannot execute planFromState because the reward function and terminal function for planning have not been set. Use the initializeForPlanning method to set them.");
 		}
+
+		SimulatedEnvironment env = new SimulatedEnvironment(domain, rf, tf,
+				initialState);
+
+		int eCount = 0;
+		do {
+			this.runLearningEpisode(env);
+			eCount++;
+		} while (eCount < numEpisodesForPlanning
+				&& maxWeightChangeInLastEpisode > maxWeightChangeForPlanningTermination);
+
+		return new GreedyQPolicy(this);
+
 	}
 
-	/**
-	 * Sets a max change in the VFA weight threshold that will cause the
-	 * {@link #planFromState(State)} to stop planning when it is achieved.
-	 * 
-	 * @param m
-	 *            the maximum allowable change in the VFA weights before
-	 *            planning stops
-	 */
-	public void setMaxVFAWeightChangeForPlanningTerminaiton(double m) {
-		if (m > 0.) {
-			this.maxWeightChangeForPlanningTermination = m;
-		} else {
-			this.maxWeightChangeForPlanningTermination = 0.;
-		}
-	}
-
-	/**
-	 * Returns the number of steps taken in the last episode;
-	 * 
-	 * @return the number of steps taken in the last episode;
-	 */
-	public int getLastNumSteps() {
-		return eStepCounter;
-	}
-
-	/**
-	 * Sets whether to use replacing eligibility traces rather than accumulating
-	 * traces.
-	 * 
-	 * @param toggle
-	 */
-	public void setUseReplaceTraces(boolean toggle) {
-		this.useReplacingTraces = toggle;
-	}
-
-	/**
-	 * Sets whether the primitive actions taken during an options will be
-	 * included as steps in produced EpisodeAnalysis objects. The default value
-	 * is true. If this is set to false, then EpisodeAnalysis objects returned
-	 * from a learning episode will record options as a single "action" and the
-	 * steps taken by the option will be hidden.
-	 * 
-	 * @param toggle
-	 *            whether to decompose options into the primitive actions taken
-	 *            by them or not.
-	 */
-	public void toggleShouldDecomposeOption(boolean toggle) {
-
-		this.shouldDecomposeOptions = toggle;
-		for (Action a : actions) {
-			if (a instanceof Option) {
-				((Option) a).toggleShouldRecordResults(toggle);
-			}
-		}
-	}
-
-	/**
-	 * Sets whether options that are decomposed into primitives will have the
-	 * option that produced them and listed. The default value is true. If
-	 * option decomposition is not enabled, changing this value will do nothing.
-	 * When it is enabled and this is set to true, primitive actions taken by an
-	 * option in EpisodeAnalysis objects will be recorded with a special action
-	 * name that indicates which option was called to produce the primitive
-	 * action as well as which step of the option the primitive action is. When
-	 * set to false, recorded names of primitives will be only the primitive
-	 * aciton's name it will be unclear which option was taken to generate it.
-	 * 
-	 * @param toggle
-	 *            whether to annotate the primitive actions of options with the
-	 *            calling option's name.
-	 */
-	public void toggleShouldAnnotateOptionDecomposition(boolean toggle) {
-		shouldAnnotateOptions = toggle;
-		for (Action a : actions) {
-			if (a instanceof Option) {
-				((Option) a).toggleShouldAnnotateResults(toggle);
-			}
-		}
+	@Override
+	public void resetSolver() {
+		this.vfa.resetWeights();
+		this.eStepCounter = 0;
+		this.maxWeightChangeInLastEpisode = Double.POSITIVE_INFINITY;
+		this.episodeHistory.clear();
 	}
 
 	@Override
@@ -636,8 +685,56 @@ public class GradientDescentSarsaLam extends MDPSolver implements QFunction,
 		return ea;
 	}
 
-	public EpisodeAnalysis getLastLearningEpisode() {
-		return episodeHistory.getLast();
+	/**
+	 * Sets which policy this agent should use for learning.
+	 * 
+	 * @param p
+	 *            the policy to use for learning.
+	 */
+	public void setLearningPolicy(Policy p) {
+		this.learningPolicy = p;
+	}
+
+	/**
+	 * Sets the learning rate function to use.
+	 * 
+	 * @param lr
+	 *            the learning rate function to use.
+	 */
+	public void setLearningRate(LearningRate lr) {
+		this.learningRate = lr;
+	}
+
+	/**
+	 * Sets the maximum number of episodes that will be performed when the
+	 * {@link #planFromState(State)} method is called.
+	 * 
+	 * @param n
+	 *            the maximum number of episodes that will be performed when the
+	 *            {@link #planFromState(State)} method is called.
+	 */
+	public void setMaximumEpisodesForPlanning(int n) {
+		if (n > 0) {
+			this.numEpisodesForPlanning = n;
+		} else {
+			this.numEpisodesForPlanning = 1;
+		}
+	}
+
+	/**
+	 * Sets a max change in the VFA weight threshold that will cause the
+	 * {@link #planFromState(State)} to stop planning when it is achieved.
+	 * 
+	 * @param m
+	 *            the maximum allowable change in the VFA weights before
+	 *            planning stops
+	 */
+	public void setMaxVFAWeightChangeForPlanningTerminaiton(double m) {
+		if (m > 0.) {
+			this.maxWeightChangeForPlanningTermination = m;
+		} else {
+			this.maxWeightChangeForPlanningTermination = 0.;
+		}
 	}
 
 	public void setNumEpisodesToStore(int numEps) {
@@ -648,174 +745,77 @@ public class GradientDescentSarsaLam extends MDPSolver implements QFunction,
 		}
 	}
 
-	public List<EpisodeAnalysis> getAllStoredLearningEpisodes() {
-		return episodeHistory;
+	/**
+	 * Sets whether learning rate polls should be based on the VFA state feature
+	 * ids, or the OO-MDP state. Default is to use feature ids.
+	 * 
+	 * @param useFeatureWiseLearningRate
+	 *            if true then learning rate polls are based on VFA state
+	 *            feature ids; if false then they are based on the OO-MDP state
+	 *            object.
+	 */
+	public void setUseFeatureWiseLearningRate(boolean useFeatureWiseLearningRate) {
+		this.useFeatureWiseLearningRate = useFeatureWiseLearningRate;
 	}
 
-	@Override
-	public List<QValue> getQs(State s) {
-		List<GroundedAction> gas = this.getAllGroundedActions(s);
-		List<QValue> qs = new ArrayList<QValue>(gas.size());
+	/**
+	 * Sets whether to use replacing eligibility traces rather than accumulating
+	 * traces.
+	 * 
+	 * @param toggle
+	 */
+	public void setUseReplaceTraces(boolean toggle) {
+		this.useReplacingTraces = toggle;
+	}
 
-		List<ActionApproximationResult> results = vfa.getStateActionValues(s,
-				gas);
-		for (GroundedAction ga : gas) {
-			qs.add(this.getQFromFeaturesFor(results, s, ga));
+	/**
+	 * Sets whether options that are decomposed into primitives will have the
+	 * option that produced them and listed. The default value is true. If
+	 * option decomposition is not enabled, changing this value will do nothing.
+	 * When it is enabled and this is set to true, primitive actions taken by an
+	 * option in EpisodeAnalysis objects will be recorded with a special action
+	 * name that indicates which option was called to produce the primitive
+	 * action as well as which step of the option the primitive action is. When
+	 * set to false, recorded names of primitives will be only the primitive
+	 * aciton's name it will be unclear which option was taken to generate it.
+	 * 
+	 * @param toggle
+	 *            whether to annotate the primitive actions of options with the
+	 *            calling option's name.
+	 */
+	public void toggleShouldAnnotateOptionDecomposition(boolean toggle) {
+		shouldAnnotateOptions = toggle;
+		for (Action a : actions) {
+			if (a instanceof Option) {
+				((Option) a).toggleShouldAnnotateResults(toggle);
+			}
 		}
-
-		return qs;
 	}
 
-	@Override
-	public QValue getQ(State s, AbstractGroundedAction a) {
+	/**
+	 * Sets whether the primitive actions taken during an options will be
+	 * included as steps in produced EpisodeAnalysis objects. The default value
+	 * is true. If this is set to false, then EpisodeAnalysis objects returned
+	 * from a learning episode will record options as a single "action" and the
+	 * steps taken by the option will be hidden.
+	 * 
+	 * @param toggle
+	 *            whether to decompose options into the primitive actions taken
+	 *            by them or not.
+	 */
+	public void toggleShouldDecomposeOption(boolean toggle) {
 
-		List<GroundedAction> gaList = new ArrayList<GroundedAction>(1);
-		gaList.add((GroundedAction) a);
-
-		List<ActionApproximationResult> results = vfa.getStateActionValues(s,
-				gaList);
-
-		return this.getQFromFeaturesFor(results, s, (GroundedAction) a);
+		this.shouldDecomposeOptions = toggle;
+		for (Action a : actions) {
+			if (a instanceof Option) {
+				((Option) a).toggleShouldRecordResults(toggle);
+			}
+		}
 	}
 
 	@Override
 	public double value(State s) {
 		return QFunction.QFunctionHelper.getOptimalValue(this, s);
-	}
-
-	/**
-	 * Creates a Q-value object in which the Q-value is determined from VFA.
-	 * 
-	 * @param results
-	 *            the VFA prediction results for each action.
-	 * @param s
-	 *            the state of the Q-value
-	 * @param ga
-	 *            the action taken
-	 * @return a Q-value object in which the Q-value is determined from VFA.
-	 */
-	protected QValue getQFromFeaturesFor(
-			List<ActionApproximationResult> results, State s, GroundedAction ga) {
-
-		ActionApproximationResult result = ActionApproximationResult
-				.extractApproximationForAction(results, ga);
-		QValue q = new QValue(s, ga, result.approximationResult.predictedValue);
-
-		return q;
-	}
-
-	/**
-	 * Gets all Q-value VFA results for each action for a given state
-	 * 
-	 * @param s
-	 *            the state for which the Q-Value VFA results should be
-	 *            returned.
-	 * @return all Q-value VFA results for each action for a given state
-	 */
-	protected List<ActionApproximationResult> getAllActionApproximations(State s) {
-		List<GroundedAction> gas = this.getAllGroundedActions(s);
-		return this.vfa.getStateActionValues(s, gas);
-	}
-
-	/**
-	 * Returns the VFA Q-value approximation for the given state and action.
-	 * 
-	 * @param s
-	 *            the state for which the VFA result should be returned
-	 * @param ga
-	 *            the action for which the VFA result should be returned
-	 * @return the VFA Q-value approximation for the given state and action.
-	 */
-	protected ActionApproximationResult getActionApproximation(State s,
-			GroundedAction ga) {
-		List<GroundedAction> gaList = new ArrayList<GroundedAction>(1);
-		gaList.add(ga);
-
-		List<ActionApproximationResult> results = vfa.getStateActionValues(s,
-				gaList);
-
-		return ActionApproximationResult.extractApproximationForAction(results,
-				ga);
-	}
-
-	/**
-	 * Plans from the input state and then returns a
-	 * {@link burlap.behavior.policy.GreedyQPolicy} that greedily selects the
-	 * action with the highest Q-value and breaks ties uniformly randomly.
-	 * 
-	 * @param initialState
-	 *            the initial state of the planning problem
-	 * @return a {@link burlap.behavior.policy.GreedyQPolicy}.
-	 */
-	@Override
-	public GreedyQPolicy planFromState(State initialState) {
-
-		if (this.rf == null || this.tf == null) {
-			throw new RuntimeException(
-					"QLearning (and its subclasses) cannot execute planFromState because the reward function and terminal function for planning have not been set. Use the initializeForPlanning method to set them.");
-		}
-
-		SimulatedEnvironment env = new SimulatedEnvironment(domain, rf, tf,
-				initialState);
-
-		int eCount = 0;
-		do {
-			this.runLearningEpisode(env);
-			eCount++;
-		} while (eCount < numEpisodesForPlanning
-				&& maxWeightChangeInLastEpisode > maxWeightChangeForPlanningTermination);
-
-		return new GreedyQPolicy(this);
-
-	}
-
-	@Override
-	public void resetSolver() {
-		this.vfa.resetWeights();
-		this.eStepCounter = 0;
-		this.maxWeightChangeInLastEpisode = Double.POSITIVE_INFINITY;
-		this.episodeHistory.clear();
-	}
-
-	/**
-	 * An object for keeping track of the eligibility traces within an episode
-	 * for each VFA weight
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class EligibilityTraceVector {
-
-		/**
-		 * The VFA weight being traced
-		 */
-		public FunctionWeight weight;
-
-		/**
-		 * The eligibility value
-		 */
-		public double eligibilityValue;
-
-		/**
-		 * The value of the weight when the trace started
-		 */
-		public double initialWeightValue;
-
-		/**
-		 * Creates a trace for the given weight with the given eligibility value
-		 * 
-		 * @param weight
-		 *            the VFA weight
-		 * @param eligibilityValue
-		 *            the eligibility to assign to it.
-		 */
-		public EligibilityTraceVector(FunctionWeight weight,
-				double eligibilityValue) {
-			this.weight = weight;
-			this.eligibilityValue = eligibilityValue;
-			this.initialWeightValue = weight.weightValue();
-		}
-
 	}
 
 }

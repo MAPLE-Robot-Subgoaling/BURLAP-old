@@ -6,19 +6,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import burlap.behavior.valuefunction.ValueFunctionInitialization;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.behavior.stochasticgames.madynamicprogramming.MADynamicProgramming;
 import burlap.behavior.stochasticgames.madynamicprogramming.SGBackupOperator;
+import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.debugtools.DPrint;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.core.TransitionProbability;
-import burlap.oomdp.stochasticgames.SGAgentType;
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 import burlap.oomdp.stochasticgames.JointAction;
-import burlap.oomdp.stochasticgames.JointActionModel;
 import burlap.oomdp.stochasticgames.JointReward;
+import burlap.oomdp.stochasticgames.SGAgentType;
 import burlap.oomdp.stochasticgames.SGDomain;
 
 /**
@@ -232,53 +231,6 @@ public class MAValueIteration extends MADynamicProgramming {
 
 	}
 
-	@Override
-	public void planFromState(State s) {
-
-		if (this.performStateReachabilityFrom(s)) {
-			this.runVI();
-		}
-
-	}
-
-	/**
-	 * Runs Value Iteration over the set of states that have been discovered. VI
-	 * terminates either when the max change in Q-value is less than the
-	 * threshold stored in this object's maxDelta parameter or when the number
-	 * of iterations exceeds this object's maxIterations parameter.
-	 * <p/>
-	 * If {@link #performStateReachabilityFrom(State)} has not yet been called,
-	 * then the state set will be empty and a runtime exception will be thrown.
-	 */
-	public void runVI() {
-
-		if (this.states.size() == 0) {
-			throw new RuntimeException(
-					"No states to iterate over. Note that state reacability needs to be performed before runVI() can be called. Consider using planFromState(State s) method instead or using the performStateReachabilityFrom(State s) method first.");
-		}
-
-		int i;
-		for (i = 0; i < this.maxIterations; i++) {
-
-			double maxChange = Double.NEGATIVE_INFINITY;
-			for (HashableState sh : this.states) {
-				double change = this.backupAllValueFunctions(sh.s);
-				maxChange = Math.max(change, maxChange);
-			}
-
-			DPrint.cl(this.debugCode, "Finished pass: " + i
-					+ " with max change: " + maxChange);
-
-			if (maxChange < this.maxDelta) {
-				break;
-			}
-
-		}
-
-		DPrint.cl(this.debugCode, "Performed " + i + " passes.");
-
-	}
-
 	/**
 	 * Finds and stores all states that are reachable from input state s.
 	 * 
@@ -326,6 +278,53 @@ public class MAValueIteration extends MADynamicProgramming {
 						+ " unique states found.");
 
 		return true;
+	}
+
+	@Override
+	public void planFromState(State s) {
+
+		if (this.performStateReachabilityFrom(s)) {
+			this.runVI();
+		}
+
+	}
+
+	/**
+	 * Runs Value Iteration over the set of states that have been discovered. VI
+	 * terminates either when the max change in Q-value is less than the
+	 * threshold stored in this object's maxDelta parameter or when the number
+	 * of iterations exceeds this object's maxIterations parameter.
+	 * <p/>
+	 * If {@link #performStateReachabilityFrom(State)} has not yet been called,
+	 * then the state set will be empty and a runtime exception will be thrown.
+	 */
+	public void runVI() {
+
+		if (this.states.size() == 0) {
+			throw new RuntimeException(
+					"No states to iterate over. Note that state reacability needs to be performed before runVI() can be called. Consider using planFromState(State s) method instead or using the performStateReachabilityFrom(State s) method first.");
+		}
+
+		int i;
+		for (i = 0; i < this.maxIterations; i++) {
+
+			double maxChange = Double.NEGATIVE_INFINITY;
+			for (HashableState sh : this.states) {
+				double change = this.backupAllValueFunctions(sh.s);
+				maxChange = Math.max(change, maxChange);
+			}
+
+			DPrint.cl(this.debugCode, "Finished pass: " + i
+					+ " with max change: " + maxChange);
+
+			if (maxChange < this.maxDelta) {
+				break;
+			}
+
+		}
+
+		DPrint.cl(this.debugCode, "Performed " + i + " passes.");
+
 	}
 
 }

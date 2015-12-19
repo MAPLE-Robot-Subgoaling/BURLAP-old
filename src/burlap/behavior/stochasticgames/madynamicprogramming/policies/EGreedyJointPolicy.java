@@ -89,6 +89,15 @@ public class EGreedyJointPolicy extends MAQSourcePolicy {
 	}
 
 	@Override
+	public JointPolicy copy() {
+		EGreedyJointPolicy np = new EGreedyJointPolicy(this.epsilon);
+		np.setAgentsInJointPolicy(this.agentsInJointPolicy);
+		np.setQSourceProvider(this.qSourceProvider);
+		np.setTargetAgent(this.targetAgentQName);
+		return np;
+	}
+
+	@Override
 	public AbstractGroundedAction getAction(State s) {
 
 		List<JointAction> jas = this.getAllJointActions(s);
@@ -174,12 +183,12 @@ public class EGreedyJointPolicy extends MAQSourcePolicy {
 	}
 
 	@Override
-	public boolean isStochastic() {
+	public boolean isDefinedFor(State s) {
 		return true;
 	}
 
 	@Override
-	public boolean isDefinedFor(State s) {
+	public boolean isStochastic() {
 		return true;
 	}
 
@@ -191,15 +200,6 @@ public class EGreedyJointPolicy extends MAQSourcePolicy {
 	@Override
 	public void setTargetAgent(String agentName) {
 		this.targetAgentQName = agentName;
-	}
-
-	@Override
-	public JointPolicy copy() {
-		EGreedyJointPolicy np = new EGreedyJointPolicy(this.epsilon);
-		np.setAgentsInJointPolicy(this.agentsInJointPolicy);
-		np.setQSourceProvider(this.qSourceProvider);
-		np.setTargetAgent(this.targetAgentQName);
-		return np;
 	}
 
 }

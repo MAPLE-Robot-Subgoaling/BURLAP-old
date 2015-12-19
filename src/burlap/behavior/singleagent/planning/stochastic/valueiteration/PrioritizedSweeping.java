@@ -8,16 +8,16 @@ import java.util.Set;
 
 import burlap.behavior.singleagent.planning.stochastic.ActionTransitions;
 import burlap.behavior.singleagent.planning.stochastic.HashedTransitionProbability;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.datastructures.HashIndexedHeap;
 import burlap.debugtools.DPrint;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.core.TransitionProbability;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * An implementation of Prioritized Sweeping as DP planning algorithm as
@@ -38,6 +38,139 @@ import burlap.oomdp.singleagent.RewardFunction;
  * 
  */
 public class PrioritizedSweeping extends ValueIteration {
+
+	/**
+	 * A back pointer and its max action probability of transition.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	protected class BPTR {
+
+		/**
+		 * The back pointer node
+		 */
+		public BPTRNode backNode;
+
+		/**
+		 * The maximum probability tha the back node will transition to the
+		 * implicitly defined forward state node.
+		 */
+		public double forwardMaxProbability;
+
+		/**
+		 * Stores back pointer information.
+		 * 
+		 * @param backNode
+		 *            the backwards node
+		 * @param forwardState
+		 *            the state to which the back node transitions
+		 */
+		public BPTR(BPTRNode backNode, HashableState forwardState) {
+			this.backNode = backNode;
+			List<GroundedAction> actions = PrioritizedSweeping.this
+					.getAllGroundedActions(backNode.sh.s);
+			double maxProb = 0.;
+			// find action with maximum transition probability
+			for (GroundedAction ga : actions) {
+				// search for match
+				List<TransitionProbability> tps = ga
+						.getTransitions(backNode.sh.s);
+				for (TransitionProbability tp : tps) {
+					HashableState tpsh = PrioritizedSweeping.this.hashingFactory
+							.hashState(tp.s);
+					if (tpsh.equals(forwardState)) {
+						maxProb = Math.max(maxProb, tp.p);
+						break;
+					}
+				}
+			}
+			this.forwardMaxProbability = maxProb;
+		}
+
+	}
+
+	/**
+	 * A node for state thar contains a list of its back pointers, their max
+	 * probability of transition to this state, and the priority of this nodes
+	 * state.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	protected class BPTRNode {
+
+		public HashableState sh;
+		public List<BPTR> backPointers;
+		public double maxSelfTransitionProb = 0.;
+		public double priority = Double.MAX_VALUE;
+
+		/**
+		 * Creates a back pointer for the given state with no back pointers and
+		 * a priority of Double.MAX_VALUE (ensures one sweep of the state space
+		 * to start)
+		 * 
+		 * @param sh
+		 *            the hased state for which this node will correspond
+		 */
+		public BPTRNode(HashableState sh) {
+			this.sh = sh;
+			this.backPointers = new LinkedList<PrioritizedSweeping.BPTR>();
+		}
+
+		/**
+		 * Adds a backpointer transition
+		 * 
+		 * @param bptr
+		 *            the node that can transition to this node
+		 */
+		public void addBackTransition(BPTRNode bptr) {
+			if (!bptr.sh.equals(this.sh)) {
+				// make sure we don't already have this node
+				boolean hasNode = false;
+				for (BPTR b : this.backPointers) {
+					if (b.backNode == bptr) {
+						hasNode = true;
+						break;
+					}
+				}
+				if (!hasNode) {
+					this.backPointers.add(new BPTR(bptr, this.sh));
+				}
+			} else if (this.maxSelfTransitionProb == 0.) {
+				BPTR tmp = new BPTR(bptr, this.sh);
+				this.maxSelfTransitionProb = tmp.forwardMaxProbability;
+			}
+
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			BPTRNode o = (BPTRNode) other;
+			return this.sh.equals(o.sh);
+		}
+
+		@Override
+		public int hashCode() {
+			return this.sh.hashCode();
+		}
+
+	}
+
+	/**
+	 * Comparator for the the priority of BPTRNodes
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	protected static class BPTRNodeComparator implements Comparator<BPTRNode> {
+
+		@Override
+		public int compare(BPTRNode o1, BPTRNode o2) {
+			return Double.compare(o1.priority, o2.priority);
+		}
+
+	}
 
 	/**
 	 * The priority queue of states
@@ -78,47 +211,25 @@ public class PrioritizedSweeping extends ValueIteration {
 		this.maxBackups = maxBackups;
 	}
 
-	@Override
-	public void runVI() {
+	/**
+	 * Returns or creates, stores, and returns a priority back pointer node for
+	 * the given hased state
+	 * 
+	 * @param sh
+	 *            the hashed state for which its node should be returned.
+	 * @return a priority back pointer node for the given hased state
+	 */
+	protected BPTRNode getNodeFor(HashableState sh) {
 
-		if (!this.foundReachableStates) {
-			throw new RuntimeException(
-					"Cannot run VI until the reachable states have been found. Use the planFromState or performReachabilityFrom method at least once before calling runVI.");
-		}
-
-		DPrint.cl(this.debugCode, "Beginning Planning.");
-
-		double lastDelta = Double.POSITIVE_INFINITY;
-		int numBackups = 0;
-		while (lastDelta > this.maxDelta
-				&& (numBackups < this.maxBackups || this.maxBackups == -1)) {
-
-			BPTRNode node = this.priorityNodes.poll();
-			lastDelta = node.priority;
-
-			double oldV = this.value(node.sh);
-			double newV = this.performBellmanUpdateOn(node.sh);
-			double delta = Math.abs(newV - oldV);
-
-			// update this nodes priority
-			node.priority = delta * node.maxSelfTransitionProb;
+		BPTRNode node = new BPTRNode(sh);
+		BPTRNode stored = this.priorityNodes.containsInstance(node);
+		if (stored != null) {
+			node = stored;
+		} else {
 			this.priorityNodes.insert(node);
-
-			// update priority of nodes that transition to it
-			for (BPTR bptr : node.backPointers) {
-				bptr.backNode.priority = Math.max(bptr.backNode.priority,
-						bptr.forwardMaxProbability * delta);
-				this.priorityNodes.refreshPriority(bptr.backNode);
-			}
-
-			lastDelta = Math.max(lastDelta, delta);
-			numBackups++;
-
 		}
 
-		DPrint.cl(this.debugCode, "Finished planning with " + numBackups
-				+ " Bellman backups");
-
+		return node;
 	}
 
 	@Override
@@ -186,157 +297,46 @@ public class PrioritizedSweeping extends ValueIteration {
 
 	}
 
-	/**
-	 * Returns or creates, stores, and returns a priority back pointer node for
-	 * the given hased state
-	 * 
-	 * @param sh
-	 *            the hashed state for which its node should be returned.
-	 * @return a priority back pointer node for the given hased state
-	 */
-	protected BPTRNode getNodeFor(HashableState sh) {
+	@Override
+	public void runVI() {
 
-		BPTRNode node = new BPTRNode(sh);
-		BPTRNode stored = this.priorityNodes.containsInstance(node);
-		if (stored != null) {
-			node = stored;
-		} else {
+		if (!this.foundReachableStates) {
+			throw new RuntimeException(
+					"Cannot run VI until the reachable states have been found. Use the planFromState or performReachabilityFrom method at least once before calling runVI.");
+		}
+
+		DPrint.cl(this.debugCode, "Beginning Planning.");
+
+		double lastDelta = Double.POSITIVE_INFINITY;
+		int numBackups = 0;
+		while (lastDelta > this.maxDelta
+				&& (numBackups < this.maxBackups || this.maxBackups == -1)) {
+
+			BPTRNode node = this.priorityNodes.poll();
+			lastDelta = node.priority;
+
+			double oldV = this.value(node.sh);
+			double newV = this.performBellmanUpdateOn(node.sh);
+			double delta = Math.abs(newV - oldV);
+
+			// update this nodes priority
+			node.priority = delta * node.maxSelfTransitionProb;
 			this.priorityNodes.insert(node);
-		}
 
-		return node;
-	}
-
-	/**
-	 * A node for state thar contains a list of its back pointers, their max
-	 * probability of transition to this state, and the priority of this nodes
-	 * state.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	protected class BPTRNode {
-
-		public HashableState sh;
-		public List<BPTR> backPointers;
-		public double maxSelfTransitionProb = 0.;
-		public double priority = Double.MAX_VALUE;
-
-		/**
-		 * Creates a back pointer for the given state with no back pointers and
-		 * a priority of Double.MAX_VALUE (ensures one sweep of the state space
-		 * to start)
-		 * 
-		 * @param sh
-		 *            the hased state for which this node will correspond
-		 */
-		public BPTRNode(HashableState sh) {
-			this.sh = sh;
-			this.backPointers = new LinkedList<PrioritizedSweeping.BPTR>();
-		}
-
-		/**
-		 * Adds a backpointer transition
-		 * 
-		 * @param bptr
-		 *            the node that can transition to this node
-		 */
-		public void addBackTransition(BPTRNode bptr) {
-			if (!bptr.sh.equals(this.sh)) {
-				// make sure we don't already have this node
-				boolean hasNode = false;
-				for (BPTR b : this.backPointers) {
-					if (b.backNode == bptr) {
-						hasNode = true;
-						break;
-					}
-				}
-				if (!hasNode) {
-					this.backPointers.add(new BPTR(bptr, this.sh));
-				}
-			} else if (this.maxSelfTransitionProb == 0.) {
-				BPTR tmp = new BPTR(bptr, this.sh);
-				this.maxSelfTransitionProb = tmp.forwardMaxProbability;
+			// update priority of nodes that transition to it
+			for (BPTR bptr : node.backPointers) {
+				bptr.backNode.priority = Math.max(bptr.backNode.priority,
+						bptr.forwardMaxProbability * delta);
+				this.priorityNodes.refreshPriority(bptr.backNode);
 			}
 
+			lastDelta = Math.max(lastDelta, delta);
+			numBackups++;
+
 		}
 
-		@Override
-		public int hashCode() {
-			return this.sh.hashCode();
-		}
-
-		@Override
-		public boolean equals(Object other) {
-			BPTRNode o = (BPTRNode) other;
-			return this.sh.equals(o.sh);
-		}
-
-	}
-
-	/**
-	 * A back pointer and its max action probability of transition.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	protected class BPTR {
-
-		/**
-		 * The back pointer node
-		 */
-		public BPTRNode backNode;
-
-		/**
-		 * The maximum probability tha the back node will transition to the
-		 * implicitly defined forward state node.
-		 */
-		public double forwardMaxProbability;
-
-		/**
-		 * Stores back pointer information.
-		 * 
-		 * @param backNode
-		 *            the backwards node
-		 * @param forwardState
-		 *            the state to which the back node transitions
-		 */
-		public BPTR(BPTRNode backNode, HashableState forwardState) {
-			this.backNode = backNode;
-			List<GroundedAction> actions = PrioritizedSweeping.this
-					.getAllGroundedActions(backNode.sh.s);
-			double maxProb = 0.;
-			// find action with maximum transition probability
-			for (GroundedAction ga : actions) {
-				// search for match
-				List<TransitionProbability> tps = ga
-						.getTransitions(backNode.sh.s);
-				for (TransitionProbability tp : tps) {
-					HashableState tpsh = PrioritizedSweeping.this.hashingFactory
-							.hashState(tp.s);
-					if (tpsh.equals(forwardState)) {
-						maxProb = Math.max(maxProb, tp.p);
-						break;
-					}
-				}
-			}
-			this.forwardMaxProbability = maxProb;
-		}
-
-	}
-
-	/**
-	 * Comparator for the the priority of BPTRNodes
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	protected static class BPTRNodeComparator implements Comparator<BPTRNode> {
-
-		@Override
-		public int compare(BPTRNode o1, BPTRNode o2) {
-			return Double.compare(o1.priority, o2.priority);
-		}
+		DPrint.cl(this.debugCode, "Finished planning with " + numBackups
+				+ " Bellman backups");
 
 	}
 

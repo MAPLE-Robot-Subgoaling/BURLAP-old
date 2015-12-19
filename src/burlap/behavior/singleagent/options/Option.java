@@ -6,25 +6,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.policy.Policy;
 import burlap.behavior.policy.Policy.ActionProb;
+import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.options.support.DirectOptionTerminateMapper;
 import burlap.behavior.singleagent.options.support.EnvironmentOptionOutcome;
 import burlap.oomdp.auxiliary.StateMapping;
-import burlap.oomdp.singleagent.FullActionModel;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.auxiliary.common.NullTermination;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.core.TransitionProbability;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
+import burlap.oomdp.singleagent.FullActionModel;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.environment.Environment;
 import burlap.oomdp.singleagent.environment.EnvironmentOutcome;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * This is an abstract class to provide support to learning and planning with
@@ -86,6 +86,86 @@ import burlap.oomdp.singleagent.environment.EnvironmentOutcome;
 public abstract class Option extends Action implements FullActionModel {
 
 	/**
+	 * A search node class used for finding all possible paths of execution an
+	 * option could take in the world from each initiation state.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	class ExpectationSearchNode {
+
+		/**
+		 * the state this search node wraps
+		 */
+		public State s;
+
+		/**
+		 * The option parameters that were passed to the option upon initiation.
+		 */
+		public GroundedAction groundedAction;
+
+		/**
+		 * the *un*-discounted probability of reaching this search node
+		 */
+		public double probability;
+
+		/**
+		 * The cumulative discounted reward received reaching this node.
+		 */
+		public double cumulativeDiscountedReward;
+
+		/**
+		 * The number of steps taken to reach this node.
+		 */
+		public int nSteps;
+
+		/**
+		 * Initializes.
+		 * 
+		 * @param src
+		 *            a source parent node from which this node was generated
+		 * @param s
+		 *            the state this search node wraps
+		 * @param transProb
+		 *            the transition probability of reaching this node from the
+		 *            source node
+		 * @param discountedR
+		 *            the discounted reward received from reaching this node
+		 *            from the source node.
+		 */
+		public ExpectationSearchNode(ExpectationSearchNode src, State s,
+				double transProb, double discountedR) {
+
+			this.s = s;
+			this.groundedAction = src.groundedAction;
+			this.probability = src.probability * transProb;
+			this.cumulativeDiscountedReward = src.cumulativeDiscountedReward
+					+ discountedR;
+			this.nSteps = src.nSteps + 1;
+
+		}
+
+		/**
+		 * Initializes with the probability set to 1, the number of steps 0, and
+		 * the cumulative discounted reward 0. This constructor is useful for
+		 * the initial root node of the option path expansion
+		 * 
+		 * @param s
+		 *            the state this search node wraps
+		 * @param groundedAction
+		 *            the parameters in which this option was initiated
+		 */
+		public ExpectationSearchNode(State s, GroundedAction groundedAction) {
+			this.s = s;
+			this.groundedAction = groundedAction;
+			this.probability = 1.;
+			this.cumulativeDiscountedReward = 0.;
+			this.nSteps = 0;
+		}
+
+	}
+
+	/**
 	 * Random object for following stochastic option policies
 	 */
 	protected Random rand;
@@ -102,15 +182,15 @@ public abstract class Option extends Action implements FullActionModel {
 	 */
 	protected boolean shouldRecordResults;
 
+	// ////////////////////////////////////////////////////////////
+	// variables for keeping track of reward from execution
+	// ////////////////////////////////////////////////////////////
+
 	/**
 	 * Boolean indicating whether the last option execution recording annotates
 	 * the selected actions with this option's name
 	 */
 	protected boolean shouldAnnotateExecution;
-
-	// ////////////////////////////////////////////////////////////
-	// variables for keeping track of reward from execution
-	// ////////////////////////////////////////////////////////////
 
 	/**
 	 * reward function for keeping track of the cumulative reward during an
@@ -144,15 +224,15 @@ public abstract class Option extends Action implements FullActionModel {
 	 */
 	protected int lastNumSteps;
 
+	// ////////////////////////////////////////////////////////////
+	// variables required for planners that use full bellman updates
+	// ////////////////////////////////////////////////////////////
+
 	/**
 	 * the terminal function of the MDP in which this option is to be executed.
 	 * Will cause an option to prematurely end if ever reached.
 	 */
 	protected TerminalFunction externalTerminalFunction;
-
-	// ////////////////////////////////////////////////////////////
-	// variables required for planners that use full bellman updates
-	// ////////////////////////////////////////////////////////////
 
 	/**
 	 * State hash factory used to cache the transition probabilities so that
@@ -193,95 +273,6 @@ public abstract class Option extends Action implements FullActionModel {
 	protected DirectOptionTerminateMapper terminateMapper;
 
 	/**
-	 * Returns whether this option is Markov or not; that is, whether action
-	 * selection and termination only depends on the current state.
-	 * 
-	 * @return True if this option is Markov ; false otherwise.
-	 */
-	public abstract boolean isMarkov();
-
-	/**
-	 * Returns whether this option's termination conditions are deterministic or
-	 * stochastic
-	 * 
-	 * @return true if this option's termination conditions are deterministic;
-	 *         false if stochastic.
-	 */
-	public abstract boolean usesDeterministicTermination();
-
-	/**
-	 * Returns whether this option's policy is deterministic or stochastic
-	 * 
-	 * @return true if this option's policy is deterministic; false if
-	 *         stochastic
-	 */
-	public abstract boolean usesDeterministicPolicy();
-
-	/**
-	 * Returns the probability that this option (executed with the given
-	 * parameters) will terminate in the given state
-	 * 
-	 * @param s
-	 *            the state to test for termination
-	 * @param groundedAction
-	 *            the parameters in which this option was initiated
-	 * @return the probability that this option (executed with the given
-	 *         parameters) will terminate in the given state
-	 */
-	public abstract double probabilityOfTermination(State s,
-			GroundedAction groundedAction);
-
-	/**
-	 * This method is always called when an option is initiated and begins
-	 * execution. Specifically, it is called from the
-	 * {@link #performActionHelper(burlap.oomdp.core.states.State, burlap.oomdp.singleagent.GroundedAction)}
-	 * For Markov options, this method probably does not need to do anything,
-	 * but for non-Markov options, like Macro actions, it may need to initialize
-	 * some structures for determining termination and action selection.
-	 * 
-	 * @param s
-	 *            the state in which the option was initiated
-	 * @param groundedAction
-	 *            the parameters in which this option will be initiated
-	 */
-	public abstract void initiateInStateHelper(State s,
-			GroundedAction groundedAction);
-
-	/**
-	 * This method causes the option to select a single step in the given state,
-	 * when the option was initiated with the provided parameters. This method
-	 * will be called by the
-	 * {@link #performActionHelper(burlap.oomdp.core.states.State, burlap.oomdp.singleagent.GroundedAction)}
-	 * method until it is determined that the option terminates.
-	 * 
-	 * @param s
-	 *            the state in which an action should be selected.
-	 * @param groundedAction
-	 *            the parameters in which this option was initiated
-	 * @return the action the option has selected to take in State
-	 *         <code>s</code>
-	 */
-	public abstract GroundedAction oneStepActionSelection(State s,
-			GroundedAction groundedAction);
-
-	/**
-	 * Returns the option's policy distribution for a given state. This method
-	 * is primarily used by the methods for computing transition dynamics. Note
-	 * that if this is a non-Markov option, the returned distribution should be
-	 * with respect to the state in which the option was executed and any
-	 * previous actions it took that influence behavior.
-	 * 
-	 * @param s
-	 *            the state for which this option's policy distribution should
-	 *            be returned
-	 * @param groundedAction
-	 *            the parameters in which this option was initiated
-	 * @return this options policy distribution for the given state.
-	 */
-	public abstract List<ActionProb> getActionDistributionForState(State s,
-			GroundedAction groundedAction);
-
-	/**
 	 * Initializes an option without a name and parameters. These values should
 	 * be filled in by other means otherwise the option may not work.
 	 */
@@ -305,345 +296,31 @@ public abstract class Option extends Action implements FullActionModel {
 		this.domain = domain;
 	}
 
-	private void init() {
-		rand = new Random();
-		rf = null;
-		keepTrackOfReward = false;
-		discountFactor = 1.;
-		lastCumulativeReward = 0.;
-		cumulativeDiscount = 1.;
-		lastNumSteps = 0;
-		stateMapping = null;
-		terminateMapper = null;
-		externalTerminalFunction = new NullTermination();
-		shouldRecordResults = true;
-		shouldAnnotateExecution = true;
-	}
-
 	/**
-	 * Sets the option to use the provided hashing factory for caching
-	 * transition probability results.
+	 * Adds to the expected discounted probability of reaching state given a
+	 * value p, where p = \gamma^k * p(s, s', k), where s' is a possible
+	 * terminal state and k is a unique number of steps not yet added to sum
+	 * over all possible step sizes to s'.
 	 * 
-	 * @param hashingFactory
-	 *            the state hashing factory to use.
-	 */
-	public void setExpectationHashingFactory(HashableStateFactory hashingFactory) {
-		this.expectationStateHashingFactory = hashingFactory;
-		this.cachedExpectations = new HashMap<HashableState, List<TransitionProbability>>();
-		this.cachedExpectedRewards = new HashMap<HashableState, Double>();
-	}
-
-	/**
-	 * Sets the minimum probability of reaching a terminal state for it to be
-	 * included in the options computed transition dynamics distribution.
-	 * 
-	 * @param cutoff
-	 *            the minimum probability of reaching a terminal state for it to
-	 *            be included in the options computed transition dynamics
-	 *            distribution.
-	 */
-	public void setExpectationCalculationProbabilityCutoff(double cutoff) {
-		this.expectationSearchCutoffProb = cutoff;
-	}
-
-	/**
-	 * Change whether the options last execution will be recorded or not.
-	 * 
-	 * @param toggle
-	 *            true if the last option execution should be saved; false
-	 *            otherwise.
-	 */
-	public void toggleShouldRecordResults(boolean toggle) {
-		this.shouldRecordResults = toggle;
-	}
-
-	/**
-	 * Toggle whether the last recorded option execution will annotate the
-	 * actions taken with this option's name
-	 * 
-	 * @param toggle
-	 *            true if the last recorded option execution will annotate the
-	 *            actions taken with this option's name; false otherwise
-	 */
-	public void toggleShouldAnnotateResults(boolean toggle) {
-		this.shouldAnnotateExecution = toggle;
-	}
-
-	/**
-	 * Returns whether this option is recording its executions
-	 * 
-	 * @return true if this option is recording its executions; false otherwise.
-	 */
-	public boolean isRecordingExecutionResults() {
-		return shouldRecordResults;
-	}
-
-	/**
-	 * Returns whether this option is annotating recorded action executions with
-	 * this option's name.
-	 * 
-	 * @return true if this option is annotating recorded action executions with
-	 *         this option's name; false otherwise.
-	 */
-	public boolean isAnnotatingExecutionResults() {
-		return shouldAnnotateExecution;
-	}
-
-	/**
-	 * Returns the events from this option's last execution
-	 * 
-	 * @return the events from this option's last execution
-	 */
-	public EpisodeAnalysis getLastExecutionResults() {
-		return lastOptionExecutionResults;
-	}
-
-	/**
-	 * Sets this option to use a state mapping that maps from the source MDP
-	 * states to another state representation that will be used by this option
-	 * for making action selections.
-	 * 
-	 * @param m
-	 *            the state mapping to use.
-	 */
-	public void setStateMapping(StateMapping m) {
-		this.stateMapping = m;
-	}
-
-	/**
-	 * Sets this option to determine its execution results using a direct
-	 * terminal state mapping rather than actually executing each action selcted
-	 * by the option step by step. A method like this should only be used under
-	 * specific circumstances. See the
-	 * {@link burlap.behavior.singleagent.options.support.DirectOptionTerminateMapper}
-	 * class documentation for more information.
-	 * 
-	 * @param tm
-	 *            the direct state to terminal state mapping to use.
-	 */
-	public void setTerminateMapper(DirectOptionTerminateMapper tm) {
-		this.terminateMapper = tm;
-	}
-
-	/**
-	 * Sets what the external MDPs terminal function is that will cause this
-	 * option to terminate if it enters those terminal states.
-	 * 
-	 * @param tf
-	 *            the external MDPs terminal function is
-	 */
-	public void setExernalTermination(TerminalFunction tf) {
-		if (tf == null) {
-			this.externalTerminalFunction = new NullTermination();
-		} else {
-			this.externalTerminalFunction = tf;
-		}
-	}
-
-	/**
-	 * Returns the state that is mapped from the input state. If this option
-	 * does not using a state mapping, then the input state is returned.
-	 * 
+	 * @param possibleTerminations
+	 *            the map from of all possible termination states to the
+	 *            expected discounted probability of reaching them
 	 * @param s
-	 *            the input state from which a mapped state is to be returned.
-	 * @return the state that is mapped from the input state.
+	 *            a possible termination state
+	 * @param p
+	 *            the discounted probability of reaching s for some specific
+	 *            number of steps not already summed into the respective
+	 *            possibleTerminations map.
 	 */
-	protected State map(State s) {
-		if (stateMapping == null) {
-			return s;
+	protected void accumulateDiscountedProb(
+			Map<HashableState, Double> possibleTerminations, State s, double p) {
+		HashableState sh = expectationStateHashingFactory.hashState(s);
+		Double stored = possibleTerminations.get(sh);
+		double newP = p;
+		if (stored != null) {
+			newP = stored + p;
 		}
-		return stateMapping.mapState(s);
-	}
-
-	/**
-	 * Tells this option to keep track the cumulative reward from its execution
-	 * using the given reward function and the given discount factor.
-	 * 
-	 * @param rf
-	 *            the reward function to use
-	 * @param discount
-	 *            the discount factor to use
-	 */
-	public void keepTrackOfRewardWith(RewardFunction rf, double discount) {
-		this.keepTrackOfReward = true;
-		this.rf = rf;
-		this.discountFactor = discount;
-	}
-
-	/**
-	 * Returns the cumulative discounted reward received in last execution of
-	 * this option.
-	 * 
-	 * @return the cumulative discounted reward received in last execution of
-	 *         this option.
-	 */
-	public double getLastCumulativeReward() {
-		return this.lastCumulativeReward;
-	}
-
-	/**
-	 * Returns the number of steps taken in the last execution of this option.
-	 * 
-	 * @return the number of steps taken in the last execution of this option.
-	 */
-	public int getLastNumSteps() {
-		return this.lastNumSteps;
-	}
-
-	@Override
-	public boolean isPrimitive() {
-		return false;
-	}
-
-	/**
-	 * Tells the option that it is being initiated in the given state with the
-	 * given parameters. Will set auxiliary data such as the cumulative reward
-	 * received in the last execution to 0 since the option is about to be
-	 * executed again. The
-	 * {@link #initiateInStateHelper(State, burlap.oomdp.singleagent.GroundedAction)}
-	 * method will be called before exiting.
-	 * 
-	 * @param s
-	 *            the state in which the option is being initiated.
-	 * @param groundedAction
-	 *            the parameters in which this option was initiated
-	 */
-	public void initiateInState(State s, GroundedAction groundedAction) {
-		lastCumulativeReward = 0.;
-		cumulativeDiscount = 1.;
-		lastNumSteps = 0;
-		lastOptionExecutionResults = new EpisodeAnalysis(s);
-		this.initiateInStateHelper(s, groundedAction);
-	}
-
-	@Override
-	protected State performActionHelper(State st, GroundedAction groundedAction) {
-
-		if (terminateMapper != null) {
-			State ns = terminateMapper.generateOptionTerminalState(st);
-			lastNumSteps = terminateMapper.getNumSteps(st, ns);
-			lastCumulativeReward = terminateMapper.getCumulativeReward(st, ns,
-					rf, discountFactor);
-			return ns;
-		}
-
-		State curState = st;
-
-		this.initiateInState(curState, groundedAction);
-
-		do {
-			curState = this.oneStep(curState, groundedAction);
-		} while (this.continueFromState(curState, groundedAction)
-				&& !externalTerminalFunction.isTerminal(curState));
-
-		return curState;
-	}
-
-	@Override
-	public EnvironmentOutcome performInEnvironment(Environment env,
-			GroundedAction groundedActions) {
-
-		State initialState = env.getCurrentObservation();
-		this.initiateInState(initialState, groundedActions);
-		do {
-			this.oneStep(env, groundedActions);
-		} while (this.continueFromState(env.getCurrentObservation(),
-				groundedActions) && !env.isInTerminalState());
-
-		EnvironmentOptionOutcome eoo = new EnvironmentOptionOutcome(
-				initialState, groundedActions.copy(),
-				env.getCurrentObservation(), this.lastCumulativeReward,
-				env.isInTerminalState(), this.discountFactor, this.lastNumSteps);
-
-		return eoo;
-	}
-
-	/**
-	 * Performs one step of execution of the option. This method assumes that
-	 * the
-	 * {@link #initiateInState(burlap.oomdp.core.states.State, burlap.oomdp.singleagent.GroundedAction)}
-	 * method was called previously for the state in which this option was
-	 * initiated.
-	 * 
-	 * @param s
-	 *            the state in which a single step of the option is to be taken.
-	 * @param groundedAction
-	 *            the parameters in which this option was initiated
-	 * @return the resulting state from a single step of the option being
-	 *         performed.
-	 */
-	public State oneStep(State s, GroundedAction groundedAction) {
-		GroundedAction ga = this.oneStepActionSelection(s, groundedAction);
-		State sprime = ga.executeIn(s);
-		lastNumSteps++;
-		double r = 0.;
-		if (keepTrackOfReward) {
-			r = rf.reward(s, ga, sprime);
-			lastCumulativeReward += cumulativeDiscount * r;
-			cumulativeDiscount *= discountFactor;
-		}
-
-		if (shouldRecordResults) {
-			GroundedAction recordAction = ga;
-			if (shouldAnnotateExecution) {
-				recordAction = new Policy.GroundedAnnotatedAction(
-						groundedAction.toString() + "(" + (lastNumSteps - 1)
-								+ ")", ga);
-			}
-			lastOptionExecutionResults.recordTransitionTo(recordAction, sprime,
-					r);
-		}
-
-		return sprime;
-	}
-
-	/**
-	 * Performs one step of execution of the option in the provided
-	 * {@link burlap.oomdp.singleagent.environment.Environment}. This method
-	 * assuems that the
-	 * {@link #initiateInState(burlap.oomdp.core.states.State, burlap.oomdp.singleagent.GroundedAction)}
-	 * method was called previously for the state in which this option was
-	 * initiated.
-	 * 
-	 * @param env
-	 *            The {@link burlap.oomdp.singleagent.environment.Environment}
-	 *            in which this option is to be applied
-	 * @param groundedAction
-	 *            the parameters in which this option was initiated
-	 * @return the
-	 *         {@link burlap.oomdp.singleagent.environment.EnvironmentOutcome}
-	 *         of the one step of interaction.
-	 */
-	public EnvironmentOutcome oneStep(Environment env,
-			GroundedAction groundedAction) {
-
-		GroundedAction ga = this.oneStepActionSelection(
-				env.getCurrentObservation(), groundedAction);
-		EnvironmentOutcome eo = ga.executeIn(env);
-		if (eo instanceof EnvironmentOptionOutcome) {
-			EnvironmentOptionOutcome eoo = (EnvironmentOptionOutcome) eo;
-			lastNumSteps += eoo.numSteps;
-			lastCumulativeReward += cumulativeDiscount * eoo.r;
-			cumulativeDiscount *= eoo.discount;
-		} else {
-			lastNumSteps++;
-			lastCumulativeReward += cumulativeDiscount * eo.r;
-			cumulativeDiscount *= discountFactor;
-		}
-
-		if (shouldRecordResults) {
-			GroundedAction recordAction = ga;
-			if (shouldAnnotateExecution) {
-				recordAction = new Policy.GroundedAnnotatedAction(
-						groundedAction.toString() + "(" + (lastNumSteps - 1)
-								+ ")", ga);
-			}
-			lastOptionExecutionResults.recordTransitionTo(recordAction, eo.op,
-					eo.r);
-		}
-
-		return eo;
-
+		possibleTerminations.put(sh, newP);
 	}
 
 	/**
@@ -679,6 +356,47 @@ public abstract class Option extends Action implements FullActionModel {
 	}
 
 	/**
+	 * Returns the option's policy distribution for a given state. This method
+	 * is primarily used by the methods for computing transition dynamics. Note
+	 * that if this is a non-Markov option, the returned distribution should be
+	 * with respect to the state in which the option was executed and any
+	 * previous actions it took that influence behavior.
+	 * 
+	 * @param s
+	 *            the state for which this option's policy distribution should
+	 *            be returned
+	 * @param groundedAction
+	 *            the parameters in which this option was initiated
+	 * @return this options policy distribution for the given state.
+	 */
+	public abstract List<ActionProb> getActionDistributionForState(State s,
+			GroundedAction groundedAction);
+
+	/**
+	 * This method creates a deterministic action selection probability
+	 * distribution where the deterministic action to be selected with
+	 * probability 1 is the one returned by the method
+	 * {@link #getDeterministicPolicy(State, burlap.oomdp.singleagent.GroundedAction)}
+	 * . This method is helpful for quickly defining the action selection
+	 * distribution for deterministic option policies.
+	 * 
+	 * @param s
+	 *            the state for which the action selection distribution should
+	 *            be returned.
+	 * @param groundedAction
+	 *            the parameters in which this option was initiated
+	 * @return a deterministic action selection distribution.
+	 */
+	protected List<ActionProb> getDeterministicPolicy(State s,
+			GroundedAction groundedAction) {
+		GroundedAction ga = this.oneStepActionSelection(s, groundedAction);
+		ActionProb ap = new ActionProb(ga, 1.);
+		List<ActionProb> aps = new ArrayList<Policy.ActionProb>();
+		aps.add(ap);
+		return aps;
+	}
+
+	/**
 	 * Returns the expected reward to be received from initiating this option
 	 * from state s.
 	 * 
@@ -697,6 +415,35 @@ public abstract class Option extends Action implements FullActionModel {
 		}
 		this.getTransitions(s, groundedAction);
 		return this.cachedExpectedRewards.get(sh);
+	}
+
+	/**
+	 * Returns the cumulative discounted reward received in last execution of
+	 * this option.
+	 * 
+	 * @return the cumulative discounted reward received in last execution of
+	 *         this option.
+	 */
+	public double getLastCumulativeReward() {
+		return this.lastCumulativeReward;
+	}
+
+	/**
+	 * Returns the events from this option's last execution
+	 * 
+	 * @return the events from this option's last execution
+	 */
+	public EpisodeAnalysis getLastExecutionResults() {
+		return lastOptionExecutionResults;
+	}
+
+	/**
+	 * Returns the number of steps taken in the last execution of this option.
+	 * 
+	 * @return the number of steps taken in the last execution of this option.
+	 */
+	public int getLastNumSteps() {
+		return this.lastNumSteps;
 	}
 
 	@Override
@@ -735,6 +482,91 @@ public abstract class Option extends Action implements FullActionModel {
 		// transition.add(new TransitionProbability(res, 1.0));
 
 		return transition;
+	}
+
+	private void init() {
+		rand = new Random();
+		rf = null;
+		keepTrackOfReward = false;
+		discountFactor = 1.;
+		lastCumulativeReward = 0.;
+		cumulativeDiscount = 1.;
+		lastNumSteps = 0;
+		stateMapping = null;
+		terminateMapper = null;
+		externalTerminalFunction = new NullTermination();
+		shouldRecordResults = true;
+		shouldAnnotateExecution = true;
+	}
+
+	/**
+	 * Tells the option that it is being initiated in the given state with the
+	 * given parameters. Will set auxiliary data such as the cumulative reward
+	 * received in the last execution to 0 since the option is about to be
+	 * executed again. The
+	 * {@link #initiateInStateHelper(State, burlap.oomdp.singleagent.GroundedAction)}
+	 * method will be called before exiting.
+	 * 
+	 * @param s
+	 *            the state in which the option is being initiated.
+	 * @param groundedAction
+	 *            the parameters in which this option was initiated
+	 */
+	public void initiateInState(State s, GroundedAction groundedAction) {
+		lastCumulativeReward = 0.;
+		cumulativeDiscount = 1.;
+		lastNumSteps = 0;
+		lastOptionExecutionResults = new EpisodeAnalysis(s);
+		this.initiateInStateHelper(s, groundedAction);
+	}
+
+	/**
+	 * This method is always called when an option is initiated and begins
+	 * execution. Specifically, it is called from the
+	 * {@link #performActionHelper(burlap.oomdp.core.states.State, burlap.oomdp.singleagent.GroundedAction)}
+	 * For Markov options, this method probably does not need to do anything,
+	 * but for non-Markov options, like Macro actions, it may need to initialize
+	 * some structures for determining termination and action selection.
+	 * 
+	 * @param s
+	 *            the state in which the option was initiated
+	 * @param groundedAction
+	 *            the parameters in which this option will be initiated
+	 */
+	public abstract void initiateInStateHelper(State s,
+			GroundedAction groundedAction);
+
+	/**
+	 * Returns whether this option is annotating recorded action executions with
+	 * this option's name.
+	 * 
+	 * @return true if this option is annotating recorded action executions with
+	 *         this option's name; false otherwise.
+	 */
+	public boolean isAnnotatingExecutionResults() {
+		return shouldAnnotateExecution;
+	}
+
+	/**
+	 * Returns whether this option is Markov or not; that is, whether action
+	 * selection and termination only depends on the current state.
+	 * 
+	 * @return True if this option is Markov ; false otherwise.
+	 */
+	public abstract boolean isMarkov();
+
+	@Override
+	public boolean isPrimitive() {
+		return false;
+	}
+
+	/**
+	 * Returns whether this option is recording its executions
+	 * 
+	 * @return true if this option is recording its executions; false otherwise.
+	 */
+	public boolean isRecordingExecutionResults() {
+		return shouldRecordResults;
 	}
 
 	/**
@@ -806,134 +638,302 @@ public abstract class Option extends Action implements FullActionModel {
 	}
 
 	/**
-	 * Adds to the expected discounted probability of reaching state given a
-	 * value p, where p = \gamma^k * p(s, s', k), where s' is a possible
-	 * terminal state and k is a unique number of steps not yet added to sum
-	 * over all possible step sizes to s'.
+	 * Tells this option to keep track the cumulative reward from its execution
+	 * using the given reward function and the given discount factor.
 	 * 
-	 * @param possibleTerminations
-	 *            the map from of all possible termination states to the
-	 *            expected discounted probability of reaching them
-	 * @param s
-	 *            a possible termination state
-	 * @param p
-	 *            the discounted probability of reaching s for some specific
-	 *            number of steps not already summed into the respective
-	 *            possibleTerminations map.
+	 * @param rf
+	 *            the reward function to use
+	 * @param discount
+	 *            the discount factor to use
 	 */
-	protected void accumulateDiscountedProb(
-			Map<HashableState, Double> possibleTerminations, State s, double p) {
-		HashableState sh = expectationStateHashingFactory.hashState(s);
-		Double stored = possibleTerminations.get(sh);
-		double newP = p;
-		if (stored != null) {
-			newP = stored + p;
-		}
-		possibleTerminations.put(sh, newP);
+	public void keepTrackOfRewardWith(RewardFunction rf, double discount) {
+		this.keepTrackOfReward = true;
+		this.rf = rf;
+		this.discountFactor = discount;
 	}
 
 	/**
-	 * This method creates a deterministic action selection probability
-	 * distribution where the deterministic action to be selected with
-	 * probability 1 is the one returned by the method
-	 * {@link #getDeterministicPolicy(State, burlap.oomdp.singleagent.GroundedAction)}
-	 * . This method is helpful for quickly defining the action selection
-	 * distribution for deterministic option policies.
+	 * Returns the state that is mapped from the input state. If this option
+	 * does not using a state mapping, then the input state is returned.
 	 * 
 	 * @param s
-	 *            the state for which the action selection distribution should
-	 *            be returned.
+	 *            the input state from which a mapped state is to be returned.
+	 * @return the state that is mapped from the input state.
+	 */
+	protected State map(State s) {
+		if (stateMapping == null) {
+			return s;
+		}
+		return stateMapping.mapState(s);
+	}
+
+	/**
+	 * Performs one step of execution of the option in the provided
+	 * {@link burlap.oomdp.singleagent.environment.Environment}. This method
+	 * assuems that the
+	 * {@link #initiateInState(burlap.oomdp.core.states.State, burlap.oomdp.singleagent.GroundedAction)}
+	 * method was called previously for the state in which this option was
+	 * initiated.
+	 * 
+	 * @param env
+	 *            The {@link burlap.oomdp.singleagent.environment.Environment}
+	 *            in which this option is to be applied
 	 * @param groundedAction
 	 *            the parameters in which this option was initiated
-	 * @return a deterministic action selection distribution.
+	 * @return the
+	 *         {@link burlap.oomdp.singleagent.environment.EnvironmentOutcome}
+	 *         of the one step of interaction.
 	 */
-	protected List<ActionProb> getDeterministicPolicy(State s,
+	public EnvironmentOutcome oneStep(Environment env,
 			GroundedAction groundedAction) {
-		GroundedAction ga = this.oneStepActionSelection(s, groundedAction);
-		ActionProb ap = new ActionProb(ga, 1.);
-		List<ActionProb> aps = new ArrayList<Policy.ActionProb>();
-		aps.add(ap);
-		return aps;
+
+		GroundedAction ga = this.oneStepActionSelection(
+				env.getCurrentObservation(), groundedAction);
+		EnvironmentOutcome eo = ga.executeIn(env);
+		if (eo instanceof EnvironmentOptionOutcome) {
+			EnvironmentOptionOutcome eoo = (EnvironmentOptionOutcome) eo;
+			lastNumSteps += eoo.numSteps;
+			lastCumulativeReward += cumulativeDiscount * eoo.r;
+			cumulativeDiscount *= eoo.discount;
+		} else {
+			lastNumSteps++;
+			lastCumulativeReward += cumulativeDiscount * eo.r;
+			cumulativeDiscount *= discountFactor;
+		}
+
+		if (shouldRecordResults) {
+			GroundedAction recordAction = ga;
+			if (shouldAnnotateExecution) {
+				recordAction = new Policy.GroundedAnnotatedAction(
+						groundedAction.toString() + "(" + (lastNumSteps - 1)
+								+ ")", ga);
+			}
+			lastOptionExecutionResults.recordTransitionTo(recordAction, eo.op,
+					eo.r);
+		}
+
+		return eo;
+
 	}
 
 	/**
-	 * A search node class used for finding all possible paths of execution an
-	 * option could take in the world from each initiation state.
+	 * Performs one step of execution of the option. This method assumes that
+	 * the
+	 * {@link #initiateInState(burlap.oomdp.core.states.State, burlap.oomdp.singleagent.GroundedAction)}
+	 * method was called previously for the state in which this option was
+	 * initiated.
 	 * 
-	 * @author James MacGlashan
-	 * 
+	 * @param s
+	 *            the state in which a single step of the option is to be taken.
+	 * @param groundedAction
+	 *            the parameters in which this option was initiated
+	 * @return the resulting state from a single step of the option being
+	 *         performed.
 	 */
-	class ExpectationSearchNode {
-
-		/**
-		 * the state this search node wraps
-		 */
-		public State s;
-
-		/**
-		 * The option parameters that were passed to the option upon initiation.
-		 */
-		public GroundedAction groundedAction;
-
-		/**
-		 * the *un*-discounted probability of reaching this search node
-		 */
-		public double probability;
-
-		/**
-		 * The cumulative discounted reward received reaching this node.
-		 */
-		public double cumulativeDiscountedReward;
-
-		/**
-		 * The number of steps taken to reach this node.
-		 */
-		public int nSteps;
-
-		/**
-		 * Initializes with the probability set to 1, the number of steps 0, and
-		 * the cumulative discounted reward 0. This constructor is useful for
-		 * the initial root node of the option path expansion
-		 * 
-		 * @param s
-		 *            the state this search node wraps
-		 * @param groundedAction
-		 *            the parameters in which this option was initiated
-		 */
-		public ExpectationSearchNode(State s, GroundedAction groundedAction) {
-			this.s = s;
-			this.groundedAction = groundedAction;
-			this.probability = 1.;
-			this.cumulativeDiscountedReward = 0.;
-			this.nSteps = 0;
+	public State oneStep(State s, GroundedAction groundedAction) {
+		GroundedAction ga = this.oneStepActionSelection(s, groundedAction);
+		State sprime = ga.executeIn(s);
+		lastNumSteps++;
+		double r = 0.;
+		if (keepTrackOfReward) {
+			r = rf.reward(s, ga, sprime);
+			lastCumulativeReward += cumulativeDiscount * r;
+			cumulativeDiscount *= discountFactor;
 		}
 
-		/**
-		 * Initializes.
-		 * 
-		 * @param src
-		 *            a source parent node from which this node was generated
-		 * @param s
-		 *            the state this search node wraps
-		 * @param transProb
-		 *            the transition probability of reaching this node from the
-		 *            source node
-		 * @param discountedR
-		 *            the discounted reward received from reaching this node
-		 *            from the source node.
-		 */
-		public ExpectationSearchNode(ExpectationSearchNode src, State s,
-				double transProb, double discountedR) {
-
-			this.s = s;
-			this.groundedAction = src.groundedAction;
-			this.probability = src.probability * transProb;
-			this.cumulativeDiscountedReward = src.cumulativeDiscountedReward
-					+ discountedR;
-			this.nSteps = src.nSteps + 1;
-
+		if (shouldRecordResults) {
+			GroundedAction recordAction = ga;
+			if (shouldAnnotateExecution) {
+				recordAction = new Policy.GroundedAnnotatedAction(
+						groundedAction.toString() + "(" + (lastNumSteps - 1)
+								+ ")", ga);
+			}
+			lastOptionExecutionResults.recordTransitionTo(recordAction, sprime,
+					r);
 		}
 
+		return sprime;
 	}
+
+	/**
+	 * This method causes the option to select a single step in the given state,
+	 * when the option was initiated with the provided parameters. This method
+	 * will be called by the
+	 * {@link #performActionHelper(burlap.oomdp.core.states.State, burlap.oomdp.singleagent.GroundedAction)}
+	 * method until it is determined that the option terminates.
+	 * 
+	 * @param s
+	 *            the state in which an action should be selected.
+	 * @param groundedAction
+	 *            the parameters in which this option was initiated
+	 * @return the action the option has selected to take in State
+	 *         <code>s</code>
+	 */
+	public abstract GroundedAction oneStepActionSelection(State s,
+			GroundedAction groundedAction);
+
+	@Override
+	protected State performActionHelper(State st, GroundedAction groundedAction) {
+
+		if (terminateMapper != null) {
+			State ns = terminateMapper.generateOptionTerminalState(st);
+			lastNumSteps = terminateMapper.getNumSteps(st, ns);
+			lastCumulativeReward = terminateMapper.getCumulativeReward(st, ns,
+					rf, discountFactor);
+			return ns;
+		}
+
+		State curState = st;
+
+		this.initiateInState(curState, groundedAction);
+
+		do {
+			curState = this.oneStep(curState, groundedAction);
+		} while (this.continueFromState(curState, groundedAction)
+				&& !externalTerminalFunction.isTerminal(curState));
+
+		return curState;
+	}
+
+	@Override
+	public EnvironmentOutcome performInEnvironment(Environment env,
+			GroundedAction groundedActions) {
+
+		State initialState = env.getCurrentObservation();
+		this.initiateInState(initialState, groundedActions);
+		do {
+			this.oneStep(env, groundedActions);
+		} while (this.continueFromState(env.getCurrentObservation(),
+				groundedActions) && !env.isInTerminalState());
+
+		EnvironmentOptionOutcome eoo = new EnvironmentOptionOutcome(
+				initialState, groundedActions.copy(),
+				env.getCurrentObservation(), this.lastCumulativeReward,
+				env.isInTerminalState(), this.discountFactor, this.lastNumSteps);
+
+		return eoo;
+	}
+
+	/**
+	 * Returns the probability that this option (executed with the given
+	 * parameters) will terminate in the given state
+	 * 
+	 * @param s
+	 *            the state to test for termination
+	 * @param groundedAction
+	 *            the parameters in which this option was initiated
+	 * @return the probability that this option (executed with the given
+	 *         parameters) will terminate in the given state
+	 */
+	public abstract double probabilityOfTermination(State s,
+			GroundedAction groundedAction);
+
+	/**
+	 * Sets what the external MDPs terminal function is that will cause this
+	 * option to terminate if it enters those terminal states.
+	 * 
+	 * @param tf
+	 *            the external MDPs terminal function is
+	 */
+	public void setExernalTermination(TerminalFunction tf) {
+		if (tf == null) {
+			this.externalTerminalFunction = new NullTermination();
+		} else {
+			this.externalTerminalFunction = tf;
+		}
+	}
+
+	/**
+	 * Sets the minimum probability of reaching a terminal state for it to be
+	 * included in the options computed transition dynamics distribution.
+	 * 
+	 * @param cutoff
+	 *            the minimum probability of reaching a terminal state for it to
+	 *            be included in the options computed transition dynamics
+	 *            distribution.
+	 */
+	public void setExpectationCalculationProbabilityCutoff(double cutoff) {
+		this.expectationSearchCutoffProb = cutoff;
+	}
+
+	/**
+	 * Sets the option to use the provided hashing factory for caching
+	 * transition probability results.
+	 * 
+	 * @param hashingFactory
+	 *            the state hashing factory to use.
+	 */
+	public void setExpectationHashingFactory(HashableStateFactory hashingFactory) {
+		this.expectationStateHashingFactory = hashingFactory;
+		this.cachedExpectations = new HashMap<HashableState, List<TransitionProbability>>();
+		this.cachedExpectedRewards = new HashMap<HashableState, Double>();
+	}
+
+	/**
+	 * Sets this option to use a state mapping that maps from the source MDP
+	 * states to another state representation that will be used by this option
+	 * for making action selections.
+	 * 
+	 * @param m
+	 *            the state mapping to use.
+	 */
+	public void setStateMapping(StateMapping m) {
+		this.stateMapping = m;
+	}
+
+	/**
+	 * Sets this option to determine its execution results using a direct
+	 * terminal state mapping rather than actually executing each action selcted
+	 * by the option step by step. A method like this should only be used under
+	 * specific circumstances. See the
+	 * {@link burlap.behavior.singleagent.options.support.DirectOptionTerminateMapper}
+	 * class documentation for more information.
+	 * 
+	 * @param tm
+	 *            the direct state to terminal state mapping to use.
+	 */
+	public void setTerminateMapper(DirectOptionTerminateMapper tm) {
+		this.terminateMapper = tm;
+	}
+
+	/**
+	 * Toggle whether the last recorded option execution will annotate the
+	 * actions taken with this option's name
+	 * 
+	 * @param toggle
+	 *            true if the last recorded option execution will annotate the
+	 *            actions taken with this option's name; false otherwise
+	 */
+	public void toggleShouldAnnotateResults(boolean toggle) {
+		this.shouldAnnotateExecution = toggle;
+	}
+
+	/**
+	 * Change whether the options last execution will be recorded or not.
+	 * 
+	 * @param toggle
+	 *            true if the last option execution should be saved; false
+	 *            otherwise.
+	 */
+	public void toggleShouldRecordResults(boolean toggle) {
+		this.shouldRecordResults = toggle;
+	}
+
+	/**
+	 * Returns whether this option's policy is deterministic or stochastic
+	 * 
+	 * @return true if this option's policy is deterministic; false if
+	 *         stochastic
+	 */
+	public abstract boolean usesDeterministicPolicy();
+
+	/**
+	 * Returns whether this option's termination conditions are deterministic or
+	 * stochastic
+	 * 
+	 * @return true if this option's termination conditions are deterministic;
+	 *         false if stochastic.
+	 */
+	public abstract boolean usesDeterministicTermination();
 
 }

@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.statehashing.HashableState;
 
 /**
  * UCT Action node that stores relevant action statics necessary for UCT.
@@ -15,6 +15,27 @@ import burlap.oomdp.singleagent.GroundedAction;
  * 
  */
 public class UCTActionNode {
+
+	/**
+	 * A factory for generating UCTActionNode objects.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class UCTActionConstructor {
+
+		/**
+		 * Returns a UCTActionNode Object that wraps the given action
+		 * 
+		 * @param a
+		 *            the action to wrap
+		 * @return a UCTActionNode Object that wraps the given action
+		 */
+		public UCTActionNode generate(GroundedAction a) {
+			return new UCTActionNode(a);
+		}
+
+	}
 
 	/**
 	 * The action this action node wraps
@@ -53,29 +74,6 @@ public class UCTActionNode {
 	}
 
 	/**
-	 * Returns the average return
-	 * 
-	 * @return the average return
-	 */
-	public double averageReturn() {
-		if (this.n == 0) {
-			return Double.NEGATIVE_INFINITY;
-		}
-		return sumReturn / n;
-	}
-
-	/**
-	 * Updates the node statistics with a sample return
-	 * 
-	 * @param sampledReturn
-	 *            the sample return observed
-	 */
-	public void update(double sampledReturn) {
-		sumReturn += sampledReturn;
-		n++;
-	}
-
-	/**
 	 * Adds a successor node to the list of possible successors
 	 * 
 	 * @param node
@@ -93,6 +91,34 @@ public class UCTActionNode {
 			succesorsMatchingState.add(node);
 		}
 
+	}
+
+	/**
+	 * Returns the average return
+	 * 
+	 * @return the average return
+	 */
+	public double averageReturn() {
+		if (this.n == 0) {
+			return Double.NEGATIVE_INFINITY;
+		}
+		return sumReturn / n;
+	}
+
+	/**
+	 * Returns a list of all successor nodes observed
+	 * 
+	 * @return a list of all successor nodes observed
+	 */
+	public List<UCTStateNode> getAllSuccessors() {
+		List<UCTStateNode> res = new ArrayList<UCTStateNode>();
+		for (List<UCTStateNode> nodes : successorStates.values()) {
+			for (UCTStateNode node : nodes) {
+				res.add(node);
+			}
+		}
+
+		return res;
 	}
 
 	/**
@@ -122,40 +148,14 @@ public class UCTActionNode {
 	}
 
 	/**
-	 * Returns a list of all successor nodes observed
+	 * Updates the node statistics with a sample return
 	 * 
-	 * @return a list of all successor nodes observed
+	 * @param sampledReturn
+	 *            the sample return observed
 	 */
-	public List<UCTStateNode> getAllSuccessors() {
-		List<UCTStateNode> res = new ArrayList<UCTStateNode>();
-		for (List<UCTStateNode> nodes : successorStates.values()) {
-			for (UCTStateNode node : nodes) {
-				res.add(node);
-			}
-		}
-
-		return res;
-	}
-
-	/**
-	 * A factory for generating UCTActionNode objects.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class UCTActionConstructor {
-
-		/**
-		 * Returns a UCTActionNode Object that wraps the given action
-		 * 
-		 * @param a
-		 *            the action to wrap
-		 * @return a UCTActionNode Object that wraps the given action
-		 */
-		public UCTActionNode generate(GroundedAction a) {
-			return new UCTActionNode(a);
-		}
-
+	public void update(double sampledReturn) {
+		sumReturn += sampledReturn;
+		n++;
 	}
 
 }

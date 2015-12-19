@@ -7,9 +7,9 @@ import java.awt.geom.Rectangle2D;
 
 import burlap.behavior.singleagent.auxiliary.valuefunctionvis.StateValuePainter;
 import burlap.oomdp.core.Attribute;
+import burlap.oomdp.core.Attribute.AttributeType;
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.core.Attribute.AttributeType;
 
 /**
  * A class for rendering the value of states as colored 2D cells on the canvas.
@@ -135,138 +135,6 @@ public class StateValuePainter2D extends StateValuePainter {
 		this.colorBlend = colorBlend;
 	}
 
-	/**
-	 * Sets the color blending used for the value function.
-	 * 
-	 * @param colorBlend
-	 *            the color blending used for the value function.
-	 */
-	public void setColorBlend(ColorBlend colorBlend) {
-		this.colorBlend = colorBlend;
-	}
-
-	/**
-	 * Will set the x-y attributes to use for cell rendering to the x y
-	 * attributes of the first object in the state of the designated classes.
-	 * 
-	 * @param xClassName
-	 *            the object class name containing the render x-axis attribute
-	 * @param xAttName
-	 *            the render x-axis attribute name
-	 * @param yClassName
-	 *            the object class name containing the render y-axis attribute
-	 * @param yAttName
-	 *            the render y-axis attribute name
-	 */
-	public void setXYAttByObjectClass(String xClassName, String xAttName,
-			String yClassName, String yAttName) {
-		this.xClassName = xClassName;
-		this.xAttName = xAttName;
-
-		this.yClassName = yClassName;
-		this.yAttName = yAttName;
-
-		this.xObjectName = null;
-		this.yObjectName = null;
-	}
-
-	/**
-	 * Will set the x-y attributes to use for cell rendering to the x y
-	 * attributes of the designated object references.
-	 * 
-	 * @param xObjectName
-	 *            the object name reference that contains the render x-axis
-	 *            attribute
-	 * @param xAttName
-	 *            the render x-axis attribute name
-	 * @param yObjectName
-	 *            the object name reference that contains the render y-axis
-	 *            attribute
-	 * @param yAttName
-	 *            the render y-axis attribute name
-	 */
-	public void setXYAttByObjectReference(String xObjectName, String xAttName,
-			String yObjectName, String yAttName) {
-		this.xObjectName = xObjectName;
-		this.xAttName = xAttName;
-
-		this.yObjectName = yObjectName;
-		this.yAttName = yAttName;
-
-		this.xClassName = null;
-		this.yClassName = null;
-	}
-
-	/**
-	 * Enables or disables the rendering the text specifying the value of a
-	 * state in its cell.
-	 * 
-	 * @param renderValueString
-	 *            if true, then text specifying the value of the state will be
-	 *            rendered; if false then it will not be rendered.
-	 */
-	public void toggleValueStringRendering(boolean renderValueString) {
-		this.renderValueString = renderValueString;
-	}
-
-	/**
-	 * Sets the rendering format of the string displaying the value of each
-	 * state.
-	 * 
-	 * @param fontSize
-	 *            the font size of the string
-	 * @param fontColor
-	 *            the color of the font
-	 * @param precision
-	 *            the precision of the value text printed (e.g., 2 means
-	 *            displaying 2 decimal places)
-	 * @param offsetFromLeft
-	 *            the offset from the left side of a state's cell that the text
-	 *            will begin being rendered. 0 means starting on the left
-	 *            boundary, 1 on the right boundary.
-	 * @param offsetFromTop
-	 *            the offset from the top side of a state's cell that the text
-	 *            will begin being rendered. 0 means starting on the top
-	 *            boundary, 1 on the bottom boundary.
-	 */
-	public void setValueStringRenderingFormat(int fontSize, Color fontColor,
-			int precision, float offsetFromLeft, float offsetFromTop) {
-		this.vsFontSize = fontSize;
-		this.vsFontColor = fontColor;
-		this.vsPrecision = precision;
-		this.vsOffsetFromLeft = offsetFromLeft;
-		this.vsOffsetFromTop = offsetFromTop;
-	}
-
-	/**
-	 * Sets the number of states that will be rendered along a row
-	 * 
-	 * @param numXCells
-	 *            the number of states that will be rendered along a row
-	 */
-	public void setNumXCells(int numXCells) {
-		this.numXCells = numXCells;
-	}
-
-	/**
-	 * Sets the number of states that will be rendered along a row
-	 * 
-	 * @param numYCells
-	 *            the number of states that will be rendered along a column
-	 */
-	public void setNumYCells(int numYCells) {
-		this.numYCells = numYCells;
-	}
-
-	@Override
-	public void rescale(double lowerValue, double upperValue) {
-		if (!this.shouldRescaleValues) {
-			return;
-		}
-		this.colorBlend.rescale(lowerValue, upperValue);
-
-	}
-
 	@Override
 	public void paintStateValue(Graphics2D g2, State s, double value,
 			float cWidth, float cHeight) {
@@ -339,6 +207,138 @@ public class StateValuePainter2D extends StateValuePainter {
 
 		}
 
+	}
+
+	@Override
+	public void rescale(double lowerValue, double upperValue) {
+		if (!this.shouldRescaleValues) {
+			return;
+		}
+		this.colorBlend.rescale(lowerValue, upperValue);
+
+	}
+
+	/**
+	 * Sets the color blending used for the value function.
+	 * 
+	 * @param colorBlend
+	 *            the color blending used for the value function.
+	 */
+	public void setColorBlend(ColorBlend colorBlend) {
+		this.colorBlend = colorBlend;
+	}
+
+	/**
+	 * Sets the number of states that will be rendered along a row
+	 * 
+	 * @param numXCells
+	 *            the number of states that will be rendered along a row
+	 */
+	public void setNumXCells(int numXCells) {
+		this.numXCells = numXCells;
+	}
+
+	/**
+	 * Sets the number of states that will be rendered along a row
+	 * 
+	 * @param numYCells
+	 *            the number of states that will be rendered along a column
+	 */
+	public void setNumYCells(int numYCells) {
+		this.numYCells = numYCells;
+	}
+
+	/**
+	 * Sets the rendering format of the string displaying the value of each
+	 * state.
+	 * 
+	 * @param fontSize
+	 *            the font size of the string
+	 * @param fontColor
+	 *            the color of the font
+	 * @param precision
+	 *            the precision of the value text printed (e.g., 2 means
+	 *            displaying 2 decimal places)
+	 * @param offsetFromLeft
+	 *            the offset from the left side of a state's cell that the text
+	 *            will begin being rendered. 0 means starting on the left
+	 *            boundary, 1 on the right boundary.
+	 * @param offsetFromTop
+	 *            the offset from the top side of a state's cell that the text
+	 *            will begin being rendered. 0 means starting on the top
+	 *            boundary, 1 on the bottom boundary.
+	 */
+	public void setValueStringRenderingFormat(int fontSize, Color fontColor,
+			int precision, float offsetFromLeft, float offsetFromTop) {
+		this.vsFontSize = fontSize;
+		this.vsFontColor = fontColor;
+		this.vsPrecision = precision;
+		this.vsOffsetFromLeft = offsetFromLeft;
+		this.vsOffsetFromTop = offsetFromTop;
+	}
+
+	/**
+	 * Will set the x-y attributes to use for cell rendering to the x y
+	 * attributes of the first object in the state of the designated classes.
+	 * 
+	 * @param xClassName
+	 *            the object class name containing the render x-axis attribute
+	 * @param xAttName
+	 *            the render x-axis attribute name
+	 * @param yClassName
+	 *            the object class name containing the render y-axis attribute
+	 * @param yAttName
+	 *            the render y-axis attribute name
+	 */
+	public void setXYAttByObjectClass(String xClassName, String xAttName,
+			String yClassName, String yAttName) {
+		this.xClassName = xClassName;
+		this.xAttName = xAttName;
+
+		this.yClassName = yClassName;
+		this.yAttName = yAttName;
+
+		this.xObjectName = null;
+		this.yObjectName = null;
+	}
+
+	/**
+	 * Will set the x-y attributes to use for cell rendering to the x y
+	 * attributes of the designated object references.
+	 * 
+	 * @param xObjectName
+	 *            the object name reference that contains the render x-axis
+	 *            attribute
+	 * @param xAttName
+	 *            the render x-axis attribute name
+	 * @param yObjectName
+	 *            the object name reference that contains the render y-axis
+	 *            attribute
+	 * @param yAttName
+	 *            the render y-axis attribute name
+	 */
+	public void setXYAttByObjectReference(String xObjectName, String xAttName,
+			String yObjectName, String yAttName) {
+		this.xObjectName = xObjectName;
+		this.xAttName = xAttName;
+
+		this.yObjectName = yObjectName;
+		this.yAttName = yAttName;
+
+		this.xClassName = null;
+		this.yClassName = null;
+	}
+
+	/**
+	 * Enables or disables the rendering the text specifying the value of a
+	 * state in its cell.
+	 * 
+	 * @param renderValueString
+	 *            if true, then text specifying the value of the state will be
+	 *            rendered; if false then it will not be rendered.
+	 */
+	public void toggleValueStringRendering(boolean renderValueString) {
+		this.renderValueString = renderValueString;
 	}
 
 	/**

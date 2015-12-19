@@ -16,37 +16,6 @@ import burlap.oomdp.visualizer.Visualizer;
 public class BlocksWorldVisualizer {
 
 	/**
-	 * Returns a 2D Visualizer canvas object to visualize {@link BlocksWorld}
-	 * states.
-	 * 
-	 * @return the visualizer.
-	 */
-	public static Visualizer getVisualizer() {
-
-		Visualizer v = new Visualizer();
-		v.addObjectClassPainter(BlocksWorld.CLASSBLOCK, new BlockPainter());
-		return v;
-	}
-
-	/**
-	 * Returns a 2D Visualizer canvas object to visualize {@link BlocksWorld}
-	 * states where the name of the block is rendered at the provided font point
-	 * size.
-	 * 
-	 * @param fontSize
-	 *            the size of the font to use when rendering the name of a block
-	 *            object.
-	 * @return the visualizer.
-	 */
-	public static Visualizer getVisualizer(int fontSize) {
-
-		Visualizer v = new Visualizer();
-		v.addObjectClassPainter(BlocksWorld.CLASSBLOCK, new BlockPainter(
-				fontSize));
-		return v;
-	}
-
-	/**
 	 * Paints blocks as a rectangle scaled to a size necessary to be able to
 	 * show all blocks on the table within the canvas width or all blocks
 	 * stacked on each other within the canvas height. The name of the block
@@ -73,6 +42,36 @@ public class BlocksWorldVisualizer {
 		 */
 		public BlockPainter(int fontSize) {
 			this.fontSize = fontSize;
+		}
+
+		protected Color getColorForString(String colName) {
+			if (colName.equals(BlocksWorld.COLORRED)) {
+				return Color.RED;
+			}
+			if (colName.equals(BlocksWorld.COLORGREEN)) {
+				return Color.GREEN;
+			}
+			if (colName.equals(BlocksWorld.COLORBLUE)) {
+				return Color.BLUE;
+			}
+			return null;
+
+		}
+
+		protected int getHeight(State s, ObjectInstance ob) {
+			if (ob.getIntValForAttribute(BlocksWorld.ATTONTABLE) == 1) {
+				return 0;
+			}
+			return 1 + this.getHeight(s, s.getObject(ob
+					.getStringValForAttribute(BlocksWorld.ATTONBLOCK)));
+		}
+
+		protected String getStackBottom(State s, ObjectInstance ob) {
+			if (ob.getIntValForAttribute(BlocksWorld.ATTONTABLE) == 1) {
+				return ob.getName();
+			}
+			return this.getStackBottom(s, s.getObject(ob
+					.getStringValForAttribute(BlocksWorld.ATTONBLOCK)));
 		}
 
 		@Override
@@ -121,36 +120,37 @@ public class BlocksWorldVisualizer {
 
 		}
 
-		protected String getStackBottom(State s, ObjectInstance ob) {
-			if (ob.getIntValForAttribute(BlocksWorld.ATTONTABLE) == 1) {
-				return ob.getName();
-			}
-			return this.getStackBottom(s, s.getObject(ob
-					.getStringValForAttribute(BlocksWorld.ATTONBLOCK)));
-		}
+	}
 
-		protected int getHeight(State s, ObjectInstance ob) {
-			if (ob.getIntValForAttribute(BlocksWorld.ATTONTABLE) == 1) {
-				return 0;
-			}
-			return 1 + this.getHeight(s, s.getObject(ob
-					.getStringValForAttribute(BlocksWorld.ATTONBLOCK)));
-		}
+	/**
+	 * Returns a 2D Visualizer canvas object to visualize {@link BlocksWorld}
+	 * states.
+	 * 
+	 * @return the visualizer.
+	 */
+	public static Visualizer getVisualizer() {
 
-		protected Color getColorForString(String colName) {
-			if (colName.equals(BlocksWorld.COLORRED)) {
-				return Color.RED;
-			}
-			if (colName.equals(BlocksWorld.COLORGREEN)) {
-				return Color.GREEN;
-			}
-			if (colName.equals(BlocksWorld.COLORBLUE)) {
-				return Color.BLUE;
-			}
-			return null;
+		Visualizer v = new Visualizer();
+		v.addObjectClassPainter(BlocksWorld.CLASSBLOCK, new BlockPainter());
+		return v;
+	}
 
-		}
+	/**
+	 * Returns a 2D Visualizer canvas object to visualize {@link BlocksWorld}
+	 * states where the name of the block is rendered at the provided font point
+	 * size.
+	 * 
+	 * @param fontSize
+	 *            the size of the font to use when rendering the name of a block
+	 *            object.
+	 * @return the visualizer.
+	 */
+	public static Visualizer getVisualizer(int fontSize) {
 
+		Visualizer v = new Visualizer();
+		v.addObjectClassPainter(BlocksWorld.CLASSBLOCK, new BlockPainter(
+				fontSize));
+		return v;
 	}
 
 }

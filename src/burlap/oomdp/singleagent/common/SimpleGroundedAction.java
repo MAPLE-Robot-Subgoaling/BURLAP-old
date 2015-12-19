@@ -16,8 +16,8 @@ public class SimpleGroundedAction extends GroundedAction {
 	}
 
 	@Override
-	public void initParamsWithStringRep(String[] params) {
-		// do nothing
+	public GroundedAction copy() {
+		return new SimpleGroundedAction(this.action);
 	}
 
 	@Override
@@ -26,7 +26,7 @@ public class SimpleGroundedAction extends GroundedAction {
 	}
 
 	@Override
-	public GroundedAction copy() {
-		return new SimpleGroundedAction(this.action);
+	public void initParamsWithStringRep(String[] params) {
+		// do nothing
 	}
 }

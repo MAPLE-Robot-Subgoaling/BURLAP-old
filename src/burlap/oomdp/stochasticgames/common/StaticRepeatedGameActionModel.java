@@ -3,8 +3,8 @@ package burlap.oomdp.stochasticgames.common;
 import java.util.ArrayList;
 import java.util.List;
 
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TransitionProbability;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.stochasticgames.JointAction;
 import burlap.oomdp.stochasticgames.JointActionModel;
 
@@ -23,6 +23,12 @@ public class StaticRepeatedGameActionModel extends JointActionModel {
 	}
 
 	@Override
+	protected State actionHelper(State s, JointAction ja) {
+		// do nothing, the state simply repeats itself
+		return s;
+	}
+
+	@Override
 	public List<TransitionProbability> transitionProbsFor(State s,
 			JointAction ja) {
 		List<TransitionProbability> res = new ArrayList<TransitionProbability>();
@@ -30,12 +36,6 @@ public class StaticRepeatedGameActionModel extends JointActionModel {
 		res.add(tp);
 
 		return res;
-	}
-
-	@Override
-	protected State actionHelper(State s, JointAction ja) {
-		// do nothing, the state simply repeats itself
-		return s;
 	}
 
 }

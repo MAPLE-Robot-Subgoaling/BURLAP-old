@@ -57,15 +57,6 @@ public class CritiqueResult {
 	}
 
 	/**
-	 * Returns the source state of this behavior.
-	 * 
-	 * @return the source state of this behavior.
-	 */
-	public State getS() {
-		return s;
-	}
-
-	/**
 	 * Returns the action of this behavior.
 	 * 
 	 * @return the action of this behavior.
@@ -75,21 +66,30 @@ public class CritiqueResult {
 	}
 
 	/**
-	 * Returns the resulting state of this behavior.
-	 * 
-	 * @return the resulting state of this behavior.
-	 */
-	public State getSprime() {
-		return sprime;
-	}
-
-	/**
 	 * Returns the critique of this behavior.
 	 * 
 	 * @return the critique of this behavior.
 	 */
 	public double getCritique() {
 		return critique;
+	}
+
+	/**
+	 * Returns the source state of this behavior.
+	 * 
+	 * @return the source state of this behavior.
+	 */
+	public State getS() {
+		return s;
+	}
+
+	/**
+	 * Returns the resulting state of this behavior.
+	 * 
+	 * @return the resulting state of this behavior.
+	 */
+	public State getSprime() {
+		return sprime;
 	}
 
 }

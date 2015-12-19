@@ -6,11 +6,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import burlap.behavior.valuefunction.QValue;
-import burlap.behavior.singleagent.MDPSolver;
 import burlap.behavior.valuefunction.ValueFunction;
 import burlap.oomdp.core.states.State;
-import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.visualizer.RenderLayer;
 
 /**
@@ -69,32 +66,12 @@ public class ValueFunctionRenderLayer implements RenderLayer {
 	}
 
 	/**
-	 * Sets the states to visualize
-	 * 
-	 * @param stateValuesToVisualize
-	 *            the state to visualize
-	 */
-	public void setStatesToVisualize(Collection<State> stateValuesToVisualize) {
-		this.statesToVisualize = stateValuesToVisualize;
-	}
-
-	/**
 	 * Returns the State-wise value function painter
 	 * 
 	 * @return the State-wise value function painter
 	 */
 	public StateValuePainter getSvp() {
 		return svp;
-	}
-
-	/**
-	 * Sets the state-wise value function painter
-	 * 
-	 * @param svp
-	 *            state-wise value function painter
-	 */
-	public void setSvp(StateValuePainter svp) {
-		this.svp = svp;
 	}
 
 	@Override
@@ -122,6 +99,26 @@ public class ValueFunctionRenderLayer implements RenderLayer {
 			this.svp.paintStateValue(g2, s, vIter.next(), width, height);
 		}
 
+	}
+
+	/**
+	 * Sets the states to visualize
+	 * 
+	 * @param stateValuesToVisualize
+	 *            the state to visualize
+	 */
+	public void setStatesToVisualize(Collection<State> stateValuesToVisualize) {
+		this.statesToVisualize = stateValuesToVisualize;
+	}
+
+	/**
+	 * Sets the state-wise value function painter
+	 * 
+	 * @param svp
+	 *            state-wise value function painter
+	 */
+	public void setSvp(StateValuePainter svp) {
+		this.svp = svp;
 	}
 
 }

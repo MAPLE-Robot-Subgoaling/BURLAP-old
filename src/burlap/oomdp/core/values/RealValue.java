@@ -1,8 +1,5 @@
 package burlap.oomdp.core.values;
 
-import java.util.Collection;
-import java.util.Set;
-
 import burlap.oomdp.core.Attribute;
 
 /**
@@ -29,6 +26,11 @@ public class RealValue extends OOMDPValue implements Value {
 		this.realVal = UNSET;
 	}
 
+	public RealValue(Attribute attribute, double realVal) {
+		super(attribute);
+		this.realVal = realVal;
+	}
+
 	/**
 	 * Initializes this value as a copy from the source Value object v.
 	 * 
@@ -37,46 +39,8 @@ public class RealValue extends OOMDPValue implements Value {
 	 */
 	public RealValue(RealValue v) {
 		super(v);
-		RealValue rv = (RealValue) v;
+		RealValue rv = v;
 		this.realVal = rv.realVal;
-	}
-
-	public RealValue(Attribute attribute, double realVal) {
-		super(attribute);
-		this.realVal = realVal;
-	}
-
-	@Override
-	public Value copy() {
-		return new RealValue(this);
-	}
-
-	@Override
-	public boolean valueHasBeenSet() {
-		return !Double.isNaN(this.realVal);
-	}
-
-	@Override
-	public Value setValue(int v) {
-		return new RealValue(this.attribute, v);
-	}
-
-	@Override
-	public Value setValue(double v) {
-		return new RealValue(this.attribute, v);
-	}
-
-	@Override
-	public Value setValue(String v) {
-		return new RealValue(this.attribute, Double.parseDouble(v));
-	}
-
-	@Override
-	public double getRealVal() {
-		if (Double.isNaN(this.realVal)) {
-			throw new UnsetValueException();
-		}
-		return this.realVal;
 	}
 
 	@Override
@@ -88,11 +52,8 @@ public class RealValue extends OOMDPValue implements Value {
 	}
 
 	@Override
-	public double getNumericRepresentation() {
-		if (Double.isNaN(this.realVal)) {
-			throw new UnsetValueException();
-		}
-		return this.realVal;
+	public Value copy() {
+		return new RealValue(this);
 	}
 
 	@Override
@@ -111,5 +72,41 @@ public class RealValue extends OOMDPValue implements Value {
 
 		return realVal == op.realVal;
 
+	}
+
+	@Override
+	public double getNumericRepresentation() {
+		if (Double.isNaN(this.realVal)) {
+			throw new UnsetValueException();
+		}
+		return this.realVal;
+	}
+
+	@Override
+	public double getRealVal() {
+		if (Double.isNaN(this.realVal)) {
+			throw new UnsetValueException();
+		}
+		return this.realVal;
+	}
+
+	@Override
+	public Value setValue(double v) {
+		return new RealValue(this.attribute, v);
+	}
+
+	@Override
+	public Value setValue(int v) {
+		return new RealValue(this.attribute, v);
+	}
+
+	@Override
+	public Value setValue(String v) {
+		return new RealValue(this.attribute, Double.parseDouble(v));
+	}
+
+	@Override
+	public boolean valueHasBeenSet() {
+		return !Double.isNaN(this.realVal);
 	}
 }

@@ -145,6 +145,65 @@ public class MultiAgentExperimenter {
 	}
 
 	/**
+	 * Runs a trial where trial length is interpreted as the number of episodes
+	 * in a trial.
+	 * 
+	 * @param w
+	 *            the world object in which the trial will be run
+	 */
+	protected void runEpisodewiseTrial(World w) {
+
+		for (int i = 0; i < this.trialLength; i++) {
+			w.runGame();
+		}
+
+	}
+
+	/**
+	 * Runs a trial where the trial lenght is interpreted as the number of total
+	 * steps taken.
+	 * 
+	 * @param w
+	 *            the world object in which the trial will be run
+	 */
+	protected void runStepwiseTrial(World w) {
+
+		int stepsReamining = this.trialLength;
+		while (stepsReamining > 0) {
+			GameAnalysis ga = w.runGame(stepsReamining);
+			stepsReamining -= ga.numTimeSteps() - 1;
+		}
+
+	}
+
+	/**
+	 * Sets the significance used for confidence intervals. The default is 0.05
+	 * which corresponds to a 95% CI.
+	 * 
+	 * @param significance
+	 *            the significance for confidence intervals to use
+	 */
+	public void setPlotCISignificance(double significance) {
+		this.plotCISignificance = significance;
+		if (this.plotter != null) {
+			this.plotter.setSignificanceForCI(significance);
+		}
+	}
+
+	/**
+	 * Sets the delay in milliseconds between automatic plot refreshes
+	 * 
+	 * @param delayInMS
+	 *            the delay in milliseconds
+	 */
+	public void setPlotRefreshDelay(int delayInMS) {
+		this.plotRefresh = delayInMS;
+		if (this.plotter != null) {
+			this.plotter.setRefreshDelay(delayInMS);
+		}
+	}
+
+	/**
 	 * Setsup the plotting confiruation.
 	 * 
 	 * @param chartWidth
@@ -175,56 +234,6 @@ public class MultiAgentExperimenter {
 		this.plotter.setRefreshDelay(this.plotRefresh);
 		this.plotter.setSignificanceForCI(this.plotCISignificance);
 
-	}
-
-	/**
-	 * Sets the delay in milliseconds between automatic plot refreshes
-	 * 
-	 * @param delayInMS
-	 *            the delay in milliseconds
-	 */
-	public void setPlotRefreshDelay(int delayInMS) {
-		this.plotRefresh = delayInMS;
-		if (this.plotter != null) {
-			this.plotter.setRefreshDelay(delayInMS);
-		}
-	}
-
-	/**
-	 * Sets the significance used for confidence intervals. The default is 0.05
-	 * which corresponds to a 95% CI.
-	 * 
-	 * @param significance
-	 *            the significance for confidence intervals to use
-	 */
-	public void setPlotCISignificance(double significance) {
-		this.plotCISignificance = significance;
-		if (this.plotter != null) {
-			this.plotter.setSignificanceForCI(significance);
-		}
-	}
-
-	/**
-	 * Toggles whether plots should be displayed or not.
-	 * 
-	 * @param shouldPlotResults
-	 *            if true, then plots will be displayed; if false plots will not
-	 *            be displayed.
-	 */
-	public void toggleVisualPlots(boolean shouldPlotResults) {
-		this.displayPlots = shouldPlotResults;
-	}
-
-	/**
-	 * Changes whether the trial length provided in the constructor is
-	 * interpreted as the number of episodes or total number of steps.
-	 * 
-	 * @param lengthRepresentsEpisodes
-	 *            if true, interpret length as number of episodes; if false
-	 *            interprete as total number of steps.
-	 */
-	public void toggleTrialLengthInterpretation(boolean lengthRepresentsEpisodes) {
-		this.trialLengthIsInEpisodes = lengthRepresentsEpisodes;
 	}
 
 	/**
@@ -282,6 +291,47 @@ public class MultiAgentExperimenter {
 	}
 
 	/**
+	 * Changes whether the trial length provided in the constructor is
+	 * interpreted as the number of episodes or total number of steps.
+	 * 
+	 * @param lengthRepresentsEpisodes
+	 *            if true, interpret length as number of episodes; if false
+	 *            interprete as total number of steps.
+	 */
+	public void toggleTrialLengthInterpretation(boolean lengthRepresentsEpisodes) {
+		this.trialLengthIsInEpisodes = lengthRepresentsEpisodes;
+	}
+
+	/**
+	 * Toggles whether plots should be displayed or not.
+	 * 
+	 * @param shouldPlotResults
+	 *            if true, then plots will be displayed; if false plots will not
+	 *            be displayed.
+	 */
+	public void toggleVisualPlots(boolean shouldPlotResults) {
+		this.displayPlots = shouldPlotResults;
+	}
+
+	/**
+	 * Writes an step-wise data to a csv file. If the file path does not include
+	 * the .csv extension, it will automatically be added. If the experimenter
+	 * as not been run, then nothing will be saved and a warrning message will
+	 * be printed to indicate as such.
+	 * 
+	 * @param filePath
+	 *            the path to the csv file to write to.
+	 */
+	public void writeEpisodeDataToCSV(String filePath) {
+		if (!this.completedExperiment) {
+			System.out
+					.println("Cannot write data until the experiment has been started with the startExperiment() method.");
+			return;
+		}
+		this.plotter.writeEpisodeDataToCSV(filePath);
+	}
+
+	/**
 	 * Writes the step-wise and episode-wise data to CSV files. The episode-wise
 	 * data will be saved to the file <pathAndBaseNameToUse>Episodes.csv. The
 	 * step-wise data will. If the experimenter as not been run, then nothing
@@ -317,56 +367,6 @@ public class MultiAgentExperimenter {
 			return;
 		}
 		this.plotter.writeStepDataToCSV(filePath);
-	}
-
-	/**
-	 * Writes an step-wise data to a csv file. If the file path does not include
-	 * the .csv extension, it will automatically be added. If the experimenter
-	 * as not been run, then nothing will be saved and a warrning message will
-	 * be printed to indicate as such.
-	 * 
-	 * @param filePath
-	 *            the path to the csv file to write to.
-	 */
-	public void writeEpisodeDataToCSV(String filePath) {
-		if (!this.completedExperiment) {
-			System.out
-					.println("Cannot write data until the experiment has been started with the startExperiment() method.");
-			return;
-		}
-		this.plotter.writeEpisodeDataToCSV(filePath);
-	}
-
-	/**
-	 * Runs a trial where trial length is interpreted as the number of episodes
-	 * in a trial.
-	 * 
-	 * @param w
-	 *            the world object in which the trial will be run
-	 */
-	protected void runEpisodewiseTrial(World w) {
-
-		for (int i = 0; i < this.trialLength; i++) {
-			w.runGame();
-		}
-
-	}
-
-	/**
-	 * Runs a trial where the trial lenght is interpreted as the number of total
-	 * steps taken.
-	 * 
-	 * @param w
-	 *            the world object in which the trial will be run
-	 */
-	protected void runStepwiseTrial(World w) {
-
-		int stepsReamining = this.trialLength;
-		while (stepsReamining > 0) {
-			GameAnalysis ga = w.runGame(stepsReamining);
-			stepsReamining -= ga.numTimeSteps() - 1;
-		}
-
 	}
 
 }

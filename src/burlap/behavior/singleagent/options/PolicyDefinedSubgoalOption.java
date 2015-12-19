@@ -43,13 +43,14 @@ public class PolicyDefinedSubgoalOption extends Option {
 	}
 
 	@Override
-	public boolean isParameterized() {
-		return false;
+	public boolean applicableInState(State st, GroundedAction groundedAction) {
+		return policy.getAction(this.map(st)) != null;
 	}
 
 	@Override
-	public GroundedAction getAssociatedGroundedAction() {
-		return new SimpleGroundedAction(this);
+	public List<ActionProb> getActionDistributionForState(State s,
+			GroundedAction groundedAction) {
+		return policy.getActionDistributionForState(this.map(s));
 	}
 
 	@Override
@@ -60,18 +61,29 @@ public class PolicyDefinedSubgoalOption extends Option {
 	}
 
 	@Override
+	public GroundedAction getAssociatedGroundedAction() {
+		return new SimpleGroundedAction(this);
+	}
+
+	@Override
+	public void initiateInStateHelper(State s, GroundedAction groundedAction) {
+		// no bookkeeping
+	}
+
+	@Override
 	public boolean isMarkov() {
 		return true;
 	}
 
 	@Override
-	public boolean usesDeterministicTermination() {
-		return true;
+	public boolean isParameterized() {
+		return false;
 	}
 
 	@Override
-	public boolean usesDeterministicPolicy() {
-		return !policy.isStochastic();
+	public GroundedAction oneStepActionSelection(State s,
+			GroundedAction groundedAction) {
+		return (GroundedAction) policy.getAction(this.map(s));
 	}
 
 	@Override
@@ -85,25 +97,13 @@ public class PolicyDefinedSubgoalOption extends Option {
 	}
 
 	@Override
-	public boolean applicableInState(State st, GroundedAction groundedAction) {
-		return policy.getAction(this.map(st)) != null;
+	public boolean usesDeterministicPolicy() {
+		return !policy.isStochastic();
 	}
 
 	@Override
-	public void initiateInStateHelper(State s, GroundedAction groundedAction) {
-		// no bookkeeping
-	}
-
-	@Override
-	public GroundedAction oneStepActionSelection(State s,
-			GroundedAction groundedAction) {
-		return (GroundedAction) policy.getAction(this.map(s));
-	}
-
-	@Override
-	public List<ActionProb> getActionDistributionForState(State s,
-			GroundedAction groundedAction) {
-		return policy.getActionDistributionForState(this.map(s));
+	public boolean usesDeterministicTermination() {
+		return true;
 	}
 
 }

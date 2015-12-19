@@ -1,11 +1,11 @@
 package burlap.behavior.singleagent.learnfromdemo.mlirl.support;
 
-import burlap.behavior.valuefunction.QValue;
+import java.util.List;
+
 import burlap.behavior.singleagent.MDPSolver;
+import burlap.behavior.valuefunction.QValue;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
-
-import java.util.List;
 
 /**
  * This class provides methods to compute the gradient of a Boltzmann policy.
@@ -139,26 +139,6 @@ public class BoltzmannPolicyGradient {
 	}
 
 	/**
-	 * Given an array of Q-values, returns the maximum Q-value multiplied by the
-	 * parameter beta.
-	 * 
-	 * @param qs
-	 *            an array of Q-values
-	 * @param beta
-	 *            the scaling beta parameter.
-	 * @return the maximum Q-value multiplied by the parameter beta
-	 */
-	public static double maxBetaScaled(double[] qs, double beta) {
-		double max = Double.NEGATIVE_INFINITY;
-		for (double q : qs) {
-			if (q > max) {
-				max = q;
-			}
-		}
-		return beta * max;
-	}
-
-	/**
 	 * Computes the log sum of exponentiated Q-values (Scaled by beta)
 	 * 
 	 * @param qs
@@ -178,6 +158,26 @@ public class BoltzmannPolicyGradient {
 		double v = maxBetaScaled + Math.log(expSum);
 		return v;
 
+	}
+
+	/**
+	 * Given an array of Q-values, returns the maximum Q-value multiplied by the
+	 * parameter beta.
+	 * 
+	 * @param qs
+	 *            an array of Q-values
+	 * @param beta
+	 *            the scaling beta parameter.
+	 * @return the maximum Q-value multiplied by the parameter beta
+	 */
+	public static double maxBetaScaled(double[] qs, double beta) {
+		double max = Double.NEGATIVE_INFINITY;
+		for (double q : qs) {
+			if (q > max) {
+				max = q;
+			}
+		}
+		return beta * max;
 	}
 
 }

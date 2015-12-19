@@ -13,21 +13,21 @@ import burlap.oomdp.auxiliary.common.NullTermination;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectClass;
-import burlap.oomdp.core.objects.ObjectInstance;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.core.objects.MutableObjectInstance;
+import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.MutableState;
-import burlap.oomdp.stochasticgames.SGAgent;
-import burlap.oomdp.stochasticgames.SGAgentType;
-import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.stochasticgames.JointAction;
 import burlap.oomdp.stochasticgames.JointActionModel;
 import burlap.oomdp.stochasticgames.JointReward;
+import burlap.oomdp.stochasticgames.SGAgent;
+import burlap.oomdp.stochasticgames.SGAgentType;
 import burlap.oomdp.stochasticgames.SGDomain;
 import burlap.oomdp.stochasticgames.SGStateGenerator;
-import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
 import burlap.oomdp.stochasticgames.World;
+import burlap.oomdp.stochasticgames.agentactions.GroundedSGAgentAction;
+import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
 import burlap.oomdp.stochasticgames.agentactions.SimpleSGAgentAction;
 import burlap.oomdp.stochasticgames.common.ConstantSGStateGenerator;
 import burlap.oomdp.stochasticgames.common.StaticRepeatedGameActionModel;
@@ -77,6 +77,275 @@ import burlap.oomdp.stochasticgames.explorers.SGTerminalExplorer;
 public class SingleStageNormalFormGame implements DomainGenerator {
 
 	/**
+	 * A wrapper for a HashMap from strings to ints used to map action names to
+	 * their action index.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	protected static class ActionNameMap {
+		public static ActionNameMap[] deepCopyActionNameMapArray(
+				ActionNameMap[] input) {
+			ActionNameMap[] c = new ActionNameMap[input.length];
+			for (int i = 0; i < input.length; i++) {
+				c[i] = input[i].copy();
+			}
+			return c;
+		}
+
+		Map<String, Integer> namesToInd;
+
+		public ActionNameMap() {
+			this.namesToInd = new HashMap<String, Integer>();
+		}
+
+		public boolean containsKey(String name) {
+			return this.namesToInd.containsKey(name);
+		}
+
+		public ActionNameMap copy() {
+			ActionNameMap c = new ActionNameMap();
+			for (Map.Entry<String, Integer> e : this.namesToInd.entrySet()) {
+				c.put(e.getKey(), e.getValue());
+			}
+
+			return c;
+		}
+
+		public Integer get(String name) {
+			Integer i = this.namesToInd.get(name);
+			if (i == null) {
+				throw new RuntimeException("No action named " + name
+						+ " for this player");
+			}
+			return i;
+		}
+
+		public void put(String name, int ind) {
+			this.namesToInd.put(name, ind);
+		}
+
+		public int size() {
+			return this.namesToInd.size();
+		}
+	}
+
+	/**
+	 * A class for defining a payout function for a single agent for each
+	 * possible strategy profile.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class AgentPayoutFunction {
+
+		public static AgentPayoutFunction[] getDeepCopyOfPayoutArray(
+				AgentPayoutFunction[] input) {
+			AgentPayoutFunction[] c = new AgentPayoutFunction[input.length];
+			for (int i = 0; i < input.length; i++) {
+				c[i] = input[i].copy();
+			}
+			return c;
+		}
+
+		Map<StrategyProfile, Double> payout;
+
+		public AgentPayoutFunction() {
+			this.payout = new HashMap<SingleStageNormalFormGame.StrategyProfile, Double>();
+		}
+
+		public AgentPayoutFunction copy() {
+			AgentPayoutFunction c = new AgentPayoutFunction();
+			for (Map.Entry<StrategyProfile, Double> e : this.payout.entrySet()) {
+				c.set(e.getKey().copy(), e.getValue());
+			}
+			return c;
+		}
+
+		/**
+		 * Returns the payout for a given strategy profile
+		 * 
+		 * @param profile
+		 *            the strategy profile
+		 * @return the payout for the given strategy profile.
+		 */
+		public double getPayout(StrategyProfile profile) {
+			Double P = this.payout.get(profile);
+			if (P == null) {
+				throw new RuntimeException(
+						"Payout Function is not defined for this strategy profile: "
+								+ profile.toString());
+			}
+
+			return P;
+		}
+
+		/**
+		 * sets the payout for a given strategy profile
+		 * 
+		 * @param profile
+		 *            the strategy profile
+		 * @param p
+		 *            the payout returned for this strategy profile
+		 */
+		public void set(StrategyProfile profile, double p) {
+			this.payout.put(profile, p);
+		}
+
+	}
+
+	/**
+	 * A SingleAction class that uses the parent domain generator to determine
+	 * which agent can take which actions and enforces that in the
+	 * preconditions.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	protected static class NFGAgentAction extends SimpleSGAgentAction {
+
+		ActionNameMap[] actionNameToIndex;
+
+		public NFGAgentAction(SGDomain d, String name,
+				ActionNameMap[] actionNameToIndex) {
+			super(d, name);
+			this.actionNameToIndex = actionNameToIndex;
+		}
+
+		@Override
+		public boolean applicableInState(State s, GroundedSGAgentAction gsa) {
+
+			ObjectInstance a = s.getObject(gsa.actingAgent);
+			int pn = a.getIntValForAttribute(ATTPN);
+
+			if (this.actionNameToIndex[pn].containsKey(this.actionName)) {
+				return true;
+			}
+
+			return false;
+		}
+
+	}
+
+	/**
+	 * A Joint Reward Function class that uses the parent domain generators
+	 * payout matrix to determine payouts for any given strategy profile.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	protected static class SingleStageNormalFormJointReward implements
+			JointReward {
+
+		int nPlayers;
+		ActionNameMap[] actionNameToIndex;
+		AgentPayoutFunction[] payouts;
+
+		public SingleStageNormalFormJointReward(int nPlayers,
+				ActionNameMap[] actionNameToIndex, AgentPayoutFunction[] payouts) {
+			this.nPlayers = nPlayers;
+			this.actionNameToIndex = actionNameToIndex;
+			this.payouts = payouts;
+		}
+
+		@Override
+		public Map<String, Double> reward(State s, JointAction ja, State sp) {
+
+			Map<String, Double> rewards = new HashMap<String, Double>();
+
+			String[] profile = new String[this.nPlayers];
+			for (GroundedSGAgentAction sa : ja) {
+				String name = sa.actingAgent;
+				ObjectInstance player = s.getObject(name);
+				int pn = player.getIntValForAttribute(ATTPN);
+				profile[pn] = sa.action.actionName;
+			}
+
+			StrategyProfile stprofile = SingleStageNormalFormGame
+					.getStrategyProfile(this.actionNameToIndex, profile);
+			for (GroundedSGAgentAction sa : ja) {
+				String name = sa.actingAgent;
+				ObjectInstance player = s.getObject(name);
+				int pn = player.getIntValForAttribute(ATTPN);
+				rewards.put(name, this.payouts[pn].getPayout(stprofile));
+			}
+
+			return rewards;
+		}
+
+	}
+
+	/**
+	 * A strategy profile represented as an array of action indices that is
+	 * hashable.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class StrategyProfile {
+
+		int[] profile;
+		int hashCode;
+
+		public StrategyProfile(int... actions) {
+			this.profile = actions.clone();
+
+			this.hashCode = 0;
+			for (int a : this.profile) {
+				this.hashCode *= 23;
+				this.hashCode += a;
+			}
+
+		}
+
+		public StrategyProfile copy() {
+			return new StrategyProfile(this.profile);
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (!(o instanceof StrategyProfile)) {
+				return false;
+			}
+
+			StrategyProfile so = (StrategyProfile) o;
+
+			if (this.profile.length != so.profile.length) {
+				return false;
+			}
+
+			for (int i = 0; i < profile.length; i++) {
+				if (this.profile[i] != so.profile[i]) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		@Override
+		public int hashCode() {
+			return this.hashCode;
+		}
+
+		@Override
+		public String toString() {
+			if (this.profile.length == 0) {
+				return "";
+			}
+			StringBuffer buf = new StringBuffer(3 * this.profile.length);
+			buf.append(this.profile[0]);
+
+			for (int i = 1; i < this.profile.length; i++) {
+				buf.append(" ").append(this.profile[i]);
+			}
+
+			return buf.toString();
+		}
+
+	}
+
+	/**
 	 * When this generator is constructed with a generic bimatrix or zero sum
 	 * definition ({@link #SingleStageNormalFormGame(String[][], double[][][])}
 	 * or {@link #SingleStageNormalFormGame(String[][])}, respectively), action
@@ -96,6 +365,227 @@ public class SingleStageNormalFormGame implements DomainGenerator {
 	 * Class name for a player class
 	 */
 	public static final String CLASSPLAYER = "player";
+
+	/**
+	 * Returns an {@link burlap.oomdp.stochasticgames.SGAgentType} object that
+	 * can be used by agents being associated with any player number. This
+	 * AgentType permits agents to use any action in the domain, but the action
+	 * preconditions will prevent the agent from taking actions that its player
+	 * number cannot take.
+	 * 
+	 * @param domain
+	 *            the domain in which the the agents will be playing.
+	 * @return an {@link burlap.oomdp.stochasticgames.SGAgentType} object that
+	 *         can be used by agents being associated with any player number.
+	 */
+	public static SGAgentType getAgentTypeForAllPlayers(SGDomain domain) {
+		SGAgentType at = new SGAgentType("player",
+				domain.getObjectClass(CLASSPLAYER), domain.getAgentActions());
+		return at;
+	}
+
+	/**
+	 * Returns an instance of Battle of the Sexes 1, which is defined by:<br/>
+	 * (3,2); (0,0) <br/>
+	 * (0,0); (2,3)
+	 * 
+	 * @return and instance of Battle of the Sexes 1.
+	 */
+	public static SingleStageNormalFormGame getBattleOfTheSexes1() {
+		SingleStageNormalFormGame gen = new SingleStageNormalFormGame(
+				new String[][] { { "opera", "football" },
+						{ "opera", "football" } }, new double[][][] {
+						{ { 3, 0 }, { 0, 2 } },
+
+						{ { 2, 0 }, { 0, 3 } } });
+		return gen;
+	}
+
+	/**
+	 * Returns an instance of Battle of the Sexes 2, which is defined by:<br/>
+	 * (3,2); (1,1) <br/>
+	 * (0,0); (2,3)
+	 * 
+	 * @return and instance of Battle of the Sexes 2.
+	 */
+	public static SingleStageNormalFormGame getBattleOfTheSexes2() {
+		SingleStageNormalFormGame gen = new SingleStageNormalFormGame(
+				new String[][] { { "opera", "football" },
+						{ "opera", "football" } }, new double[][][] {
+						{ { 3, 1 }, { 0, 2 } },
+
+						{ { 2, 1 }, { 0, 3 } } });
+		return gen;
+	}
+
+	/**
+	 * Returns an instance of Chicken, which is defined by:<br/>
+	 * (0,0); (-1,1) <br/>
+	 * (1,-1); (-10,-10)
+	 * 
+	 * @return and instance of Chicken.
+	 */
+	public static SingleStageNormalFormGame getChicken() {
+		SingleStageNormalFormGame gen = new SingleStageNormalFormGame(
+				new String[][] { { "turn", "stright" }, { "turn", "stright" } },
+				new double[][][] { { { 0, -1 }, { 1, -10 } },
+
+				{ { 0, 1 }, { -1, -10 } } });
+		return gen;
+	}
+
+	/**
+	 * Returns an instance of Hawk Dove, which is defined by:<br/>
+	 * (-1,-1); (2,0) <br/>
+	 * (0,2); (1,1)
+	 * 
+	 * @return and instance of Hawk Dove.
+	 */
+	public static SingleStageNormalFormGame getHawkDove() {
+		SingleStageNormalFormGame gen = new SingleStageNormalFormGame(
+				new String[][] { { "hawk", "dove" }, { "hawk", "dove" } },
+				new double[][][] { { { -1, 2 }, { 0, 1 } },
+
+				{ { -1, 0 }, { 2, 1 } } });
+		return gen;
+	}
+
+	/**
+	 * Returns an instance of Matching Pennies, which is defined by:<br/>
+	 * (1,-1); (-1,1) <br/>
+	 * (-1,1); (1,-1)
+	 * 
+	 * @return and instance of Matching Pennies.
+	 */
+	public static SingleStageNormalFormGame getMatchingPennies() {
+		SingleStageNormalFormGame gen = new SingleStageNormalFormGame(
+				new String[][] { { "heads", "tails" }, { "heads", "tails" } },
+				new double[][][] { { { 1, -1 }, { -1, 1 } },
+
+				{ { -1, 1 }, { 1, -1 } } });
+		return gen;
+	}
+
+	/**
+	 * Returns an instance of Prisoner's Dilemma, which is defined by:<br/>
+	 * (3,3); (0,5) <br/>
+	 * (5,0); (1,1)
+	 * 
+	 * @return and instance of Prisoner's Dilemma.
+	 */
+	public static SingleStageNormalFormGame getPrisonersDilemma() {
+		SingleStageNormalFormGame gen = new SingleStageNormalFormGame(
+				new String[][] { { "cooperate", "defect" },
+						{ "cooperate", "defect" } }, new double[][][] {
+						{ { 3, 0 }, { 5, 1 } },
+
+						{ { 3, 5 }, { 0, 1 } } });
+		return gen;
+	}
+
+	/**
+	 * Returns a repeated game joint action model. This action model always
+	 * returns to the same state.
+	 * 
+	 * @return a repeated game joint action model.
+	 */
+	public static JointActionModel getRepatedGameActionModel() {
+		return new StaticRepeatedGameActionModel();
+	}
+
+	/**
+	 * Returns an instance of Stag Hunt, which is defined by:<br/>
+	 * (2,2); (0,1) <br/>
+	 * (1,0); (1,1)
+	 * 
+	 * @return and instance of Stag Hunt.
+	 */
+	public static SingleStageNormalFormGame getStagHunt() {
+		SingleStageNormalFormGame gen = new SingleStageNormalFormGame(
+				new String[][] { { "stag", "hare" }, { "stag", "hare" } },
+				new double[][][] { { { 2, 0 }, { 1, 1 } },
+
+				{ { 2, 1 }, { 0, 1 } } });
+		return gen;
+	}
+
+	/**
+	 * Returns a state object for a domain object generated by a
+	 * {@link SingleStageNormalFormGame} object. This method will examine the
+	 * domain for the number of players by looking at the discrete attribute
+	 * range of the playerNum attribute. It will then create a state with that
+	 * many player object class instances, each with their playerNum attribute
+	 * set accordingly.
+	 * 
+	 * @param domain
+	 *            a domain object generated by a
+	 *            {@link SingleStageNormalFormGame} object
+	 * @return a state object for a domain object generated by a
+	 *         {@link SingleStageNormalFormGame} object, with the appropriate
+	 *         number of player object instances.
+	 */
+	public static State getState(SGDomain domain) {
+		State s = new MutableState();
+
+		ObjectClass pclass = domain.getObjectClass(CLASSPLAYER);
+		Attribute pnAtt = pclass.getAttribute(ATTPN);
+		int n = pnAtt.discValues.size(); // determines the number of players
+
+		for (int i = 0; i < n; i++) {
+			ObjectInstance player = new MutableObjectInstance(pclass,
+					CLASSPLAYER + i);
+			player.setValue(ATTPN, i);
+			s.addObject(player);
+		}
+
+		return s;
+	}
+
+	/**
+	 * Returns a hashable strategy profile object for a strategy profile
+	 * specified by action names
+	 * 
+	 * @param actions
+	 *            the strategy profile specified as an array of action names,
+	 *            ordered by the player number of the player that took the
+	 *            action.
+	 * @return a hashable strategy profile.
+	 */
+	protected static StrategyProfile getStrategyProfile(
+			ActionNameMap[] actionNameToIndex, String... actions) {
+		int[] iprofile = new int[actions.length];
+		for (int i = 0; i < actions.length; i++) {
+			iprofile[i] = actionNameToIndex[i].get(actions[i]);
+		}
+		return new StrategyProfile(iprofile);
+	}
+
+	/**
+	 * A main method showing example code that would be used to create an
+	 * instance of Prisoner's dilemma and begin playing it with a
+	 * {@link burlap.oomdp.stochasticgames.explorers.SGTerminalExplorer}.
+	 * 
+	 * @param args
+	 */
+	public static void main(String[] args) {
+
+		SingleStageNormalFormGame game = SingleStageNormalFormGame
+				.getPrisonersDilemma();
+		SGDomain domain = (SGDomain) game.generateDomain();
+		JointReward r = game.getJointRewardFunction();
+
+		SGTerminalExplorer exp = new SGTerminalExplorer(domain);
+
+		// add short hand as first letter of each action name
+		for (SGAgentAction sa : domain.getAgentActions()) {
+			exp.addActionShortHand(sa.actionName.substring(0, 1), sa.actionName);
+		}
+
+		exp.setRewardFunction(r);
+
+		exp.exploreFromState(SingleStageNormalFormGame.getState(domain));
+
+	}
 
 	/**
 	 * Number of players
@@ -125,54 +615,16 @@ public class SingleStageNormalFormGame implements DomainGenerator {
 	protected Set<String> uniqueActionNames;
 
 	/**
-	 * A constructor for bimatrix games with specified action names.
+	 * A constructor for a bimatrix zero sum game. The action names for each
+	 * row/column will be named "action0" ... "actionN" where N is the maximum
+	 * number of rows/columns.
 	 * 
-	 * @param actionSets
-	 *            a 2x2 array of strings giving the names for each action.
-	 *            actionSets[0][1] returns the name of the second action for the
-	 *            first player.
-	 * @param twoPlayerPayoutMatrix
-	 *            A 2x2x2 payout matrix. twoPlayerPayoutMatrix[0][0][1] gives
-	 *            the payout player 1 receives when player takes its first
-	 *            action and player two takes its second action.
+	 * @param zeroSumRowPayoff
+	 *            the payoffs for the row player
 	 */
-	public SingleStageNormalFormGame(String[][] actionSets,
-			double[][][] twoPlayerPayoutMatrix) {
-
-		this.nPlayers = actionSets.length;
-		this.actionSets = new ArrayList<List<String>>();
-		for (int i = 0; i < actionSets.length; i++) {
-			List<String> actions = new ArrayList<String>();
-			this.actionSets.add(actions);
-			for (int j = 0; j < actionSets[0].length; j++) {
-				actions.add(actionSets[i][j]);
-			}
-		}
-
-		this.payouts = new AgentPayoutFunction[actionSets.length];
-		for (int i = 0; i < payouts.length; i++) {
-			this.payouts[i] = new AgentPayoutFunction();
-		}
-
-		this.uniqueActionNames = new HashSet<String>();
-		this.actionNameToIndex = new ActionNameMap[this.actionSets.size()];
-		for (int i = 0; i < this.actionSets.size(); i++) {
-			this.actionNameToIndex[i] = new ActionNameMap();
-			for (int j = 0; j < this.actionSets.get(i).size(); j++) {
-				this.actionNameToIndex[i].put(this.actionSets.get(i).get(j), j);
-				this.uniqueActionNames.add(this.actionSets.get(i).get(j));
-			}
-		}
-
-		for (int i = 0; i < this.nPlayers; i++) {
-			for (int j = 0; j < actionSets[0].length; j++) {
-				for (int k = 0; k < actionSets[1].length; k++) {
-					StrategyProfile sp = new StrategyProfile(j, k);
-					this.payouts[i].set(sp, twoPlayerPayoutMatrix[i][j][k]);
-				}
-			}
-		}
-
+	public SingleStageNormalFormGame(double[][] zeroSumRowPayoff) {
+		this(zeroSumRowPayoff, GeneralBimatrixSolverTools
+				.getNegatedMatrix(zeroSumRowPayoff));
 	}
 
 	/**
@@ -236,16 +688,38 @@ public class SingleStageNormalFormGame implements DomainGenerator {
 	}
 
 	/**
-	 * A constructor for a bimatrix zero sum game. The action names for each
-	 * row/column will be named "action0" ... "actionN" where N is the maximum
-	 * number of rows/columns.
+	 * A constructor for games with an asymmetric number of actions for each
+	 * player.
 	 * 
-	 * @param zeroSumRowPayoff
-	 *            the payoffs for the row player
+	 * @param actionSets
+	 *            the oredered list of actions for each player.
+	 *            actionSets.get(i).get(j) returns the name of the jth action
+	 *            for the ith player.
 	 */
-	public SingleStageNormalFormGame(double[][] zeroSumRowPayoff) {
-		this(zeroSumRowPayoff, GeneralBimatrixSolverTools
-				.getNegatedMatrix(zeroSumRowPayoff));
+	public SingleStageNormalFormGame(List<List<String>> actionSets) {
+
+		this.nPlayers = actionSets.size();
+		this.actionSets = new ArrayList<List<String>>(actionSets.size());
+		for (List<String> actions : actionSets) {
+			List<String> nactions = new ArrayList<String>(actions);
+			this.actionSets.add(nactions);
+		}
+
+		this.payouts = new AgentPayoutFunction[this.actionSets.size()];
+		for (int i = 0; i < payouts.length; i++) {
+			this.payouts[i] = new AgentPayoutFunction();
+		}
+
+		this.uniqueActionNames = new HashSet<String>();
+		this.actionNameToIndex = new ActionNameMap[this.actionSets.size()];
+		for (int i = 0; i < this.actionSets.size(); i++) {
+			this.actionNameToIndex[i] = new ActionNameMap();
+			for (int j = 0; j < this.actionSets.get(i).size(); j++) {
+				this.actionNameToIndex[i].put(this.actionSets.get(i).get(j), j);
+				this.uniqueActionNames.add(this.actionSets.get(i).get(j));
+			}
+		}
+
 	}
 
 	/**
@@ -286,24 +760,31 @@ public class SingleStageNormalFormGame implements DomainGenerator {
 	}
 
 	/**
-	 * A constructor for games with an asymmetric number of actions for each
-	 * player.
+	 * A constructor for bimatrix games with specified action names.
 	 * 
 	 * @param actionSets
-	 *            the oredered list of actions for each player.
-	 *            actionSets.get(i).get(j) returns the name of the jth action
-	 *            for the ith player.
+	 *            a 2x2 array of strings giving the names for each action.
+	 *            actionSets[0][1] returns the name of the second action for the
+	 *            first player.
+	 * @param twoPlayerPayoutMatrix
+	 *            A 2x2x2 payout matrix. twoPlayerPayoutMatrix[0][0][1] gives
+	 *            the payout player 1 receives when player takes its first
+	 *            action and player two takes its second action.
 	 */
-	public SingleStageNormalFormGame(List<List<String>> actionSets) {
+	public SingleStageNormalFormGame(String[][] actionSets,
+			double[][][] twoPlayerPayoutMatrix) {
 
-		this.nPlayers = actionSets.size();
-		this.actionSets = new ArrayList<List<String>>(actionSets.size());
-		for (List<String> actions : actionSets) {
-			List<String> nactions = new ArrayList<String>(actions);
-			this.actionSets.add(nactions);
+		this.nPlayers = actionSets.length;
+		this.actionSets = new ArrayList<List<String>>();
+		for (int i = 0; i < actionSets.length; i++) {
+			List<String> actions = new ArrayList<String>();
+			this.actionSets.add(actions);
+			for (int j = 0; j < actionSets[0].length; j++) {
+				actions.add(actionSets[i][j]);
+			}
 		}
 
-		this.payouts = new AgentPayoutFunction[this.actionSets.size()];
+		this.payouts = new AgentPayoutFunction[actionSets.length];
 		for (int i = 0; i < payouts.length; i++) {
 			this.payouts[i] = new AgentPayoutFunction();
 		}
@@ -318,58 +799,15 @@ public class SingleStageNormalFormGame implements DomainGenerator {
 			}
 		}
 
-	}
-
-	/**
-	 * Sets the pay out that player number <code>playerNumber</code> receives
-	 * for a given strategy profile
-	 * 
-	 * @param playerNumber
-	 *            the index of the player whose payout should be specified
-	 *            (index starts at 0)
-	 * @param payout
-	 *            the payout the <code>playerNumber</code>th receives
-	 * @param actions
-	 *            the strategy profile; array specifying the names of the
-	 *            actions taken by each player, ordered by their player number
-	 */
-	public void setPayout(int playerNumber, double payout, String... actions) {
-		int[] iprofile = new int[actions.length];
-		for (int i = 0; i < actions.length; i++) {
-			iprofile[i] = this.actionNameToIndex[i].get(actions[i]);
+		for (int i = 0; i < this.nPlayers; i++) {
+			for (int j = 0; j < actionSets[0].length; j++) {
+				for (int k = 0; k < actionSets[1].length; k++) {
+					StrategyProfile sp = new StrategyProfile(j, k);
+					this.payouts[i].set(sp, twoPlayerPayoutMatrix[i][j][k]);
+				}
+			}
 		}
-		this.setPayout(playerNumber, payout, iprofile);
-	}
 
-	/**
-	 * Sets the pay out that player number <code>playerNumber</code> receives
-	 * for a given strategy profile
-	 * 
-	 * @param playerNumber
-	 *            the index of the player whose payout should be specified
-	 *            (index starts at 0)
-	 * @param payout
-	 *            the payout the <code>playerNumber</code>th receives
-	 * @param actions
-	 *            the strategy profile; array specifying the int index of the
-	 *            actions taken by each player, ordered by their player number
-	 */
-	public void setPayout(int playerNumber, double payout, int... actions) {
-		StrategyProfile profile = new StrategyProfile(actions);
-		this.payouts[playerNumber].set(profile, payout);
-	}
-
-	/**
-	 * Returns the name of the <code>an</code> action of player <code>pn</code>
-	 * 
-	 * @param pn
-	 *            the player number
-	 * @param an
-	 *            the action index
-	 * @return the name of the <code>an</code> action of player <code>pn</code>
-	 */
-	public String actionName(int pn, int an) {
-		return this.actionSets.get(pn).get(an);
 	}
 
 	/**
@@ -388,74 +826,16 @@ public class SingleStageNormalFormGame implements DomainGenerator {
 	}
 
 	/**
-	 * Returns the payout that player <code>pn</code> receives for the given
-	 * strategy profile.
+	 * Returns the name of the <code>an</code> action of player <code>pn</code>
 	 * 
 	 * @param pn
 	 *            the player number
-	 * @param actions
-	 *            the strategy profile specified as an array of action names,
-	 *            ordered by the player number of the player that took the
-	 *            action.
-	 * @return the payout that player <code>pn</code> receives for the given
-	 *         strategy profile.
+	 * @param an
+	 *            the action index
+	 * @return the name of the <code>an</code> action of player <code>pn</code>
 	 */
-	public double getPayout(int pn, String... actions) {
-		int[] iprofile = new int[actions.length];
-		for (int i = 0; i < actions.length; i++) {
-			iprofile[i] = this.actionNameToIndex[i].get(actions[i]);
-		}
-		return this.getPayout(pn, iprofile);
-	}
-
-	/**
-	 * Returns the payout that player <code>pn</code> receives for the given
-	 * strategy profile.
-	 * 
-	 * @param pn
-	 *            the player number
-	 * @param actions
-	 *            the strategy profile specified as an array of action indices,
-	 *            ordered by the player number of the player that took the
-	 *            action.
-	 * @return the payout that player <code>pn</code> receives for the given
-	 *         strategy profile.
-	 */
-	public double getPayout(int pn, int... actions) {
-		StrategyProfile sp = new StrategyProfile(actions);
-		return this.payouts[pn].getPayout(sp);
-	}
-
-	/**
-	 * Returns the number of players in the domain to be generated
-	 * 
-	 * @return the number of players in the domain to be generated
-	 */
-	public int getNumPlayers() {
-		return this.nPlayers;
-	}
-
-	@Override
-	public Domain generateDomain() {
-
-		SGDomain domain = new SGDomain();
-
-		Attribute att = new Attribute(domain, ATTPN,
-				Attribute.AttributeType.DISC);
-		att.setDiscValuesForRange(0, nPlayers - 1, 1);
-
-		ObjectClass player = new ObjectClass(domain, CLASSPLAYER);
-		player.addAttribute(att);
-
-		ActionNameMap[] cnames = ActionNameMap
-				.deepCopyActionNameMapArray(this.actionNameToIndex);
-		for (String aname : this.uniqueActionNames) {
-			new NFGAgentAction(domain, aname, cnames);
-		}
-
-		domain.setJointActionModel(new StaticRepeatedGameActionModel());
-
-		return domain;
+	public String actionName(int pn, int an) {
+		return this.actionSets.get(pn).get(an);
 	}
 
 	/**
@@ -518,6 +898,29 @@ public class SingleStageNormalFormGame implements DomainGenerator {
 
 	}
 
+	@Override
+	public Domain generateDomain() {
+
+		SGDomain domain = new SGDomain();
+
+		Attribute att = new Attribute(domain, ATTPN,
+				Attribute.AttributeType.DISC);
+		att.setDiscValuesForRange(0, nPlayers - 1, 1);
+
+		ObjectClass player = new ObjectClass(domain, CLASSPLAYER);
+		player.addAttribute(att);
+
+		ActionNameMap[] cnames = ActionNameMap
+				.deepCopyActionNameMapArray(this.actionNameToIndex);
+		for (String aname : this.uniqueActionNames) {
+			new NFGAgentAction(domain, aname, cnames);
+		}
+
+		domain.setJointActionModel(new StaticRepeatedGameActionModel());
+
+		return domain;
+	}
+
 	/**
 	 * Returns a {@link burlap.oomdp.stochasticgames.JointReward} function for
 	 * this game.
@@ -533,493 +936,90 @@ public class SingleStageNormalFormGame implements DomainGenerator {
 	}
 
 	/**
-	 * Returns a hashable strategy profile object for a strategy profile
-	 * specified by action names
+	 * Returns the number of players in the domain to be generated
 	 * 
+	 * @return the number of players in the domain to be generated
+	 */
+	public int getNumPlayers() {
+		return this.nPlayers;
+	}
+
+	/**
+	 * Returns the payout that player <code>pn</code> receives for the given
+	 * strategy profile.
+	 * 
+	 * @param pn
+	 *            the player number
+	 * @param actions
+	 *            the strategy profile specified as an array of action indices,
+	 *            ordered by the player number of the player that took the
+	 *            action.
+	 * @return the payout that player <code>pn</code> receives for the given
+	 *         strategy profile.
+	 */
+	public double getPayout(int pn, int... actions) {
+		StrategyProfile sp = new StrategyProfile(actions);
+		return this.payouts[pn].getPayout(sp);
+	}
+
+	/**
+	 * Returns the payout that player <code>pn</code> receives for the given
+	 * strategy profile.
+	 * 
+	 * @param pn
+	 *            the player number
 	 * @param actions
 	 *            the strategy profile specified as an array of action names,
 	 *            ordered by the player number of the player that took the
 	 *            action.
-	 * @return a hashable strategy profile.
+	 * @return the payout that player <code>pn</code> receives for the given
+	 *         strategy profile.
 	 */
-	protected static StrategyProfile getStrategyProfile(
-			ActionNameMap[] actionNameToIndex, String... actions) {
+	public double getPayout(int pn, String... actions) {
 		int[] iprofile = new int[actions.length];
 		for (int i = 0; i < actions.length; i++) {
-			iprofile[i] = actionNameToIndex[i].get(actions[i]);
+			iprofile[i] = this.actionNameToIndex[i].get(actions[i]);
 		}
-		return new StrategyProfile(iprofile);
+		return this.getPayout(pn, iprofile);
 	}
 
 	/**
-	 * Returns a state object for a domain object generated by a
-	 * {@link SingleStageNormalFormGame} object. This method will examine the
-	 * domain for the number of players by looking at the discrete attribute
-	 * range of the playerNum attribute. It will then create a state with that
-	 * many player object class instances, each with their playerNum attribute
-	 * set accordingly.
+	 * Sets the pay out that player number <code>playerNumber</code> receives
+	 * for a given strategy profile
 	 * 
-	 * @param domain
-	 *            a domain object generated by a
-	 *            {@link SingleStageNormalFormGame} object
-	 * @return a state object for a domain object generated by a
-	 *         {@link SingleStageNormalFormGame} object, with the appropriate
-	 *         number of player object instances.
+	 * @param playerNumber
+	 *            the index of the player whose payout should be specified
+	 *            (index starts at 0)
+	 * @param payout
+	 *            the payout the <code>playerNumber</code>th receives
+	 * @param actions
+	 *            the strategy profile; array specifying the int index of the
+	 *            actions taken by each player, ordered by their player number
 	 */
-	public static State getState(SGDomain domain) {
-		State s = new MutableState();
-
-		ObjectClass pclass = domain.getObjectClass(CLASSPLAYER);
-		Attribute pnAtt = pclass.getAttribute(ATTPN);
-		int n = pnAtt.discValues.size(); // determines the number of players
-
-		for (int i = 0; i < n; i++) {
-			ObjectInstance player = new MutableObjectInstance(pclass,
-					CLASSPLAYER + i);
-			player.setValue(ATTPN, i);
-			s.addObject(player);
-		}
-
-		return s;
+	public void setPayout(int playerNumber, double payout, int... actions) {
+		StrategyProfile profile = new StrategyProfile(actions);
+		this.payouts[playerNumber].set(profile, payout);
 	}
 
 	/**
-	 * Returns an {@link burlap.oomdp.stochasticgames.SGAgentType} object that
-	 * can be used by agents being associated with any player number. This
-	 * AgentType permits agents to use any action in the domain, but the action
-	 * preconditions will prevent the agent from taking actions that its player
-	 * number cannot take.
+	 * Sets the pay out that player number <code>playerNumber</code> receives
+	 * for a given strategy profile
 	 * 
-	 * @param domain
-	 *            the domain in which the the agents will be playing.
-	 * @return an {@link burlap.oomdp.stochasticgames.SGAgentType} object that
-	 *         can be used by agents being associated with any player number.
+	 * @param playerNumber
+	 *            the index of the player whose payout should be specified
+	 *            (index starts at 0)
+	 * @param payout
+	 *            the payout the <code>playerNumber</code>th receives
+	 * @param actions
+	 *            the strategy profile; array specifying the names of the
+	 *            actions taken by each player, ordered by their player number
 	 */
-	public static SGAgentType getAgentTypeForAllPlayers(SGDomain domain) {
-		SGAgentType at = new SGAgentType("player",
-				domain.getObjectClass(CLASSPLAYER), domain.getAgentActions());
-		return at;
-	}
-
-	/**
-	 * Returns a repeated game joint action model. This action model always
-	 * returns to the same state.
-	 * 
-	 * @return a repeated game joint action model.
-	 */
-	public static JointActionModel getRepatedGameActionModel() {
-		return new StaticRepeatedGameActionModel();
-	}
-
-	/**
-	 * Returns an instance of Prisoner's Dilemma, which is defined by:<br/>
-	 * (3,3); (0,5) <br/>
-	 * (5,0); (1,1)
-	 * 
-	 * @return and instance of Prisoner's Dilemma.
-	 */
-	public static SingleStageNormalFormGame getPrisonersDilemma() {
-		SingleStageNormalFormGame gen = new SingleStageNormalFormGame(
-				new String[][] { { "cooperate", "defect" },
-						{ "cooperate", "defect" } }, new double[][][] {
-						{ { 3, 0 }, { 5, 1 } },
-
-						{ { 3, 5 }, { 0, 1 } } });
-		return gen;
-	}
-
-	/**
-	 * Returns an instance of Chicken, which is defined by:<br/>
-	 * (0,0); (-1,1) <br/>
-	 * (1,-1); (-10,-10)
-	 * 
-	 * @return and instance of Chicken.
-	 */
-	public static SingleStageNormalFormGame getChicken() {
-		SingleStageNormalFormGame gen = new SingleStageNormalFormGame(
-				new String[][] { { "turn", "stright" }, { "turn", "stright" } },
-				new double[][][] { { { 0, -1 }, { 1, -10 } },
-
-				{ { 0, 1 }, { -1, -10 } } });
-		return gen;
-	}
-
-	/**
-	 * Returns an instance of Hawk Dove, which is defined by:<br/>
-	 * (-1,-1); (2,0) <br/>
-	 * (0,2); (1,1)
-	 * 
-	 * @return and instance of Hawk Dove.
-	 */
-	public static SingleStageNormalFormGame getHawkDove() {
-		SingleStageNormalFormGame gen = new SingleStageNormalFormGame(
-				new String[][] { { "hawk", "dove" }, { "hawk", "dove" } },
-				new double[][][] { { { -1, 2 }, { 0, 1 } },
-
-				{ { -1, 0 }, { 2, 1 } } });
-		return gen;
-	}
-
-	/**
-	 * Returns an instance of Battle of the Sexes 1, which is defined by:<br/>
-	 * (3,2); (0,0) <br/>
-	 * (0,0); (2,3)
-	 * 
-	 * @return and instance of Battle of the Sexes 1.
-	 */
-	public static SingleStageNormalFormGame getBattleOfTheSexes1() {
-		SingleStageNormalFormGame gen = new SingleStageNormalFormGame(
-				new String[][] { { "opera", "football" },
-						{ "opera", "football" } }, new double[][][] {
-						{ { 3, 0 }, { 0, 2 } },
-
-						{ { 2, 0 }, { 0, 3 } } });
-		return gen;
-	}
-
-	/**
-	 * Returns an instance of Battle of the Sexes 2, which is defined by:<br/>
-	 * (3,2); (1,1) <br/>
-	 * (0,0); (2,3)
-	 * 
-	 * @return and instance of Battle of the Sexes 2.
-	 */
-	public static SingleStageNormalFormGame getBattleOfTheSexes2() {
-		SingleStageNormalFormGame gen = new SingleStageNormalFormGame(
-				new String[][] { { "opera", "football" },
-						{ "opera", "football" } }, new double[][][] {
-						{ { 3, 1 }, { 0, 2 } },
-
-						{ { 2, 1 }, { 0, 3 } } });
-		return gen;
-	}
-
-	/**
-	 * Returns an instance of Matching Pennies, which is defined by:<br/>
-	 * (1,-1); (-1,1) <br/>
-	 * (-1,1); (1,-1)
-	 * 
-	 * @return and instance of Matching Pennies.
-	 */
-	public static SingleStageNormalFormGame getMatchingPennies() {
-		SingleStageNormalFormGame gen = new SingleStageNormalFormGame(
-				new String[][] { { "heads", "tails" }, { "heads", "tails" } },
-				new double[][][] { { { 1, -1 }, { -1, 1 } },
-
-				{ { -1, 1 }, { 1, -1 } } });
-		return gen;
-	}
-
-	/**
-	 * Returns an instance of Stag Hunt, which is defined by:<br/>
-	 * (2,2); (0,1) <br/>
-	 * (1,0); (1,1)
-	 * 
-	 * @return and instance of Stag Hunt.
-	 */
-	public static SingleStageNormalFormGame getStagHunt() {
-		SingleStageNormalFormGame gen = new SingleStageNormalFormGame(
-				new String[][] { { "stag", "hare" }, { "stag", "hare" } },
-				new double[][][] { { { 2, 0 }, { 1, 1 } },
-
-				{ { 2, 1 }, { 0, 1 } } });
-		return gen;
-	}
-
-	/**
-	 * A Joint Reward Function class that uses the parent domain generators
-	 * payout matrix to determine payouts for any given strategy profile.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	protected static class SingleStageNormalFormJointReward implements
-			JointReward {
-
-		int nPlayers;
-		ActionNameMap[] actionNameToIndex;
-		AgentPayoutFunction[] payouts;
-
-		public SingleStageNormalFormJointReward(int nPlayers,
-				ActionNameMap[] actionNameToIndex, AgentPayoutFunction[] payouts) {
-			this.nPlayers = nPlayers;
-			this.actionNameToIndex = actionNameToIndex;
-			this.payouts = payouts;
+	public void setPayout(int playerNumber, double payout, String... actions) {
+		int[] iprofile = new int[actions.length];
+		for (int i = 0; i < actions.length; i++) {
+			iprofile[i] = this.actionNameToIndex[i].get(actions[i]);
 		}
-
-		@Override
-		public Map<String, Double> reward(State s, JointAction ja, State sp) {
-
-			Map<String, Double> rewards = new HashMap<String, Double>();
-
-			String[] profile = new String[this.nPlayers];
-			for (GroundedSGAgentAction sa : ja) {
-				String name = sa.actingAgent;
-				ObjectInstance player = s.getObject(name);
-				int pn = player.getIntValForAttribute(ATTPN);
-				profile[pn] = sa.action.actionName;
-			}
-
-			StrategyProfile stprofile = SingleStageNormalFormGame
-					.getStrategyProfile(this.actionNameToIndex, profile);
-			for (GroundedSGAgentAction sa : ja) {
-				String name = sa.actingAgent;
-				ObjectInstance player = s.getObject(name);
-				int pn = player.getIntValForAttribute(ATTPN);
-				rewards.put(name, this.payouts[pn].getPayout(stprofile));
-			}
-
-			return rewards;
-		}
-
-	}
-
-	/**
-	 * A SingleAction class that uses the parent domain generator to determine
-	 * which agent can take which actions and enforces that in the
-	 * preconditions.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	protected static class NFGAgentAction extends SimpleSGAgentAction {
-
-		ActionNameMap[] actionNameToIndex;
-
-		public NFGAgentAction(SGDomain d, String name,
-				ActionNameMap[] actionNameToIndex) {
-			super(d, name);
-			this.actionNameToIndex = actionNameToIndex;
-		}
-
-		@Override
-		public boolean applicableInState(State s, GroundedSGAgentAction gsa) {
-
-			ObjectInstance a = s.getObject(gsa.actingAgent);
-			int pn = a.getIntValForAttribute(ATTPN);
-
-			if (this.actionNameToIndex[pn].containsKey(this.actionName)) {
-				return true;
-			}
-
-			return false;
-		}
-
-	}
-
-	/**
-	 * A class for defining a payout function for a single agent for each
-	 * possible strategy profile.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class AgentPayoutFunction {
-
-		Map<StrategyProfile, Double> payout;
-
-		public AgentPayoutFunction() {
-			this.payout = new HashMap<SingleStageNormalFormGame.StrategyProfile, Double>();
-		}
-
-		/**
-		 * sets the payout for a given strategy profile
-		 * 
-		 * @param profile
-		 *            the strategy profile
-		 * @param p
-		 *            the payout returned for this strategy profile
-		 */
-		public void set(StrategyProfile profile, double p) {
-			this.payout.put(profile, p);
-		}
-
-		/**
-		 * Returns the payout for a given strategy profile
-		 * 
-		 * @param profile
-		 *            the strategy profile
-		 * @return the payout for the given strategy profile.
-		 */
-		public double getPayout(StrategyProfile profile) {
-			Double P = this.payout.get(profile);
-			if (P == null) {
-				throw new RuntimeException(
-						"Payout Function is not defined for this strategy profile: "
-								+ profile.toString());
-			}
-
-			return P;
-		}
-
-		public AgentPayoutFunction copy() {
-			AgentPayoutFunction c = new AgentPayoutFunction();
-			for (Map.Entry<StrategyProfile, Double> e : this.payout.entrySet()) {
-				c.set(e.getKey().copy(), e.getValue());
-			}
-			return c;
-		}
-
-		public static AgentPayoutFunction[] getDeepCopyOfPayoutArray(
-				AgentPayoutFunction[] input) {
-			AgentPayoutFunction[] c = new AgentPayoutFunction[input.length];
-			for (int i = 0; i < input.length; i++) {
-				c[i] = input[i].copy();
-			}
-			return c;
-		}
-
-	}
-
-	/**
-	 * A strategy profile represented as an array of action indices that is
-	 * hashable.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class StrategyProfile {
-
-		int[] profile;
-		int hashCode;
-
-		public StrategyProfile(int... actions) {
-			this.profile = actions.clone();
-
-			this.hashCode = 0;
-			for (int a : this.profile) {
-				this.hashCode *= 23;
-				this.hashCode += a;
-			}
-
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (!(o instanceof StrategyProfile)) {
-				return false;
-			}
-
-			StrategyProfile so = (StrategyProfile) o;
-
-			if (this.profile.length != so.profile.length) {
-				return false;
-			}
-
-			for (int i = 0; i < profile.length; i++) {
-				if (this.profile[i] != so.profile[i]) {
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		@Override
-		public int hashCode() {
-			return this.hashCode;
-		}
-
-		@Override
-		public String toString() {
-			if (this.profile.length == 0) {
-				return "";
-			}
-			StringBuffer buf = new StringBuffer(3 * this.profile.length);
-			buf.append(this.profile[0]);
-
-			for (int i = 1; i < this.profile.length; i++) {
-				buf.append(" ").append(this.profile[i]);
-			}
-
-			return buf.toString();
-		}
-
-		public StrategyProfile copy() {
-			return new StrategyProfile(this.profile);
-		}
-
-	}
-
-	/**
-	 * A wrapper for a HashMap from strings to ints used to map action names to
-	 * their action index.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	protected static class ActionNameMap {
-		Map<String, Integer> namesToInd;
-
-		public ActionNameMap() {
-			this.namesToInd = new HashMap<String, Integer>();
-		}
-
-		public void put(String name, int ind) {
-			this.namesToInd.put(name, ind);
-		}
-
-		public Integer get(String name) {
-			Integer i = this.namesToInd.get(name);
-			if (i == null) {
-				throw new RuntimeException("No action named " + name
-						+ " for this player");
-			}
-			return i;
-		}
-
-		public boolean containsKey(String name) {
-			return this.namesToInd.containsKey(name);
-		}
-
-		public int size() {
-			return this.namesToInd.size();
-		}
-
-		public ActionNameMap copy() {
-			ActionNameMap c = new ActionNameMap();
-			for (Map.Entry<String, Integer> e : this.namesToInd.entrySet()) {
-				c.put(e.getKey(), e.getValue());
-			}
-
-			return c;
-		}
-
-		public static ActionNameMap[] deepCopyActionNameMapArray(
-				ActionNameMap[] input) {
-			ActionNameMap[] c = new ActionNameMap[input.length];
-			for (int i = 0; i < input.length; i++) {
-				c[i] = input[i].copy();
-			}
-			return c;
-		}
-	}
-
-	/**
-	 * A main method showing example code that would be used to create an
-	 * instance of Prisoner's dilemma and begin playing it with a
-	 * {@link burlap.oomdp.stochasticgames.explorers.SGTerminalExplorer}.
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-
-		SingleStageNormalFormGame game = SingleStageNormalFormGame
-				.getPrisonersDilemma();
-		SGDomain domain = (SGDomain) game.generateDomain();
-		JointReward r = game.getJointRewardFunction();
-
-		SGTerminalExplorer exp = new SGTerminalExplorer(domain);
-
-		// add short hand as first letter of each action name
-		for (SGAgentAction sa : domain.getAgentActions()) {
-			exp.addActionShortHand(sa.actionName.substring(0, 1), sa.actionName);
-		}
-
-		exp.setRewardFunction(r);
-
-		exp.exploreFromState(SingleStageNormalFormGame.getState(domain));
-
+		this.setPayout(playerNumber, payout, iprofile);
 	}
 
 }

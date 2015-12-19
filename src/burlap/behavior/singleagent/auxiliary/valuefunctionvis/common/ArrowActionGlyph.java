@@ -18,16 +18,6 @@ import java.awt.image.BufferedImage;
 public class ArrowActionGlyph implements ActionGlyphPainter {
 
 	/**
-	 * The direction of the arrow.0: north; 1: south; 2: east; 3:west
-	 */
-	protected int direction;
-
-	/**
-	 * The color of the arrow
-	 */
-	protected Color fillColor = Color.BLACK;
-
-	/**
 	 * Creates and returns a
 	 * {@link burlap.behavior.singleagent.auxiliary.valuefunctionvis.common.PolicyGlyphPainter2D}
 	 * where the x and y position attributes are name xAtt and yAtt,
@@ -72,6 +62,16 @@ public class ArrowActionGlyph implements ActionGlyphPainter {
 
 		return spp;
 	}
+
+	/**
+	 * The direction of the arrow.0: north; 1: south; 2: east; 3:west
+	 */
+	protected int direction;
+
+	/**
+	 * The color of the arrow
+	 */
+	protected Color fillColor = Color.BLACK;
 
 	/**
 	 * creates an arrow action glyph painter in the specified direction

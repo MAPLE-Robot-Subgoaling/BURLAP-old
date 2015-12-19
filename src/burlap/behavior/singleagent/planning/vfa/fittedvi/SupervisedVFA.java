@@ -1,9 +1,9 @@
 package burlap.behavior.singleagent.planning.vfa.fittedvi;
 
+import java.util.List;
+
 import burlap.behavior.valuefunction.ValueFunction;
 import burlap.oomdp.core.states.State;
-
-import java.util.List;
 
 /**
  * An interface for learning value function approximation via a supervised
@@ -21,17 +21,6 @@ import java.util.List;
  * @author James MacGlashan.
  */
 public interface SupervisedVFA {
-
-	/**
-	 * Uses supervised learning (regression) to learn a value function
-	 * approximation of the input training data.
-	 * 
-	 * @param trainingData
-	 *            the training data to fit.
-	 * @return a {@link burlap.behavior.valuefunction.ValueFunction} that fits
-	 *         the training data.
-	 */
-	public ValueFunction train(List<SupervisedVFAInstance> trainingData);
 
 	/**
 	 * A pair for a state and it's target value function value.
@@ -62,5 +51,16 @@ public interface SupervisedVFA {
 		}
 
 	}
+
+	/**
+	 * Uses supervised learning (regression) to learn a value function
+	 * approximation of the input training data.
+	 * 
+	 * @param trainingData
+	 *            the training data to fit.
+	 * @return a {@link burlap.behavior.valuefunction.ValueFunction} that fits
+	 *         the training data.
+	 */
+	public ValueFunction train(List<SupervisedVFAInstance> trainingData);
 
 }

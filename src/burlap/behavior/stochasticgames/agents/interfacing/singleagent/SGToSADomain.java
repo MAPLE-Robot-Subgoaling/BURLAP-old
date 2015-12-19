@@ -4,7 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import burlap.oomdp.auxiliary.DomainGenerator;
-import burlap.oomdp.core.*;
+import burlap.oomdp.core.AbstractGroundedAction;
+import burlap.oomdp.core.AbstractObjectParameterizedGroundedAction;
+import burlap.oomdp.core.Attribute;
+import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.ObjectClass;
+import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
@@ -44,61 +49,88 @@ import burlap.oomdp.stochasticgames.agentactions.SGAgentAction;
  */
 public class SGToSADomain implements DomainGenerator {
 
-	SGDomain srcDomain;
-	List<SGAgentAction> useableActions;
+	public static class GroundedSAAActionWrapper extends GroundedAction {
 
-	/**
-	 * Initializes.
-	 * 
-	 * @param srcDomain
-	 *            the source stochastic games domain
-	 * @param asAgentType
-	 *            the {@link burlap.oomdp.stochasticgames.SGAgentType} object
-	 *            specifying the actions that should be created in the single
-	 *            agent domain.
-	 */
-	public SGToSADomain(SGDomain srcDomain, SGAgentType asAgentType) {
-		this(srcDomain, asAgentType.actions);
+		GroundedSGAgentAction wrappedSGAction;
+
+		public GroundedSAAActionWrapper(Action action,
+				GroundedSGAgentAction wrappedSGAction) {
+			super(action);
+			this.wrappedSGAction = wrappedSGAction;
+		}
+
+		@Override
+		public GroundedAction copy() {
+			return new GroundedSAAActionWrapper(this.action,
+					this.wrappedSGAction);
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			return super.equals(other);
+		}
+
+		@Override
+		public String[] getParametersAsString() {
+			return wrappedSGAction.getParametersAsString();
+		}
+
+		@Override
+		public int hashCode() {
+			return super.hashCode();
+		}
+
+		@Override
+		public void initParamsWithStringRep(String[] params) {
+			wrappedSGAction.initParamsWithStringRep(params);
+		}
+
+		@Override
+		public String toString() {
+			return wrappedSGAction.toString();
+		}
+
+		@Override
+		public GroundedAction translateParameters(State source, State target) {
+			AbstractGroundedAction translatedWrapped = AbstractObjectParameterizedGroundedAction.Helper
+					.translateParameters(this.wrappedSGAction, source, target);
+			GroundedSAAActionWrapper translated = new GroundedSAAActionWrapper(
+					this.action, (GroundedSGAgentAction) translatedWrapped);
+			return translated;
+		}
 	}
+	public static class GroundedSObParamedAAActionWrapper extends
+			GroundedSAAActionWrapper implements
+			AbstractObjectParameterizedGroundedAction {
 
-	/**
-	 * Initializes.
-	 * 
-	 * @param srcDomain
-	 *            the source stochastic games domain
-	 * @param useableActions
-	 *            the stochastic game actions for which single agent actions
-	 *            should be created created in the single agent domain.
-	 */
-	public SGToSADomain(SGDomain srcDomain, List<SGAgentAction> useableActions) {
-
-		this.srcDomain = srcDomain;
-		this.useableActions = useableActions;
-
-	}
-
-	@Override
-	public Domain generateDomain() {
-
-		SADomain domainWrapper = new SADomain();
-
-		for (Attribute a : srcDomain.getAttributes()) {
-			domainWrapper.addAttribute(a);
+		public GroundedSObParamedAAActionWrapper(Action action,
+				GroundedSGAgentAction wrappedSGAction) {
+			super(action, wrappedSGAction);
 		}
 
-		for (ObjectClass c : srcDomain.getObjectClasses()) {
-			domainWrapper.addObjectClass(c);
+		@Override
+		public boolean actionDomainIsObjectIdentifierIndependent() {
+			return ((AbstractObjectParameterizedGroundedAction) this.wrappedSGAction)
+					.actionDomainIsObjectIdentifierIndependent();
 		}
 
-		for (PropositionalFunction pf : srcDomain.getPropFunctions()) {
-			domainWrapper.addPropositionalFunction(pf);
+		@Override
+		public GroundedAction copy() {
+			return new GroundedSObParamedAAActionWrapper(this.action,
+					this.wrappedSGAction);
 		}
 
-		for (SGAgentAction sa : useableActions) {
-			new SAActionWrapper(sa, domainWrapper);
+		@Override
+		public String[] getObjectParameters() {
+			return ((AbstractObjectParameterizedGroundedAction) this.wrappedSGAction)
+					.getObjectParameters();
 		}
 
-		return domainWrapper;
+		@Override
+		public void setObjectParameters(String[] params) {
+			((AbstractObjectParameterizedGroundedAction) this.wrappedSGAction)
+					.setObjectParameters(params);
+		}
 	}
 
 	/**
@@ -139,28 +171,6 @@ public class SGToSADomain implements DomainGenerator {
 		}
 
 		@Override
-		protected State performActionHelper(State s,
-				GroundedAction groundedAction) {
-			throw new RuntimeException(
-					"The SGToSADomain Action instances cannot execute the performAction method, because the transition dynamics depend on the other agent decisions which are unknown. Instead, use the performInEnvironment method or use these action indirectly with a LearningAgentToSGAgentInterface instance.");
-		}
-
-		@Override
-		public boolean isParameterized() {
-			return srcAction.isParameterized();
-		}
-
-		@Override
-		public GroundedAction getAssociatedGroundedAction() {
-			GroundedSGAgentAction tmp = this.srcAction
-					.getAssociatedGroundedAction(agentName);
-			if (tmp instanceof AbstractObjectParameterizedGroundedAction) {
-				return new GroundedSObParamedAAActionWrapper(this, tmp);
-			}
-			return new GroundedSAAActionWrapper(this, null);
-		}
-
-		@Override
 		public List<GroundedAction> getAllApplicableGroundedActions(State s) {
 
 			List<GroundedSGAgentAction> sgGroundigns = this.srcAction
@@ -179,94 +189,89 @@ public class SGToSADomain implements DomainGenerator {
 		}
 
 		@Override
+		public GroundedAction getAssociatedGroundedAction() {
+			GroundedSGAgentAction tmp = this.srcAction
+					.getAssociatedGroundedAction(agentName);
+			if (tmp instanceof AbstractObjectParameterizedGroundedAction) {
+				return new GroundedSObParamedAAActionWrapper(this, tmp);
+			}
+			return new GroundedSAAActionWrapper(this, null);
+		}
+
+		@Override
+		public boolean isParameterized() {
+			return srcAction.isParameterized();
+		}
+
+		@Override
 		public boolean isPrimitive() {
 			return true;
 		}
-	}
-
-	public static class GroundedSAAActionWrapper extends GroundedAction {
-
-		GroundedSGAgentAction wrappedSGAction;
-
-		public GroundedSAAActionWrapper(Action action,
-				GroundedSGAgentAction wrappedSGAction) {
-			super(action);
-			this.wrappedSGAction = wrappedSGAction;
-		}
 
 		@Override
-		public void initParamsWithStringRep(String[] params) {
-			wrappedSGAction.initParamsWithStringRep(params);
-		}
-
-		@Override
-		public String[] getParametersAsString() {
-			return wrappedSGAction.getParametersAsString();
-		}
-
-		@Override
-		public String toString() {
-			return wrappedSGAction.toString();
-		}
-
-		@Override
-		public GroundedAction translateParameters(State source, State target) {
-			AbstractGroundedAction translatedWrapped = AbstractObjectParameterizedGroundedAction.Helper
-					.translateParameters(this.wrappedSGAction, source, target);
-			GroundedSAAActionWrapper translated = new GroundedSAAActionWrapper(
-					this.action, (GroundedSGAgentAction) translatedWrapped);
-			return translated;
-		}
-
-		@Override
-		public int hashCode() {
-			return super.hashCode();
-		}
-
-		@Override
-		public boolean equals(Object other) {
-			return super.equals(other);
-		}
-
-		@Override
-		public GroundedAction copy() {
-			return new GroundedSAAActionWrapper(this.action,
-					this.wrappedSGAction);
+		protected State performActionHelper(State s,
+				GroundedAction groundedAction) {
+			throw new RuntimeException(
+					"The SGToSADomain Action instances cannot execute the performAction method, because the transition dynamics depend on the other agent decisions which are unknown. Instead, use the performInEnvironment method or use these action indirectly with a LearningAgentToSGAgentInterface instance.");
 		}
 	}
 
-	public static class GroundedSObParamedAAActionWrapper extends
-			GroundedSAAActionWrapper implements
-			AbstractObjectParameterizedGroundedAction {
+	SGDomain srcDomain;
 
-		public GroundedSObParamedAAActionWrapper(Action action,
-				GroundedSGAgentAction wrappedSGAction) {
-			super(action, wrappedSGAction);
+	List<SGAgentAction> useableActions;
+
+	/**
+	 * Initializes.
+	 * 
+	 * @param srcDomain
+	 *            the source stochastic games domain
+	 * @param useableActions
+	 *            the stochastic game actions for which single agent actions
+	 *            should be created created in the single agent domain.
+	 */
+	public SGToSADomain(SGDomain srcDomain, List<SGAgentAction> useableActions) {
+
+		this.srcDomain = srcDomain;
+		this.useableActions = useableActions;
+
+	}
+
+	/**
+	 * Initializes.
+	 * 
+	 * @param srcDomain
+	 *            the source stochastic games domain
+	 * @param asAgentType
+	 *            the {@link burlap.oomdp.stochasticgames.SGAgentType} object
+	 *            specifying the actions that should be created in the single
+	 *            agent domain.
+	 */
+	public SGToSADomain(SGDomain srcDomain, SGAgentType asAgentType) {
+		this(srcDomain, asAgentType.actions);
+	}
+
+	@Override
+	public Domain generateDomain() {
+
+		SADomain domainWrapper = new SADomain();
+
+		for (Attribute a : srcDomain.getAttributes()) {
+			domainWrapper.addAttribute(a);
 		}
 
-		@Override
-		public String[] getObjectParameters() {
-			return ((AbstractObjectParameterizedGroundedAction) this.wrappedSGAction)
-					.getObjectParameters();
+		for (ObjectClass c : srcDomain.getObjectClasses()) {
+			domainWrapper.addObjectClass(c);
 		}
 
-		@Override
-		public void setObjectParameters(String[] params) {
-			((AbstractObjectParameterizedGroundedAction) this.wrappedSGAction)
-					.setObjectParameters(params);
+		for (PropositionalFunction pf : srcDomain.getPropFunctions()) {
+			domainWrapper.addPropositionalFunction(pf);
 		}
 
-		@Override
-		public boolean actionDomainIsObjectIdentifierIndependent() {
-			return ((AbstractObjectParameterizedGroundedAction) this.wrappedSGAction)
-					.actionDomainIsObjectIdentifierIndependent();
+		for (SGAgentAction sa : useableActions) {
+			new SAActionWrapper(sa, domainWrapper);
 		}
 
-		@Override
-		public GroundedAction copy() {
-			return new GroundedSObParamedAAActionWrapper(this.action,
-					this.wrappedSGAction);
-		}
+		return domainWrapper;
 	}
 
 }

@@ -58,26 +58,6 @@ public class LandmarkColorBlendInterpolation implements ColorBlend {
 	}
 
 	/**
-	 * Sets the color blend to raise the normalized distance of values to the
-	 * given degree.
-	 * 
-	 * @param polyDegree
-	 *            the power to raise the normalized distance
-	 */
-	public void setPolynomialDegree(double polyDegree) {
-		this.polyDegree = polyDegree;
-	}
-
-	/**
-	 * Returns the power to raise the normalized distance
-	 * 
-	 * @return the power to raise the normalized distance
-	 */
-	public double getPolynomialDegree() {
-		return this.polyDegree;
-	}
-
-	/**
 	 * Adds the next landmark between which interpolation should occur. Assumes
 	 * that the value val is greater than the last landmark value added.
 	 * 
@@ -90,28 +70,6 @@ public class LandmarkColorBlendInterpolation implements ColorBlend {
 		this.landmarkValues.add(val);
 		this.landmarkColors.add(c);
 		this.originalLandmarkValues.add(val);
-	}
-
-	@Override
-	public void rescale(double minV, double maxV) {
-		double origMin = this.originalLandmarkValues.get(0);
-		double origMax = this.originalLandmarkValues
-				.get(this.originalLandmarkValues.size() - 1);
-
-		if (origMin == minV && origMax == maxV) {
-			return; // already correctly scaled
-		}
-
-		double origRange = origMax - origMin;
-		double newRange = maxV - minV;
-
-		for (int i = 0; i < this.landmarkValues.size(); i++) {
-			double v = this.originalLandmarkValues.get(i);
-			double t = (v - origMin) / origRange;
-			double nv = t * newRange + minV;
-			this.landmarkValues.set(i, nv);
-		}
-
 	}
 
 	@Override
@@ -158,6 +116,15 @@ public class LandmarkColorBlendInterpolation implements ColorBlend {
 	}
 
 	/**
+	 * Returns the power to raise the normalized distance
+	 * 
+	 * @return the power to raise the normalized distance
+	 */
+	public double getPolynomialDegree() {
+		return this.polyDegree;
+	}
+
+	/**
 	 * Returns the point that is a normalized distance t between s and e
 	 * 
 	 * @param s
@@ -171,6 +138,39 @@ public class LandmarkColorBlendInterpolation implements ColorBlend {
 	protected float interpolate(float s, float e, float t) {
 		float range = e - s;
 		return s + t * range;
+	}
+
+	@Override
+	public void rescale(double minV, double maxV) {
+		double origMin = this.originalLandmarkValues.get(0);
+		double origMax = this.originalLandmarkValues
+				.get(this.originalLandmarkValues.size() - 1);
+
+		if (origMin == minV && origMax == maxV) {
+			return; // already correctly scaled
+		}
+
+		double origRange = origMax - origMin;
+		double newRange = maxV - minV;
+
+		for (int i = 0; i < this.landmarkValues.size(); i++) {
+			double v = this.originalLandmarkValues.get(i);
+			double t = (v - origMin) / origRange;
+			double nv = t * newRange + minV;
+			this.landmarkValues.set(i, nv);
+		}
+
+	}
+
+	/**
+	 * Sets the color blend to raise the normalized distance of values to the
+	 * given degree.
+	 * 
+	 * @param polyDegree
+	 *            the power to raise the normalized distance
+	 */
+	public void setPolynomialDegree(double polyDegree) {
+		this.polyDegree = polyDegree;
 	}
 
 }

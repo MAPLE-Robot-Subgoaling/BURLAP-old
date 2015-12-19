@@ -1,11 +1,16 @@
 package burlap.oomdp.statehashing;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.values.Value;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
-import java.util.*;
 
 /**
  * This class produces {@link burlap.oomdp.statehashing.HashableState} instances
@@ -125,32 +130,6 @@ public class MaskedHashableStateFactory extends SimpleHashableStateFactory {
 	}
 
 	/**
-	 * Removes {@link burlap.oomdp.core.Attribute} masks.
-	 * 
-	 * @param masks
-	 *            the names of the {@link burlap.oomdp.core.Attribute}s that
-	 *            will no longer be masked.
-	 */
-	public void removeAttributeMasks(String... masks) {
-		for (String mask : masks) {
-			this.maskedAttributes.remove(mask);
-		}
-	}
-
-	/**
-	 * Removes {@link burlap.oomdp.core.ObjectClass} masks.
-	 * 
-	 * @param masks
-	 *            the names of the {@link burlap.oomdp.core.ObjectClass}s that
-	 *            will no longer be masked.
-	 */
-	public void removeObjectClassMasks(String... masks) {
-		for (String mask : masks) {
-			this.maskedObjectClasses.remove(mask);
-		}
-	}
-
-	/**
 	 * Clears all {@link burlap.oomdp.core.Attribute} masks.
 	 */
 	public void clearAllAttributeMasks() {
@@ -164,12 +143,21 @@ public class MaskedHashableStateFactory extends SimpleHashableStateFactory {
 		this.maskedObjectClasses.clear();
 	}
 
-	public Set<String> getMaskedAttributes() {
-		return maskedAttributes;
-	}
+	@Override
+	protected int computeHashCode(ObjectInstance o) {
+		HashCodeBuilder hashCodeBuilder = new HashCodeBuilder(17, 31);
+		if (!this.identifierIndependent) {
+			hashCodeBuilder.append(o.getName());
+		}
 
-	public Set<String> getMaskedObjectClasses() {
-		return maskedObjectClasses;
+		List<Value> values = o.getValues();
+		for (Value v : values) {
+			if (!this.maskedAttributes.contains(v.attName())) {
+				this.appendHashcodeForValue(hashCodeBuilder, v);
+			}
+		}
+
+		return hashCodeBuilder.toHashCode();
 	}
 
 	@Override
@@ -192,21 +180,39 @@ public class MaskedHashableStateFactory extends SimpleHashableStateFactory {
 		return code;
 	}
 
+	public Set<String> getMaskedAttributes() {
+		return maskedAttributes;
+	}
+
+	public Set<String> getMaskedObjectClasses() {
+		return maskedObjectClasses;
+	}
+
 	@Override
-	protected int computeHashCode(ObjectInstance o) {
-		HashCodeBuilder hashCodeBuilder = new HashCodeBuilder(17, 31);
-		if (!this.identifierIndependent) {
-			hashCodeBuilder.append(o.getName());
+	protected boolean identifierDependentEquals(State s1, State s2) {
+		if (s1.numTotalObjects() != s2.numTotalObjects()
+				&& this.maskedObjectClasses.size() == 0) {
+			return false;
 		}
 
-		List<Value> values = o.getValues();
-		for (Value v : values) {
-			if (!this.maskedAttributes.contains(v.attName())) {
-				this.appendHashcodeForValue(hashCodeBuilder, v);
+		List<ObjectInstance> theseObjects = s1.getAllObjects();
+		if (theseObjects.size() != s2.numTotalObjects()) {
+			return false;
+		}
+		for (ObjectInstance ob : theseObjects) {
+			if (this.maskedObjectClasses.contains(ob.getClassName())) {
+				continue;
+			}
+			ObjectInstance oByName = s2.getObject(ob.getName());
+			if (oByName == null) {
+				return false;
+			}
+			if (!objectValuesEqual(ob, oByName)) {
+				return false;
 			}
 		}
 
-		return hashCodeBuilder.toHashCode();
+		return true;
 	}
 
 	@Override
@@ -252,33 +258,6 @@ public class MaskedHashableStateFactory extends SimpleHashableStateFactory {
 	}
 
 	@Override
-	protected boolean identifierDependentEquals(State s1, State s2) {
-		if (s1.numTotalObjects() != s2.numTotalObjects()
-				&& this.maskedObjectClasses.size() == 0) {
-			return false;
-		}
-
-		List<ObjectInstance> theseObjects = s1.getAllObjects();
-		if (theseObjects.size() != s2.numTotalObjects()) {
-			return false;
-		}
-		for (ObjectInstance ob : theseObjects) {
-			if (this.maskedObjectClasses.contains(ob.getClassName())) {
-				continue;
-			}
-			ObjectInstance oByName = s2.getObject(ob.getName());
-			if (oByName == null) {
-				return false;
-			}
-			if (!objectValuesEqual(ob, oByName)) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	@Override
 	protected boolean objectValuesEqual(ObjectInstance o1, ObjectInstance o2) {
 		for (Value v : o1.getValues()) {
 			if (this.maskedAttributes.contains(v.attName())) {
@@ -290,5 +269,31 @@ public class MaskedHashableStateFactory extends SimpleHashableStateFactory {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Removes {@link burlap.oomdp.core.Attribute} masks.
+	 * 
+	 * @param masks
+	 *            the names of the {@link burlap.oomdp.core.Attribute}s that
+	 *            will no longer be masked.
+	 */
+	public void removeAttributeMasks(String... masks) {
+		for (String mask : masks) {
+			this.maskedAttributes.remove(mask);
+		}
+	}
+
+	/**
+	 * Removes {@link burlap.oomdp.core.ObjectClass} masks.
+	 * 
+	 * @param masks
+	 *            the names of the {@link burlap.oomdp.core.ObjectClass}s that
+	 *            will no longer be masked.
+	 */
+	public void removeObjectClassMasks(String... masks) {
+		for (String mask : masks) {
+			this.maskedObjectClasses.remove(mask);
+		}
 	}
 }

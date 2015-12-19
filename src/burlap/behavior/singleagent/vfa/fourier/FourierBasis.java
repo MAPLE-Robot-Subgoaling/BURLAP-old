@@ -1,17 +1,21 @@
 package burlap.behavior.singleagent.vfa.fourier;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import burlap.behavior.singleagent.learning.tdmethods.vfa.GradientDescentSarsaLam;
-import burlap.behavior.singleagent.vfa.*;
+import burlap.behavior.singleagent.vfa.ActionFeaturesQuery;
+import burlap.behavior.singleagent.vfa.FeatureDatabase;
+import burlap.behavior.singleagent.vfa.StateFeature;
+import burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator;
+import burlap.behavior.singleagent.vfa.ValueFunctionApproximation;
 import burlap.behavior.singleagent.vfa.common.ConcatenatedObjectFeatureVectorGenerator;
 import burlap.behavior.singleagent.vfa.common.LinearVFA;
 import burlap.oomdp.core.AbstractObjectParameterizedGroundedAction;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * An implementation of Fourier Basis functions [1]. This class expects a
@@ -134,19 +138,6 @@ public class FourierBasis implements FeatureDatabase {
 	}
 
 	/**
-	 * Forces the set of coefficient vectors (and thereby Fourier basis
-	 * functions) used. Use this method only if you want to fine tune the basis
-	 * functions used.
-	 * 
-	 * @param coefficientVectors
-	 *            the coefficient vectors used to produce the Fourier basis
-	 *            functions.
-	 */
-	public void setCoefficientVectors(List<short[]> coefficientVectors) {
-		this.coefficientVectors = coefficientVectors;
-	}
-
-	/**
 	 * Returns the basis function value for the given state input for the given
 	 * basis function index. The basisFunction index may be greater than the
 	 * number of coefficient vectors because it may refer to an state-action
@@ -174,95 +165,13 @@ public class FourierBasis implements FeatureDatabase {
 		// dot product of input and coefficient vector
 		double sum = 0.;
 		for (int i = 0; i < this.numStateVariables; i++) {
-			sum += input[i] * (double) coefficientVector[i];
+			sum += input[i] * coefficientVector[i];
 		}
 
 		// get cos function of it
 		sum *= Math.PI;
 		sum = Math.cos(sum);
 		return sum;
-	}
-
-	@Override
-	public List<StateFeature> getStateFeatures(State s) {
-
-		double[] input = this.featureVectorGenerator
-				.generateFeatureVectorFrom(s);
-		if (this.coefficientVectors == null) {
-			this.numStateVariables = input.length;
-			if (this.maxNonZeroCoefficents == -1) {
-				this.maxNonZeroCoefficents = this.numStateVariables;
-			}
-			this.generateCoefficientVectors();
-		}
-
-		List<StateFeature> res = new ArrayList<StateFeature>(
-				this.coefficientVectors.size());
-
-		for (int i = 0; i < this.coefficientVectors.size(); i++) {
-			double value = this.basisValue(input, i);
-			StateFeature sf = new StateFeature(i, value);
-			res.add(sf);
-		}
-
-		return res;
-	}
-
-	@Override
-	public List<ActionFeaturesQuery> getActionFeaturesSets(State s,
-			List<GroundedAction> actions) {
-
-		List<ActionFeaturesQuery> lstAFQ = new ArrayList<ActionFeaturesQuery>();
-
-		List<StateFeature> sfs = this.getStateFeatures(s);
-
-		for (GroundedAction ga : actions) {
-			int actionMult = this.getActionMultiplier(ga);
-			int indexOffset = actionMult * this.coefficientVectors.size();
-
-			ActionFeaturesQuery afq = new ActionFeaturesQuery(ga);
-			for (StateFeature sf : sfs) {
-				afq.addFeature(new StateFeature(sf.id + indexOffset, sf.value));
-			}
-
-			lstAFQ.add(afq);
-
-		}
-
-		return lstAFQ;
-
-	}
-
-	@Override
-	public void freezeDatabaseState(boolean toggle) {
-		// nothing to do
-	}
-
-	@Override
-	public int numberOfFeatures() {
-		if (this.coefficientVectors == null) {
-			return 0;
-		}
-		if (this.nextActionMultiplier == 0) {
-			return this.coefficientVectors.size();
-		}
-		return this.coefficientVectors.size() * this.nextActionMultiplier;
-	}
-
-	/**
-	 * Returns the coefficient vector for the given basis function index. The
-	 * basisFunction index may be greater than the number of coefficient vectors
-	 * because it may refer to an state-action feature's basis function (and
-	 * there is a copy of each basis function for each action). The coefficient
-	 * vector returned is at the index basisFunction % m, where m is the number
-	 * of this object's coefficient vectors.
-	 * 
-	 * @param i
-	 *            the basis function index
-	 * @return the coefficient vector for the given basis function
-	 */
-	public short[] getCoefficientVector(int i) {
-		return this.coefficientVectors.get(i % this.coefficientVectors.size());
 	}
 
 	/**
@@ -288,16 +197,21 @@ public class FourierBasis implements FeatureDatabase {
 		return sum;
 	}
 
-	/**
-	 * Creates and returns a linear VFA object over this Fourier basis feature
-	 * database.
-	 * 
-	 * @param defaultWeightValue
-	 *            the default feature weight value to use for all features
-	 * @return a linear VFA object over this Fourier basis feature database.
-	 */
-	public ValueFunctionApproximation generateVFA(double defaultWeightValue) {
-		return new LinearVFA(this, defaultWeightValue);
+	@Override
+	public FourierBasis copy() {
+		FourierBasis fb = new FourierBasis(this.featureVectorGenerator,
+				this.order, this.maxNonZeroCoefficents);
+		fb.numStateVariables = this.numStateVariables;
+		fb.coefficientVectors = new ArrayList<short[]>(this.coefficientVectors);
+		fb.actionFeatureMultiplier = new HashMap<GroundedAction, Integer>(
+				this.actionFeatureMultiplier);
+
+		return fb;
+	}
+
+	@Override
+	public void freezeDatabaseState(boolean toggle) {
+		// nothing to do
 	}
 
 	/**
@@ -356,6 +270,43 @@ public class FourierBasis implements FeatureDatabase {
 	}
 
 	/**
+	 * Creates and returns a linear VFA object over this Fourier basis feature
+	 * database.
+	 * 
+	 * @param defaultWeightValue
+	 *            the default feature weight value to use for all features
+	 * @return a linear VFA object over this Fourier basis feature database.
+	 */
+	public ValueFunctionApproximation generateVFA(double defaultWeightValue) {
+		return new LinearVFA(this, defaultWeightValue);
+	}
+
+	@Override
+	public List<ActionFeaturesQuery> getActionFeaturesSets(State s,
+			List<GroundedAction> actions) {
+
+		List<ActionFeaturesQuery> lstAFQ = new ArrayList<ActionFeaturesQuery>();
+
+		List<StateFeature> sfs = this.getStateFeatures(s);
+
+		for (GroundedAction ga : actions) {
+			int actionMult = this.getActionMultiplier(ga);
+			int indexOffset = actionMult * this.coefficientVectors.size();
+
+			ActionFeaturesQuery afq = new ActionFeaturesQuery(ga);
+			for (StateFeature sf : sfs) {
+				afq.addFeature(new StateFeature(sf.id + indexOffset, sf.value));
+			}
+
+			lstAFQ.add(afq);
+
+		}
+
+		return lstAFQ;
+
+	}
+
+	/**
 	 * This method returns the action multiplier for the specified grounded
 	 * action. If the action is not stored, a new action multiplier will
 	 * created, stored, and returned. If the action is parameterized a runtime
@@ -382,16 +333,69 @@ public class FourierBasis implements FeatureDatabase {
 		return stored;
 	}
 
-	@Override
-	public FourierBasis copy() {
-		FourierBasis fb = new FourierBasis(this.featureVectorGenerator,
-				this.order, this.maxNonZeroCoefficents);
-		fb.numStateVariables = this.numStateVariables;
-		fb.coefficientVectors = new ArrayList<short[]>(this.coefficientVectors);
-		fb.actionFeatureMultiplier = new HashMap<GroundedAction, Integer>(
-				this.actionFeatureMultiplier);
+	/**
+	 * Returns the coefficient vector for the given basis function index. The
+	 * basisFunction index may be greater than the number of coefficient vectors
+	 * because it may refer to an state-action feature's basis function (and
+	 * there is a copy of each basis function for each action). The coefficient
+	 * vector returned is at the index basisFunction % m, where m is the number
+	 * of this object's coefficient vectors.
+	 * 
+	 * @param i
+	 *            the basis function index
+	 * @return the coefficient vector for the given basis function
+	 */
+	public short[] getCoefficientVector(int i) {
+		return this.coefficientVectors.get(i % this.coefficientVectors.size());
+	}
 
-		return fb;
+	@Override
+	public List<StateFeature> getStateFeatures(State s) {
+
+		double[] input = this.featureVectorGenerator
+				.generateFeatureVectorFrom(s);
+		if (this.coefficientVectors == null) {
+			this.numStateVariables = input.length;
+			if (this.maxNonZeroCoefficents == -1) {
+				this.maxNonZeroCoefficents = this.numStateVariables;
+			}
+			this.generateCoefficientVectors();
+		}
+
+		List<StateFeature> res = new ArrayList<StateFeature>(
+				this.coefficientVectors.size());
+
+		for (int i = 0; i < this.coefficientVectors.size(); i++) {
+			double value = this.basisValue(input, i);
+			StateFeature sf = new StateFeature(i, value);
+			res.add(sf);
+		}
+
+		return res;
+	}
+
+	@Override
+	public int numberOfFeatures() {
+		if (this.coefficientVectors == null) {
+			return 0;
+		}
+		if (this.nextActionMultiplier == 0) {
+			return this.coefficientVectors.size();
+		}
+		return this.coefficientVectors.size() * this.nextActionMultiplier;
+	}
+
+	/**
+	 * Forces the set of coefficient vectors (and thereby Fourier basis
+	 * functions) used. Use this method only if you want to fine tune the basis
+	 * functions used.
+	 * 
+	 * @param coefficientVectors
+	 *            the coefficient vectors used to produce the Fourier basis
+	 *            functions.
+	 */
+	public void setCoefficientVectors(List<short[]> coefficientVectors) {
+		this.coefficientVectors = coefficientVectors;
 	}
 
 }

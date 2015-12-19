@@ -61,45 +61,16 @@ public class HashedAggregator<K> {
 	}
 
 	/**
-	 * The current value associated with key ind. This object's initialValue
-	 * datamember is returned if nothing has been added to this value
-	 * previously.
+	 * Returns true if this object has a value associated with the specified
+	 * key, false otherwise.
 	 * 
-	 * @param ind
-	 *            the key index
-	 * @return the value associated with the key index.
+	 * @param key
+	 *            the key to check
+	 * @return true if this object has a value associated with the specified
+	 *         key, false otherwise.
 	 */
-	public double v(K ind) {
-		Double cur = storage.get(ind);
-		double c = cur != null ? cur : initialValue;
-		return c;
-	}
-
-	/**
-	 * Returns the number of keys stored.
-	 * 
-	 * @return the number of keys stored.
-	 */
-	public int size() {
-		return storage.size();
-	}
-
-	/**
-	 * The set of keys stored.
-	 * 
-	 * @return The set of keys stored.
-	 */
-	public Set<K> keySet() {
-		return this.storage.keySet();
-	}
-
-	/**
-	 * The set of values stored.
-	 * 
-	 * @return The set of values stored.
-	 */
-	public Collection<Double> valueSet() {
-		return this.storage.values();
+	public boolean containsKey(K key) {
+		return this.storage.containsKey(key);
 	}
 
 	/**
@@ -121,16 +92,45 @@ public class HashedAggregator<K> {
 	}
 
 	/**
-	 * Returns true if this object has a value associated with the specified
-	 * key, false otherwise.
+	 * The set of keys stored.
 	 * 
-	 * @param key
-	 *            the key to check
-	 * @return true if this object has a value associated with the specified
-	 *         key, false otherwise.
+	 * @return The set of keys stored.
 	 */
-	public boolean containsKey(K key) {
-		return this.storage.containsKey(key);
+	public Set<K> keySet() {
+		return this.storage.keySet();
+	}
+
+	/**
+	 * Returns the number of keys stored.
+	 * 
+	 * @return the number of keys stored.
+	 */
+	public int size() {
+		return storage.size();
+	}
+
+	/**
+	 * The current value associated with key ind. This object's initialValue
+	 * datamember is returned if nothing has been added to this value
+	 * previously.
+	 * 
+	 * @param ind
+	 *            the key index
+	 * @return the value associated with the key index.
+	 */
+	public double v(K ind) {
+		Double cur = storage.get(ind);
+		double c = cur != null ? cur : initialValue;
+		return c;
+	}
+
+	/**
+	 * The set of values stored.
+	 * 
+	 * @return The set of values stored.
+	 */
+	public Collection<Double> valueSet() {
+		return this.storage.values();
 	}
 
 }

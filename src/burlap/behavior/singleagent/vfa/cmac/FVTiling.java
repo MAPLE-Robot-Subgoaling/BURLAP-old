@@ -13,6 +13,54 @@ package burlap.behavior.singleagent.vfa.cmac;
 public class FVTiling {
 
 	/**
+	 * Stores a tiled version of a feature vector with a hashcode and equality
+	 * comparions methods implemented.
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public class FVTile {
+		public int[] tiledVector;
+		protected int hashCode;
+
+		public FVTile(int[] tiledVector) {
+			this.tiledVector = tiledVector;
+			this.hashCode = 0;
+			for (int i = 0; i < tiledVector.length; i++) {
+				if (FVTiling.this.dimensionMask[i]) {
+					this.hashCode = 31 * this.hashCode + tiledVector[i];
+				}
+			}
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			if (!(other instanceof FVTile)) {
+				return false;
+			}
+
+			FVTile o = (FVTile) other;
+			if (this.tiledVector.length != o.tiledVector.length) {
+				return false;
+			}
+
+			for (int i = 0; i < this.tiledVector.length; i++) {
+				if (this.tiledVector[i] != o.tiledVector[i]) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		@Override
+		public int hashCode() {
+			return this.hashCode;
+		}
+
+	}
+
+	/**
 	 * The width of each dimension in this tiling
 	 */
 	protected double[] widths;
@@ -93,54 +141,6 @@ public class FVTiling {
 		FVTile tile = new FVTile(tiledVector);
 
 		return tile;
-	}
-
-	/**
-	 * Stores a tiled version of a feature vector with a hashcode and equality
-	 * comparions methods implemented.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public class FVTile {
-		public int[] tiledVector;
-		protected int hashCode;
-
-		public FVTile(int[] tiledVector) {
-			this.tiledVector = tiledVector;
-			this.hashCode = 0;
-			for (int i = 0; i < tiledVector.length; i++) {
-				if (FVTiling.this.dimensionMask[i]) {
-					this.hashCode = 31 * this.hashCode + tiledVector[i];
-				}
-			}
-		}
-
-		@Override
-		public boolean equals(Object other) {
-			if (!(other instanceof FVTile)) {
-				return false;
-			}
-
-			FVTile o = (FVTile) other;
-			if (this.tiledVector.length != o.tiledVector.length) {
-				return false;
-			}
-
-			for (int i = 0; i < this.tiledVector.length; i++) {
-				if (this.tiledVector[i] != o.tiledVector[i]) {
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		@Override
-		public int hashCode() {
-			return this.hashCode;
-		}
-
 	}
 
 }

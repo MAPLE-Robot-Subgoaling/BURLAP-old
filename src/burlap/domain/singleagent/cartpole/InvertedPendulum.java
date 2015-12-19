@@ -7,13 +7,16 @@ import burlap.oomdp.auxiliary.DomainGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectClass;
-import burlap.oomdp.core.objects.ObjectInstance;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.core.TransitionProbability;
 import burlap.oomdp.core.objects.MutableObjectInstance;
+import burlap.oomdp.core.objects.ObjectInstance;
 import burlap.oomdp.core.states.MutableState;
-import burlap.oomdp.singleagent.*;
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.singleagent.FullActionModel;
+import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.singleagent.SADomain;
 import burlap.oomdp.singleagent.common.SimpleAction;
 import burlap.oomdp.singleagent.explorer.VisualExplorer;
 import burlap.oomdp.visualizer.Visualizer;
@@ -41,37 +44,166 @@ import burlap.oomdp.visualizer.Visualizer;
 public class InvertedPendulum implements DomainGenerator {
 
 	/**
-	 * A constant for the name of the angle attribute
+	 * An action that applies a given force to the cart + uniform random noise
+	 * in the range defined in the {@link InvertedPendulum#physParams} data
+	 * member.
+	 * 
+	 * @author James MacGlashan
+	 * 
 	 */
-	public static final String ATTANGLE = "angleAtt";
+	public class ForceAction extends SimpleAction implements FullActionModel {
+
+		/**
+		 * The base noise to which noise will be added.
+		 */
+		protected double baseForce;
+
+		/**
+		 * The physics parameters to use
+		 */
+		protected IPPhysicsParams physParams;
+
+		/**
+		 * Initializes the force action
+		 * 
+		 * @param name
+		 *            the name of the action
+		 * @param domain
+		 *            the domain object to which the action will belong.
+		 * @param force
+		 *            the base force this action applies; noise will be added to
+		 *            this force according to the
+		 *            {@link InvertedPendulum#physParams} data member.
+		 * @param physParams
+		 *            the
+		 *            {@link burlap.domain.singleagent.cartpole.InvertedPendulum.IPPhysicsParams}
+		 *            object specifying the physics to use for movement
+		 */
+		public ForceAction(String name, Domain domain, double force,
+				IPPhysicsParams physParams) {
+			super(name, domain);
+			this.baseForce = force;
+			this.physParams = physParams;
+		}
+
+		@Override
+		public List<TransitionProbability> getTransitions(State s,
+				GroundedAction groundedAction) {
+			if (this.physParams.actionNoise != 0.) {
+				throw new RuntimeException(
+						"Transition Probabilities for the Inverted Pendulum with continuous action noise cannot be enumerated.");
+			}
+			return this.deterministicTransition(s, groundedAction);
+		}
+
+		@Override
+		protected State performActionHelper(State s,
+				GroundedAction groundedAction) {
+
+			double roll = RandomFactory.getMapped(0).nextDouble()
+					* (2 * physParams.actionNoise) - physParams.actionNoise;
+			double force = this.baseForce + roll;
+			InvertedPendulum.updateState(s, force, this.physParams);
+			return s;
+		}
+
+	}
 
 	/**
-	 * A constant for the name of the angle velocity
+	 * A default reward function for this domain. Returns 0 everywhere except at
+	 * fail conditions, which return -1 and are defined by the pole being grater
+	 * than some threshold (default PI/2 radians.
+	 * 
+	 * @author James MacGlashan
+	 * 
 	 */
-	public static final String ATTANGLEV = "angleVAtt";
+	public static class InvertedPendulumRewardFunction implements
+			RewardFunction {
+
+		/**
+		 * The maximum pole angle to cause termination/failure.
+		 */
+		double maxAbsoluteAngle = (Math.PI / 2.);
+
+		public InvertedPendulumRewardFunction() {
+
+		}
+
+		/**
+		 * Initializes with a max pole angle as specified in radians
+		 * 
+		 * @param maxAbsoluteAngle
+		 *            the maximum pole angle in radians that causes task
+		 *            termination/failure.
+		 */
+		public InvertedPendulumRewardFunction(double maxAbsoluteAngle) {
+			this.maxAbsoluteAngle = maxAbsoluteAngle;
+		}
+
+		@Override
+		public double reward(State s, GroundedAction a, State sprime) {
+
+			double failReward = -1;
+
+			ObjectInstance pendulum = sprime
+					.getFirstObjectOfClass(CLASSPENDULUM);
+			double ang = pendulum.getRealValForAttribute(ATTANGLE);
+
+			if (Math.abs(ang) >= maxAbsoluteAngle) {
+				return failReward;
+			}
+
+			return 0;
+		}
+
+	}
 
 	/**
-	 * The object class for the pendulum.
+	 * A default terminal function for this domain. Terminates when the angle
+	 * between pole and vertical axis is greater than PI/2 radians or some other
+	 * user specified threshold.
+	 * 
+	 * @author James MacGlashan
+	 * 
 	 */
-	public static final String CLASSPENDULUM = "pendulum";
+	public static class InvertedPendulumTerminalFunction implements
+			TerminalFunction {
 
-	/**
-	 * A constant for the name of the left action
-	 */
-	public static final String ACTIONLEFT = "left";
+		/**
+		 * The maximum pole angle to cause termination/failure.
+		 */
+		double maxAbsoluteAngle = (Math.PI / 2.);
 
-	/**
-	 * A constant for the name of the right action
-	 */
-	public static final String ACTIONRIGHT = "right";
+		public InvertedPendulumTerminalFunction() {
 
-	/**
-	 * A constant for the name of the no force action (which due to
-	 * stochasticity may include a small force)
-	 */
-	public static final String ACTIONNOFORCE = "noForce";
+		}
 
-	public IPPhysicsParams physParams = new IPPhysicsParams();
+		/**
+		 * Initializes with a max pole angle as specified in radians
+		 * 
+		 * @param maxAbsoluteAngle
+		 *            the maximum pole angle in radians that causes task
+		 *            termination/failure.
+		 */
+		public InvertedPendulumTerminalFunction(double maxAbsoluteAngle) {
+			this.maxAbsoluteAngle = maxAbsoluteAngle;
+		}
+
+		@Override
+		public boolean isTerminal(State s) {
+
+			ObjectInstance pendulum = s.getFirstObjectOfClass(CLASSPENDULUM);
+			double a = pendulum.getRealValForAttribute(ATTANGLE);
+
+			if (Math.abs(a) >= maxAbsoluteAngle) {
+				return true;
+			}
+
+			return false;
+
+		}
+
+	}
 
 	public static class IPPhysicsParams {
 
@@ -149,32 +281,96 @@ public class InvertedPendulum implements DomainGenerator {
 		}
 	}
 
-	@Override
-	public Domain generateDomain() {
+	/**
+	 * A constant for the name of the angle attribute
+	 */
+	public static final String ATTANGLE = "angleAtt";
 
-		SADomain domain = new SADomain();
+	/**
+	 * A constant for the name of the angle velocity
+	 */
+	public static final String ATTANGLEV = "angleVAtt";
 
-		Attribute angleatt = new Attribute(domain, ATTANGLE,
-				Attribute.AttributeType.REAL);
-		angleatt.setLims(-this.physParams.angleRange,
-				this.physParams.angleRange);
+	/**
+	 * The object class for the pendulum.
+	 */
+	public static final String CLASSPENDULUM = "pendulum";
 
-		Attribute anglevatt = new Attribute(domain, ATTANGLEV,
-				Attribute.AttributeType.REAL);
-		anglevatt.setLims(-this.physParams.maxAngleSpeed,
-				this.physParams.maxAngleSpeed);
+	/**
+	 * A constant for the name of the left action
+	 */
+	public static final String ACTIONLEFT = "left";
 
-		ObjectClass pendulum = new ObjectClass(domain, CLASSPENDULUM);
-		pendulum.addAttribute(angleatt);
-		pendulum.addAttribute(anglevatt);
+	/**
+	 * A constant for the name of the right action
+	 */
+	public static final String ACTIONRIGHT = "right";
 
-		IPPhysicsParams cphys = this.physParams.copy();
+	/**
+	 * A constant for the name of the no force action (which due to
+	 * stochasticity may include a small force)
+	 */
+	public static final String ACTIONNOFORCE = "noForce";
 
-		new ForceAction(ACTIONLEFT, domain, -this.physParams.actionForce, cphys);
-		new ForceAction(ACTIONRIGHT, domain, this.physParams.actionForce, cphys);
-		new ForceAction(ACTIONNOFORCE, domain, 0., cphys);
+	/**
+	 * Returns an initial state with 0 angle (perfectly vertical) and 0 angle
+	 * velocity.
+	 * 
+	 * @param domain
+	 *            the domain object to which the state will be belong.
+	 * @return an initial state with 0 angle (perfectly vertical) and 0 angle
+	 *         velocity.
+	 */
+	public static State getInitialState(Domain domain) {
+		return getInitialState(domain, 0., 0.);
+	}
 
-		return domain;
+	/**
+	 * Returns an initial state with the pole at the given angle and with the
+	 * given angular velocity of the pole.
+	 * 
+	 * @param domain
+	 *            the domain object to which the state will belong.
+	 * @param angle
+	 *            the angle of the pole from the vertical axis.
+	 * @param angleVelocity
+	 *            the angular velocity of the pole.
+	 * @return an initial state with the pole at the given angle and with the
+	 *         given angular velocity of the pole.
+	 */
+	public static State getInitialState(Domain domain, double angle,
+			double angleVelocity) {
+		State s = new MutableState();
+		ObjectInstance o = new MutableObjectInstance(
+				domain.getObjectClass(CLASSPENDULUM), CLASSPENDULUM);
+		o.setValue(ATTANGLE, angle);
+		o.setValue(ATTANGLEV, angleVelocity);
+		s.addObject(o);
+		return s;
+	}
+
+	/**
+	 * @param args
+	 *            none expected
+	 */
+	public static void main(String[] args) {
+
+		InvertedPendulum ivp = new InvertedPendulum();
+		Domain domain = ivp.generateDomain();
+
+		State s = InvertedPendulum.getInitialState(domain);
+
+		Visualizer v = InvertedPendulumVisualizer
+				.getInvertedPendulumVisualizer();
+
+		VisualExplorer exp = new VisualExplorer(domain, v, s);
+
+		exp.addKeyAction("a", ACTIONLEFT);
+		exp.addKeyAction("d", ACTIONRIGHT);
+		exp.addKeyAction("s", ACTIONNOFORCE);
+
+		exp.initGUI();
+
 	}
 
 	/**
@@ -231,227 +427,34 @@ public class InvertedPendulum implements DomainGenerator {
 
 	}
 
-	/**
-	 * Returns an initial state with 0 angle (perfectly vertical) and 0 angle
-	 * velocity.
-	 * 
-	 * @param domain
-	 *            the domain object to which the state will be belong.
-	 * @return an initial state with 0 angle (perfectly vertical) and 0 angle
-	 *         velocity.
-	 */
-	public static State getInitialState(Domain domain) {
-		return getInitialState(domain, 0., 0.);
-	}
+	public IPPhysicsParams physParams = new IPPhysicsParams();
 
-	/**
-	 * Returns an initial state with the pole at the given angle and with the
-	 * given angular velocity of the pole.
-	 * 
-	 * @param domain
-	 *            the domain object to which the state will belong.
-	 * @param angle
-	 *            the angle of the pole from the vertical axis.
-	 * @param angleVelocity
-	 *            the angular velocity of the pole.
-	 * @return an initial state with the pole at the given angle and with the
-	 *         given angular velocity of the pole.
-	 */
-	public static State getInitialState(Domain domain, double angle,
-			double angleVelocity) {
-		State s = new MutableState();
-		ObjectInstance o = new MutableObjectInstance(
-				domain.getObjectClass(CLASSPENDULUM), CLASSPENDULUM);
-		o.setValue(ATTANGLE, angle);
-		o.setValue(ATTANGLEV, angleVelocity);
-		s.addObject(o);
-		return s;
-	}
+	@Override
+	public Domain generateDomain() {
 
-	/**
-	 * An action that applies a given force to the cart + uniform random noise
-	 * in the range defined in the {@link InvertedPendulum#physParams} data
-	 * member.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public class ForceAction extends SimpleAction implements FullActionModel {
+		SADomain domain = new SADomain();
 
-		/**
-		 * The base noise to which noise will be added.
-		 */
-		protected double baseForce;
+		Attribute angleatt = new Attribute(domain, ATTANGLE,
+				Attribute.AttributeType.REAL);
+		angleatt.setLims(-this.physParams.angleRange,
+				this.physParams.angleRange);
 
-		/**
-		 * The physics parameters to use
-		 */
-		protected IPPhysicsParams physParams;
+		Attribute anglevatt = new Attribute(domain, ATTANGLEV,
+				Attribute.AttributeType.REAL);
+		anglevatt.setLims(-this.physParams.maxAngleSpeed,
+				this.physParams.maxAngleSpeed);
 
-		/**
-		 * Initializes the force action
-		 * 
-		 * @param name
-		 *            the name of the action
-		 * @param domain
-		 *            the domain object to which the action will belong.
-		 * @param force
-		 *            the base force this action applies; noise will be added to
-		 *            this force according to the
-		 *            {@link InvertedPendulum#physParams} data member.
-		 * @param physParams
-		 *            the
-		 *            {@link burlap.domain.singleagent.cartpole.InvertedPendulum.IPPhysicsParams}
-		 *            object specifying the physics to use for movement
-		 */
-		public ForceAction(String name, Domain domain, double force,
-				IPPhysicsParams physParams) {
-			super(name, domain);
-			this.baseForce = force;
-			this.physParams = physParams;
-		}
+		ObjectClass pendulum = new ObjectClass(domain, CLASSPENDULUM);
+		pendulum.addAttribute(angleatt);
+		pendulum.addAttribute(anglevatt);
 
-		@Override
-		protected State performActionHelper(State s,
-				GroundedAction groundedAction) {
+		IPPhysicsParams cphys = this.physParams.copy();
 
-			double roll = RandomFactory.getMapped(0).nextDouble()
-					* (2 * physParams.actionNoise) - physParams.actionNoise;
-			double force = this.baseForce + roll;
-			InvertedPendulum.updateState(s, force, this.physParams);
-			return s;
-		}
+		new ForceAction(ACTIONLEFT, domain, -this.physParams.actionForce, cphys);
+		new ForceAction(ACTIONRIGHT, domain, this.physParams.actionForce, cphys);
+		new ForceAction(ACTIONNOFORCE, domain, 0., cphys);
 
-		@Override
-		public List<TransitionProbability> getTransitions(State s,
-				GroundedAction groundedAction) {
-			if (this.physParams.actionNoise != 0.) {
-				throw new RuntimeException(
-						"Transition Probabilities for the Inverted Pendulum with continuous action noise cannot be enumerated.");
-			}
-			return this.deterministicTransition(s, groundedAction);
-		}
-
-	}
-
-	/**
-	 * A default terminal function for this domain. Terminates when the angle
-	 * between pole and vertical axis is greater than PI/2 radians or some other
-	 * user specified threshold.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class InvertedPendulumTerminalFunction implements
-			TerminalFunction {
-
-		/**
-		 * The maximum pole angle to cause termination/failure.
-		 */
-		double maxAbsoluteAngle = (Math.PI / 2.);
-
-		public InvertedPendulumTerminalFunction() {
-
-		}
-
-		/**
-		 * Initializes with a max pole angle as specified in radians
-		 * 
-		 * @param maxAbsoluteAngle
-		 *            the maximum pole angle in radians that causes task
-		 *            termination/failure.
-		 */
-		public InvertedPendulumTerminalFunction(double maxAbsoluteAngle) {
-			this.maxAbsoluteAngle = maxAbsoluteAngle;
-		}
-
-		@Override
-		public boolean isTerminal(State s) {
-
-			ObjectInstance pendulum = s.getFirstObjectOfClass(CLASSPENDULUM);
-			double a = pendulum.getRealValForAttribute(ATTANGLE);
-
-			if (Math.abs(a) >= maxAbsoluteAngle) {
-				return true;
-			}
-
-			return false;
-
-		}
-
-	}
-
-	/**
-	 * A default reward function for this domain. Returns 0 everywhere except at
-	 * fail conditions, which return -1 and are defined by the pole being grater
-	 * than some threshold (default PI/2 radians.
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class InvertedPendulumRewardFunction implements
-			RewardFunction {
-
-		/**
-		 * The maximum pole angle to cause termination/failure.
-		 */
-		double maxAbsoluteAngle = (Math.PI / 2.);
-
-		public InvertedPendulumRewardFunction() {
-
-		}
-
-		/**
-		 * Initializes with a max pole angle as specified in radians
-		 * 
-		 * @param maxAbsoluteAngle
-		 *            the maximum pole angle in radians that causes task
-		 *            termination/failure.
-		 */
-		public InvertedPendulumRewardFunction(double maxAbsoluteAngle) {
-			this.maxAbsoluteAngle = maxAbsoluteAngle;
-		}
-
-		@Override
-		public double reward(State s, GroundedAction a, State sprime) {
-
-			double failReward = -1;
-
-			ObjectInstance pendulum = sprime
-					.getFirstObjectOfClass(CLASSPENDULUM);
-			double ang = pendulum.getRealValForAttribute(ATTANGLE);
-
-			if (Math.abs(ang) >= maxAbsoluteAngle) {
-				return failReward;
-			}
-
-			return 0;
-		}
-
-	}
-
-	/**
-	 * @param args
-	 *            none expected
-	 */
-	public static void main(String[] args) {
-
-		InvertedPendulum ivp = new InvertedPendulum();
-		Domain domain = ivp.generateDomain();
-
-		State s = InvertedPendulum.getInitialState(domain);
-
-		Visualizer v = InvertedPendulumVisualizer
-				.getInvertedPendulumVisualizer();
-
-		VisualExplorer exp = new VisualExplorer(domain, v, s);
-
-		exp.addKeyAction("a", ACTIONLEFT);
-		exp.addKeyAction("d", ACTIONRIGHT);
-		exp.addKeyAction("s", ACTIONNOFORCE);
-
-		exp.initGUI();
-
+		return domain;
 	}
 
 }

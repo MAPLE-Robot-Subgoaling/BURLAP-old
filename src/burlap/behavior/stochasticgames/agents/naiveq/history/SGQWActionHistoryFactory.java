@@ -1,10 +1,10 @@
 package burlap.behavior.stochasticgames.agents.naiveq.history;
 
-import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.behavior.policy.EpsilonGreedy;
+import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.AgentFactory;
+import burlap.oomdp.stochasticgames.SGAgent;
 import burlap.oomdp.stochasticgames.SGDomain;
 
 /**
@@ -74,20 +74,13 @@ public class SGQWActionHistoryFactory implements AgentFactory {
 	 *            The state hashing factory the Q-learning algorithm will use
 	 * @param historySize
 	 *            How much history the agent should remember
-	 * @param maxPlayers
-	 *            The maximum number of players that can be in the game
-	 * @param actionMap
-	 *            An action mapping to map from actions to int values
 	 */
 	public SGQWActionHistoryFactory(SGDomain d, double discount,
-			double learningRate, HashableStateFactory stateHash,
-			int historySize, int maxPlayers, ActionIdMap actionMap) {
+			double learningRate, HashableStateFactory stateHash, int historySize) {
 		this.domain = d;
 		this.learningRate = learningRate;
 		this.stateHash = stateHash;
 		this.historySize = historySize;
-		this.maxPlayers = maxPlayers;
-		this.actionMap = actionMap;
 	}
 
 	/**
@@ -103,34 +96,20 @@ public class SGQWActionHistoryFactory implements AgentFactory {
 	 *            The state hashing factory the Q-learning algorithm will use
 	 * @param historySize
 	 *            How much history the agent should remember
+	 * @param maxPlayers
+	 *            The maximum number of players that can be in the game
+	 * @param actionMap
+	 *            An action mapping to map from actions to int values
 	 */
 	public SGQWActionHistoryFactory(SGDomain d, double discount,
-			double learningRate, HashableStateFactory stateHash, int historySize) {
+			double learningRate, HashableStateFactory stateHash,
+			int historySize, int maxPlayers, ActionIdMap actionMap) {
 		this.domain = d;
 		this.learningRate = learningRate;
 		this.stateHash = stateHash;
 		this.historySize = historySize;
-	}
-
-	/**
-	 * Sets the Q-value initialization function that will be used by the agent.
-	 * 
-	 * @param qinit
-	 *            the Q-value initialization function.
-	 */
-	public void setQValueInitializer(ValueFunctionInitialization qinit) {
-		this.qinit = qinit;
-	}
-
-	/**
-	 * Sets the epislon parmaeter (for epsilon greedy policy). If set to a
-	 * negative, then the default policy of the create agent will be used.
-	 * 
-	 * @param epsilon
-	 *            the epsilon value to use
-	 */
-	public void setEpsilon(double epsilon) {
-		this.epsilon = epsilon;
+		this.maxPlayers = maxPlayers;
+		this.actionMap = actionMap;
 	}
 
 	@Override
@@ -153,6 +132,27 @@ public class SGQWActionHistoryFactory implements AgentFactory {
 
 		return agent;
 
+	}
+
+	/**
+	 * Sets the epislon parmaeter (for epsilon greedy policy). If set to a
+	 * negative, then the default policy of the create agent will be used.
+	 * 
+	 * @param epsilon
+	 *            the epsilon value to use
+	 */
+	public void setEpsilon(double epsilon) {
+		this.epsilon = epsilon;
+	}
+
+	/**
+	 * Sets the Q-value initialization function that will be used by the agent.
+	 * 
+	 * @param qinit
+	 *            the Q-value initialization function.
+	 */
+	public void setQValueInitializer(ValueFunctionInitialization qinit) {
+		this.qinit = qinit;
 	}
 
 }

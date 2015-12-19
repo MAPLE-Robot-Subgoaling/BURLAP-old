@@ -96,16 +96,14 @@ public class VisualWorldObserver extends JFrame implements WorldObserver {
 		this.propViewer.setEditable(false);
 	}
 
-	/**
-	 * Sets how long to wait in ms for a state to be rendered before returning
-	 * control the world. The default value is 17, which is about 60FPS.
-	 * 
-	 * @param delay
-	 *            how long to wait in ms for a state to be rendered before
-	 *            returning control the world.
-	 */
-	public void setFrameDelay(long delay) {
-		this.actionRenderDelay = delay;
+	@Override
+	public void gameEnding(State s) {
+		// do nothing
+	}
+
+	@Override
+	public void gameStarting(State s) {
+		this.updateAndWait(s);
 	}
 
 	/**
@@ -128,45 +126,11 @@ public class VisualWorldObserver extends JFrame implements WorldObserver {
 	}
 
 	@Override
-	public void gameStarting(State s) {
-		this.updateAndWait(s);
-	}
-
-	@Override
 	public void observe(State s, JointAction ja, Map<String, Double> reward,
 			State sp) {
 
 		this.updateAndWait(sp);
 
-	}
-
-	@Override
-	public void gameEnding(State s) {
-		// do nothing
-	}
-
-	protected void updateAndWait(State s) {
-		this.painter.updateState(s);
-		this.updatePropTextArea(s);
-		Thread waitThread = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					Thread.sleep(actionRenderDelay);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-
-		waitThread.start();
-
-		try {
-			waitThread.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
 	}
 
 	/**
@@ -204,6 +168,42 @@ public class VisualWorldObserver extends JFrame implements WorldObserver {
 		for (int i = 0; i < ga.maxTimeStep(); i++) {
 			this.observe(ga.getState(i), ga.getJointAction(i),
 					ga.getJointReward(i + 1), ga.getState(i + 1));
+		}
+	}
+
+	/**
+	 * Sets how long to wait in ms for a state to be rendered before returning
+	 * control the world. The default value is 17, which is about 60FPS.
+	 * 
+	 * @param delay
+	 *            how long to wait in ms for a state to be rendered before
+	 *            returning control the world.
+	 */
+	public void setFrameDelay(long delay) {
+		this.actionRenderDelay = delay;
+	}
+
+	protected void updateAndWait(State s) {
+		this.painter.updateState(s);
+		this.updatePropTextArea(s);
+		Thread waitThread = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(actionRenderDelay);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+
+		waitThread.start();
+
+		try {
+			waitThread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 	}
 

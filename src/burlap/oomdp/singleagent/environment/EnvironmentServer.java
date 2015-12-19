@@ -1,10 +1,10 @@
 package burlap.oomdp.singleagent.environment;
 
-import burlap.oomdp.core.states.State;
-import burlap.oomdp.singleagent.GroundedAction;
-
 import java.util.LinkedList;
 import java.util.List;
+
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.singleagent.GroundedAction;
 
 /**
  * A server that delegates all
@@ -21,19 +21,20 @@ import java.util.List;
  */
 public class EnvironmentServer implements Environment {
 
-	/**
-	 * the {@link burlap.oomdp.singleagent.environment.Environment} delegate
-	 * that handles all primary
-	 * {@link burlap.oomdp.singleagent.environment.Environment} functionality.
-	 */
-	protected Environment delegate;
+	public static class StateSettableEnvironmentServer extends
+			EnvironmentServer implements StateSettableEnvironment {
 
-	/**
-	 * The {@link burlap.oomdp.singleagent.environment.EnvironmentObserver}
-	 * objects that will be notified of
-	 * {@link burlap.oomdp.singleagent.environment.Environment} events.
-	 */
-	protected List<EnvironmentObserver> observers = new LinkedList<EnvironmentObserver>();
+		public StateSettableEnvironmentServer(
+				StateSettableEnvironment delegate,
+				EnvironmentObserver... observers) {
+			super(delegate, observers);
+		}
+
+		@Override
+		public void setCurStateTo(State s) {
+			((StateSettableEnvironment) this.delegate).setCurStateTo(s);
+		}
+	}
 
 	/**
 	 * Constructs an
@@ -64,37 +65,26 @@ public class EnvironmentServer implements Environment {
 		return new EnvironmentServer(delegate, observers);
 	}
 
+	/**
+	 * the {@link burlap.oomdp.singleagent.environment.Environment} delegate
+	 * that handles all primary
+	 * {@link burlap.oomdp.singleagent.environment.Environment} functionality.
+	 */
+	protected Environment delegate;
+
+	/**
+	 * The {@link burlap.oomdp.singleagent.environment.EnvironmentObserver}
+	 * objects that will be notified of
+	 * {@link burlap.oomdp.singleagent.environment.Environment} events.
+	 */
+	protected List<EnvironmentObserver> observers = new LinkedList<EnvironmentObserver>();
+
 	public EnvironmentServer(Environment delegate,
 			EnvironmentObserver... observers) {
 		this.delegate = delegate;
 		for (EnvironmentObserver observer : observers) {
 			this.observers.add(observer);
 		}
-	}
-
-	/**
-	 * Returns the {@link burlap.oomdp.singleagent.environment.Environment}
-	 * delegate that handles all
-	 * {@link burlap.oomdp.singleagent.environment.Environment} functionality
-	 * 
-	 * @return the {@link burlap.oomdp.singleagent.environment.Environment}
-	 *         delegate
-	 */
-	public Environment getEnvironmentDelegate() {
-		return delegate;
-	}
-
-	/**
-	 * Sets the {@link burlap.oomdp.singleagent.environment.Environment}
-	 * delegate that handles all
-	 * {@link burlap.oomdp.singleagent.environment.Environment} functionality
-	 * 
-	 * @param delegate
-	 *            the {@link burlap.oomdp.singleagent.environment.Environment}
-	 *            delegate
-	 */
-	public void setEnvironmentDelegate(Environment delegate) {
-		this.delegate = delegate;
 	}
 
 	/**
@@ -120,20 +110,35 @@ public class EnvironmentServer implements Environment {
 		this.observers.clear();
 	}
 
-	/**
-	 * Removes one or more
-	 * {@link burlap.oomdp.singleagent.environment.EnvironmentObserver}s from
-	 * this server.
-	 * 
-	 * @param observers
-	 *            the
-	 *            {@link burlap.oomdp.singleagent.environment.EnvironmentObserver}
-	 *            s to remove.
-	 */
-	public void removeObservers(EnvironmentObserver... observers) {
-		for (EnvironmentObserver observer : observers) {
-			this.observers.remove(observer);
+	@Override
+	public EnvironmentOutcome executeAction(GroundedAction ga) {
+		EnvironmentOutcome eo = this.delegate.executeAction(ga);
+		for (EnvironmentObserver observer : this.observers) {
+			observer.observeEnvironmentInteraction(eo);
 		}
+		return eo;
+	}
+
+	@Override
+	public State getCurrentObservation() {
+		return this.delegate.getCurrentObservation();
+	}
+
+	/**
+	 * Returns the {@link burlap.oomdp.singleagent.environment.Environment}
+	 * delegate that handles all
+	 * {@link burlap.oomdp.singleagent.environment.Environment} functionality
+	 * 
+	 * @return the {@link burlap.oomdp.singleagent.environment.Environment}
+	 *         delegate
+	 */
+	public Environment getEnvironmentDelegate() {
+		return delegate;
+	}
+
+	@Override
+	public double getLastReward() {
+		return this.delegate.getLastReward();
 	}
 
 	/**
@@ -150,27 +155,24 @@ public class EnvironmentServer implements Environment {
 	}
 
 	@Override
-	public State getCurrentObservation() {
-		return this.delegate.getCurrentObservation();
-	}
-
-	@Override
-	public EnvironmentOutcome executeAction(GroundedAction ga) {
-		EnvironmentOutcome eo = this.delegate.executeAction(ga);
-		for (EnvironmentObserver observer : this.observers) {
-			observer.observeEnvironmentInteraction(eo);
-		}
-		return eo;
-	}
-
-	@Override
-	public double getLastReward() {
-		return this.delegate.getLastReward();
-	}
-
-	@Override
 	public boolean isInTerminalState() {
 		return this.delegate.isInTerminalState();
+	}
+
+	/**
+	 * Removes one or more
+	 * {@link burlap.oomdp.singleagent.environment.EnvironmentObserver}s from
+	 * this server.
+	 * 
+	 * @param observers
+	 *            the
+	 *            {@link burlap.oomdp.singleagent.environment.EnvironmentObserver}
+	 *            s to remove.
+	 */
+	public void removeObservers(EnvironmentObserver... observers) {
+		for (EnvironmentObserver observer : observers) {
+			this.observers.remove(observer);
+		}
 	}
 
 	@Override
@@ -181,18 +183,16 @@ public class EnvironmentServer implements Environment {
 		}
 	}
 
-	public static class StateSettableEnvironmentServer extends
-			EnvironmentServer implements StateSettableEnvironment {
-
-		public StateSettableEnvironmentServer(
-				StateSettableEnvironment delegate,
-				EnvironmentObserver... observers) {
-			super(delegate, observers);
-		}
-
-		@Override
-		public void setCurStateTo(State s) {
-			((StateSettableEnvironment) this.delegate).setCurStateTo(s);
-		}
+	/**
+	 * Sets the {@link burlap.oomdp.singleagent.environment.Environment}
+	 * delegate that handles all
+	 * {@link burlap.oomdp.singleagent.environment.Environment} functionality
+	 * 
+	 * @param delegate
+	 *            the {@link burlap.oomdp.singleagent.environment.Environment}
+	 *            delegate
+	 */
+	public void setEnvironmentDelegate(Environment delegate) {
+		this.delegate = delegate;
 	}
 }

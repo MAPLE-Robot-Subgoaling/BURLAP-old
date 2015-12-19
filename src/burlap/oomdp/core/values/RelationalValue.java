@@ -1,6 +1,5 @@
 package burlap.oomdp.core.values;
 
-import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -35,6 +34,11 @@ public class RelationalValue extends OOMDPValue implements Value {
 		this.target = UNSET;
 	}
 
+	public RelationalValue(Attribute attribute, String target) {
+		super(attribute);
+		this.target = target;
+	}
+
 	/**
 	 * Initializes this value as a copy from the source Value object v.
 	 * 
@@ -43,28 +47,8 @@ public class RelationalValue extends OOMDPValue implements Value {
 	 */
 	public RelationalValue(RelationalValue v) {
 		super(v);
-		RelationalValue rv = (RelationalValue) v;
+		RelationalValue rv = v;
 		this.target = rv.target;
-	}
-
-	public RelationalValue(Attribute attribute, String target) {
-		super(attribute);
-		this.target = target;
-	}
-
-	@Override
-	public Value copy() {
-		return new RelationalValue(this);
-	}
-
-	@Override
-	public boolean valueHasBeenSet() {
-		return true;
-	}
-
-	@Override
-	public Value setValue(String v) {
-		return new RelationalValue(this.attribute, v);
 	}
 
 	@Override
@@ -73,33 +57,18 @@ public class RelationalValue extends OOMDPValue implements Value {
 	}
 
 	@Override
-	public Value clearRelationTargets() {
-		return new RelationalValue(this.attribute);
-	}
-
-	@Override
-	public Value removeRelationalTarget(String target) {
-		if (this.target.equals(target)) {
-			return new RelationalValue(this.attribute);
-		}
-		return this;
-	}
-
-	@Override
-	public Set<String> getAllRelationalTargets() {
-		Set<String> res = new TreeSet<String>();
-		res.add(this.target);
-		return res;
-	}
-
-	@Override
 	public StringBuilder buildStringVal(StringBuilder builder) {
 		return builder.append(this.target);
 	}
 
 	@Override
-	public double getNumericRepresentation() {
-		return 0;
+	public Value clearRelationTargets() {
+		return new RelationalValue(this.attribute);
+	}
+
+	@Override
+	public Value copy() {
+		return new RelationalValue(this);
 	}
 
 	@Override
@@ -118,6 +87,36 @@ public class RelationalValue extends OOMDPValue implements Value {
 
 		return this.target.equals(op.target);
 
+	}
+
+	@Override
+	public Set<String> getAllRelationalTargets() {
+		Set<String> res = new TreeSet<String>();
+		res.add(this.target);
+		return res;
+	}
+
+	@Override
+	public double getNumericRepresentation() {
+		return 0;
+	}
+
+	@Override
+	public Value removeRelationalTarget(String target) {
+		if (this.target.equals(target)) {
+			return new RelationalValue(this.attribute);
+		}
+		return this;
+	}
+
+	@Override
+	public Value setValue(String v) {
+		return new RelationalValue(this.attribute, v);
+	}
+
+	@Override
+	public boolean valueHasBeenSet() {
+		return true;
 	}
 
 }

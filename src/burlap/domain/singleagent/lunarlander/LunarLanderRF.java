@@ -79,6 +79,18 @@ public class LunarLanderRF implements RewardFunction {
 		this.defaultReward = defaultReward;
 	}
 
+	public double getCollisionReward() {
+		return collisionReward;
+	}
+
+	public double getDefaultReward() {
+		return defaultReward;
+	}
+
+	public double getGoalReward() {
+		return goalReward;
+	}
+
 	@Override
 	public double reward(State s, GroundedAction a, State sprime) {
 		if (onPad.somePFGroundingIsTrue(sprime)) {
@@ -94,27 +106,15 @@ public class LunarLanderRF implements RewardFunction {
 		return defaultReward;
 	}
 
-	public double getGoalReward() {
-		return goalReward;
-	}
-
-	public void setGoalReward(double goalReward) {
-		this.goalReward = goalReward;
-	}
-
-	public double getCollisionReward() {
-		return collisionReward;
-	}
-
 	public void setCollisionReward(double collisionReward) {
 		this.collisionReward = collisionReward;
 	}
 
-	public double getDefaultReward() {
-		return defaultReward;
-	}
-
 	public void setDefaultReward(double defaultReward) {
 		this.defaultReward = defaultReward;
+	}
+
+	public void setGoalReward(double goalReward) {
+		this.goalReward = goalReward;
 	}
 }

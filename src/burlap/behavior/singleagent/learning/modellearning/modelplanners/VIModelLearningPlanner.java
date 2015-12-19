@@ -4,20 +4,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import burlap.behavior.policy.Policy;
-import burlap.behavior.valuefunction.QValue;
-import burlap.behavior.singleagent.learning.modellearning.ModelLearningPlanner;
-import burlap.behavior.valuefunction.QFunction;
 import burlap.behavior.policy.GreedyQPolicy;
+import burlap.behavior.policy.Policy;
+import burlap.behavior.singleagent.learning.modellearning.ModelLearningPlanner;
 import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
-import burlap.debugtools.DPrint;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.Domain;
-import burlap.oomdp.core.states.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * A model learning interface wrapper to VI that causes VI to be performed every
@@ -31,6 +28,64 @@ import burlap.oomdp.singleagent.RewardFunction;
  */
 public class VIModelLearningPlanner extends ValueIteration implements
 		ModelLearningPlanner {
+
+	/**
+	 * A policy that causes planning to performed if the state is unknown
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	class ReplanIfUnseenPolicy extends Policy {
+
+		/**
+		 * The source policy to follow for known states
+		 */
+		Policy p;
+
+		/**
+		 * Initializes with a given source policy
+		 * 
+		 * @param p
+		 *            the source policy
+		 */
+		public ReplanIfUnseenPolicy(Policy p) {
+			this.p = p;
+		}
+
+		@Override
+		public AbstractGroundedAction getAction(State s) {
+			if (!VIModelLearningPlanner.this.hasComputedValueFor(s)) {
+				VIModelLearningPlanner.this.observedStates
+						.add(VIModelLearningPlanner.this.hashingFactory
+								.hashState(s));
+				VIModelLearningPlanner.this.rerunVI();
+			}
+			return p.getAction(s);
+		}
+
+		@Override
+		public List<ActionProb> getActionDistributionForState(State s) {
+
+			if (!VIModelLearningPlanner.this.hasComputedValueFor(s)) {
+				VIModelLearningPlanner.this.observedStates
+						.add(VIModelLearningPlanner.this.hashingFactory
+								.hashState(s));
+				VIModelLearningPlanner.this.rerunVI();
+			}
+			return p.getActionDistributionForState(s);
+		}
+
+		@Override
+		public boolean isDefinedFor(State s) {
+			return p.isDefinedFor(s);
+		}
+
+		@Override
+		public boolean isStochastic() {
+			return p.isStochastic();
+		}
+
+	}
 
 	/**
 	 * States the agent has observed during learning.
@@ -106,64 +161,6 @@ public class VIModelLearningPlanner extends ValueIteration implements
 
 		// run vi
 		this.runVI();
-
-	}
-
-	/**
-	 * A policy that causes planning to performed if the state is unknown
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	class ReplanIfUnseenPolicy extends Policy {
-
-		/**
-		 * The source policy to follow for known states
-		 */
-		Policy p;
-
-		/**
-		 * Initializes with a given source policy
-		 * 
-		 * @param p
-		 *            the source policy
-		 */
-		public ReplanIfUnseenPolicy(Policy p) {
-			this.p = p;
-		}
-
-		@Override
-		public AbstractGroundedAction getAction(State s) {
-			if (!VIModelLearningPlanner.this.hasComputedValueFor(s)) {
-				VIModelLearningPlanner.this.observedStates
-						.add(VIModelLearningPlanner.this.hashingFactory
-								.hashState(s));
-				VIModelLearningPlanner.this.rerunVI();
-			}
-			return p.getAction(s);
-		}
-
-		@Override
-		public List<ActionProb> getActionDistributionForState(State s) {
-
-			if (!VIModelLearningPlanner.this.hasComputedValueFor(s)) {
-				VIModelLearningPlanner.this.observedStates
-						.add(VIModelLearningPlanner.this.hashingFactory
-								.hashState(s));
-				VIModelLearningPlanner.this.rerunVI();
-			}
-			return p.getActionDistributionForState(s);
-		}
-
-		@Override
-		public boolean isStochastic() {
-			return p.isStochastic();
-		}
-
-		@Override
-		public boolean isDefinedFor(State s) {
-			return p.isDefinedFor(s);
-		}
 
 	}
 

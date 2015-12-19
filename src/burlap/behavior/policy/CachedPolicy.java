@@ -1,13 +1,13 @@
 package burlap.behavior.policy;
 
-import burlap.oomdp.statehashing.HashableStateFactory;
-import burlap.oomdp.statehashing.HashableState;
-import burlap.oomdp.core.AbstractGroundedAction;
-import burlap.oomdp.core.states.State;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import burlap.oomdp.core.AbstractGroundedAction;
+import burlap.oomdp.core.states.State;
+import burlap.oomdp.statehashing.HashableState;
+import burlap.oomdp.statehashing.HashableStateFactory;
 
 /**
  * This class can be used to lazily cache the policy of a source policy. This is
@@ -86,14 +86,14 @@ public class CachedPolicy extends Policy {
 	}
 
 	@Override
-	public boolean isStochastic() {
-		return this.sourcePolicy.isStochastic();
-	}
-
-	@Override
 	public boolean isDefinedFor(State s) {
 		HashableState sh = this.hashingFactory.hashState(s);
 		return this.actionSelection.containsKey(sh) ? true : this.sourcePolicy
 				.isDefinedFor(s);
+	}
+
+	@Override
+	public boolean isStochastic() {
+		return this.sourcePolicy.isStochastic();
 	}
 }

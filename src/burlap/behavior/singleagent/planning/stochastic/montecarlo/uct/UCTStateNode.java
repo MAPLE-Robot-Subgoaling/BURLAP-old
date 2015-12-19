@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import burlap.behavior.singleagent.planning.stochastic.montecarlo.uct.UCTActionNode.UCTActionConstructor;
-import burlap.oomdp.statehashing.HashableState;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
+import burlap.oomdp.statehashing.HashableState;
 
 /**
  * UCT State Node that wraps a hashed state object and provided additional state
@@ -17,6 +17,35 @@ import burlap.oomdp.singleagent.GroundedAction;
  * 
  */
 public class UCTStateNode {
+
+	/**
+	 * A factory for generating UCTStateNode objects
+	 * 
+	 * @author James MacGlashan
+	 * 
+	 */
+	public static class UCTStateConstructor {
+
+		/**
+		 * Generates an instance of a {@link UCTStateNode}
+		 * 
+		 * @param s
+		 *            the state that this node wraps
+		 * @param d
+		 *            the depth of the node
+		 * @param actions
+		 *            the possible OO-MDP actions that can be taken
+		 * @param constructor
+		 *            a {@link UCTActionNode} factory that can be used to create
+		 *            ActionNodes for each of the actions.
+		 * @return a {@link UCTStateNode} instance.
+		 */
+		public UCTStateNode generate(HashableState s, int d,
+				List<Action> actions, UCTActionConstructor constructor) {
+			return new UCTStateNode(s, d, actions, constructor);
+		}
+
+	}
 
 	/**
 	 * The (hashed) state this node wraps
@@ -82,35 +111,6 @@ public class UCTStateNode {
 		UCTStateNode os = (UCTStateNode) o;
 
 		return state.equals(os.state) && depth == os.depth;
-
-	}
-
-	/**
-	 * A factory for generating UCTStateNode objects
-	 * 
-	 * @author James MacGlashan
-	 * 
-	 */
-	public static class UCTStateConstructor {
-
-		/**
-		 * Generates an instance of a {@link UCTStateNode}
-		 * 
-		 * @param s
-		 *            the state that this node wraps
-		 * @param d
-		 *            the depth of the node
-		 * @param actions
-		 *            the possible OO-MDP actions that can be taken
-		 * @param constructor
-		 *            a {@link UCTActionNode} factory that can be used to create
-		 *            ActionNodes for each of the actions.
-		 * @return a {@link UCTStateNode} instance.
-		 */
-		public UCTStateNode generate(HashableState s, int d,
-				List<Action> actions, UCTActionConstructor constructor) {
-			return new UCTStateNode(s, d, actions, constructor);
-		}
 
 	}
 

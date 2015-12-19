@@ -26,6 +26,10 @@ public class TestBlockDude {
 	Domain domain;
 	BlockDude constructor;
 
+	public State generateState() {
+		return BlockDudeLevelConstructor.getLevel3(domain);
+	}
+
 	@Before
 	public void setup() {
 		constructor = new BlockDude();
@@ -36,10 +40,6 @@ public class TestBlockDude {
 	public void teardown() {
 		this.domain = null;
 		this.constructor = null;
-	}
-
-	public State generateState() {
-		return BlockDudeLevelConstructor.getLevel3(domain);
 	}
 
 	@Test

@@ -1,5 +1,10 @@
 package burlap.behavior.singleagent.vfa.rbf;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import burlap.behavior.singleagent.vfa.ActionFeaturesQuery;
 import burlap.behavior.singleagent.vfa.FeatureDatabase;
 import burlap.behavior.singleagent.vfa.StateFeature;
@@ -8,11 +13,6 @@ import burlap.behavior.singleagent.vfa.common.LinearVFA;
 import burlap.oomdp.core.AbstractObjectParameterizedGroundedAction;
 import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.GroundedAction;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * A feature database of RBF units that can be used for linear value function
@@ -97,24 +97,31 @@ public class RBFFeatureDatabase implements FeatureDatabase {
 	}
 
 	@Override
-	public List<StateFeature> getStateFeatures(State s) {
+	public RBFFeatureDatabase copy() {
+		RBFFeatureDatabase rbf = new RBFFeatureDatabase(this.hasOffset);
+		rbf.rbfs = new ArrayList<RBF>(this.rbfs);
+		rbf.nRbfs = this.nRbfs;
+		rbf.actionFeatureMultiplier = new HashMap<GroundedAction, Integer>(
+				this.actionFeatureMultiplier);
+		rbf.nextActionMultiplier = this.nextActionMultiplier;
 
-		List<StateFeature> rbfsf = new ArrayList<StateFeature>();
-		int id = 0;
+		return rbf;
+	}
 
-		for (RBF r : rbfs) {
-			double value = r.responseFor(s);
-			StateFeature sf = new StateFeature(id, value);
-			rbfsf.add(sf);
-			id++;
-		}
+	@Override
+	public void freezeDatabaseState(boolean toggle) {
+		// do nothing
+	}
 
-		if (hasOffset) {
-			StateFeature sf = new StateFeature(id, 1);
-			rbfsf.add(sf);
-		}
-
-		return rbfsf;
+	/**
+	 * Creates and returns a linear VFA object over this RBF feature database.
+	 * 
+	 * @param defaultWeightValue
+	 *            the default feature weight value to use for all features
+	 * @return a linear VFA object over this RBF feature database.
+	 */
+	public ValueFunctionApproximation generateVFA(double defaultWeightValue) {
+		return new LinearVFA(this, defaultWeightValue);
 	}
 
 	@Override
@@ -139,22 +146,6 @@ public class RBFFeatureDatabase implements FeatureDatabase {
 		}
 
 		return lstAFQ;
-	}
-
-	@Override
-	public void freezeDatabaseState(boolean toggle) {
-		// do nothing
-	}
-
-	/**
-	 * Creates and returns a linear VFA object over this RBF feature database.
-	 * 
-	 * @param defaultWeightValue
-	 *            the default feature weight value to use for all features
-	 * @return a linear VFA object over this RBF feature database.
-	 */
-	public ValueFunctionApproximation generateVFA(double defaultWeightValue) {
-		return new LinearVFA(this, defaultWeightValue);
 	}
 
 	/**
@@ -185,22 +176,31 @@ public class RBFFeatureDatabase implements FeatureDatabase {
 	}
 
 	@Override
+	public List<StateFeature> getStateFeatures(State s) {
+
+		List<StateFeature> rbfsf = new ArrayList<StateFeature>();
+		int id = 0;
+
+		for (RBF r : rbfs) {
+			double value = r.responseFor(s);
+			StateFeature sf = new StateFeature(id, value);
+			rbfsf.add(sf);
+			id++;
+		}
+
+		if (hasOffset) {
+			StateFeature sf = new StateFeature(id, 1);
+			rbfsf.add(sf);
+		}
+
+		return rbfsf;
+	}
+
+	@Override
 	public int numberOfFeatures() {
 		if (this.actionFeatureMultiplier.size() == 0) {
 			return this.nRbfs;
 		}
 		return this.nRbfs * this.nextActionMultiplier;
-	}
-
-	@Override
-	public RBFFeatureDatabase copy() {
-		RBFFeatureDatabase rbf = new RBFFeatureDatabase(this.hasOffset);
-		rbf.rbfs = new ArrayList<RBF>(this.rbfs);
-		rbf.nRbfs = this.nRbfs;
-		rbf.actionFeatureMultiplier = new HashMap<GroundedAction, Integer>(
-				this.actionFeatureMultiplier);
-		rbf.nextActionMultiplier = this.nextActionMultiplier;
-
-		return rbf;
 	}
 }

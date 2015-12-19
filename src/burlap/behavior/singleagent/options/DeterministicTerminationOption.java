@@ -70,53 +70,6 @@ public class DeterministicTerminationOption extends Option {
 
 	/**
 	 * Initializes the option by creating the policy uses some provided option.
-	 * The valueFunction is called repeatedly on each state in the initiation
-	 * state set (which needs to be a
-	 * {@link burlap.oomdp.auxiliary.stateconditiontest.StateConditionTestIterable}
-	 * ) and then sets this options policy to the valueFunction derived policy
-	 * that is provided.
-	 * 
-	 * @param name
-	 *            the name of the option
-	 * @param init
-	 *            the iterable initiation states
-	 * @param terminaitonStates
-	 *            the termination states of the option
-	 * @param planner
-	 *            the valueFunction to be used to create the policy for this
-	 *            option
-	 * @param p
-	 *            the valueFunction derived policy to use after planning from
-	 *            each initial state is performed.
-	 */
-	public DeterministicTerminationOption(String name,
-			StateConditionTestIterable init,
-			StateConditionTest terminaitonStates, Planner planner,
-			SolverDerivedPolicy p) {
-
-		if (!(p instanceof Policy)) {
-			throw new RuntimeErrorException(new Error(
-					"PlannerDerivedPolicy p is not an instnace of Policy"));
-		}
-
-		this.name = name;
-
-		this.initiationTest = init;
-		this.terminationStates = terminaitonStates;
-
-		// now construct the policy using the valueFunction from each possible
-		// initiation state
-		for (State si : init) {
-			planner.planFromState(si);
-		}
-
-		p.setSolver(planner);
-		this.policy = (Policy) p;
-
-	}
-
-	/**
-	 * Initializes the option by creating the policy uses some provided option.
 	 * The valueFunction is called repeatedly on each state in the the list
 	 * <code>seedStatesForPlanning</code> and then sets this options policy to
 	 * the valueFunction derived policy that is provided.
@@ -163,14 +116,77 @@ public class DeterministicTerminationOption extends Option {
 
 	}
 
-	@Override
-	public boolean isParameterized() {
-		return false;
+	/**
+	 * Initializes the option by creating the policy uses some provided option.
+	 * The valueFunction is called repeatedly on each state in the initiation
+	 * state set (which needs to be a
+	 * {@link burlap.oomdp.auxiliary.stateconditiontest.StateConditionTestIterable}
+	 * ) and then sets this options policy to the valueFunction derived policy
+	 * that is provided.
+	 * 
+	 * @param name
+	 *            the name of the option
+	 * @param init
+	 *            the iterable initiation states
+	 * @param terminaitonStates
+	 *            the termination states of the option
+	 * @param planner
+	 *            the valueFunction to be used to create the policy for this
+	 *            option
+	 * @param p
+	 *            the valueFunction derived policy to use after planning from
+	 *            each initial state is performed.
+	 */
+	public DeterministicTerminationOption(String name,
+			StateConditionTestIterable init,
+			StateConditionTest terminaitonStates, Planner planner,
+			SolverDerivedPolicy p) {
+
+		if (!(p instanceof Policy)) {
+			throw new RuntimeErrorException(new Error(
+					"PlannerDerivedPolicy p is not an instnace of Policy"));
+		}
+
+		this.name = name;
+
+		this.initiationTest = init;
+		this.terminationStates = terminaitonStates;
+
+		// now construct the policy using the valueFunction from each possible
+		// initiation state
+		for (State si : init) {
+			planner.planFromState(si);
+		}
+
+		p.setSolver(planner);
+		this.policy = (Policy) p;
+
 	}
 
 	@Override
-	public GroundedAction getAssociatedGroundedAction() {
-		return new SimpleGroundedAction(this);
+	public boolean applicableInState(State st, GroundedAction groundedAction) {
+		if (initiationTest.satisfies(this.map(st))) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Returns true if the initiation states and termination states of this
+	 * option are iterable; false if either of them are not.
+	 * 
+	 * @return true if the initiation states and termination states of this
+	 *         option are iterable; false if either of them are not.
+	 */
+	public boolean enumerable() {
+		return (initiationTest instanceof StateConditionTestIterable)
+				&& (terminationStates instanceof StateConditionTestIterable);
+	}
+
+	@Override
+	public List<ActionProb> getActionDistributionForState(State s,
+			GroundedAction groundedAction) {
+		return policy.getActionDistributionForState(this.map(s));
 	}
 
 	@Override
@@ -178,6 +194,11 @@ public class DeterministicTerminationOption extends Option {
 		GroundedAction ga = new SimpleGroundedAction(this);
 		return this.applicableInState(s, ga) ? Arrays.asList(ga)
 				: new ArrayList<GroundedAction>(0);
+	}
+
+	@Override
+	public GroundedAction getAssociatedGroundedAction() {
+		return new SimpleGroundedAction(this);
 	}
 
 	/**
@@ -198,16 +219,9 @@ public class DeterministicTerminationOption extends Option {
 		return this.terminationStates;
 	}
 
-	/**
-	 * Returns true if the initiation states and termination states of this
-	 * option are iterable; false if either of them are not.
-	 * 
-	 * @return true if the initiation states and termination states of this
-	 *         option are iterable; false if either of them are not.
-	 */
-	public boolean enumerable() {
-		return (initiationTest instanceof StateConditionTestIterable)
-				&& (terminationStates instanceof StateConditionTestIterable);
+	@Override
+	public void initiateInStateHelper(State s, GroundedAction groundedAction) {
+		// no bookkeeping
 	}
 
 	@Override
@@ -216,13 +230,14 @@ public class DeterministicTerminationOption extends Option {
 	}
 
 	@Override
-	public boolean usesDeterministicTermination() {
-		return true;
+	public boolean isParameterized() {
+		return false;
 	}
 
 	@Override
-	public boolean usesDeterministicPolicy() {
-		return !policy.isStochastic();
+	public GroundedAction oneStepActionSelection(State s,
+			GroundedAction groundedAction) {
+		return (GroundedAction) policy.getAction(this.map(s));
 	}
 
 	@Override
@@ -236,28 +251,13 @@ public class DeterministicTerminationOption extends Option {
 	}
 
 	@Override
-	public boolean applicableInState(State st, GroundedAction groundedAction) {
-		if (initiationTest.satisfies(this.map(st))) {
-			return true;
-		}
-		return false;
+	public boolean usesDeterministicPolicy() {
+		return !policy.isStochastic();
 	}
 
 	@Override
-	public void initiateInStateHelper(State s, GroundedAction groundedAction) {
-		// no bookkeeping
-	}
-
-	@Override
-	public GroundedAction oneStepActionSelection(State s,
-			GroundedAction groundedAction) {
-		return (GroundedAction) policy.getAction(this.map(s));
-	}
-
-	@Override
-	public List<ActionProb> getActionDistributionForState(State s,
-			GroundedAction groundedAction) {
-		return policy.getActionDistributionForState(this.map(s));
+	public boolean usesDeterministicTermination() {
+		return true;
 	}
 
 }

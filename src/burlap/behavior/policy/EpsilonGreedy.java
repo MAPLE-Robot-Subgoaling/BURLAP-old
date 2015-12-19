@@ -7,8 +7,8 @@ import java.util.Random;
 import javax.management.RuntimeErrorException;
 
 import burlap.behavior.singleagent.MDPSolverInterface;
-import burlap.behavior.valuefunction.QValue;
 import burlap.behavior.valuefunction.QFunction;
+import burlap.behavior.valuefunction.QValue;
 import burlap.debugtools.RandomFactory;
 import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.AbstractObjectParameterizedGroundedAction;
@@ -57,38 +57,6 @@ public class EpsilonGreedy extends Policy implements SolverDerivedPolicy {
 		qplanner = planner;
 		this.epsilon = epsilon;
 		rand = RandomFactory.getMapped(0);
-	}
-
-	/**
-	 * Returns the epsilon value, where epsilon is the probability of taking a
-	 * random action.
-	 * 
-	 * @return the epsilon value
-	 */
-	public double getEpsilon() {
-		return epsilon;
-	}
-
-	/**
-	 * Sets the epsilon value, where epsilon is the probability of taking a
-	 * random action.
-	 * 
-	 * @param epsilon
-	 *            the probability of taking a random action.
-	 */
-	public void setEpsilon(double epsilon) {
-		this.epsilon = epsilon;
-	}
-
-	@Override
-	public void setSolver(MDPSolverInterface solver) {
-
-		if (!(solver instanceof QFunction)) {
-			throw new RuntimeErrorException(new Error(
-					"Planner is not a QComputablePlanner"));
-		}
-
-		this.qplanner = (QFunction) solver;
 	}
 
 	@Override
@@ -156,14 +124,46 @@ public class EpsilonGreedy extends Policy implements SolverDerivedPolicy {
 		return dist;
 	}
 
-	@Override
-	public boolean isStochastic() {
-		return true;
+	/**
+	 * Returns the epsilon value, where epsilon is the probability of taking a
+	 * random action.
+	 * 
+	 * @return the epsilon value
+	 */
+	public double getEpsilon() {
+		return epsilon;
 	}
 
 	@Override
 	public boolean isDefinedFor(State s) {
 		return true; // can always find q-values with default value
+	}
+
+	@Override
+	public boolean isStochastic() {
+		return true;
+	}
+
+	/**
+	 * Sets the epsilon value, where epsilon is the probability of taking a
+	 * random action.
+	 * 
+	 * @param epsilon
+	 *            the probability of taking a random action.
+	 */
+	public void setEpsilon(double epsilon) {
+		this.epsilon = epsilon;
+	}
+
+	@Override
+	public void setSolver(MDPSolverInterface solver) {
+
+		if (!(solver instanceof QFunction)) {
+			throw new RuntimeErrorException(new Error(
+					"Planner is not a QComputablePlanner"));
+		}
+
+		this.qplanner = (QFunction) solver;
 	}
 
 }
